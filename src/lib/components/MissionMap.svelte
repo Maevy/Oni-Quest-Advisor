@@ -147,9 +147,9 @@
 					stroke-width="0.1"
 					stroke-dasharray="0.4 0.4"
 				/>
-				<text x="0.4" y={marker.y - 0.5} fill="rgb(203, 213, 225)" font-size="1.2">{marker.y}"</text
+				<text x="0.4" y={marker.y - 0.5} fill="rgb(203, 213, 225)" font-size="1.2">{marker.x}"</text
 				>
-				<text x={marker.x + 0.4} y="1.4" fill="rgb(203, 213, 225)" font-size="1.2">{marker.x}"</text
+				<text x={marker.x + 0.4} y="1.4" fill="rgb(203, 213, 225)" font-size="1.2">{marker.y}"</text
 				>
 			{/if}
 
