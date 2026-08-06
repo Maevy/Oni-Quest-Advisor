@@ -1,0 +1,61 @@
+{
+	"id": "obelisk-strike",
+	"season": "Season 2",
+	"name": "Obelisk Strike",
+	"description": "An ancient obelisk has surfaced at the heart of the battlefield, its markings pulsing with a power both sides intend to claim before the other.",
+	"brokenMorale": false,
+	"ceasefire": true,
+	"setup": [
+		{
+			"label": "Obelisk",
+			"description": "There is 1 Objective Marker at the center of the field."
+		},
+		{
+			"label": "Standard Deployment",
+			"description": "8\" Deployment Zones."
+		}
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": [
+			{
+				"id": "cache",
+				"x": 18,
+				"y": 18,
+				"shape": "circle",
+				"label": "Cache",
+				"color": "#f59e0b",
+				"showRuler": true
+			},
+			{
+				"id": "treasure",
+				"x": 9,
+				"y": 18,
+				"shape": "star",
+				"label": "Treasure",
+				"color": "#38bdf8",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "unlock-cache",
+			"text": "Gain 1 VP for unlocking the Cache.",
+			"vp": 1,
+			"count": 1
+		},
+		{
+			"id": "treasure-in-inventory",
+			"text": "Gain 2 VP if your model has the Treasure in its Inventory at the end of the game.",
+			"vp": 2,
+			"count": 1
+		}
+	],
+	"questRules": [
+		{
+			"label": "",
+			"description": "At the start of each Strategic Phase, any model within 2\" of the Obelisk may attempt to unlock it, gaining access to the Cache for the remainder of the game."
+		}
+	]
+}

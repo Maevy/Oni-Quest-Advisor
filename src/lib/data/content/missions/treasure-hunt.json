@@ -1,0 +1,75 @@
+{
+	"id": "treasure-hunt",
+	"season": "Season 2",
+	"name": "Treasure Hunt",
+	"description": "Whether a lord or a common adventurer, one can always benefit from more coin.",
+	"brokenMorale": true,
+	"ceasefire": false,
+	"setup": [
+		{
+			"label": "Intrigue Tokens",
+			"description": "There are 2 Intrigue Tokens in the middle of the field. Under each Intrigue Token lies a Cache Token. (In other words, an Intrigue Token is placed on top of a Cache Token.)"
+		},
+		{
+			"label": "Standard Deployment",
+			"description": "8\" Deployment Zones."
+		}
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": [
+			{
+				"id": "intrigue-a",
+				"x": 9,
+				"y": 18,
+				"shape": "box",
+				"label": "Intrigue",
+				"color": "#22d3ee",
+				"showRuler": true
+			},
+			{
+				"id": "intrigue-b",
+				"x": 27,
+				"y": 18,
+				"shape": "box",
+				"label": "Intrigue",
+				"color": "#22d3ee",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "unlock-cache",
+			"text": "Gain 1 VP for unlocking the Cache.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "treasure-in-inventory",
+			"text": "Gain 2 VP if your model has the Treasure in its Inventory at the end of the game.",
+			"vp": 2,
+			"count": 2
+		},
+		{
+			"id": "leave-with-treasure",
+			"text": "Gain 3 VP if your model leaves the field with a Treasure in its Inventory.",
+			"vp": 3,
+			"count": 2
+		}
+	],
+	"questRules": [
+		{
+			"label": "Treasure (Cache)",
+			"description": "A Treasure is represented by a Cache Token. Models may not Interact with Cache during Round 1. To access the Treasure, a player's model must first reveal the Intrigue Token by successfully performing the Perceive Action. An Intrigue Token is also automatically revealed if a model comes into Base Contact with it. When revealed, the Intrigue Token is replaced with a Sigil Token.\n\nA model in Base Contact with a Cache token may declare an Interact Action. By performing a successful AG roll, the model unlocks the Cache, takes the Treasure and places it into its Inventory. Once the Cache is unlocked, it cannot be unlocked again.\n\nSummoned models may not interact with Cache Tokens.\n\nA player whose model has this Item in its Inventory at the end of the game gains 2 VP. From round 4 onward, a model with a Treasure in its Inventory may voluntarily leave the field via its own Deployment Zone. A model carrying a Treasure cannot be Shrouded or Flying. Treasure is an Item with Qty 1 and Wgt 1.\n\n(Note: If the model becomes Incapacitated or Dead, the Treasure is removed from its Inventory and placed in Base Contact with the model. Models that leave the field voluntarily are still considered present and alive for the purposes of Loss of Morale.)"
+		},
+		{
+			"label": "Sigils",
+			"description": "Sigils don't trigger Round 1. Each Sigil Token has a specific Spell assigned to it, determined by rolling a die and consulting the chart. The Spell is triggered when a model comes into Base Contact with either the Sigil Token or the Cache Token beneath it. When triggered, the Spell is considered successfully cast and will hit all models within its AoE, unless they perform a successful Dodge. These Spells have PW 14. After the Spell is triggered and resolved, remove the Sigil Token."
+		},
+		{
+			"label": "Class Bonus: Rogue, Ranger, Alchemist",
+			"description": "Models with the Rogue, Ranger, or Alchemist Class add +3 to their AG roll when interacting with a Cache."
+		}
+	]
+}

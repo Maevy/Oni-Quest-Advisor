@@ -1,0 +1,44 @@
+{
+	"id": "cinder-vault",
+	"season": "Season 2",
+	"name": "Cinder Vault",
+	"description": "Deep beneath the ashfields, two sealed vaults hum with residual heat — and whatever was locked inside them.",
+	"brokenMorale": true,
+	"ceasefire": false,
+	"setup": [
+		{
+			"label": "Vault Doors",
+			"description": "Place 2 Objective Markers 6\" from the center, one on each side of the centerline."
+		}
+	],
+	"map": {
+		"zone": { "type": "radial", "rangeInches": 10 },
+		"markers": [
+			{
+				"id": "vault-a",
+				"x": 12,
+				"y": 12,
+				"shape": "box",
+				"label": "Vault A",
+				"color": "#f59e0b",
+				"showRuler": false
+			},
+			{
+				"id": "vault-b",
+				"x": 24,
+				"y": 24,
+				"shape": "box",
+				"label": "Vault B",
+				"color": "#f59e0b",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{ "id": "open-vault-a", "text": "Gain 1 VP for opening Vault A.", "vp": 1, "count": 1 },
+		{ "id": "open-vault-b", "text": "Gain 1 VP for opening Vault B.", "vp": 1, "count": 1 }
+	],
+	"questRules": [
+		{ "label": "", "description": "Both vaults unlock simultaneously at the start of Round 2." }
+	]
+}

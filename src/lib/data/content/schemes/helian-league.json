@@ -1,0 +1,11 @@
+[
+	{
+		"id": "head-hunt",
+		"title": "Head Hunt",
+		"ruleText": "Gain 1 VP (to a maximum of 3 VP) for each Deathblow you perform against enemy models.",
+		"factionId": "helian-league",
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	}
+]
