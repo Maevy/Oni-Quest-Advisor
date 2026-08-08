@@ -16,7 +16,7 @@
 	}
 </script>
 
-<div class="flex gap-2">
+<div class="flex flex-wrap gap-2">
 	{#each boxNumbers(count) as box (box)}
 		{@const achieved = box <= checkedCount}
 		<button

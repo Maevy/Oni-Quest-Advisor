@@ -1,0 +1,95 @@
+{
+	"id": "clue-trail",
+	"season": "Season 2",
+	"name": "Clue Trail",
+	"description": "It is not uncommon for several adventuring parties to pursue the same bounty. This is especially true for investigations and tracking contracts, where competition is fierce. Such pursuits often lead to clashes with local authorities, rival adventurers, or even fellow guildmates.",
+	"brokenMorale": false,
+	"ceasefire": true,
+	"setup": [
+		{
+			"label": "Clues",
+			"description": "Place 4 Objective Markers on the center line. These represent Clues."
+		},
+		{
+			"label": "Standard Deployment",
+			"description": "8\" Deployment Zones."
+		}
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": [
+			{
+				"id": "clue-1",
+				"x": 6,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Clue",
+				"color": "#d946ef",
+				"showRuler": true
+			},
+			{
+				"id": "clue-2",
+				"x": 14,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Clue",
+				"color": "#d946ef",
+				"showRuler": true
+			},
+			{
+				"id": "clue-3",
+				"x": 22,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Clue",
+				"color": "#d946ef",
+				"showRuler": false
+			},
+			{
+				"id": "clue-4",
+				"x": 30,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Clue",
+				"color": "#d946ef",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "control-round-2",
+			"text": "Receive 1 VP at the end of Round 2 for each Objective Marker under your control.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "control-round-3",
+			"text": "Receive 1 VP at the end of Round 3 for each Objective Marker under your control.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "control-round-4",
+			"text": "Receive 1 VP at the end of Round 4 for each Objective Marker under your control.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "control-round-5",
+			"text": "Receive 1 VP at the end of Round 5 for each Objective Marker under your control.",
+			"vp": 1,
+			"count": 4
+		}
+	],
+	"important": [
+		"Reset control over all Objective Markers to Neutral at the end of each round.",
+		"Models may not Interact with Objective Markers during Round 1."
+	],
+	"questRules": [
+		{
+			"label": "",
+			"description": "Objective Markers can be either Neutral or Controlled. At the start of the game, all Objective Markers are Neutral. By performing an Interact Action with a marker, a player takes control of it. If the marker is already Controlled, performing an Interact Action with it reverts it to Neutral.\n\nAt the end of each round (after both players have completed their turns), the player not controlling the Controlled Objective Marker may move it up to 6\" in any direction, ignoring terrain, then revert it to Neutral. Objective Markers may not be moved inside scenery. Summoned models may not Interact with Objective Markers."
+		}
+	]
+}

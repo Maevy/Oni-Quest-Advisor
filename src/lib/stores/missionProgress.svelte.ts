@@ -8,7 +8,10 @@ class MissionProgressStore {
 	drawnSchemes = $state<SchemeCard[]>([]);
 
 	loadForMission(missionId: string): void {
-		this.progress = loadMissionProgress(missionId) ?? domain.createEmptyProgress(missionId);
+		const loaded = loadMissionProgress(missionId);
+		this.progress = loaded
+			? { ...domain.createEmptyProgress(missionId), ...loaded }
+			: domain.createEmptyProgress(missionId);
 		this.drawnSchemes = [];
 	}
 
@@ -75,6 +78,12 @@ class MissionProgressStore {
 		if (!this.progress) return;
 		this.progress = domain.clearScheme(this.progress);
 		this.drawnSchemes = [];
+		this.persist();
+	}
+
+	setRound(round: number): void {
+		if (!this.progress) return;
+		this.progress = domain.setRound(this.progress, round);
 		this.persist();
 	}
 

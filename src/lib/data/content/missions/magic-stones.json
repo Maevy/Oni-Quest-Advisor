@@ -1,0 +1,74 @@
+{
+	"id": "magic-stones",
+	"season": "Season 2",
+	"name": "Magic Stones",
+	"description": "Strange crystalline formations occasionally bloom in places steeped in mana. They flare with energy, but can quickly fade—either being reclaimed by the rift, or by the abominations drawn to them, along with any who linger. Adventurers are often dispatched to such arcane ruins, contaminated lands near rifts, mana crystal fields, or other arcane nexuses to harvest this raw energy. Move fast, draw deep—and leave richer than you came.",
+	"brokenMorale": false,
+	"ceasefire": false,
+	"setup": [
+		{
+			"label": "Magic Stones",
+			"description": "There are 3 Objective Markers in the center line of the field representing Magic Stones."
+		},
+		{
+			"label": "Standard Deployment",
+			"description": "8\" Deployment Zones."
+		}
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": [
+			{
+				"id": "stone-west",
+				"x": 9,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Magic Stone",
+				"color": "#d946ef",
+				"showRuler": true
+			},
+			{
+				"id": "stone-center",
+				"x": 18,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Magic Stone",
+				"color": "#d946ef",
+				"showRuler": false
+			},
+			{
+				"id": "stone-east",
+				"x": 27,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Magic Stone",
+				"color": "#d946ef",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "control-round-2",
+			"text": "Gain 2 VP at the end of Round 2 for each Objective Marker under your control.",
+			"vp": 2,
+			"count": 1
+		},
+		{
+			"id": "control-round-4",
+			"text": "Gain 2 VP at the end of Round 4 for each Objective Marker under your control.",
+			"vp": 2,
+			"count": 1
+		}
+	],
+	"important": [
+		"Models may not Interact with Objective Markers during Round 1.",
+		"Reset control over all Objective Markers to Neutral at the end of Round 2 and Round 4."
+	],
+	"questRules": [
+		{
+			"label": "",
+			"description": "Objective Markers can be either Neutral or Controlled. At the start of the game, all Objective Markers are Neutral. A party may take control of a Neutral Objective Marker by having a model in Base Contact with it and performing an Interact action. The marker then becomes Controlled by that model's party. If the Objective Marker is already Controlled, performing an Interact action with it resets it to Neutral. Summoned models may not Interact with Objective Markers."
+		}
+	]
+}

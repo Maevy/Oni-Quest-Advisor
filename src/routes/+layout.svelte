@@ -1,7 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import background from '$lib/assets/oniquestCompanion_background.png';
+	import background from '$lib/assets/oniquestCompanion_background.jpg';
 
 	let { children } = $props();
 </script>

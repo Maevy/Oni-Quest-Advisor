@@ -51,6 +51,13 @@
 		].join(' ');
 	}
 
+	const rulerMarkers = $derived(map.markers.filter((marker) => marker.showRuler));
+
+	/** Position among ruler markers sharing a coordinate, so their distance labels stagger instead of overlapping. */
+	function rulerLabelOffset(marker: Marker, axis: 'x' | 'y'): number {
+		return rulerMarkers.filter((m) => m[axis] === marker[axis]).indexOf(marker);
+	}
+
 	const GRID_STEP_INCHES = 6;
 	/** Internal orientation lines only, every {@link GRID_STEP_INCHES} inches — no gameplay meaning. */
 	const gridPositions = Array.from(
@@ -127,6 +134,26 @@
 			>
 		{/if}
 
+		{#if map.quarters}
+			{@const mid = MAP_SIZE_INCHES / 2}
+			<line
+				x1={mid}
+				y1="0"
+				x2={mid}
+				y2={MAP_SIZE_INCHES}
+				stroke="rgba(148, 163, 184, 0.8)"
+				stroke-width="0.2"
+			/>
+			<line
+				x1="0"
+				y1={mid}
+				x2={MAP_SIZE_INCHES}
+				y2={mid}
+				stroke="rgba(148, 163, 184, 0.8)"
+				stroke-width="0.2"
+			/>
+		{/if}
+
 		{#each map.markers as marker (marker.id)}
 			{#if marker.showRuler}
 				<line
@@ -147,9 +174,13 @@
 					stroke-width="0.1"
 					stroke-dasharray="0.4 0.4"
 				/>
-				<text x="0.4" y={marker.y - 0.5} fill="rgb(203, 213, 225)" font-size="1.2">{marker.x}"</text
+				{@const rowIndex = rulerLabelOffset(marker, 'y')}
+				{@const colIndex = rulerLabelOffset(marker, 'x')}
+				<text x={0.4 + rowIndex * 2.4} y={marker.y - 0.5} fill="rgb(203, 213, 225)" font-size="1.2"
+					>{marker.x}"</text
 				>
-				<text x={marker.x + 0.4} y="1.4" fill="rgb(203, 213, 225)" font-size="1.2">{marker.y}"</text
+				<text x={marker.x + 0.4} y={1.4 + colIndex * 1.6} fill="rgb(203, 213, 225)" font-size="1.2"
+					>{marker.y}"</text
 				>
 			{/if}
 
@@ -170,7 +201,7 @@
 
 			<text
 				x={marker.x}
-				y={marker.y + 2.3}
+				y={marker.y + (marker.labelPosition === 'above' ? -1.8 : 2.3)}
 				fill="rgb(226, 232, 240)"
 				font-size="1.3"
 				text-anchor="middle">{marker.label}</text

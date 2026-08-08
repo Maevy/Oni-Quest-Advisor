@@ -6,6 +6,9 @@ export type SchemeDraft = {
 	intelligence: number | null;
 };
 
+export const MIN_ROUND = 1;
+export const MAX_ROUND = 5;
+
 export type MissionProgress = {
 	missionId: string;
 	/** Objective id → how many of its independent instances are checked (0..objective.count). */
@@ -13,6 +16,8 @@ export type MissionProgress = {
 	scheme: ChosenScheme | null;
 	/** Faction/intelligence inputs for the Scheme draw step — kept prefilled across a reset. */
 	schemeDraft: SchemeDraft;
+	/** Which round the table is currently on, tracked manually by the players (MIN_ROUND..MAX_ROUND). */
+	currentRound: number;
 };
 
 export function createEmptyProgress(missionId: string): MissionProgress {
@@ -20,8 +25,13 @@ export function createEmptyProgress(missionId: string): MissionProgress {
 		missionId,
 		checkedObjectiveCounts: {},
 		scheme: null,
-		schemeDraft: { factionId: null, intelligence: null }
+		schemeDraft: { factionId: null, intelligence: null },
+		currentRound: MIN_ROUND
 	};
+}
+
+export function setRound(progress: MissionProgress, round: number): MissionProgress {
+	return { ...progress, currentRound: Math.max(MIN_ROUND, Math.min(round, MAX_ROUND)) };
 }
 
 export function setSchemeDraft(

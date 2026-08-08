@@ -60,5 +60,6 @@
 			chosenSchemeCard &&
 			missionProgressStore.setSchemeChecked(checkedIncrements, chosenSchemeCard.maxIncrements)}
 		onDeleteScheme={() => missionProgressStore.deleteScheme()}
+		onSetRound={(round) => missionProgressStore.setRound(round)}
 	/>
 {/if}

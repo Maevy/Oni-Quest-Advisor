@@ -1,0 +1,74 @@
+{
+	"id": "snail-chase",
+	"season": "Season 2",
+	"name": "Snail Chase",
+	"description": "Giant Ink Snails are among Thenion's most revered creatures. Their precious slime is essential in producing Thenian Royal Blue—the renowned purple dye prized throughout Calad. The richness of the dye is said to reflect the health of the giant snails themselves. For this reason, they are rarely confined and are instead allowed to roam freely through the caverns and woodlands of Thenion. Each year, the matriarchs of the Netherealm oversee their great mating migration, offering generous rewards to those willing to shepherd these majestic beasts safely along their ancient routes.",
+	"brokenMorale": false,
+	"ceasefire": false,
+	"setup": [
+		{
+			"label": "Ink Snails",
+			"description": "After Deployment sides have been chosen, but before deploying models, each player, starting with the First Player, places 2 Objective Markers fully within their Deployment Zone. Mark each Objective Marker so it belongs to its owner. The markers represent Ink Snails."
+		}
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": []
+	},
+	"results": [
+		{
+			"id": "across-center-round-2",
+			"text": "Receive 1 VP at the end of Round 2 for each of your Ink Snails fully across the center line.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "across-center-round-3",
+			"text": "Receive 1 VP at the end of Round 3 for each of your Ink Snails fully across the center line.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "across-center-round-4",
+			"text": "Receive 1 VP at the end of Round 4 for each of your Ink Snails fully across the center line.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "across-center-round-5",
+			"text": "Receive 1 VP at the end of Round 5 for each of your Ink Snails fully across the center line.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "in-opponent-zone-round-2",
+			"text": "Receive 1 VP at the end of Round 2 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "in-opponent-zone-round-3",
+			"text": "Receive 1 VP at the end of Round 3 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "in-opponent-zone-round-4",
+			"text": "Receive 1 VP at the end of Round 4 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "in-opponent-zone-round-5",
+			"text": "Receive 1 VP at the end of Round 5 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"vp": 1,
+			"count": 2
+		}
+	],
+	"questRules": [
+		{
+			"label": "",
+			"description": "Objective Markers represent Ink Snails. Starting with Round 2, a model may perform an Interact Action with any Objective Marker (including an opponent's) to move it up to 6\" in any direction, ignoring terrain.\n\nObjective Markers may not be moved inside scenery. Summoned models may not Interact with Objective Markers."
+		}
+	]
+}

@@ -1,0 +1,10 @@
+node_modules
+.svelte-kit
+build
+.git
+.idea
+.vscode
+docs
+*.md
+.env
+.env.*

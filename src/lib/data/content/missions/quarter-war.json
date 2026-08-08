@@ -1,0 +1,87 @@
+{
+	"id": "quarter-war",
+	"season": "Season 2",
+	"name": "Quarter War",
+	"description": "Be it a city, open plain, river, or ancient ruin, few places in Calad remain untouched by conflict. Small-scale skirmishes for control of territory are a common occurrence between rival factions, cults, and even neighboring lords.",
+	"brokenMorale": false,
+	"ceasefire": true,
+	"setup": [
+		{
+			"label": "Corner Deployment",
+			"description": "Players deploy in opposing corners. Each Deployment Zone extends 9\" from its corner."
+		}
+	],
+	"map": {
+		"zone": { "type": "radial", "rangeInches": 9 },
+		"markers": [],
+		"quarters": true
+	},
+	"results": [
+		{
+			"id": "stronger-presence-round-1",
+			"text": "Receive 1 VP at the end of Round 1 for each Quarter in which you have Stronger Presence.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "stronger-presence-round-2",
+			"text": "Receive 1 VP at the end of Round 2 for each Quarter in which you have Stronger Presence.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "stronger-presence-round-3",
+			"text": "Receive 1 VP at the end of Round 3 for each Quarter in which you have Stronger Presence.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "stronger-presence-round-4",
+			"text": "Receive 1 VP at the end of Round 4 for each Quarter in which you have Stronger Presence.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "stronger-presence-round-5",
+			"text": "Receive 1 VP at the end of Round 5 for each Quarter in which you have Stronger Presence.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "uncontested-round-1",
+			"text": "Receive 1 VP at the end of Round 1 for each Quarter fully containing one or more models and no enemy models.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "uncontested-round-2",
+			"text": "Receive 1 VP at the end of Round 2 for each Quarter fully containing one or more models and no enemy models.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "uncontested-round-3",
+			"text": "Receive 1 VP at the end of Round 3 for each Quarter fully containing one or more models and no enemy models.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "uncontested-round-4",
+			"text": "Receive 1 VP at the end of Round 4 for each Quarter fully containing one or more models and no enemy models.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "uncontested-round-5",
+			"text": "Receive 1 VP at the end of Round 5 for each Quarter fully containing one or more models and no enemy models.",
+			"vp": 1,
+			"count": 4
+		}
+	],
+	"questRules": [
+		{
+			"label": "Stronger Presence",
+			"description": "Stronger Presence is determined by calculating the total Recruitment Points of each party fully within the specified Quarter. Add together the Recruitment Points of all Alive Party Members fully within that Quarter (do not include Upgrades). Compare this total with the other player(s). The player with the highest Recruitment Point total has the Stronger Presence."
+		}
+	]
+}

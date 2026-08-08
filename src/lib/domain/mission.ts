@@ -32,6 +32,8 @@ export type Mission = {
 	setup: SetupItem[];
 	map: MapSpec;
 	results: ResultObjectiveDef[];
+	/** Rules callouts shown alongside Results (e.g. Round-1 restrictions) — not counted for VP. */
+	important?: string[];
 	questRules: QuestRuleSection[];
 };
 

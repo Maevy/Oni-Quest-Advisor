@@ -1,0 +1,104 @@
+{
+	"id": "toxic-infestation",
+	"season": "Season 2",
+	"name": "Toxic Infestation",
+	"description": "The ancient taint never lingers. It spreads, corrupting the very elements that shape the land. Curse-ridden vines rapidly consume the earth, choking forests, poisoning wildlife, and giving rise to aberrations. Ordinary blades cannot cut the accursed growth. The vines can only be severed and culled through arcane means. A curse to some, a treasure to others. Both the vines themselves and the rewards offered for its culling fetch a handsome sum.",
+	"brokenMorale": false,
+	"ceasefire": false,
+	"setup": [
+		{
+			"label": "Toxic Vines",
+			"description": "Place 2 Objective Markers in opposite corners of the field. These represent the Toxic Vines."
+		},
+		{
+			"label": "Corner Deployment",
+			"description": "Players deploy in the two corners not occupied by the Toxic Vines. Each Deployment Zone extends 9\" from its corner."
+		}
+	],
+	"map": {
+		"zone": { "type": "radial", "rangeInches": 9 },
+		"markers": [
+			{
+				"id": "toxic-vine-a",
+				"x": 32,
+				"y": 5,
+				"shape": "star",
+				"label": "Toxic Vine",
+				"color": "#d946ef",
+				"showRuler": true
+			},
+			{
+				"id": "toxic-vine-b",
+				"x": 5,
+				"y": 32,
+				"shape": "star",
+				"label": "Toxic Vine",
+				"color": "#d946ef",
+				"showRuler": false
+			},
+			{
+				"id": "avatar",
+				"x": 18,
+				"y": 18,
+				"shape": "circle",
+				"label": "Avatar 2nd Round",
+				"color": "#f59e0b",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "defeat-avatar",
+			"text": "Gain 1 VP each time you defeat the Avatar of the Infestation.",
+			"vp": 1,
+			"count": 4
+		},
+		{
+			"id": "control-round-2",
+			"text": "Gain 1 VP at the end of Round 2 for each Toxic Vine under your control.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "control-round-3",
+			"text": "Gain 1 VP at the end of Round 3 for each Toxic Vine under your control.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "control-round-4",
+			"text": "Gain 1 VP at the end of Round 4 for each Toxic Vine under your control.",
+			"vp": 1,
+			"count": 2
+		},
+		{
+			"id": "control-round-5",
+			"text": "Gain 1 VP at the end of Round 5 for each Toxic Vine under your control.",
+			"vp": 1,
+			"count": 2
+		}
+	],
+	"important": [
+		"Models may not Interact with Objective Markers during Round 1.",
+		"Reset control over all Objective Markers to Neutral at the end of each round."
+	],
+	"questRules": [
+		{
+			"label": "Toxic Spores",
+			"description": "The area within 2\" of an Objective Marker is considered Toxic Environment."
+		},
+		{
+			"label": "Toxic Vines (Objective Markers)",
+			"description": "Models may not Interact with the Objective Markers in Round 1. Objective Markers can be either Neutral or Controlled. At the start of the game, all Objective Markers are Neutral. Toxic Vine Objective Markers may be Interacted with. By performing an Interact Action with a marker and spending 1 Mana, a player takes control of it. If the marker is already Controlled, performing an Interact Action with it reverts it to Neutral.\n\nAt the end of each round (after both players have completed their turns), move each Controlled marker 5\" directly toward the center of the field, then revert it to Neutral. Summoned models may not Interact with Objective Markers."
+		},
+		{
+			"label": "Avatar of the Infestation",
+			"description": "At the beginning of Round 2, place a Tier III Hostile at the center of the field, facing the 1st Player's Deployment Zone. This Hostile gains Survival (Toxic). Whenever a model causes a Wound to this Hostile while within 6\" of it, that model gains 1 Mana.\n\nIf there is no Avatar of the Infestation on the field during the Strategic Phase of any turn, spawn one facing the Active Player's Deployment Zone."
+		},
+		{
+			"label": "Hint",
+			"description": "If a model cannot generate its own Mana, it can gain Mana by causing Wounds to the Tier III Hostile (Avatar of the Infestation) that spawns during Round 2. This Mana can then be used to cull a Vine (take control of an Objective Marker)."
+		}
+	]
+}

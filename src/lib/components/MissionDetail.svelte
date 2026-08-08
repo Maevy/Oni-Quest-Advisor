@@ -6,6 +6,7 @@
 	import ResultsPanel from './ResultsPanel.svelte';
 	import SchemesPanel from './SchemesPanel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
+	import RoundTracker from './RoundTracker.svelte';
 
 	type Props = {
 		mission: Mission;
@@ -23,6 +24,7 @@
 		onChooseScheme: (schemeId: string) => void;
 		onSetSchemeChecked: (checkedIncrements: number) => void;
 		onDeleteScheme: () => void;
+		onSetRound: (round: number) => void;
 	};
 
 	let {
@@ -40,11 +42,14 @@
 		onDrawSchemes,
 		onChooseScheme,
 		onSetSchemeChecked,
-		onDeleteScheme
+		onDeleteScheme,
+		onSetRound
 	}: Props = $props();
 </script>
 
-<div class="min-h-dvh px-4 py-4">
+<RoundTracker round={progress.currentRound} {onSetRound} />
+
+<div class="min-h-dvh py-4 pr-16 pl-4">
 	<div class="mx-auto flex w-full max-w-xl flex-col">
 		<div class="flex items-center justify-end gap-2">
 			<span class="text-sm font-semibold text-sky-300">{totalVP} VP</span>
@@ -75,6 +80,7 @@
 			<MissionMap map={mission.map} />
 			<ResultsPanel
 				results={mission.results}
+				important={mission.important}
 				checkedObjectiveCounts={progress.checkedObjectiveCounts}
 				onSetChecked={onSetObjectiveChecked}
 			/>

@@ -12,6 +12,8 @@ export type Marker = {
 	label: string;
 	color: string;
 	showRuler: boolean;
+	/** Side of the marker the label renders on — 'below' unless set, useful to avoid overlap with a nearby marker's label. */
+	labelPosition?: 'above' | 'below';
 };
 
 export type DeploymentZone =
@@ -20,6 +22,8 @@ export type DeploymentZone =
 export type MapSpec = {
 	zone: DeploymentZone;
 	markers: Marker[];
+	/** Draws a center cross splitting the field into 4 gameplay-relevant Quarters (e.g. Quarter War). */
+	quarters?: boolean;
 };
 
 export type ZoneRect = { x: number; y: number; width: number; height: number };

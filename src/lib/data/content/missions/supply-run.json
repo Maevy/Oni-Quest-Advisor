@@ -1,0 +1,105 @@
+{
+	"id": "supply-run",
+	"season": "Season 2",
+	"name": "Supply Run",
+	"description": "Ancient ruins from the bygone ages of Elders and gods are often overflowing with riches—fittingly, with monsters as well.",
+	"brokenMorale": true,
+	"ceasefire": false,
+	"setup": [
+		{
+			"label": "Intrigue Tokens",
+			"description": "There are 2 Intrigue Tokens in the middle of the field. Each represents a bountiful pile of Resources."
+		},
+		{
+			"label": "Cache Tokens",
+			"description": "Each player has a Cache Token placed at the edge of their Deployment Zone."
+		},
+		{
+			"label": "Standard Deployment",
+			"description": "8\" Deployment Zones."
+		}
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": [
+			{
+				"id": "cache-a",
+				"x": 18,
+				"y": 8,
+				"shape": "star",
+				"label": "Cache",
+				"color": "#d946ef",
+				"showRuler": false
+			},
+			{
+				"id": "cache-b",
+				"x": 18,
+				"y": 28,
+				"shape": "star",
+				"label": "Cache",
+				"color": "#d946ef",
+				"showRuler": false
+			},
+			{
+				"id": "intrigue-a",
+				"x": 9,
+				"y": 18,
+				"shape": "box",
+				"label": "Intrigue",
+				"color": "#22d3ee",
+				"showRuler": true
+			},
+			{
+				"id": "intrigue-b",
+				"x": 27,
+				"y": 18,
+				"shape": "box",
+				"label": "Intrigue",
+				"color": "#22d3ee",
+				"showRuler": false
+			},
+			{
+				"id": "hostile-a",
+				"x": 7,
+				"y": 18,
+				"shape": "circle",
+				"label": "Tier 3 Hostile",
+				"color": "#ef4444",
+				"showRuler": false,
+				"labelPosition": "above"
+			},
+			{
+				"id": "hostile-b",
+				"x": 29,
+				"y": 18,
+				"shape": "circle",
+				"label": "Tier 3 Hostile",
+				"color": "#ef4444",
+				"showRuler": false,
+				"labelPosition": "above"
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "deposit-resources",
+			"text": "Gain 2 VP for each Resources deposited in your own Cache.",
+			"vp": 2,
+			"count": 8
+		}
+	],
+	"questRules": [
+		{
+			"label": "Resources (Intrigue)",
+			"description": "A model may loot the Resources and place them in its Inventory by declaring an Interact action at the Intrigue Token. Models may not Interact with Intrigue Tokens during Round 1. Summoned models may not Interact with Intrigue Tokens at any time. Resources are an Item with Qty 1 and Wgt 1."
+		},
+		{
+			"label": "Cache",
+			"description": "Each player has a Cache Token placed at the edge of their Deployment Zone, as shown on the map. Your models may deposit collected Resources into your Cache by performing an Interact action with the Cache. When doing so, discard the Resources from the model's Inventory."
+		},
+		{
+			"label": "Hostile Guard",
+			"description": "The Hostiles are guarding the precious resources. As shown on the map, each Intrigue Token has a Tier III Hostile guarding it. This Hostile is initially placed in Base Contact with the token. The Hostile will only activate if there are player models within 16\" of the Intrigue Token it is guarding. If the Hostile is not engaged and ends the turn 16\" or more away from its Intrigue Token, it returns to its initial position during the End Phase of that turn. If the Hostile is attacked from more than 16\" away from the token, it will Dodge but remain in place.\n\nIf a model is carrying Resources, it becomes the Target Priority for these Hostiles.\n\n(This behavior takes priority over standard Hostile Behavior rules.)"
+		}
+	]
+}
