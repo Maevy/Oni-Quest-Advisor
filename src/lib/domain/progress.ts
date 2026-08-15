@@ -1,5 +1,5 @@
-import type { Mission } from './mission';
-import type { ChosenScheme, SchemeCard } from './scheme';
+import { getScoreableResults, type Mission } from './mission';
+import { schemeVp, type ChosenScheme, type SchemeCard } from './scheme';
 
 export type SchemeDraft = {
 	factionId: string | null;
@@ -63,15 +63,13 @@ export function calculateTotalVP(
 	progress: MissionProgress,
 	schemeCard: SchemeCard | null
 ): number {
-	const resultsVP = mission.results.reduce(
+	const resultsVP = getScoreableResults(mission).reduce(
 		(sum, objective) => sum + objective.vp * (progress.checkedObjectiveCounts[objective.id] ?? 0),
 		0
 	);
 
 	const schemeVP =
-		progress.scheme && schemeCard
-			? progress.scheme.checkedIncrements * schemeCard.vpPerIncrement
-			: 0;
+		progress.scheme && schemeCard ? schemeVp(schemeCard, progress.scheme.checkedIncrements) : 0;
 
 	return resultsVP + schemeVP;
 }

@@ -1,13 +1,18 @@
 # lib/stores/ — application/state layer
 
-- Owns runtime state: loaded scenarios, the currently selected scenario, the currently
-  selected mission card ids.
-- Built with Svelte 5 runes (`$state`/`$derived`), exposed as small purposeful
-  functions (e.g. `rollScenario()`, `selectScenario(id)`, `toggleMission(id)`) — not as
+- Owns runtime state: loaded content (missions/factions/schemes), the current screen
+  - selections, and the per-mission play progress.
+- Class-based singletons in `.svelte.ts` files (`contentStore`, `navigationStore`,
+  `missionProgressStore`), re-exported from `index.ts`. Built on Svelte 5 runes
+  (`$state`/`$derived`) and exposed via small purposeful methods (e.g.
+  `selectSeason()`, `rollRandomMission()`, `drawSchemes()`, `setRound()`) — not as
   raw mutable state exported wholesale for callers to mutate directly.
 - Orchestrates, doesn't decide: calls into `lib/domain` for any rule/decision logic
-  (random pick, selection validation) and into `lib/data` for loading/persistence.
+  (random draws, clamping, VP math) and into `lib/data` for loading/persistence.
   The store itself shouldn't implement that logic.
-- Side effects (persisting the current selection, loading scenario data) go through
-  `lib/data` — never inline `localStorage.*` or `fetch` calls here.
+- Side effects (persisting progress, loading content) go through `lib/data` — never
+  inline `localStorage.*` or `fetch` calls here.
+- Persisted progress is loaded by merging it onto `domain.createEmptyProgress()`, so
+  fields added later get their defaults — keep this pattern when extending
+  `MissionProgress`.
 - Markup-free: no Svelte component/UI concerns in this layer.

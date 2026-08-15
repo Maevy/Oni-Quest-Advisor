@@ -1,0 +1,20 @@
+[
+	{
+		"id": "spreading-infestation",
+		"title": "Spreading Infestation",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase. Receive 2 VP (to a maximum of 3 VP) for each of your models in your opponent's Deployment Zone and outside the Line of Sight of all enemy models.",
+		"factionIds": ["monster-factions"],
+		"copies": 4,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	},
+	{
+		"id": "territorial-aggression",
+		"title": "Territorial Aggression",
+		"ruleText": "Cannot be used before the start of your second turn. Reveal this Scheme during your Strategic Phase and discard it during the End Phase. Receive 2 VP if you have 2 models in your Deployment Zone. Receive an additional 1 VP if there are no enemy models on your half of the field.",
+		"factionIds": ["monster-factions"],
+		"copies": 4,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	}
+]

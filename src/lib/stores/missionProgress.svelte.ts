@@ -50,7 +50,7 @@ class MissionProgressStore {
 		if (!draft?.factionId || draft.intelligence == null) return;
 		const pool = domain.getSchemePool(allSchemes, draft.factionId);
 		const count = domain.drawCountForIntelligence(draft.intelligence);
-		this.drawnSchemes = domain.drawUniqueSchemes(pool, count, rng);
+		this.drawnSchemes = domain.drawUniqueSchemes(pool, count, rng, draft.factionId);
 	}
 
 	chooseScheme(schemeId: string): void {

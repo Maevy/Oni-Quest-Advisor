@@ -27,7 +27,7 @@ export type Mission = {
 	description: string;
 	/** Informational only — not read by any app logic. */
 	brokenMorale: boolean;
-	/** Informational only — not read by any app logic. */
+	/** When true, Results gains the automatic "Ceasefire broken" −4 VP objective. */
 	ceasefire: boolean;
 	setup: SetupItem[];
 	map: MapSpec;
@@ -36,6 +36,38 @@ export type Mission = {
 	important?: string[];
 	questRules: QuestRuleSection[];
 };
+
+export const CEASEFIRE_OBJECTIVE_ID = 'ceasefire-broken';
+
+export const CEASEFIRE_OBJECTIVE: ResultObjectiveDef = {
+	id: CEASEFIRE_OBJECTIVE_ID,
+	text: 'Ceasefire broken',
+	vp: -4,
+	count: 1
+};
+
+export type RuleCallout = {
+	title: string;
+	/** Optional subheading rendered above the text (e.g. "1st Round Ceasefire"). */
+	heading?: string;
+	text: string;
+};
+
+export const CEASEFIRE_RULE: RuleCallout = {
+	title: 'Ceasefire',
+	heading: '1st Round Ceasefire',
+	text: 'Players cannot score VP during the first round. If a model targets an enemy model with an Attack or damages an enemy model with an Action during Round 1, that player’s party receives a –4 VP penalty. Summoned models are an exception to this rule and may be targeted and damaged. However, Attacks or Wounds caused by Summoned models still incur the penalty. (A player’s VP score may drop below 0 as a result.)'
+};
+
+export const BROKEN_MORALE_RULE: RuleCallout = {
+	title: 'Broken Morale',
+	text: 'If a player’s party is in a state of Broken Morale at the start of their Strategic phase, the Quest ends at the end of that Turn.'
+};
+
+/** Every objective shown in Results — the mission's own, plus the ceasefire penalty when it applies. */
+export function getScoreableResults(mission: Mission): ResultObjectiveDef[] {
+	return mission.ceasefire ? [...mission.results, CEASEFIRE_OBJECTIVE] : mission.results;
+}
 
 export function pickRandomMission(missions: Mission[], rng: Rng): Mission {
 	return pickRandom(missions, rng);

@@ -1,9 +1,16 @@
+import { readFileSync } from 'node:fs';
 import tailwindcss from '@tailwindcss/vite';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+	version: string;
+};
+
 export default defineConfig({
+	// SvelteKit's own `version` is a timestamp in dev, so inject the real one.
+	define: { __APP_VERSION__: JSON.stringify(pkg.version) },
 	plugins: [
 		tailwindcss(),
 		sveltekit({

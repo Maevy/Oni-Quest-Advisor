@@ -1,0 +1,38 @@
+[
+	{
+		"id": "appear-weak-when-you-are-strong",
+		"title": "Appear Weak When You Are Strong",
+		"ruleText": "Receive 1 VP for every Wound you deal to enemy models with Melee Attack (to a maximum of 3).",
+		"factionIds": ["sand-kingdoms"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "unhindered-expedition",
+		"title": "Unhindered Expedition",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase. Receive 2 VP if you have 3 models outside your Deployment Zone (excluding summoned creatures) at the end of the turn, and an additional 1 VP if at least 1 of those models is in the opponent's Deployment Zone.",
+		"factionIds": ["sand-kingdoms"],
+		"copies": 2,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	},
+	{
+		"id": "strength-in-numbers",
+		"title": "Strength in Numbers",
+		"ruleText": "Receive 2 VP if you have more alive models (including summoned creatures) than your opponent at the end of the game. Receive an additional 1 VP if you have at least twice as many models alive as your opponent.",
+		"factionIds": ["sand-kingdoms"],
+		"copies": 2,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	},
+	{
+		"id": "steadfast-expansion",
+		"title": "Steadfast Expansion",
+		"ruleText": "Receive 1 VP (to the max of 3 VP) for every party member beyond the middle of the field at the end of the game (not counting your summoned creatures).",
+		"factionIds": ["sand-kingdoms"],
+		"copies": 1,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	}
+]

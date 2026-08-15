@@ -1,15 +1,22 @@
 <script lang="ts">
-	import type { Faction, Mission, MissionProgress, SchemeCard } from '$lib/domain';
+	import type {
+		Faction,
+		Mission,
+		MissionProgress,
+		ResultObjectiveDef,
+		SchemeCard
+	} from '$lib/domain';
 	import DescriptionPanel from './DescriptionPanel.svelte';
 	import SetupPanel from './SetupPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
 	import SchemesPanel from './SchemesPanel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
-	import RoundTracker from './RoundTracker.svelte';
+	import CommandPanel from './CommandPanel.svelte';
 
 	type Props = {
 		mission: Mission;
+		results: ResultObjectiveDef[];
 		progress: MissionProgress;
 		totalVP: number;
 		factions: Faction[];
@@ -29,6 +36,7 @@
 
 	let {
 		mission,
+		results,
 		progress,
 		totalVP,
 		factions,
@@ -47,19 +55,11 @@
 	}: Props = $props();
 </script>
 
-<RoundTracker round={progress.currentRound} {onSetRound} />
+<CommandPanel {totalVP} round={progress.currentRound} {onSetRound} {onReset} />
 
-<div class="min-h-dvh py-4 pr-16 pl-4">
+<div class="min-h-dvh py-4 pr-10 pl-4">
 	<div class="mx-auto flex w-full max-w-xl flex-col">
 		<div class="flex items-center justify-end gap-2">
-			<span class="text-sm font-semibold text-sky-300">{totalVP} VP</span>
-			<button
-				type="button"
-				class="rounded-lg border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800/60"
-				onclick={onReset}
-			>
-				Reset
-			</button>
 			<button
 				type="button"
 				class="rounded-lg border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800/60"
@@ -79,7 +79,7 @@
 			<SetupPanel setup={mission.setup} />
 			<MissionMap map={mission.map} />
 			<ResultsPanel
-				results={mission.results}
+				{results}
 				important={mission.important}
 				checkedObjectiveCounts={progress.checkedObjectiveCounts}
 				onSetChecked={onSetObjectiveChecked}

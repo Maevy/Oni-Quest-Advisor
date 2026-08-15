@@ -1,0 +1,38 @@
+[
+	{
+		"id": "unmatched-flanking",
+		"title": "Unmatched Flanking",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase; receive 1 VP for every Attack against an enemy model that has no LoS to your model before the Resolution Step of the Activation in this turn (to the max of 3 VP).",
+		"factionIds": ["coalition-of-thenion"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "leave-unnoticed",
+		"title": "Leave Unnoticed",
+		"ruleText": "Receive 1 VP (to the max of 3 VP) for every party member outside enemy models' LoS at the end of the game.",
+		"factionIds": ["coalition-of-thenion"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "cunning-tenacity",
+		"title": "Cunning Tenacity",
+		"ruleText": "Receive 2 VP for every model that did not lose HP throughout the game (to a maximum of 3).",
+		"factionIds": ["coalition-of-thenion"],
+		"copies": 2,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	},
+	{
+		"id": "breach-their-defenses",
+		"title": "Breach Their Defenses",
+		"ruleText": "Receive 2 VP for every party member in the enemy Deployment Zone (up to max of 3 VP) at the end of the game.",
+		"factionIds": ["coalition-of-thenion"],
+		"copies": 2,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	}
+]

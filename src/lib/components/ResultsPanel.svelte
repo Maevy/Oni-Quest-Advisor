@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ResultObjectiveDef } from '$lib/domain';
+	import { CEASEFIRE_OBJECTIVE_ID, type ResultObjectiveDef } from '$lib/domain';
 	import IncrementBoxes from './IncrementBoxes.svelte';
 	import Panel from './Panel.svelte';
 
@@ -18,12 +18,21 @@
 		{#each results as objective (objective.id)}
 			{@const checkedCount = checkedObjectiveCounts[objective.id] ?? 0}
 			{@const complete = checkedCount >= objective.count}
-			<li class="flex flex-col gap-2 rounded-lg px-2 py-1.5">
+			{@const isCeasefire = objective.id === CEASEFIRE_OBJECTIVE_ID}
+			<li
+				class="flex flex-col gap-2 rounded-lg {isCeasefire
+					? 'border border-red-500/60 bg-red-500/10 px-3 py-2'
+					: 'px-2 py-1.5'}"
+			>
 				<div class="flex items-start justify-between gap-3">
 					<span class={complete ? 'text-slate-500 line-through' : 'text-slate-200'}>
 						{objective.text}
 					</span>
-					<span class="shrink-0 text-sm font-semibold text-sky-300">{objective.vp} VP</span>
+					<span
+						class="shrink-0 text-sm font-semibold {isCeasefire ? 'text-red-300' : 'text-sky-300'}"
+					>
+						{objective.vp} VP
+					</span>
 				</div>
 				{#if objective.count > 1}
 					<IncrementBoxes
@@ -37,7 +46,9 @@
 						checked={checkedCount > 0}
 						onchange={(event) =>
 							onSetChecked(objective.id, (event.target as HTMLInputElement).checked ? 1 : 0, 1)}
-						class="h-5 w-5 rounded border-slate-500 bg-slate-900 text-sky-500 focus:ring-sky-500"
+						class="h-5 w-5 rounded border-slate-500 bg-slate-900 {isCeasefire
+							? 'text-red-500 focus:ring-red-500'
+							: 'text-sky-500 focus:ring-sky-500'}"
 					/>
 				{/if}
 			</li>

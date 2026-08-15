@@ -5,7 +5,7 @@ import {
 	setObjectiveChecked,
 	setSchemeDraft
 } from './progress';
-import type { Mission } from './mission';
+import { CEASEFIRE_OBJECTIVE_ID, type Mission } from './mission';
 import { chooseScheme, setSchemeChecked, type SchemeCard } from './scheme';
 
 const mission: Mission = {
@@ -96,7 +96,7 @@ describe('calculateTotalVP', () => {
 			id: 'head-hunt',
 			title: 'Head Hunt',
 			ruleText: '...',
-			factionId: 'helian-league',
+			factionIds: ['empire-of-soga'],
 			copies: 2,
 			maxIncrements: 3,
 			vpPerIncrement: 1
@@ -105,12 +105,60 @@ describe('calculateTotalVP', () => {
 		progress = {
 			...progress,
 			scheme: setSchemeChecked(
-				chooseScheme(schemeCard.id, 'helian-league', 5),
+				chooseScheme(schemeCard.id, 'empire-of-soga', 5),
 				2,
 				schemeCard.maxIncrements
 			)
 		};
 
 		expect(calculateTotalVP(mission, progress, schemeCard)).toBe(1 + 2);
+	});
+
+	it("subtracts the ceasefire penalty when 'Ceasefire broken' is checked", () => {
+		const ceasefireMission: Mission = { ...mission, ceasefire: true };
+		let progress = setObjectiveChecked(
+			createEmptyProgress(ceasefireMission.id),
+			'unlock-cache',
+			1,
+			1
+		);
+		progress = setObjectiveChecked(progress, CEASEFIRE_OBJECTIVE_ID, 1, 1);
+
+		expect(calculateTotalVP(ceasefireMission, progress, null)).toBe(1 - 4);
+	});
+
+	it('does not count the ceasefire penalty while it is unchecked', () => {
+		const ceasefireMission: Mission = { ...mission, ceasefire: true };
+		const progress = setObjectiveChecked(
+			createEmptyProgress(ceasefireMission.id),
+			'unlock-cache',
+			1,
+			1
+		);
+
+		expect(calculateTotalVP(ceasefireMission, progress, null)).toBe(1);
+	});
+
+	it('sums per-box Scheme VP for cards with uneven increment values (e.g. Martial Valor)', () => {
+		const martialValor: SchemeCard = {
+			id: 'martial-valor',
+			title: 'Martial Valor',
+			ruleText: '...',
+			factionIds: ['helian-league', 'empire-of-soga'],
+			copies: 2,
+			maxIncrements: 2,
+			incrementVp: [2, 1]
+		};
+		let progress = createEmptyProgress(mission.id);
+		progress = {
+			...progress,
+			scheme: setSchemeChecked(
+				chooseScheme(martialValor.id, 'helian-league', 5),
+				1,
+				martialValor.maxIncrements
+			)
+		};
+
+		expect(calculateTotalVP(mission, progress, martialValor)).toBe(2);
 	});
 });

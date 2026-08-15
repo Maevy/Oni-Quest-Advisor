@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getMissionsForSeason, getSeasons } from '$lib/domain';
+	import { getMissionsForSeason, getScoreableResults, getSeasons } from '$lib/domain';
 	import { contentStore, missionProgressStore, navigationStore } from '$lib/stores';
 	import SeasonSelect from '$lib/components/SeasonSelect.svelte';
 	import MissionSelect from '$lib/components/MissionSelect.svelte';
@@ -17,6 +17,7 @@
 		contentStore.missions.find((mission) => mission.id === navigationStore.selectedMissionId) ??
 			null
 	);
+	let resultsForMission = $derived(selectedMission ? getScoreableResults(selectedMission) : []);
 	let chosenSchemeCard = $derived(
 		missionProgressStore.progress?.scheme
 			? (contentStore.schemes.find(
@@ -42,6 +43,7 @@
 {:else if selectedMission && missionProgressStore.progress}
 	<MissionDetail
 		mission={selectedMission}
+		results={resultsForMission}
 		progress={missionProgressStore.progress}
 		{totalVP}
 		factions={contentStore.factions}

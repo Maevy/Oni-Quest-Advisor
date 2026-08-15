@@ -1,10 +1,28 @@
 [
 	{
-		"id": "head-hunt",
-		"title": "Head Hunt",
-		"ruleText": "Gain 1 VP (to a maximum of 3 VP) for each Deathblow you perform against enemy models.",
-		"factionId": "helian-league",
+		"id": "decisive-victory",
+		"title": "Decisive Victory",
+		"ruleText": "Receive 3 VP if all of your party members are alive at the end of the game.",
+		"factionIds": ["helian-league"],
 		"copies": 2,
+		"maxIncrements": 1,
+		"vpPerIncrement": 3
+	},
+	{
+		"id": "last-warning",
+		"title": "Last Warning",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase; if your models do not declare Attack until your next Strategic Phase, you receive 3 VP.",
+		"factionIds": ["helian-league"],
+		"copies": 2,
+		"maxIncrements": 1,
+		"vpPerIncrement": 3
+	},
+	{
+		"id": "relentless-advance",
+		"title": "Relentless Advance",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase; receive 1 VP (to the max of 3) for every party member beyond the middle of the field at the end of this turn.",
+		"factionIds": ["helian-league"],
+		"copies": 1,
 		"maxIncrements": 3,
 		"vpPerIncrement": 1
 	}

@@ -1,0 +1,171 @@
+[
+	{
+		"id": "opportunistic-manipulation",
+		"title": "Opportunistic Manipulation",
+		"ruleText": "You may reveal this at the start of your Strategic Phase. Receive 1 VP for each of the following: • There is an enemy not in the Dead State in the enemy Deployment Zone. • There is an enemy not in the Dead State on your half of the field. • There is an ally in the Incapacitated State on the enemy half of the field.",
+		"factionIds": [
+			"helian-league",
+			"empire-of-soga",
+			"coalition-of-thenion",
+			"sand-kingdoms",
+			"monster-factions",
+			"adventurers-guild"
+		],
+		"copies": {
+			"helian-league": 1,
+			"empire-of-soga": 1,
+			"coalition-of-thenion": 1,
+			"sand-kingdoms": 1,
+			"monster-factions": 2,
+			"adventurers-guild": 2
+		},
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "assassination-contract",
+		"title": "Assassination Contract",
+		"ruleText": "Receive 3 VP for killing an enemy Leader (rendering it Dead).",
+		"factionIds": [
+			"helian-league",
+			"empire-of-soga",
+			"coalition-of-thenion",
+			"sand-kingdoms",
+			"monster-factions",
+			"adventurers-guild"
+		],
+		"copies": {
+			"helian-league": 1,
+			"empire-of-soga": 1,
+			"coalition-of-thenion": 2,
+			"sand-kingdoms": 1,
+			"monster-factions": 2,
+			"adventurers-guild": 2
+		},
+		"maxIncrements": 1,
+		"vpPerIncrement": 3
+	},
+	{
+		"id": "virtuous-commander",
+		"title": "Virtuous Commander",
+		"ruleText": "Receive 1 VP (to a maximum of 3 VP) for each of your models that is Alive at the end of the game.",
+		"factionIds": [
+			"helian-league",
+			"empire-of-soga",
+			"coalition-of-thenion",
+			"sand-kingdoms",
+			"monster-factions",
+			"adventurers-guild"
+		],
+		"copies": {
+			"helian-league": 4,
+			"empire-of-soga": 2,
+			"coalition-of-thenion": 2,
+			"sand-kingdoms": 2,
+			"monster-factions": 2,
+			"adventurers-guild": 2
+		},
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "martial-valor",
+		"title": "Martial Valor",
+		"ruleText": "Reveal this when your model Incapacitates an enemy model that costs more Recruitment Points; receive 2 VP. If another of your models Incapacitates a model that costs more RP, score an additional 1 VP.",
+		"factionIds": [
+			"helian-league",
+			"empire-of-soga",
+			"coalition-of-thenion",
+			"sand-kingdoms",
+			"monster-factions",
+			"adventurers-guild"
+		],
+		"copies": 2,
+		"maxIncrements": 2,
+		"incrementVp": [2, 1]
+	},
+	{
+		"id": "no-quarter",
+		"title": "No Quarter",
+		"ruleText": "Receive 1 VP for every Dead enemy model at the end of the game (to a maximum of 3 VP).",
+		"factionIds": [
+			"helian-league",
+			"empire-of-soga",
+			"coalition-of-thenion",
+			"sand-kingdoms",
+			"monster-factions",
+			"adventurers-guild"
+		],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "stand-your-ground",
+		"title": "Stand Your Ground",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it at the start of your next Strategic Phase. Receive 1 VP (to a maximum of 3 VP) for each model that did not move this round.",
+		"factionIds": [
+			"helian-league",
+			"empire-of-soga",
+			"coalition-of-thenion",
+			"sand-kingdoms",
+			"monster-factions",
+			"adventurers-guild"
+		],
+		"copies": {
+			"helian-league": 2,
+			"empire-of-soga": 2,
+			"coalition-of-thenion": 2,
+			"sand-kingdoms": 4,
+			"monster-factions": 2,
+			"adventurers-guild": 2
+		},
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "fierce-as-fire-immovable-as-a-mountain",
+		"title": "Fierce as Fire, Immovable as a Mountain",
+		"ruleText": "Reveal this card when one of your models first Wounds an enemy model in Reaction. Place a token on this card. When your model Wounds an enemy model in Reaction, place another token on this card. Score 1 VP for every token on this card (maximum of 3 VP).",
+		"factionIds": ["helian-league", "empire-of-soga"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "stalwart-defender",
+		"title": "Stalwart Defender",
+		"ruleText": "Receive 3 VP if there are no enemy models in your Deployment Zone at the end of the game.",
+		"factionIds": ["empire-of-soga", "sand-kingdoms", "adventurers-guild"],
+		"copies": { "empire-of-soga": 1, "sand-kingdoms": 1, "adventurers-guild": 2 },
+		"maxIncrements": 1,
+		"vpPerIncrement": 3
+	},
+	{
+		"id": "blood-for-blood",
+		"title": "Blood for Blood",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase; select one of your models that suffered a Wound from an enemy model. Receive 3 VP if you Incapacitate the enemy model that wounded your selected model this turn.",
+		"factionIds": ["coalition-of-thenion", "adventurers-guild"],
+		"copies": { "coalition-of-thenion": 1, "adventurers-guild": 2 },
+		"maxIncrements": 1,
+		"vpPerIncrement": 3
+	},
+	{
+		"id": "peacekeeping-paragon",
+		"title": "Peacekeeping Paragon",
+		"ruleText": "Receive 1 VP for each enemy model that is Alive at the end of the game (to a maximum of 3 VP).",
+		"factionIds": ["helian-league", "adventurers-guild"],
+		"copies": { "helian-league": 1, "adventurers-guild": 2 },
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "pursuit-of-glory",
+		"title": "Pursuit of Glory",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase. Receive 1 VP (to the max of 3 VP) during the end Phase of that turn for every Alive party member outside the Awareness of other party members.",
+		"factionIds": ["empire-of-soga", "adventurers-guild"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	}
+]

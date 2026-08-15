@@ -1,0 +1,29 @@
+[
+	{
+		"id": "head-hunt",
+		"title": "Head Hunt",
+		"ruleText": "Receive 1 VP (to the max of 3 VP) for every Deathblow you perform against enemy models.",
+		"factionIds": ["empire-of-soga"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "open-aggression",
+		"title": "Open Aggression",
+		"ruleText": "Reveal this Scheme during your Strategic Phase and discard it during the End Phase; receive 1 VP for every Wound you deal to enemy models this turn (to the max of 3 VP).",
+		"factionIds": ["empire-of-soga"],
+		"copies": 2,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	},
+	{
+		"id": "engetsu-formation",
+		"title": "Engetsu Formation",
+		"ruleText": "Receive 1 VP (to the max of 3 VP) for each party member in your Deployment Zone at the end of the game.",
+		"factionIds": ["empire-of-soga"],
+		"copies": 1,
+		"maxIncrements": 3,
+		"vpPerIncrement": 1
+	}
+]
