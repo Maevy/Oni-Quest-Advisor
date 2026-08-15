@@ -25,6 +25,8 @@ native/platform-specific one. Used on a phone screen during a game session.
   optional `quarters` center cross, per-marker `labelPosition`), Results (scoreable
   objectives with VP and a scoreable-instance `count`), optional `important` callouts
   (rules notes shown alongside Results — not scored), and quest rules (prose sections).
+  Ceasefire missions additionally get the automatic red-boxed "Ceasefire broken"
+  −4 VP objective (`CEASEFIRE_OBJECTIVE`, added by `getScoreableResults`).
 - **Faction** → a player-selectable side with its own 20-card Scheme deck; cards can
   be shared across several factions' decks. A `common` pool for cards in every
   faction's deck exists too (`COMMON_FACTION_ID`).
@@ -35,6 +37,14 @@ native/platform-specific one. Used on a phone screen during a game session.
   Stand Your Ground: 4 Sand / 2 elsewhere), `maxIncrements` (checkboxes), and either
   a uniform `vpPerIncrement` or per-box `incrementVp` values (e.g. Martial Valor:
   2 VP, then 1 VP).
+- **Faction roster (as of v0.1.0)** → six factions, each deck exactly 20 physical
+  cards drawn from 27 unique cards: Helian League, Empire of Soga, Coalition of
+  Thenion, Sand Kingdoms, Monster Factions, Adventurers' Guild (no exclusive cards —
+  its whole deck is shared). Card data: `data/content/schemes/shared.json` holds
+  every card in 2+ decks, one `schemes/<faction>.json` per faction's exclusives —
+  a card moves into `shared.json` as soon as a second deck gets it. Rulebook wording
+  "X VP (to a maximum of Y)" with multiple boxes ⇒ `incrementVp` (e.g. `[2, 1]`),
+  never a flat `vpPerIncrement` that would overshoot the cap.
 - **MissionProgress** → per-mission play state: checked objective counts, the chosen
   Scheme, a `schemeDraft` (faction/intelligence) that survives resets, and
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
@@ -101,16 +111,30 @@ read it before adding files there.
   colocated `*.spec.ts`.
 - Formatting is Prettier: tabs, single quotes, no trailing commas, print width 100.
   Run `npm run format` rather than hand-formatting.
+- Repo files are committed with LF endings (Prettier enforces LF). On a Windows
+  checkout with `core.autocrlf=true`, `git status` can list many files whose
+  `git diff` is empty — trust the diff, not the status file count.
 
 ## Commands
 
-- `npm run dev` — dev server · `npm run build` / `npm run preview`
+- `npm run dev` — dev server (http://localhost:5173) · `npm run build` /
+  `npm run preview`
 - `npm run check` — svelte-kit sync + svelte-check (type check, strict)
 - `npm run lint` — prettier --check + eslint · `npm run format` — prettier --write
 - `npm run test` — vitest run (tests: `src/**/*.{test,spec}.ts`, currently all in
   `lib/domain`)
 
 After code changes, verify with `npm run check`, `npm run lint`, and `npm run test`.
+
+## Git & releases
+
+- Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
+  Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
+  and push branch + tag. Current release: **v0.1.0**.
+- Don't stage local tooling state: `.idea/` and `.qwen/` are untracked and not yet
+  gitignored — exclude them when staging (or add them to `.gitignore`).
+- The first push on a fresh machine may hang until GitHub sign-in (Git Credential
+  Manager) is completed.
 
 ## Docs
 
@@ -122,4 +146,6 @@ behavior or visuals:
 - `docs/technical-spec/` — visual theme, mission JSON format, map rendering.
 
 Spec docs end with **Open questions** sections; keep them updated when decisions
-get made.
+get made. Note: the specs currently **lag behind** the features added around v0.1.0
+(Command Panel, rule popups, ceasefire objective, Scheme decks) — they were
+intentionally left untouched; catch them up when the behavior is considered stable.
