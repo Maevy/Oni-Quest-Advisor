@@ -25,3 +25,6 @@ vite.config.ts.timestamp-*
 # Claude Code local state
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Local planning docs — never push
+MULTIPLAYER_PLAN.md

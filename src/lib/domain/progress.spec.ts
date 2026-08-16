@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	calculateTotalVP,
 	createEmptyProgress,
+	MAX_TOTAL_VP,
 	setObjectiveChecked,
 	setSchemeDraft
 } from './progress';
@@ -160,5 +161,42 @@ describe('calculateTotalVP', () => {
 		};
 
 		expect(calculateTotalVP(mission, progress, martialValor)).toBe(2);
+	});
+
+	it('caps the total at MAX_TOTAL_VP when Results alone exceed it', () => {
+		const richMission: Mission = {
+			...mission,
+			results: [{ id: 'jackpot', text: 'Big score.', vp: 6, count: 2 }]
+		};
+		const progress = setObjectiveChecked(createEmptyProgress(richMission.id), 'jackpot', 2, 2);
+
+		expect(calculateTotalVP(richMission, progress, null)).toBe(MAX_TOTAL_VP);
+	});
+
+	it('caps the combined Results + Scheme VP at MAX_TOTAL_VP', () => {
+		const generousScheme: SchemeCard = {
+			id: 'generous',
+			title: 'Generous',
+			ruleText: '...',
+			factionIds: ['helian-league'],
+			copies: 1,
+			maxIncrements: 3,
+			vpPerIncrement: 3
+		};
+		const richMission: Mission = {
+			...mission,
+			results: [{ id: 'jackpot', text: 'Big score.', vp: 2, count: 2 }]
+		};
+		let progress = setObjectiveChecked(createEmptyProgress(richMission.id), 'jackpot', 2, 2);
+		progress = {
+			...progress,
+			scheme: setSchemeChecked(
+				chooseScheme(generousScheme.id, 'helian-league', 5),
+				3,
+				generousScheme.maxIncrements
+			)
+		};
+
+		expect(calculateTotalVP(richMission, progress, generousScheme)).toBe(MAX_TOTAL_VP);
 	});
 });

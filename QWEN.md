@@ -27,6 +27,9 @@ native/platform-specific one. Used on a phone screen during a game session.
   (rules notes shown alongside Results — not scored), and quest rules (prose sections).
   Ceasefire missions additionally get the automatic red-boxed "Ceasefire broken"
   −4 VP objective (`CEASEFIRE_OBJECTIVE`, added by `getScoreableResults`).
+  Marker rulers (`showRuler`) are measured from the **nearest** map edge
+  (`rulerAnchor`) — always the shortest path a player would actually measure (≤ 18",
+  one of the 4 corner combinations); never revert to measuring from top-left.
 - **Faction** → a player-selectable side with its own 20-card Scheme deck; cards can
   be shared across several factions' decks. A `common` pool for cards in every
   faction's deck exists too (`COMMON_FACTION_ID`).
@@ -48,7 +51,9 @@ native/platform-specific one. Used on a phone screen during a game session.
 - **MissionProgress** → per-mission play state: checked objective counts, the chosen
   Scheme, a `schemeDraft` (faction/intelligence) that survives resets, and
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
-  = 1–5). Total VP = checked Results VP + checked Scheme increments.
+  = 1–5). Total VP = checked Results VP + checked Scheme increments, capped at
+  `MAX_TOTAL_VP` = 10 (a player cannot earn more per mission); the Command Panel
+  shows the total against that cap.
 
 ## Architecture
 
@@ -130,7 +135,7 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.1.0**.
+  and push branch + tag. Current release: **v0.2.0**.
 - Don't stage local tooling state: `.idea/` and `.qwen/` are untracked and not yet
   gitignored — exclude them when staging (or add them to `.gitignore`).
 - The first push on a fresh machine may hang until GitHub sign-in (Git Credential

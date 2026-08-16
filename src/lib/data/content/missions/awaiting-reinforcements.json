@@ -1,0 +1,55 @@
+{
+	"id": "awaiting-reinforcements",
+	"season": "Season 2",
+	"name": "Awaiting Reinforcements",
+	"description": "Skirmishes over newly discovered ruins are not uncommon, as various factions compete to be the first to explore them. Hold out a while longer—reinforcements are on their way!",
+	"brokenMorale": false,
+	"ceasefire": true,
+	"setup": [
+		{
+			"label": "Obelisk",
+			"description": "There is 1 Objective Marker at the center of the field."
+		},
+		{ "label": "Standard Deployment", "description": "8\" Deployment Zones." }
+	],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": [
+			{
+				"id": "obelisk",
+				"x": 18,
+				"y": 18,
+				"shape": "triangle",
+				"label": "Obelisk",
+				"color": "#d946ef",
+				"showRuler": false
+			}
+		]
+	},
+	"results": [
+		{
+			"id": "near-obelisk",
+			"text": "Gain 1 VP if you have at least one model within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 5
+		},
+		{
+			"id": "stronger-presence-obelisk",
+			"text": "Gain 1 VP if you have a Stronger Presence within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 5
+		},
+		{
+			"id": "sole-presence-obelisk",
+			"text": "Gain 1 VP if you have a model within 7\" of the Obelisk and your opponent has none within that range at the end of the round.",
+			"vp": 1,
+			"count": 5
+		}
+	],
+	"questRules": [
+		{
+			"label": "Stronger Presence",
+			"description": "Stronger Presence is determined by calculating the total Recruitment Points of each party fully within the specified area. Add together the Recruitment Points of all Alive Party Members fully within 7\" of the Obelisk (do not include Upgrades).\n\nCompare this total with the other player(s). The player with the highest Recruitment Point total has the Stronger Presence."
+		}
+	]
+}

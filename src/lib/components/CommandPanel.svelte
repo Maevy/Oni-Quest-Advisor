@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
-	import { MAX_ROUND, MIN_ROUND } from '$lib/domain';
+	import { MAX_ROUND, MAX_TOTAL_VP, MIN_ROUND } from '$lib/domain';
 
 	type Props = {
 		totalVP: number;
@@ -35,7 +35,9 @@
 			<div class="flex flex-col items-center gap-3">
 				<div class="text-center">
 					<p class="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Total VP</p>
-					<p class="text-xl font-bold text-sky-300">{totalVP}</p>
+					<p class="text-xl font-bold text-sky-300">
+						{totalVP}<span class="text-sm font-semibold text-slate-400"> / {MAX_TOTAL_VP}</span>
+					</p>
 				</div>
 				<div class="h-px w-full bg-slate-700/60"></div>
 				<div class="flex flex-col items-center gap-1.5">

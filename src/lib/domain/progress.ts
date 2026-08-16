@@ -9,6 +9,9 @@ export type SchemeDraft = {
 export const MIN_ROUND = 1;
 export const MAX_ROUND = 5;
 
+/** Hard cap per mission: a player cannot earn more than this many VP in total. */
+export const MAX_TOTAL_VP = 10;
+
 export type MissionProgress = {
 	missionId: string;
 	/** Objective id → how many of its independent instances are checked (0..objective.count). */
@@ -71,5 +74,5 @@ export function calculateTotalVP(
 	const schemeVP =
 		progress.scheme && schemeCard ? schemeVp(schemeCard, progress.scheme.checkedIncrements) : 0;
 
-	return resultsVP + schemeVP;
+	return Math.min(resultsVP + schemeVP, MAX_TOTAL_VP);
 }

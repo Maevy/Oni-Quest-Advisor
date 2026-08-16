@@ -52,13 +52,13 @@
 			"id": "control-round-2",
 			"text": "Gain 2 VP at the end of Round 2 for each Objective Marker under your control.",
 			"vp": 2,
-			"count": 1
+			"count": 3
 		},
 		{
 			"id": "control-round-4",
 			"text": "Gain 2 VP at the end of Round 4 for each Objective Marker under your control.",
 			"vp": 2,
-			"count": 1
+			"count": 3
 		}
 	],
 	"important": [

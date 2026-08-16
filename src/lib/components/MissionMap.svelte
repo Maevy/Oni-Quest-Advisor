@@ -3,6 +3,7 @@
 		drawCircularDeployment,
 		drawHorizontalDeployment,
 		MAP_SIZE_INCHES,
+		rulerAnchor,
 		type MapSpec,
 		type Marker
 	} from '$lib/domain';
@@ -156,8 +157,9 @@
 
 		{#each map.markers as marker (marker.id)}
 			{#if marker.showRuler}
+				{@const anchor = rulerAnchor(marker)}
 				<line
-					x1="0"
+					x1={anchor.xEdge === 'left' ? 0 : MAP_SIZE_INCHES}
 					y1={marker.y}
 					x2={marker.x}
 					y2={marker.y}
@@ -167,7 +169,7 @@
 				/>
 				<line
 					x1={marker.x}
-					y1="0"
+					y1={anchor.yEdge === 'top' ? 0 : MAP_SIZE_INCHES}
 					x2={marker.x}
 					y2={marker.y}
 					stroke="rgba(148, 163, 184, 0.7)"
@@ -176,11 +178,20 @@
 				/>
 				{@const rowIndex = rulerLabelOffset(marker, 'y')}
 				{@const colIndex = rulerLabelOffset(marker, 'x')}
-				<text x={0.4 + rowIndex * 2.4} y={marker.y - 0.5} fill="rgb(203, 213, 225)" font-size="1.2"
-					>{marker.x}"</text
+				<text
+					x={anchor.xEdge === 'left'
+						? 0.4 + rowIndex * 2.4
+						: MAP_SIZE_INCHES - 0.4 - rowIndex * 2.4}
+					y={marker.y - 0.5}
+					fill="rgb(203, 213, 225)"
+					font-size="1.2"
+					text-anchor={anchor.xEdge === 'left' ? 'start' : 'end'}>{anchor.xDistance}"</text
 				>
-				<text x={marker.x + 0.4} y={1.4 + colIndex * 1.6} fill="rgb(203, 213, 225)" font-size="1.2"
-					>{marker.y}"</text
+				<text
+					x={marker.x + 0.4}
+					y={anchor.yEdge === 'top' ? 1.4 + colIndex * 1.6 : MAP_SIZE_INCHES - 0.7 - colIndex * 1.6}
+					fill="rgb(203, 213, 225)"
+					font-size="1.2">{anchor.yDistance}"</text
 				>
 			{/if}
 

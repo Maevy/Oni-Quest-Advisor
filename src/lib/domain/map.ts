@@ -26,6 +26,31 @@ export type MapSpec = {
 	quarters?: boolean;
 };
 
+export type RulerAnchor = {
+	/** Vertical edge the horizontal distance is measured from. */
+	xEdge: 'left' | 'right';
+	/** Horizontal edge the vertical distance is measured from. */
+	yEdge: 'top' | 'bottom';
+	xDistance: number;
+	yDistance: number;
+};
+
+/**
+ * Edges a player would actually measure from — always the shortest way to the
+ * marker, one of the 4 corner combinations (e.g. a marker 5" from the right edge
+ * is shown as 5", not 31" from the left).
+ */
+export function rulerAnchor(marker: { x: number; y: number }): RulerAnchor {
+	const xEdge = marker.x <= MAP_SIZE_INCHES / 2 ? 'left' : 'right';
+	const yEdge = marker.y <= MAP_SIZE_INCHES / 2 ? 'top' : 'bottom';
+	return {
+		xEdge,
+		yEdge,
+		xDistance: xEdge === 'left' ? marker.x : MAP_SIZE_INCHES - marker.x,
+		yDistance: yEdge === 'top' ? marker.y : MAP_SIZE_INCHES - marker.y
+	};
+}
+
 export type ZoneRect = { x: number; y: number; width: number; height: number };
 
 export type HorizontalDeploymentZones = {

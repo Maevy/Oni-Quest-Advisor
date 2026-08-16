@@ -20,7 +20,7 @@
 		"markers": [
 			{
 				"id": "toxic-vine-a",
-				"x": 32,
+				"x": 31,
 				"y": 5,
 				"shape": "star",
 				"label": "Toxic Vine",
@@ -30,7 +30,7 @@
 			{
 				"id": "toxic-vine-b",
 				"x": 5,
-				"y": 32,
+				"y": 31,
 				"shape": "star",
 				"label": "Toxic Vine",
 				"color": "#d946ef",

@@ -1,0 +1,49 @@
+{
+	"id": "open-hostilities",
+	"season": "Season 2",
+	"name": "Open Hostilities",
+	"description": "While the four great factions are currently at peace, Calad is no stranger to skirmishes and covert engagements between rivals vying for power.",
+	"brokenMorale": false,
+	"ceasefire": false,
+	"setup": [{ "label": "Standard Deployment", "description": "8\" Deployment Zones." }],
+	"map": {
+		"zone": { "type": "horizontal", "rangeInches": 8 },
+		"markers": []
+	},
+	"results": [
+		{
+			"id": "enemy-cost-16-or-less",
+			"text": "Gain 1 VP for rendering an enemy with a Recruitment Cost of 16 or less Incapacitated or Dead.",
+			"vp": 1,
+			"count": 6
+		},
+		{
+			"id": "enemy-cost-17-to-21",
+			"text": "Gain 2 VP for rendering an enemy with a Recruitment Cost between 17 and 21 Incapacitated or Dead.",
+			"vp": 2,
+			"count": 5
+		},
+		{
+			"id": "enemy-cost-22-to-29",
+			"text": "Gain 3 VP for rendering an enemy with a Recruitment Cost between 22 and 29 Incapacitated or Dead.",
+			"vp": 3,
+			"count": 3
+		},
+		{
+			"id": "enemy-cost-30-or-more",
+			"text": "Gain 4 VP for rendering an enemy with a Recruitment Cost of 30 or more Incapacitated or Dead.",
+			"vp": 4,
+			"count": 2
+		},
+		{
+			"id": "enemy-leader",
+			"text": "Gain 1 VP for rendering an enemy Leader Incapacitated or Dead.",
+			"vp": 1,
+			"count": 5
+		}
+	],
+	"important": [
+		"You may score multiple times from the same model if you render it Incapacitated multiple times. Summoned models never grant VP, even if they have a Recruitment Point cost."
+	],
+	"questRules": []
+}
