@@ -62,7 +62,7 @@
 		<div class="flex items-center justify-end gap-2">
 			<button
 				type="button"
-				class="rounded-lg border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800/60"
+				class="rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 				onclick={onReturn}
 			>
 				Return

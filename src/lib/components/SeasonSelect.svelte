@@ -5,12 +5,20 @@
 	type Props = {
 		seasons: string[];
 		onSelect: (season: string) => void;
+		onReturn: () => void;
 	};
 
-	let { seasons, onSelect }: Props = $props();
+	let { seasons, onSelect, onReturn }: Props = $props();
 </script>
 
 <div class="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 text-center">
+	<button
+		type="button"
+		class="fixed top-4 left-4 rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
+		onclick={onReturn}
+	>
+		← Back
+	</button>
 	<div class="mx-auto flex w-full max-w-xl flex-col items-center gap-8">
 		<div class="flex w-full flex-col items-center gap-2">
 			<div

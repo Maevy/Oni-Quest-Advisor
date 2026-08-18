@@ -52,12 +52,12 @@ export function schemeVp(card: SchemeCard, checkedIncrements: number): number {
 }
 
 /**
- * Intelligence 13 or below draws 1 Scheme (no real choice — it's taken as-is);
- * 14–15 draws 2; 16 or above draws 3.
+ * Intelligence 12 or below draws 1 Scheme (no real choice — it's taken as-is);
+ * 13–15 draws 2; 16 or above draws 3.
  */
 export function drawCountForIntelligence(intelligence: number): number {
 	if (intelligence >= 16) return 3;
-	if (intelligence >= 14) return 2;
+	if (intelligence >= 13) return 2;
 	return 1;
 }
 

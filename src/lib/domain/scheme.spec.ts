@@ -131,12 +131,13 @@ describe('drawUniqueSchemes', () => {
 });
 
 describe('drawCountForIntelligence', () => {
-	it('draws 1 at intelligence 13 or below', () => {
+	it('draws 1 at intelligence 12 or below', () => {
 		expect(drawCountForIntelligence(0)).toBe(1);
-		expect(drawCountForIntelligence(13)).toBe(1);
+		expect(drawCountForIntelligence(12)).toBe(1);
 	});
 
-	it('draws 2 at intelligence 14-15', () => {
+	it('draws 2 at intelligence 13-15', () => {
+		expect(drawCountForIntelligence(13)).toBe(2);
 		expect(drawCountForIntelligence(14)).toBe(2);
 		expect(drawCountForIntelligence(15)).toBe(2);
 	});

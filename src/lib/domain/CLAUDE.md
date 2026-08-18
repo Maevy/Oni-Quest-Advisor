@@ -2,7 +2,7 @@
 
 - Pure TypeScript: types (`Mission`, `SchemeCard`, `MissionProgress`, ...) and pure
   functions (`pickRandomMission`, `drawUniqueSchemes`, `setRound`, `calculateTotalVP`,
-  ...). This is where game rules live (e.g. "intelligence 14–15 draws 2 Schemes",
+  ...). This is where game rules live (e.g. "intelligence 13–15 draws 2 Schemes",
   "the round is clamped to 1–5") — not in stores, routes, or components.
 - No imports from Svelte, `lib/stores`, or `lib/data`. No `fetch`, no `localStorage`,
   no `window`/`document`.

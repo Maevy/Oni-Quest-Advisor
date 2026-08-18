@@ -2,12 +2,22 @@ import * as domain from '$lib/domain';
 import { contentStore } from './content.svelte';
 import { missionProgressStore } from './missionProgress.svelte';
 
-export type Screen = 'season-select' | 'mission-select' | 'mission-detail';
+export type Screen = 'game-mode' | 'season-select' | 'mission-select' | 'mission-detail';
 
 class NavigationStore {
-	screen = $state<Screen>('season-select');
+	screen = $state<Screen>('game-mode');
 	selectedSeason = $state<string | null>(null);
 	selectedMissionId = $state<string | null>(null);
+
+	selectGameMode(): void {
+		this.screen = 'season-select';
+	}
+
+	returnToGameMode(): void {
+		this.screen = 'game-mode';
+		this.selectedSeason = null;
+		this.selectedMissionId = null;
+	}
 
 	selectSeason(season: string): void {
 		this.selectedSeason = season;

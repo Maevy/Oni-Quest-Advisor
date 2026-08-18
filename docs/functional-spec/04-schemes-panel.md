@@ -17,8 +17,8 @@ Intelligence determines how many Scheme cards get drawn:
 
 | Intelligence | Draws                                 |
 | ------------ | ------------------------------------- |
-| ≤ 13         | 1 (no real choice — it's taken as-is) |
-| 14–15        | 2 (pick one)                          |
+| ≤ 12         | 1 (no real choice — it's taken as-is) |
+| 13–15        | 2 (pick one)                          |
 | ≥ 16         | 3 (pick one)                          |
 
 ## Step 2 — Draw
@@ -48,7 +48,7 @@ Example (intelligence 16+, 3 draws):
 ## Step 3 — Forced selection
 
 - The player must pick exactly one of the drawn Schemes (clicking it, e.g. "Head
-  Hunt"). At intelligence ≤ 13 there's only one drawn card, so this is a formality —
+  Hunt"). At intelligence ≤ 12 there's only one drawn card, so this is a formality —
   it's still "picked," just with no real choice.
 - On pick: the other drawn Schemes disappear — only the chosen one remains displayed.
 

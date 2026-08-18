@@ -34,7 +34,7 @@ native/platform-specific one. Used on a phone screen during a game session.
   be shared across several factions' decks. A `common` pool for cards in every
   faction's deck exists too (`COMMON_FACTION_ID`).
 - **Scheme** → secret objective card drawn from a faction's deck (+ common pool).
-  Draw count depends on intelligence: ≤13 → 1, 14–15 → 2, ≥16 → 3. Cards have
+  Draw count depends on intelligence: ≤12 → 1, 13–15 → 2, ≥16 → 3. Cards have
   `factionIds` (whose decks contain the card), `copies` (physical copies — a uniform
   number or per-faction overrides, e.g. Virtuous Commander: 4 Helian / 2 elsewhere;
   Stand Your Ground: 4 Sand / 2 elsewhere), `maxIncrements` (checkboxes), and either

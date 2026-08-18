@@ -19,14 +19,14 @@
 			<div class="flex gap-2">
 				<button
 					type="button"
-					class="rounded-lg border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800/60"
+					class="rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 					onclick={onReturn}
 				>
 					Return
 				</button>
 				<button
 					type="button"
-					class="rounded-lg border border-sky-500/50 bg-slate-900/60 px-3 py-1.5 text-sm text-sky-200 transition hover:bg-sky-500/10"
+					class="rounded-lg bg-orange-400 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-orange-300 active:bg-orange-300"
 					onclick={onRandom}
 				>
 					Random

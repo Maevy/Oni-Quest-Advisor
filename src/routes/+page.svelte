@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getMissionsForSeason, getScoreableResults, getSeasons } from '$lib/domain';
 	import { contentStore, missionProgressStore, navigationStore } from '$lib/stores';
+	import GameModeSelect from '$lib/components/GameModeSelect.svelte';
 	import SeasonSelect from '$lib/components/SeasonSelect.svelte';
 	import MissionSelect from '$lib/components/MissionSelect.svelte';
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
@@ -30,8 +31,14 @@
 	);
 </script>
 
-{#if navigationStore.screen === 'season-select'}
-	<SeasonSelect {seasons} onSelect={(season) => navigationStore.selectSeason(season)} />
+{#if navigationStore.screen === 'game-mode'}
+	<GameModeSelect onSelect={() => navigationStore.selectGameMode()} />
+{:else if navigationStore.screen === 'season-select'}
+	<SeasonSelect
+		{seasons}
+		onSelect={(season) => navigationStore.selectSeason(season)}
+		onReturn={() => navigationStore.returnToGameMode()}
+	/>
 {:else if navigationStore.screen === 'mission-select'}
 	<MissionSelect
 		season={navigationStore.selectedSeason ?? ''}
