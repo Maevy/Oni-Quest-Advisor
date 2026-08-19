@@ -48,12 +48,25 @@ native/platform-specific one. Used on a phone screen during a game session.
   a card moves into `shared.json` as soon as a second deck gets it. Rulebook wording
   "X VP (to a maximum of Y)" with multiple boxes ⇒ `incrementVp` (e.g. `[2, 1]`),
   never a flat `vpPerIncrement` that would overshoot the cap.
-- **MissionProgress** → per-mission play state: checked objective counts, the chosen
-  Scheme, a `schemeDraft` (faction/intelligence) that survives resets, and
+- **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
+  `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
+  is a hot-seat mode where both players share one device.
+- **MissionProgress** (solo) → per-mission play state: checked objective counts, the
+  chosen Scheme, a `schemeDraft` (faction/intelligence) that survives resets, and
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
   = 1–5). Total VP = checked Results VP + checked Scheme increments, capped at
   `MAX_TOTAL_VP` = 10 (a player cannot earn more per mission); the Command Panel
   shows the total against that cap.
+- **TwoPlayerMissionProgress** → 2-player equivalent: per-player `PlayerProgress`
+  (checked objectives, scheme, schemeDraft, `schemeRevealed` flag) for `player1` and
+  `player2`, plus a shared `currentRound`. Objectives are independently tracked per
+  player; both can toggle freely. Schemes are gated by `activePlayer` — only the
+  active player sees/interacts with their scheme; the other sees "Hidden" (chosen but
+  unrevealed) or "No schemes" (not yet chosen). "Reveal" is permanent. The "Swap
+  Player" button (in the Command Panel) triggers a 6-second countdown overlay, then
+  flips `activePlayer`. The Command Panel tab always shows the active player (P1
+  sky-blue / P2 orange). Per-player VP is calculated independently via
+  `calculateTwoPlayerVP`; each is capped at `MAX_TOTAL_VP`.
 
 ## Architecture
 
@@ -77,27 +90,38 @@ Rule of thumb: **routes → components/stores → domain/data**.
 - `data` never contains business logic. Static content is loaded eagerly via
   `import.meta.glob` from `src/lib/data/content/{missions,factions,schemes}/*.json`
   (all bundled missions currently belong to Season 2); progress persists to
-  `localStorage` under the `oni-quest-advisor:` key prefix. Swapping the source later
-  (e.g. for a real backend) must not touch other layers.
+  `localStorage` under the `oni-quest-advisor:mission-progress:` prefix (solo) and
+  `oni-quest-advisor:2p-progress:` prefix (two-player), keyed by mission ID. Swapping
+  the source later (e.g. for a real backend) must not touch other layers.
 - `stores` are classes in `.svelte.ts` files (`contentStore`, `navigationStore`,
-  `missionProgressStore`), exported as singletons from `stores/index.ts`. They
-  orchestrate — decisions live in `domain`, side effects in `data` — and expose
-  purposeful methods (`selectSeason()`, `rollRandomMission()`, `drawSchemes()`,
-  `setRound()`, ...), not raw mutable state. Persisted progress is loaded by merging
-  it onto `domain.createEmptyProgress()`, so fields added later get their defaults —
-  keep this pattern when extending `MissionProgress`.
-- `routes` (`+page.svelte`) switches between the three screens
-  (`season-select` → `mission-select` → `mission-detail`) on
+  `missionProgressStore`, `twoPlayerProgressStore`), exported as singletons from
+  `stores/index.ts`. They orchestrate — decisions live in `domain`, side effects in
+  `data` — and expose purposeful methods (`selectSeason()`, `rollRandomMission()`,
+  `drawSchemes()`, `setRound()`, `swapPlayer()`, `revealScheme()`, ...), not raw
+  mutable state. Persisted progress is loaded by merging it onto
+  `domain.createEmptyProgress()` / `domain.createEmptyTwoPlayerProgress()`, so fields
+  added later get their defaults — keep this pattern when extending either progress
+  type. `navigationStore` tracks `gameMode` and routes `selectMission()` to the
+  correct progress store.
+- `routes` (`+page.svelte`) switches between four screens
+  (`game-mode` → `season-select` → `mission-select` → `mission-detail`) on
   `navigationStore.screen` and wires store state/methods to component props/callbacks.
-  No business logic, no direct `fetch`/`localStorage`, no new type definitions.
-  `+layout.svelte` renders the fixed background and the site-wide footer (fan-project
-  disclaimer + app version — `__APP_VERSION__`, injected by `vite.config.ts` from
-  `package.json`; bump the version there for releases).
+  On the `mission-detail` screen, it renders `MissionDetail` (solo) or
+  `MissionDetailTwoPlayer` (2-player) based on `navigationStore.gameMode`. No business
+  logic, no direct `fetch`/`localStorage`, no new type definitions. `+layout.svelte`
+  renders the fixed background and the site-wide footer (fan-project disclaimer + app
+  version — `__APP_VERSION__`, injected by `vite.config.ts` from `package.json`; bump
+  the version there for releases).
 - `components` are presentational: `$props()` in, callbacks up. Avoid importing
   stores directly — the page wires them. Domain _types_ are fine for prop typing,
   domain _logic_ is not. Fixed-position overlays (e.g. the `CommandPanel` tab pinned
   to the right edge) need matching padding reserved in the page layout for their
-  collapsed state; expanded overlays intentionally sit on top of content.
+  collapsed state; expanded overlays intentionally sit on top of content. 2-player
+  mode has dedicated component variants (`ResultsPanelTwoPlayer`,
+  `SchemesPanelTwoPlayer`, `CommandPanelTwoPlayer`, `MissionDetailTwoPlayer`) plus a
+  `CountdownOverlay` for the swap transition; they reuse shared panels
+  (`DescriptionPanel`, `SetupPanel`, `MissionMap`, `QuestRulesPanel`, `Panel`,
+  `IncrementBoxes`) unchanged.
 
 Each layer folder has its own `CLAUDE.md` with the specific rules for that layer —
 read it before adding files there.
@@ -105,12 +129,16 @@ read it before adding files there.
 ## Conventions
 
 - TypeScript strict, no `any`. Domain types in `lib/domain` are the single source of
-  truth — don't redefine `Mission`/`SchemeCard`/`MissionProgress` shapes elsewhere.
+  truth — don't redefine
+  `Mission`/`SchemeCard`/`MissionProgress`/`TwoPlayerMissionProgress`/`PlayerProgress`
+  shapes elsewhere.
 - Svelte 5 runes only (`$state`, `$derived`, `$props`) — no legacy
   `writable`/`export let` style.
 - Mobile-first, touch-friendly layouts, large touch targets. Visual theme: dark,
   cold, blueish; outlined buttons; translucent "frosted glass" panels (see
-  `docs/technical-spec/01-visual-theme.md`).
+  `docs/technical-spec/01-visual-theme.md`). In 2-player mode, Player 1 uses the
+  standard sky-blue accent and Player 2 uses orange (`border-orange-500/40`,
+  `text-orange-300`/`text-orange-400`).
 - Prefer pure functions in `domain` over logic in components/stores/routes. Game
   rules (draw counts, clamping, VP math, unique draws) belong there, covered by a
   colocated `*.spec.ts`.
@@ -135,7 +163,7 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.2.0**.
+  and push branch + tag. Current release: **v0.4.0**.
 - Don't stage local tooling state: `.idea/` and `.qwen/` are untracked and not yet
   gitignored — exclude them when staging (or add them to `.gitignore`).
 - The first push on a fresh machine may hang until GitHub sign-in (Git Credential
@@ -152,5 +180,6 @@ behavior or visuals:
 
 Spec docs end with **Open questions** sections; keep them updated when decisions
 get made. Note: the specs currently **lag behind** the features added around v0.1.0
-(Command Panel, rule popups, ceasefire objective, Scheme decks) — they were
+(Command Panel, rule popups, ceasefire objective, Scheme decks) and v0.4.0
+(two-player hot seat mode, active-player gating, swap mechanic) — they were
 intentionally left untouched; catch them up when the behavior is considered stable.
