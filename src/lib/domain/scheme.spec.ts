@@ -131,20 +131,19 @@ describe('drawUniqueSchemes', () => {
 });
 
 describe('drawCountForIntelligence', () => {
-	it('draws 1 at intelligence 12 or below', () => {
-		expect(drawCountForIntelligence(0)).toBe(1);
-		expect(drawCountForIntelligence(12)).toBe(1);
-	});
-
-	it('draws 2 at intelligence 13-15', () => {
+	it('draws 2 at intelligence 13 or below', () => {
+		expect(drawCountForIntelligence(0)).toBe(2);
 		expect(drawCountForIntelligence(13)).toBe(2);
-		expect(drawCountForIntelligence(14)).toBe(2);
-		expect(drawCountForIntelligence(15)).toBe(2);
 	});
 
-	it('draws 3 at intelligence 16 or above', () => {
-		expect(drawCountForIntelligence(16)).toBe(3);
-		expect(drawCountForIntelligence(99)).toBe(3);
+	it('draws 3 at intelligence 14-15', () => {
+		expect(drawCountForIntelligence(14)).toBe(3);
+		expect(drawCountForIntelligence(15)).toBe(3);
+	});
+
+	it('draws 4 at intelligence 16 or above', () => {
+		expect(drawCountForIntelligence(16)).toBe(4);
+		expect(drawCountForIntelligence(99)).toBe(4);
 	});
 });
 

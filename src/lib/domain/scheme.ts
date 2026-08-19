@@ -52,13 +52,13 @@ export function schemeVp(card: SchemeCard, checkedIncrements: number): number {
 }
 
 /**
- * Intelligence 12 or below draws 1 Scheme (no real choice — it's taken as-is);
- * 13–15 draws 2; 16 or above draws 3.
+ * Intelligence 13 or below draws 2 Schemes;
+ * 14–15 draws 3; 16 or above draws 4.
  */
 export function drawCountForIntelligence(intelligence: number): number {
-	if (intelligence >= 16) return 3;
-	if (intelligence >= 13) return 2;
-	return 1;
+	if (intelligence >= 16) return 4;
+	if (intelligence >= 14) return 3;
+	return 2;
 }
 
 export function getSchemePool(schemes: SchemeCard[], factionId: string): SchemeCard[] {
