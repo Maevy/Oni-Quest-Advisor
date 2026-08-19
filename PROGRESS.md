@@ -69,12 +69,14 @@ and `CLAUDE.md` for the authoritative architecture rules.
 ## How things work
 
 ### Architecture
+
 `routes/` (pages, just wire data to components) → `lib/components` (UI) +
 `lib/stores` (app state, Svelte 5 runes) → `lib/domain` (pure types/logic, no
 Svelte/browser APIs) + `lib/data` (localStorage + static JSON loading). Each layer
 has its own `CLAUDE.md` — read it before adding files there.
 
 ### Mission data
+
 One JSON file per mission in `src/lib/data/content/missions/`, auto-loaded via
 `import.meta.glob` in `lib/data/missions.ts` — dropping in a new file is enough, no
 registration step. Shape (see `lib/domain/mission.ts`):
@@ -98,6 +100,7 @@ auto-stagger so they don't overlap. `labelPosition: 'above'` flips a marker's na
 label above it instead of below, useful when two markers sit close together.
 
 ### Round tracker
+
 `MissionProgress.currentRound` (`lib/domain/progress.ts`), an integer 1-5 clamped by
 `setRound()`. Store method: `missionProgressStore.setRound()`. UI is
 `RoundTracker.svelte`, `position: fixed`, rendered only inside `MissionDetail.svelte`
@@ -105,6 +108,7 @@ label above it instead of below, useful when two markers sit close together.
 right padding so page content never renders underneath the fixed panel.
 
 ### Deployment
+
 - Fly app: `oni-quest-advisor`, region `fra`, https://oni-quest-advisor.fly.dev/
 - `min_machines_running = 0` in `fly.toml` — machines stop when idle and cold-start
   on the next request, so the first hit after a while can take a few seconds.
@@ -113,6 +117,7 @@ right padding so page content never renders underneath the fixed panel.
   token currently lives).
 
 ### Known gotcha
+
 A commit-time content gate (from a Claude Code plugin, not part of this repo's own
 config) scans staged diffs for "task residue" patterns and can false-positive on
 innocuous substrings (it once blocked a commit over the word "coincidentally"

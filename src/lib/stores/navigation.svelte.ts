@@ -1,6 +1,7 @@
 import * as domain from '$lib/domain';
 import { contentStore } from './content.svelte';
 import { missionProgressStore } from './missionProgress.svelte';
+import { twoPlayerProgressStore } from './twoPlayerProgress.svelte';
 
 export type Screen = 'game-mode' | 'season-select' | 'mission-select' | 'mission-detail';
 
@@ -8,8 +9,15 @@ class NavigationStore {
 	screen = $state<Screen>('game-mode');
 	selectedSeason = $state<string | null>(null);
 	selectedMissionId = $state<string | null>(null);
+	gameMode = $state<domain.GameMode>('solo');
 
-	selectGameMode(): void {
+	selectSoloMode(): void {
+		this.gameMode = 'solo';
+		this.screen = 'season-select';
+	}
+
+	selectTwoPlayerMode(): void {
+		this.gameMode = 'two-player';
 		this.screen = 'season-select';
 	}
 
@@ -17,6 +25,7 @@ class NavigationStore {
 		this.screen = 'game-mode';
 		this.selectedSeason = null;
 		this.selectedMissionId = null;
+		this.gameMode = 'solo';
 	}
 
 	selectSeason(season: string): void {
@@ -33,7 +42,11 @@ class NavigationStore {
 	selectMission(missionId: string): void {
 		this.selectedMissionId = missionId;
 		this.screen = 'mission-detail';
-		missionProgressStore.loadForMission(missionId);
+		if (this.gameMode === 'two-player') {
+			twoPlayerProgressStore.loadForMission(missionId);
+		} else {
+			missionProgressStore.loadForMission(missionId);
+		}
 	}
 
 	returnToMissionSelect(): void {

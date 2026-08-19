@@ -3,10 +3,11 @@
 	import rasetsu from '$lib/assets/Rasetsu.png';
 
 	type Props = {
-		onSelect: () => void;
+		onSoloSelect: () => void;
+		onTwoPlayerSelect: () => void;
 	};
 
-	let { onSelect }: Props = $props();
+	let { onSoloSelect, onTwoPlayerSelect }: Props = $props();
 </script>
 
 <div class="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 text-center">
@@ -30,17 +31,16 @@
 			<button
 				type="button"
 				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-sky-100 backdrop-blur transition hover:bg-sky-500/10 active:bg-sky-500/20"
-				onclick={onSelect}
+				onclick={onSoloSelect}
 			>
 				Solo Quest Tracker
 			</button>
 			<button
 				type="button"
-				class="cursor-not-allowed rounded-xl border-2 border-slate-600/30 bg-slate-900/30 px-8 py-4 text-lg font-medium text-slate-600 backdrop-blur"
-				disabled
+				class="rounded-xl border-2 border-orange-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-orange-100 backdrop-blur transition hover:bg-orange-500/10 active:bg-orange-500/20"
+				onclick={onTwoPlayerSelect}
 			>
 				2 Player Tracking
-				<span class="block text-xs font-normal text-slate-700">Coming Soon</span>
 			</button>
 			<button
 				type="button"
