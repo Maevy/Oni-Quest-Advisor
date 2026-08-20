@@ -7,6 +7,7 @@
 		SchemeCard,
 		OnlineGameView
 	} from '$lib/domain';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import OnlineMissionView from './OnlineMissionView.svelte';
 	import OnlineSchemeSetup from './OnlineSchemeSetup.svelte';
 
@@ -442,30 +443,12 @@
 
 <!-- Close confirmation -->
 {#if confirmingClose}
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 px-6 backdrop-blur-sm"
-	>
-		<div
-			class="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 text-center backdrop-blur"
-		>
-			<p class="text-lg text-slate-100">Do you really want to close the game ?</p>
-			<div class="mt-4 flex justify-center gap-3">
-				<button
-					type="button"
-					class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
-					onclick={() => (confirmingClose = false)}
-				>
-					Keep playing
-				</button>
-				<button
-					type="button"
-					disabled={acting}
-					class="rounded-xl border-2 border-red-500/50 bg-slate-900/60 px-6 py-2 font-semibold text-red-300 transition enabled:hover:bg-red-500/10 enabled:active:bg-red-500/20 disabled:opacity-60"
-					onclick={handleConfirmedClose}
-				>
-					Close Game
-				</button>
-			</div>
-		</div>
-	</div>
+	<ConfirmDialog
+		text="Do you really want to close the game ?"
+		confirmLabel="Close Game"
+		cancelLabel="Keep playing"
+		confirming={acting}
+		onConfirm={handleConfirmedClose}
+		onCancel={() => (confirmingClose = false)}
+	/>
 {/if}

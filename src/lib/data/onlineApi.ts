@@ -151,6 +151,49 @@ export async function startGame(gameId: string, token: string): Promise<void> {
 	await parse<Record<string, never>>(response);
 }
 
+export async function toggleRevealIntent(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/reveal-intent`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function setObjectiveChecked(
+	gameId: string,
+	token: string,
+	objectiveId: string,
+	checkedCount: number
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/objective`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ objectiveId, checkedCount })
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function setSchemeBoxChecked(
+	gameId: string,
+	token: string,
+	checkedIncrements: number
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/scheme-box`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ checkedIncrements })
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function advancePhase(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/advance-phase`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
 /** Seat tokens for joining players are generated client-side; only their hash reaches the server. */
 export function generateJoinToken(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(32));

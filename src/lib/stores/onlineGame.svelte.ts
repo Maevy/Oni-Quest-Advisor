@@ -1,5 +1,6 @@
 import {
 	acceptJoin as apiAcceptJoin,
+	advancePhase as apiAdvancePhase,
 	chooseScheme as apiChooseScheme,
 	closeGame as apiCloseGame,
 	createGame as apiCreateGame,
@@ -14,7 +15,10 @@ import {
 	OnlineApiError,
 	requestJoin as apiRequestJoin,
 	selectMission as apiSelectMission,
+	setObjectiveChecked as apiSetObjectiveChecked,
+	setSchemeBoxChecked as apiSetSchemeBoxChecked,
 	startGame as apiStartGame,
+	toggleRevealIntent as apiToggleRevealIntent,
 	type JoinStatus
 } from '$lib/data/onlineApi';
 import {
@@ -23,7 +27,8 @@ import {
 	saveOnlineSession,
 	type OnlineSession
 } from '$lib/data/onlineSession';
-import type { OnlineGameView } from '$lib/domain';
+import { calculateTwoPlayerVP } from '$lib/domain';
+import type { Mission, OnlineGameView, SchemeCard } from '$lib/domain';
 
 /** Pending join request from the perspective of the joining phone (no seat yet). */
 type PendingJoinAttempt = { gameId: string; nickname: string; token: string };
@@ -157,6 +162,34 @@ class OnlineGameStore {
 
 	async startGame(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiStartGame(gameId, token));
+	}
+
+	// --- round engine actions ---
+
+	async toggleRevealIntent(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiToggleRevealIntent(gameId, token));
+	}
+
+	async setObjectiveChecked(objectiveId: string, checkedCount: number): Promise<void> {
+		await this.sendSetup((gameId, token) =>
+			apiSetObjectiveChecked(gameId, token, objectiveId, checkedCount)
+		);
+	}
+
+	async setSchemeChecked(checkedIncrements: number): Promise<void> {
+		await this.sendSetup((gameId, token) =>
+			apiSetSchemeBoxChecked(gameId, token, checkedIncrements)
+		);
+	}
+
+	async advancePhase(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiAdvancePhase(gameId, token));
+	}
+
+	/** The seat's own VP (opponent scheme VP stays hidden until revealed). */
+	myVP(mission: Mission, schemeCard: SchemeCard | null): number {
+		if (!this.view) return 0;
+		return calculateTwoPlayerVP(mission, this.view.self.progress, schemeCard);
 	}
 
 	private async sendSetup(action: (gameId: string, token: string) => Promise<void>): Promise<void> {

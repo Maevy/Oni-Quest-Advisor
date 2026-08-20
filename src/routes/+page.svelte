@@ -15,6 +15,7 @@
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
 	import MissionDetailTwoPlayer from '$lib/components/MissionDetailTwoPlayer.svelte';
 	import OnlineCreate from '$lib/components/OnlineCreate.svelte';
+	import OnlineGameView from '$lib/components/OnlineGameView.svelte';
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 
@@ -58,6 +59,21 @@
 			: null
 	);
 	let onlineResults = $derived(onlineMission ? getScoreableResults(onlineMission) : []);
+	let onlineMyCard = $derived(
+		onlineGameStore.view?.self.progress.scheme
+			? (contentStore.schemes.find(
+					(card) => card.id === onlineGameStore.view?.self.progress.scheme?.schemeId
+				) ?? null)
+			: null
+	);
+	let onlineOpponentRevealedCard = $derived(
+		onlineGameStore.view?.opponent?.revealedScheme
+			? (contentStore.schemes.find(
+					(card) => card.id === onlineGameStore.view?.opponent?.revealedScheme?.schemeId
+				) ?? null)
+			: null
+	);
+	let onlineMyVP = $derived(onlineMission ? onlineGameStore.myVP(onlineMission, onlineMyCard) : 0);
 
 	// Solo mode derived values
 	let chosenSchemeCard = $derived(
@@ -120,32 +136,52 @@
 		onReturn={() => navigationStore.leaveOnline()}
 	/>
 {:else if navigationStore.screen === 'online-game' && onlineGameStore.view}
-	<OnlineLobby
-		view={onlineGameStore.view}
-		isLeader={onlineGameStore.isLeader}
-		{inviteUrl}
-		error={onlineGameStore.error}
-		factions={contentStore.factions}
-		schemes={contentStore.schemes}
-		{seasons}
-		{missionsBySeason}
-		selectedMission={onlineMission}
-		resultsForMission={onlineResults}
-		onAcceptJoin={() => onlineGameStore.acceptJoin()}
-		onDenyJoin={() => onlineGameStore.denyJoin()}
-		onCloseGame={() => onlineGameStore.closeGame()}
-		onReturnToMenu={() => {
-			onlineGameStore.leave();
-			navigationStore.leaveOnline();
-		}}
-		onDraftFaction={(factionId) => onlineGameStore.draftFaction(factionId)}
-		onDraftIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}
-		onDrawSchemes={() => onlineGameStore.drawSchemes()}
-		onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
-		onDeleteScheme={() => onlineGameStore.deleteScheme()}
-		onSelectMission={(season, missionId) => onlineGameStore.selectMission(season, missionId)}
-		onStartGame={() => onlineGameStore.startGame()}
-	/>
+	{#if onlineGameStore.view.status === 'active' && onlineMission}
+		<OnlineGameView
+			view={onlineGameStore.view}
+			isLeader={onlineGameStore.isLeader}
+			error={onlineGameStore.error}
+			mission={onlineMission}
+			results={onlineResults}
+			myCard={onlineMyCard}
+			myVP={onlineMyVP}
+			opponentRevealedCard={onlineOpponentRevealedCard}
+			onToggleRevealIntent={() => onlineGameStore.toggleRevealIntent()}
+			onSetObjectiveChecked={(objectiveId, checkedCount) =>
+				onlineGameStore.setObjectiveChecked(objectiveId, checkedCount)}
+			onSetSchemeChecked={(checkedIncrements) =>
+				onlineGameStore.setSchemeChecked(checkedIncrements)}
+			onAdvancePhase={() => onlineGameStore.advancePhase()}
+			onCloseGame={() => onlineGameStore.closeGame()}
+		/>
+	{:else}
+		<OnlineLobby
+			view={onlineGameStore.view}
+			isLeader={onlineGameStore.isLeader}
+			{inviteUrl}
+			error={onlineGameStore.error}
+			factions={contentStore.factions}
+			schemes={contentStore.schemes}
+			{seasons}
+			{missionsBySeason}
+			selectedMission={onlineMission}
+			resultsForMission={onlineResults}
+			onAcceptJoin={() => onlineGameStore.acceptJoin()}
+			onDenyJoin={() => onlineGameStore.denyJoin()}
+			onCloseGame={() => onlineGameStore.closeGame()}
+			onReturnToMenu={() => {
+				onlineGameStore.leave();
+				navigationStore.leaveOnline();
+			}}
+			onDraftFaction={(factionId) => onlineGameStore.draftFaction(factionId)}
+			onDraftIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}
+			onDrawSchemes={() => onlineGameStore.drawSchemes()}
+			onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
+			onDeleteScheme={() => onlineGameStore.deleteScheme()}
+			onSelectMission={(season, missionId) => onlineGameStore.selectMission(season, missionId)}
+			onStartGame={() => onlineGameStore.startGame()}
+		/>
+	{/if}
 {:else if navigationStore.screen === 'online-game'}
 	<div class="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
 		{#if onlineGameStore.resuming}

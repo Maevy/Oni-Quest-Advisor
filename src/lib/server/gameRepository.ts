@@ -36,8 +36,12 @@ export async function insertGame(state: OnlineGameState, event: GameEventInput):
 	]);
 }
 
-/** One transaction: refresh the snapshot row and append the event to the history. */
-export async function updateGame(state: OnlineGameState, event: GameEventInput): Promise<void> {
+/** One transaction: refresh the snapshot row and append the event(s) to the history. */
+export async function updateGame(
+	state: OnlineGameState,
+	event: GameEventInput | GameEventInput[]
+): Promise<void> {
+	const events = Array.isArray(event) ? event : [event];
 	const db = await getDb();
 	const updatedAt = new Date().toISOString();
 	const persisted = { ...state, updatedAt };
@@ -47,15 +51,18 @@ export async function updateGame(state: OnlineGameState, event: GameEventInput):
 			sql: 'SELECT COALESCE(MAX(seq), 0) + 1 FROM game_events WHERE game_id = ?',
 			args: [state.id]
 		});
-		const seq = Number(seqResult.rows[0][0]);
+		let seq = Number(seqResult.rows[0][0]);
 		await tx.execute({
 			sql: 'UPDATE games SET status = ?, state = ?, updated_at = ? WHERE id = ?',
 			args: [persisted.status, JSON.stringify(persisted), updatedAt, state.id]
 		});
-		await tx.execute({
-			sql: 'INSERT INTO game_events (game_id, seq, type, actor, payload, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-			args: [state.id, seq, event.type, event.actor, JSON.stringify(event.payload ?? {}), updatedAt]
-		});
+		for (const e of events) {
+			await tx.execute({
+				sql: 'INSERT INTO game_events (game_id, seq, type, actor, payload, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+				args: [state.id, seq, e.type, e.actor, JSON.stringify(e.payload ?? {}), updatedAt]
+			});
+			seq += 1;
+		}
 		await tx.commit();
 	} catch (error) {
 		await tx.rollback();
