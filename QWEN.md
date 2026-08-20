@@ -67,6 +67,13 @@ native/platform-specific one. Used on a phone screen during a game session.
   flips `activePlayer`. The Command Panel tab always shows the active player (P1
   sky-blue / P2 orange). Per-player VP is calculated independently via
   `calculateTwoPlayerVP`; each is capped at `MAX_TOTAL_VP`.
+- **OnlineGameState** (online 2-player, server-authoritative; `domain/online.ts`) →
+  statuses `lobby`/`active`/`finished`/`closed`; two seats (nickname, seat-token
+  hash, a `PlayerProgress`, `revealIntent`, private `drawnSchemeIds`); `pendingJoin`;
+  season/mission; round × phase (`reveal`/`scoring`); round VP snapshots; winner.
+  Pure transition functions with `can*` guards plus the per-seat visibility filter
+  (`viewForSeat` — the opponent's unrevealed scheme never leaves the server). The
+  full player journey and phase model live in `MULTIPLAYER_PLAN.md` (local-only).
 
 ## Architecture
 
@@ -75,14 +82,17 @@ Layered structure. Dependencies only point downward — never sideways, never up
 ```
 src/
   routes/          → presentation: the page(s), just wire stores to components
+                      (+ api/games/** endpoints for online mode)
   lib/
     components/    → presentation: reusable UI pieces (props in, callbacks out)
     stores/        → application/state layer (class-based singletons)
-    domain/         → domain: types + pure logic functions
-    data/            → infrastructure: content loading + localStorage wrappers
+    server/        → server-only: SQLite persistence, SSE, auth (online mode)
+    domain/         → domain: types + pure logic functions (shared client/server)
+    data/            → infrastructure: content loading + localStorage/API wrappers
 ```
 
-Rule of thumb: **routes → components/stores → domain/data**.
+Rule of thumb: **routes → components/stores → domain/data**; for the online API:
+**routes/api → server → domain**. `server` never imports stores/components.
 
 - `domain` never imports from `stores`, `data`, or Svelte; no `window`/`document`,
   no `Math.random()`/`Date.now()` — randomness/time are injected (`Rng` parameter)
@@ -91,27 +101,33 @@ Rule of thumb: **routes → components/stores → domain/data**.
   `import.meta.glob` from `src/lib/data/content/{missions,factions,schemes}/*.json`
   (all bundled missions currently belong to Season 2); progress persists to
   `localStorage` under the `oni-quest-advisor:mission-progress:` prefix (solo) and
-  `oni-quest-advisor:2p-progress:` prefix (two-player), keyed by mission ID. Swapping
-  the source later (e.g. for a real backend) must not touch other layers.
+  `oni-quest-advisor:2p-progress:` prefix (two-player), keyed by mission ID. Online
+  mode adds the remote seam: `onlineApi.ts` (fetch wrapper for `/api/games/...`) and
+  `onlineSession.ts` (seat session under `oni-quest-advisor:online-session`).
 - `stores` are classes in `.svelte.ts` files (`contentStore`, `navigationStore`,
-  `missionProgressStore`, `twoPlayerProgressStore`), exported as singletons from
-  `stores/index.ts`. They orchestrate — decisions live in `domain`, side effects in
-  `data` — and expose purposeful methods (`selectSeason()`, `rollRandomMission()`,
-  `drawSchemes()`, `setRound()`, `swapPlayer()`, `revealScheme()`, ...), not raw
-  mutable state. Persisted progress is loaded by merging it onto
+  `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`), exported as
+  singletons from `stores/index.ts`. They orchestrate — decisions live in `domain`,
+  side effects in `data` — and expose purposeful methods (`selectSeason()`,
+  `rollRandomMission()`, `drawSchemes()`, `setRound()`, `swapPlayer()`,
+  `revealScheme()`, ...), not raw mutable state. `onlineGameStore` is
+  server-driven: it sends intents to the API and refetches the visibility-filtered
+  game view (SSE change notifications trigger refetches) — it never mutates game
+  state locally. Persisted progress is loaded by merging it onto
   `domain.createEmptyProgress()` / `domain.createEmptyTwoPlayerProgress()`, so fields
   added later get their defaults — keep this pattern when extending either progress
   type. `navigationStore` tracks `gameMode` and routes `selectMission()` to the
   correct progress store.
-- `routes` (`+page.svelte`) switches between four screens
-  (`game-mode` → `season-select` → `mission-select` → `mission-detail`) on
-  `navigationStore.screen` and wires store state/methods to component props/callbacks.
-  On the `mission-detail` screen, it renders `MissionDetail` (solo) or
-  `MissionDetailTwoPlayer` (2-player) based on `navigationStore.gameMode`. No business
-  logic, no direct `fetch`/`localStorage`, no new type definitions. `+layout.svelte`
-  renders the fixed background and the site-wide footer (fan-project disclaimer + app
-  version — `__APP_VERSION__`, injected by `vite.config.ts` from `package.json`; bump
-  the version there for releases).
+- `routes` (`+page.svelte`) switches screens on `navigationStore.screen` and wires
+  store state/methods to component props/callbacks: the local flow
+  (`game-mode` → `season-select` → `mission-select` → `mission-detail`, rendering
+  `MissionDetail` or `MissionDetailTwoPlayer` by `navigationStore.gameMode`) plus the
+  online screens (`online-create` → `online-join` → `online-game`). It also resumes a
+  stored online seat on mount. `api/games/**/+server.ts` are the online-mode
+  endpoints (thin handlers over `lib/server`), and `join/[code]/` is the invite-link
+  entry point. No business logic, no direct `fetch`/`localStorage`, no new type
+  definitions. `+layout.svelte` renders the fixed background and the site-wide footer
+  (fan-project disclaimer + app version — `__APP_VERSION__`, injected by
+  `vite.config.ts` from `package.json`; bump the version there for releases).
 - `components` are presentational: `$props()` in, callbacks up. Avoid importing
   stores directly — the page wires them. Domain _types_ are fine for prop typing,
   domain _logic_ is not. Fixed-position overlays (e.g. the `CommandPanel` tab pinned

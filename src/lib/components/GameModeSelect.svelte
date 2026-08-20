@@ -5,9 +5,10 @@
 	type Props = {
 		onSoloSelect: () => void;
 		onTwoPlayerSelect: () => void;
+		onOnlineSelect: () => void;
 	};
 
-	let { onSoloSelect, onTwoPlayerSelect }: Props = $props();
+	let { onSoloSelect, onTwoPlayerSelect, onOnlineSelect }: Props = $props();
 </script>
 
 <div class="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 text-center">
@@ -44,11 +45,10 @@
 			</button>
 			<button
 				type="button"
-				class="cursor-not-allowed rounded-xl border-2 border-slate-600/30 bg-slate-900/30 px-8 py-4 text-lg font-medium text-slate-600 backdrop-blur"
-				disabled
+				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-emerald-100 backdrop-blur transition hover:bg-emerald-500/10 active:bg-emerald-500/20"
+				onclick={onOnlineSelect}
 			>
-				2 Player Lobby
-				<span class="block text-xs font-normal text-slate-700">Coming Soon</span>
+				Online 2 Player Game
 			</button>
 		</div>
 	</div>

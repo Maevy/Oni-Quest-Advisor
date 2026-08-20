@@ -7,3 +7,4 @@ export * from './scheme';
 export * from './progress';
 export * from './gameMode';
 export * from './twoPlayer';
+export * from './online';

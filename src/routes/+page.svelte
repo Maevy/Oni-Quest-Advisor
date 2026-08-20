@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import { getMissionsForSeason, getScoreableResults, getSeasons } from '$lib/domain';
 	import {
 		contentStore,
 		missionProgressStore,
 		navigationStore,
+		onlineGameStore,
 		twoPlayerProgressStore
 	} from '$lib/stores';
 	import GameModeSelect from '$lib/components/GameModeSelect.svelte';
@@ -11,8 +14,24 @@
 	import MissionSelect from '$lib/components/MissionSelect.svelte';
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
 	import MissionDetailTwoPlayer from '$lib/components/MissionDetailTwoPlayer.svelte';
+	import OnlineCreate from '$lib/components/OnlineCreate.svelte';
+	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
+	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 
 	contentStore.load();
+
+	// Resume an online seat from a previous visit, if any.
+	onMount(() => {
+		void onlineGameStore.resumeSession().then((resumed) => {
+			if (resumed) navigationStore.enterOnlineGame();
+		});
+	});
+
+	let inviteUrl = $derived(
+		browser && onlineGameStore.view
+			? `${window.location.origin}/join/${onlineGameStore.view.id}`
+			: ''
+	);
 
 	let seasons = $derived(getSeasons(contentStore.missions));
 	let missionsForSeason = $derived(
@@ -66,7 +85,58 @@
 	<GameModeSelect
 		onSoloSelect={() => navigationStore.selectSoloMode()}
 		onTwoPlayerSelect={() => navigationStore.selectTwoPlayerMode()}
+		onOnlineSelect={() => navigationStore.selectOnlineMode()}
 	/>
+{:else if navigationStore.screen === 'online-create'}
+	<OnlineCreate
+		onCreate={async (nickname) => {
+			await onlineGameStore.createGame(nickname);
+			navigationStore.enterOnlineGame();
+		}}
+		onReturn={() => navigationStore.returnToGameMode()}
+	/>
+{:else if navigationStore.screen === 'online-join'}
+	<OnlineJoin
+		gameCode={navigationStore.onlineJoinCode ?? ''}
+		pendingNickname={onlineGameStore.pendingJoin?.nickname ?? null}
+		onRequestJoin={(nickname) =>
+			onlineGameStore.requestJoin(navigationStore.onlineJoinCode ?? '', nickname)}
+		onPollPending={() => onlineGameStore.pollPendingJoin()}
+		onAccepted={() => navigationStore.enterOnlineGame()}
+		onReturn={() => navigationStore.leaveOnline()}
+	/>
+{:else if navigationStore.screen === 'online-game' && onlineGameStore.view}
+	<OnlineLobby
+		view={onlineGameStore.view}
+		isLeader={onlineGameStore.isLeader}
+		{inviteUrl}
+		error={onlineGameStore.error}
+		onAcceptJoin={() => onlineGameStore.acceptJoin()}
+		onDenyJoin={() => onlineGameStore.denyJoin()}
+		onCloseGame={() => onlineGameStore.closeGame()}
+		onReturnToMenu={() => {
+			onlineGameStore.leave();
+			navigationStore.leaveOnline();
+		}}
+	/>
+{:else if navigationStore.screen === 'online-game'}
+	<div class="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
+		{#if onlineGameStore.resuming}
+			<p class="text-lg text-sky-200">Reconnecting to your game…</p>
+		{:else}
+			<p class="text-slate-300">{onlineGameStore.error ?? 'Could not load the game.'}</p>
+			<button
+				type="button"
+				class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
+				onclick={() => {
+					onlineGameStore.leave();
+					navigationStore.leaveOnline();
+				}}
+			>
+				Return to Main Menu
+			</button>
+		{/if}
+	</div>
 {:else if navigationStore.screen === 'season-select'}
 	<SeasonSelect
 		{seasons}

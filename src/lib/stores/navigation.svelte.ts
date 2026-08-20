@@ -3,13 +3,22 @@ import { contentStore } from './content.svelte';
 import { missionProgressStore } from './missionProgress.svelte';
 import { twoPlayerProgressStore } from './twoPlayerProgress.svelte';
 
-export type Screen = 'game-mode' | 'season-select' | 'mission-select' | 'mission-detail';
+export type Screen =
+	| 'game-mode'
+	| 'season-select'
+	| 'mission-select'
+	| 'mission-detail'
+	| 'online-create'
+	| 'online-join'
+	| 'online-game';
 
 class NavigationStore {
 	screen = $state<Screen>('game-mode');
 	selectedSeason = $state<string | null>(null);
 	selectedMissionId = $state<string | null>(null);
 	gameMode = $state<domain.GameMode>('solo');
+	/** Game code from an invite link, consumed by the online-join screen. */
+	onlineJoinCode = $state<string | null>(null);
 
 	selectSoloMode(): void {
 		this.gameMode = 'solo';
@@ -19,6 +28,24 @@ class NavigationStore {
 	selectTwoPlayerMode(): void {
 		this.gameMode = 'two-player';
 		this.screen = 'season-select';
+	}
+
+	selectOnlineMode(): void {
+		this.screen = 'online-create';
+	}
+
+	prepareOnlineJoin(code: string): void {
+		this.onlineJoinCode = code;
+		this.screen = 'online-join';
+	}
+
+	enterOnlineGame(): void {
+		this.screen = 'online-game';
+	}
+
+	leaveOnline(): void {
+		this.onlineJoinCode = null;
+		this.screen = 'game-mode';
 	}
 
 	returnToGameMode(): void {

@@ -3,9 +3,14 @@ primary_region = "fra"
 
 [build]
 
+[mounts]
+  source = "oni_quest_data"
+  destination = "/data"
+
 [env]
   PORT = "3000"
   ORIGIN = "https://oni-quest-advisor.fly.dev"
+  DATA_DIR = "/data"
 
 [http_service]
   internal_port = 3000
