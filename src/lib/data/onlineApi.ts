@@ -194,6 +194,14 @@ export async function advancePhase(gameId: string, token: string): Promise<void>
 	await parse<Record<string, never>>(response);
 }
 
+export async function finishGame(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/finish`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
 /** Seat tokens for joining players are generated client-side; only their hash reaches the server. */
 export function generateJoinToken(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(32));

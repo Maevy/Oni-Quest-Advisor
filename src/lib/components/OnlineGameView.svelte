@@ -22,6 +22,7 @@
 		onSetObjectiveChecked: (objectiveId: string, checkedCount: number, maxCount: number) => void;
 		onSetSchemeChecked: (checkedIncrements: number) => void;
 		onAdvancePhase: () => void;
+		onFinishGame: () => void;
 		onCloseGame: () => Promise<void>;
 	};
 
@@ -38,6 +39,7 @@
 		onSetObjectiveChecked,
 		onSetSchemeChecked,
 		onAdvancePhase,
+		onFinishGame,
 		onCloseGame
 	}: Props = $props();
 
@@ -152,14 +154,11 @@
 			{:else if isFinalScoring}
 				<button
 					type="button"
-					disabled
-					class="w-full cursor-not-allowed rounded-xl border-2 border-slate-600/30 bg-slate-900/30 px-8 py-3 text-lg font-medium text-slate-600"
+					class="w-full rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition hover:bg-emerald-500/10 active:bg-emerald-500/20"
+					onclick={onFinishGame}
 				>
 					Finish Game
 				</button>
-				<p class="mt-2 text-center text-xs text-slate-500">
-					Finishing lands with the statistics update.
-				</p>
 			{:else}
 				<button
 					type="button"

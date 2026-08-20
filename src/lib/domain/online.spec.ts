@@ -7,6 +7,7 @@ import {
 	canChooseSeatScheme,
 	canDrawSchemes,
 	canRequestJoin,
+	canScoreSeatScheme,
 	canSelectMission,
 	canStartGame,
 	chooseSeatScheme,
@@ -57,6 +58,18 @@ function activeScoringGame(): OnlineGameState {
 	state = draftAndChooseScheme(state, 'player1');
 	state = draftAndChooseScheme(state, 'player2');
 	state = startGame(state);
+	state = advanceToScoring(state);
+	return state;
+}
+
+/** Both players set their reveal intent, so scoring starts with both schemes revealed. */
+function revealedScoringGame(): OnlineGameState {
+	let state = lobbyWithBothPlayers();
+	state = draftAndChooseScheme(state, 'player1');
+	state = draftAndChooseScheme(state, 'player2');
+	state = startGame(state);
+	state = toggleRevealIntent(state, 'player1');
+	state = toggleRevealIntent(state, 'player2');
 	state = advanceToScoring(state);
 	return state;
 }
@@ -288,10 +301,24 @@ describe('scoring phase actions', () => {
 	});
 
 	it('scheme boxes are only editable by the owner during scoring', () => {
-		let state = activeScoringGame();
+		let state = revealedScoringGame();
 		state = setSeatSchemeChecked(state, 'player1', 2, 3);
 		expect(state.player1.progress.scheme?.checkedIncrements).toBe(2);
 		expect(state.player2?.progress.scheme?.checkedIncrements).toBe(0);
+	});
+
+	it('hidden schemes cannot be scored — boxes unlock only once revealed', () => {
+		let state = activeScoringGame();
+		expect(canScoreSeatScheme(state, 'player1')).toBe(false);
+		state = setSeatSchemeChecked(state, 'player1', 2, 3);
+		expect(state.player1.progress.scheme?.checkedIncrements, 'hidden scheme stays at 0').toBe(0);
+		state = {
+			...state,
+			player1: { ...state.player1, progress: { ...state.player1.progress, schemeRevealed: true } }
+		};
+		expect(canScoreSeatScheme(state, 'player1')).toBe(true);
+		state = setSeatSchemeChecked(state, 'player1', 2, 3);
+		expect(state.player1.progress.scheme?.checkedIncrements).toBe(2);
 	});
 });
 
@@ -336,6 +363,14 @@ describe('finishGame', () => {
 		expect(state.roundSnapshots[MAX_ROUND]).toEqual({ player1: 7, player2: 4 });
 		expect(state.player1.progress.schemeRevealed).toBe(true);
 		expect(state.player2?.progress.schemeRevealed).toBe(true);
+		expect(state.resultSummary).toEqual({
+			winner: 'player1',
+			finalVp: { player1: 7, player2: 4 },
+			roundsPlayed: MAX_ROUND,
+			season: 'Season 2',
+			missionId: 'obelisk-strike',
+			factions: { player1: 'helian-league', player2: 'helian-league' }
+		});
 	});
 
 	it('reports a draw on equal VP', () => {
@@ -402,5 +437,14 @@ describe('visibility', () => {
 	it('viewForSeat returns null for an empty seat', () => {
 		const state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
 		expect(viewForSeat(state, 'player2')).toBeNull();
+	});
+
+	it('viewForSeat exposes the result summary once the game is finished', () => {
+		let state = activeScoringGame();
+		state = { ...state, currentRound: MAX_ROUND };
+		state = finishGame(state, { player1: 7, player2: 4 });
+		const view = viewForSeat(state, 'player2');
+		expect(view?.resultSummary?.winner).toBe('player1');
+		expect(view?.resultSummary?.finalVp).toEqual({ player1: 7, player2: 4 });
 	});
 });

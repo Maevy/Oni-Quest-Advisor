@@ -10,6 +10,7 @@ import {
 	drawSchemes as apiDrawSchemes,
 	fetchGameState,
 	fetchJoinStatus,
+	finishGame as apiFinishGame,
 	gameEventsUrl,
 	generateJoinToken,
 	OnlineApiError,
@@ -184,6 +185,10 @@ class OnlineGameStore {
 
 	async advancePhase(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiAdvancePhase(gameId, token));
+	}
+
+	async finishGame(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiFinishGame(gameId, token));
 	}
 
 	/** The seat's own VP (opponent scheme VP stays hidden until revealed). */

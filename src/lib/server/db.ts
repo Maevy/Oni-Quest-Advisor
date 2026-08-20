@@ -2,6 +2,7 @@ import { createClient, type Client } from '@libsql/client';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { startCleanupSchedule } from './cleanup';
 
 const SCHEMA = [
 	`CREATE TABLE IF NOT EXISTS games (
@@ -37,6 +38,7 @@ export function getDb(): Promise<Client> {
 		ready = (async () => {
 			const client = createClient({ url: databaseUrl() });
 			await client.batch(SCHEMA);
+			startCleanupSchedule(client);
 			return client;
 		})();
 	}

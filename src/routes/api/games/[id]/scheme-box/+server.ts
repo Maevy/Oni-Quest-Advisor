@@ -5,7 +5,7 @@ import { ApiError, api, bearerToken, requireSeat } from '$lib/server/http';
 import { updateGame } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
 
-/** Owner-only scheme-box toggle during the Scoring phase; max comes from the chosen card. */
+/** Owner-only scheme-box toggle during the Scoring phase; boxes unlock only once the scheme is revealed. */
 export const POST = api(async ({ params, request }) => {
 	const { game, seat } = await requireSeat(params.id, bearerToken(request));
 	if (game.status !== 'active' || game.phase !== 'scoring') {
@@ -13,6 +13,9 @@ export const POST = api(async ({ params, request }) => {
 	}
 	const chosen = game[seat]?.progress.scheme;
 	if (!chosen) throw new ApiError(409, 'No scheme chosen');
+	if (!game[seat]?.progress.schemeRevealed) {
+		throw new ApiError(409, 'Reveal your scheme to score its boxes');
+	}
 	const card = getSchemes().find((c) => c.id === chosen.schemeId);
 	if (!card) throw new ApiError(500, 'Scheme content missing');
 

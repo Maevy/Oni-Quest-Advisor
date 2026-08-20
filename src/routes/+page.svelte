@@ -18,6 +18,7 @@
 	import OnlineGameView from '$lib/components/OnlineGameView.svelte';
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
+	import OnlineStats from '$lib/components/OnlineStats.svelte';
 
 	contentStore.load();
 
@@ -152,7 +153,18 @@
 			onSetSchemeChecked={(checkedIncrements) =>
 				onlineGameStore.setSchemeChecked(checkedIncrements)}
 			onAdvancePhase={() => onlineGameStore.advancePhase()}
+			onFinishGame={() => onlineGameStore.finishGame()}
 			onCloseGame={() => onlineGameStore.closeGame()}
+		/>
+	{:else if onlineGameStore.view.status === 'finished'}
+		<OnlineStats
+			view={onlineGameStore.view}
+			factions={contentStore.factions}
+			schemes={contentStore.schemes}
+			onReturnToMenu={() => {
+				onlineGameStore.leave();
+				navigationStore.leaveOnline();
+			}}
 		/>
 	{:else}
 		<OnlineLobby

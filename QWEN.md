@@ -71,6 +71,9 @@ native/platform-specific one. Used on a phone screen during a game session.
   statuses `lobby`/`active`/`finished`/`closed`; two seats (nickname, seat-token
   hash, a `PlayerProgress`, `revealIntent`, private `drawnSchemeIds`); `pendingJoin`;
   season/mission; round × phase (`reveal`/`scoring`); round VP snapshots; winner.
+  Scheme boxes are scoreable **only once revealed** (hidden schemes earn no scheme
+  VP); `finishGame` auto-reveals everything and writes a `resultSummary` (winner,
+  final VP, factions, mission) onto the state for later statistics export.
   Pure transition functions with `can*` guards plus the per-seat visibility filter
   (`viewForSeat` — the opponent's unrevealed scheme never leaves the server). The
   full player journey and phase model live in `MULTIPLAYER_PLAN.md` (local-only).

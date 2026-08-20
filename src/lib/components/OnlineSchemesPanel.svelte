@@ -82,12 +82,25 @@
 					</p>
 				{/if}
 				<div class="mt-3">
-					<IncrementBoxes
-						count={myCard.maxIncrements}
-						checkedCount={myScheme.checkedIncrements}
-						disabled={!boxesEditable}
-						onSetChecked={onSetSchemeChecked}
-					/>
+					{#if myRevealed}
+						<IncrementBoxes
+							count={myCard.maxIncrements}
+							checkedCount={myScheme.checkedIncrements}
+							disabled={!boxesEditable}
+							onSetChecked={onSetSchemeChecked}
+						/>
+					{:else if phase === 'reveal'}
+						<IncrementBoxes
+							count={myCard.maxIncrements}
+							checkedCount={myScheme.checkedIncrements}
+							disabled
+							onSetChecked={() => {}}
+						/>
+					{:else}
+						<p class="text-xs text-slate-500">
+							Hidden schemes can't be scored — reveal your scheme to unlock its boxes.
+						</p>
+					{/if}
 				</div>
 			{:else}
 				<p class="text-sm text-slate-400 italic">No scheme</p>

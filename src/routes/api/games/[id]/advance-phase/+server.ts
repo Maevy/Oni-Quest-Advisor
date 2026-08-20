@@ -1,16 +1,9 @@
 import { json } from '@sveltejs/kit';
-import {
-	advanceToScoring,
-	calculateTwoPlayerVP,
-	MAX_ROUND,
-	snapshotAndProceed,
-	type PlayerProgress,
-	type SchemeCard
-} from '$lib/domain';
-import { findMission, getSchemes } from '$lib/server/content';
+import { advanceToScoring, MAX_ROUND, snapshotAndProceed } from '$lib/domain';
 import { ApiError, api, bearerToken, requireLeader } from '$lib/server/http';
 import { updateGame, type GameEventInput } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
+import { computeRoundVp } from '$lib/server/vp';
 
 /**
  * Leader advances the round engine:
@@ -36,19 +29,8 @@ export const POST = api(async ({ params, request }) => {
 	if (game.currentRound >= MAX_ROUND) {
 		throw new ApiError(409, 'The final round is finished with Finish Game');
 	}
-	const mission = game.missionId ? findMission(game.missionId) : undefined;
-	if (!mission) throw new ApiError(500, 'Mission content missing');
-
-	const cardFor = (progress: PlayerProgress): SchemeCard | null =>
-		progress.scheme
-			? (getSchemes().find((card) => card.id === progress.scheme?.schemeId) ?? null)
-			: null;
-	const vp = {
-		player1: calculateTwoPlayerVP(mission, game.player1.progress, cardFor(game.player1.progress)),
-		player2: game.player2
-			? calculateTwoPlayerVP(mission, game.player2.progress, cardFor(game.player2.progress))
-			: 0
-	};
+	const vp = computeRoundVp(game);
+	if (!vp) throw new ApiError(500, 'Mission content missing');
 
 	const next = snapshotAndProceed(game, vp);
 	const events: GameEventInput[] = [
