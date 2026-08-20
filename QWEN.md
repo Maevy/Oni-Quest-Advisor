@@ -50,7 +50,9 @@ native/platform-specific one. Used on a phone screen during a game session.
   never a flat `vpPerIncrement` that would overshoot the cap.
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
-  is a hot-seat mode where both players share one device.
+  is a hot-seat mode where both players share one device. The third
+  **"Online 2 Player Game"** button opens the server-backed online flow — its own
+  screens (`online-create`/`online-join`/`online-game`), not part of `GameMode`.
 - **MissionProgress** (solo) → per-mission play state: checked objective counts, the
   chosen Scheme, a `schemeDraft` (faction/intelligence) that survives resets, and
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
@@ -140,7 +142,10 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `SchemesPanelTwoPlayer`, `CommandPanelTwoPlayer`, `MissionDetailTwoPlayer`) plus a
   `CountdownOverlay` for the swap transition; they reuse shared panels
   (`DescriptionPanel`, `SetupPanel`, `MissionMap`, `QuestRulesPanel`, `Panel`,
-  `IncrementBoxes`) unchanged.
+  `IncrementBoxes`) unchanged. Online mode has its own set (`OnlineCreate`,
+  `OnlineJoin`, `OnlineLobby`, `OnlineGameView`, `OnlineStats`, `OnlineSchemeSetup`,
+  `OnlineMissionView`, `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`),
+  also reusing the shared panels (collapsible there via `Panel`'s `collapsible` prop).
 
 Each layer folder has its own `CLAUDE.md` with the specific rules for that layer —
 read it before adding files there.
@@ -182,7 +187,11 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.4.0**.
+  and push branch + tag. Current release: **v0.4.1**; the online 2-player mode
+  (phases 1–4) lives on `develop`, unreleased and untested in production.
+- **Online mode needs a Fly volume**: before the first deploy containing it, run
+  `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
+  entry in `fly.toml` expects it; the deploy fails without it).
 - Don't stage local tooling state: `.idea/` and `.qwen/` are untracked and not yet
   gitignored — exclude them when staging (or add them to `.gitignore`).
 - The first push on a fresh machine may hang until GitHub sign-in (Git Credential
