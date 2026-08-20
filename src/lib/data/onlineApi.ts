@@ -91,6 +91,66 @@ export async function closeGame(gameId: string, token: string): Promise<void> {
 	await parse<Record<string, never>>(response);
 }
 
+export async function draftSeat(
+	gameId: string,
+	token: string,
+	draft: { factionId?: string | null; intelligence?: number | null }
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/draft`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify(draft)
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function drawSchemes(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/draw`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function chooseScheme(gameId: string, token: string, schemeId: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/choose-scheme`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ schemeId })
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function deleteScheme(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/delete-scheme`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function selectMission(
+	gameId: string,
+	token: string,
+	season: string,
+	missionId: string
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/select-mission`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ season, missionId })
+	});
+	await parse<Record<string, never>>(response);
+}
+
+export async function startGame(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/start`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
 /** Seat tokens for joining players are generated client-side; only their hash reaches the server. */
 export function generateJoinToken(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(32));

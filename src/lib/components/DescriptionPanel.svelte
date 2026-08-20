@@ -7,9 +7,10 @@
 		description: string;
 		brokenMorale: boolean;
 		ceasefire: boolean;
+		collapsible?: boolean;
 	};
 
-	let { name, description, brokenMorale, ceasefire }: Props = $props();
+	let { name, description, brokenMorale, ceasefire, collapsible = false }: Props = $props();
 
 	let openRule = $state<RuleCallout | null>(null);
 
@@ -23,7 +24,7 @@
 	});
 </script>
 
-<Panel title={name}>
+<Panel title={name} {collapsible}>
 	<div class="mb-3 flex flex-wrap gap-2">
 		<button
 			type="button"

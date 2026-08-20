@@ -4,6 +4,8 @@ import {
 	acceptJoin,
 	advanceToScoring,
 	bothSchemesRevealed,
+	canChooseSeatScheme,
+	canDrawSchemes,
 	canRequestJoin,
 	canSelectMission,
 	canStartGame,
@@ -45,6 +47,7 @@ function draftAndChooseScheme(
 	seat: 'player1' | 'player2'
 ): OnlineGameState {
 	let next = setSeatDraft(state, seat, { factionId: 'helian-league', intelligence: 14 });
+	next = setSeatDrawnSchemes(next, seat, ['head-hunt', 'stand-your-ground']);
 	next = chooseSeatScheme(next, seat, 'head-hunt');
 	return next;
 }
@@ -151,7 +154,7 @@ describe('selectMission', () => {
 });
 
 describe('scheme setup', () => {
-	it('choosing a scheme requires a complete draft', () => {
+	it('choosing a scheme requires a complete draft and a drawn hand', () => {
 		let state = lobbyWithBothPlayers();
 		state = chooseSeatScheme(state, 'player1', 'head-hunt');
 		expect(state.player1.progress.scheme).toBeNull();
@@ -160,12 +163,31 @@ describe('scheme setup', () => {
 		expect(state.player1.progress.scheme).toBeNull();
 		state = setSeatDraft(state, 'player1', { intelligence: 14 });
 		state = chooseSeatScheme(state, 'player1', 'head-hunt');
+		expect(state.player1.progress.scheme, 'no drawn hand yet').toBeNull();
+		state = setSeatDrawnSchemes(state, 'player1', ['head-hunt', 'stand-your-ground']);
+		state = chooseSeatScheme(state, 'player1', 'head-hunt');
 		expect(state.player1.progress.scheme).toEqual({
 			schemeId: 'head-hunt',
 			factionId: 'helian-league',
 			intelligence: 14,
 			checkedIncrements: 0
 		});
+	});
+
+	it('rejects choosing a card that is not in the drawn hand', () => {
+		let state = lobbyWithBothPlayers();
+		state = setSeatDraft(state, 'player1', { factionId: 'helian-league', intelligence: 14 });
+		state = setSeatDrawnSchemes(state, 'player1', ['head-hunt']);
+		expect(canChooseSeatScheme(state, 'player1', 'martial-valor')).toBe(false);
+		state = chooseSeatScheme(state, 'player1', 'martial-valor');
+		expect(state.player1.progress.scheme).toBeNull();
+		expect(canChooseSeatScheme(state, 'player1', 'head-hunt')).toBe(true);
+	});
+
+	it('choosing a scheme discards the drawn hand', () => {
+		let state = lobbyWithBothPlayers();
+		state = draftAndChooseScheme(state, 'player1');
+		expect(state.player1.drawnSchemeIds).toEqual([]);
 	});
 
 	it('stores drawn scheme ids per seat', () => {
@@ -184,6 +206,24 @@ describe('scheme setup', () => {
 			factionId: 'helian-league',
 			intelligence: 14
 		});
+	});
+
+	it('setup edits are locked until player 2 has joined', () => {
+		let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		state = setSeatDraft(state, 'player1', { factionId: 'helian-league' });
+		expect(state.player1.progress.schemeDraft.factionId).toBeNull();
+		expect(canDrawSchemes(state, 'player1')).toBe(false);
+	});
+
+	it('setup edits are locked once the game has started', () => {
+		let state = lobbyWithBothPlayers();
+		state = draftAndChooseScheme(state, 'player1');
+		state = draftAndChooseScheme(state, 'player2');
+		state = startGame(state);
+		state = setSeatDraft(state, 'player1', { intelligence: 16 });
+		expect(state.player1.progress.schemeDraft.intelligence).toBe(14);
+		state = clearSeatScheme(state, 'player2');
+		expect(state.player2?.progress.scheme).not.toBeNull();
 	});
 });
 

@@ -2,12 +2,12 @@
 	import type { QuestRuleSection } from '$lib/domain';
 	import Panel from './Panel.svelte';
 
-	type Props = { sections: QuestRuleSection[] };
+	type Props = { sections: QuestRuleSection[]; collapsible?: boolean };
 
-	let { sections }: Props = $props();
+	let { sections, collapsible = false }: Props = $props();
 </script>
 
-<Panel title="Quest Rules">
+<Panel title="Quest Rules" {collapsible}>
 	<div class="flex flex-col gap-4">
 		{#each sections as section, index (index)}
 			<div>

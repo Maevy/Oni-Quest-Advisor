@@ -45,6 +45,20 @@
 	);
 	let resultsForMission = $derived(selectedMission ? getScoreableResults(selectedMission) : []);
 
+	// Online mode derived values
+	let missionsBySeason = $derived(
+		Object.fromEntries(
+			seasons.map((season) => [season, getMissionsForSeason(contentStore.missions, season)])
+		)
+	);
+	let onlineMission = $derived(
+		onlineGameStore.view?.missionId
+			? (contentStore.missions.find((mission) => mission.id === onlineGameStore.view?.missionId) ??
+					null)
+			: null
+	);
+	let onlineResults = $derived(onlineMission ? getScoreableResults(onlineMission) : []);
+
 	// Solo mode derived values
 	let chosenSchemeCard = $derived(
 		missionProgressStore.progress?.scheme
@@ -111,6 +125,12 @@
 		isLeader={onlineGameStore.isLeader}
 		{inviteUrl}
 		error={onlineGameStore.error}
+		factions={contentStore.factions}
+		schemes={contentStore.schemes}
+		{seasons}
+		{missionsBySeason}
+		selectedMission={onlineMission}
+		resultsForMission={onlineResults}
 		onAcceptJoin={() => onlineGameStore.acceptJoin()}
 		onDenyJoin={() => onlineGameStore.denyJoin()}
 		onCloseGame={() => onlineGameStore.closeGame()}
@@ -118,6 +138,13 @@
 			onlineGameStore.leave();
 			navigationStore.leaveOnline();
 		}}
+		onDraftFaction={(factionId) => onlineGameStore.draftFaction(factionId)}
+		onDraftIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}
+		onDrawSchemes={() => onlineGameStore.drawSchemes()}
+		onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
+		onDeleteScheme={() => onlineGameStore.deleteScheme()}
+		onSelectMission={(season, missionId) => onlineGameStore.selectMission(season, missionId)}
+		onStartGame={() => onlineGameStore.startGame()}
 	/>
 {:else if navigationStore.screen === 'online-game'}
 	<div class="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">

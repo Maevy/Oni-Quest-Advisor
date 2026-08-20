@@ -1,9 +1,10 @@
 # lib/server/ — server (online mode)
 
 - Server-only layer, used exclusively by the API routes in `src/routes/api/games/`.
-  May import `lib/domain` (pure, shared between client and server). Never imports
-  from `lib/stores`, `lib/components`, or Svelte client APIs; no `localStorage` or
-  `window`.
+  May import `lib/domain` (pure, shared between client and server) and read the
+  bundled static content through the `lib/data` loaders (`content.ts` wraps them).
+  Never imports from `lib/stores`, `lib/components`, or Svelte client APIs; no
+  `localStorage` or `window`.
 - `db.ts` owns the libsql file database (dev: `.data/oni-quest.db`, Fly: volume at
   `/data` via `DATA_DIR`) and bootstraps the schema lazily on first use.
 - `gameRepository.ts` is the only module that speaks SQL. Every write is a single

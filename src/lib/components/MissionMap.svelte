@@ -9,9 +9,9 @@
 	} from '$lib/domain';
 	import Panel from './Panel.svelte';
 
-	type Props = { map: MapSpec };
+	type Props = { map: MapSpec; collapsible?: boolean };
 
-	let { map }: Props = $props();
+	let { map, collapsible = false }: Props = $props();
 
 	const BLUE = {
 		fill: 'rgba(56, 189, 248, 0.18)',
@@ -67,7 +67,7 @@
 	);
 </script>
 
-<Panel title="Deployment Map">
+<Panel title="Deployment Map" {collapsible}>
 	<svg
 		viewBox="0 0 {MAP_SIZE_INCHES} {MAP_SIZE_INCHES}"
 		class="mx-auto w-full max-w-72 rounded-xl border border-slate-700/60 bg-slate-950/70"

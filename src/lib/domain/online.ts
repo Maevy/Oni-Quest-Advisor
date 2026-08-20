@@ -186,6 +186,11 @@ export function denyJoin(state: OnlineGameState): OnlineGameState {
 
 // --- lobby: setup ---
 
+/** Faction/scheme setup unlocks only after both seats are filled, and ends with the lobby. */
+export function canEditSetup(state: OnlineGameState): boolean {
+	return state.status === 'lobby' && state.player2 !== null;
+}
+
 export function canSelectMission(state: OnlineGameState): boolean {
 	return state.status === 'lobby' && state.player2 !== null;
 }
@@ -204,6 +209,7 @@ export function setSeatDraft(
 	seat: PlayerKey,
 	draft: Partial<SchemeDraft>
 ): OnlineGameState {
+	if (!canEditSetup(state)) return state;
 	return updateSeat(state, seat, (s) => ({
 		...s,
 		progress: { ...s.progress, schemeDraft: { ...s.progress.schemeDraft, ...draft } }
@@ -215,26 +221,46 @@ export function setSeatDrawnSchemes(
 	seat: PlayerKey,
 	schemeIds: string[]
 ): OnlineGameState {
+	if (!canEditSetup(state)) return state;
 	return updateSeat(state, seat, (s) => ({ ...s, drawnSchemeIds: schemeIds }));
 }
 
-/** Picks the scheme using the seat's current draft; no-op when the draft is incomplete. */
+export function canDrawSchemes(state: OnlineGameState, seat: PlayerKey): boolean {
+	const current = state[seat];
+	if (!canEditSetup(state) || !current) return false;
+	const { factionId, intelligence } = current.progress.schemeDraft;
+	return factionId !== null && intelligence !== null;
+}
+
+/** Only cards from the seat's own drawn hand may be chosen. */
+export function canChooseSeatScheme(
+	state: OnlineGameState,
+	seat: PlayerKey,
+	schemeId: string
+): boolean {
+	const current = state[seat];
+	if (!canEditSetup(state) || !current) return false;
+	const { factionId, intelligence } = current.progress.schemeDraft;
+	return factionId !== null && intelligence !== null && current.drawnSchemeIds.includes(schemeId);
+}
+
+/** Picks a scheme from the seat's drawn hand and discards the rest of the hand. */
 export function chooseSeatScheme(
 	state: OnlineGameState,
 	seat: PlayerKey,
 	schemeId: string
 ): OnlineGameState {
-	const current = state[seat];
-	if (!current) return state;
-	const { factionId, intelligence } = current.progress.schemeDraft;
-	if (!factionId || intelligence === null) return state;
+	if (!canChooseSeatScheme(state, seat, schemeId)) return state;
+	const { factionId, intelligence } = state[seat]!.progress.schemeDraft;
 	return updateSeat(state, seat, (s) => ({
 		...s,
-		progress: { ...s.progress, scheme: chooseScheme(schemeId, factionId, intelligence) }
+		drawnSchemeIds: [],
+		progress: { ...s.progress, scheme: chooseScheme(schemeId, factionId!, intelligence!) }
 	}));
 }
 
 export function clearSeatScheme(state: OnlineGameState, seat: PlayerKey): OnlineGameState {
+	if (!canEditSetup(state)) return state;
 	return updateSeat(state, seat, (s) => ({ ...s, progress: { ...s.progress, scheme: null } }));
 }
 

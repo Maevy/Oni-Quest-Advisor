@@ -1,14 +1,20 @@
 import {
 	acceptJoin as apiAcceptJoin,
+	chooseScheme as apiChooseScheme,
 	closeGame as apiCloseGame,
 	createGame as apiCreateGame,
+	deleteScheme as apiDeleteScheme,
 	denyJoin as apiDenyJoin,
+	draftSeat as apiDraftSeat,
+	drawSchemes as apiDrawSchemes,
 	fetchGameState,
 	fetchJoinStatus,
 	gameEventsUrl,
 	generateJoinToken,
 	OnlineApiError,
 	requestJoin as apiRequestJoin,
+	selectMission as apiSelectMission,
+	startGame as apiStartGame,
 	type JoinStatus
 } from '$lib/data/onlineApi';
 import {
@@ -121,6 +127,47 @@ class OnlineGameStore {
 		if (!this.session) return;
 		await apiCloseGame(this.session.gameId, this.session.token);
 		await this.refreshState();
+	}
+
+	// --- setup actions (server-authoritative: send intent, then refetch) ---
+
+	async draftFaction(factionId: string | null): Promise<void> {
+		await this.sendSetup((gameId, token) => apiDraftSeat(gameId, token, { factionId }));
+	}
+
+	async draftIntelligence(intelligence: number | null): Promise<void> {
+		await this.sendSetup((gameId, token) => apiDraftSeat(gameId, token, { intelligence }));
+	}
+
+	async drawSchemes(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiDrawSchemes(gameId, token));
+	}
+
+	async chooseScheme(schemeId: string): Promise<void> {
+		await this.sendSetup((gameId, token) => apiChooseScheme(gameId, token, schemeId));
+	}
+
+	async deleteScheme(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiDeleteScheme(gameId, token));
+	}
+
+	async selectMission(season: string, missionId: string): Promise<void> {
+		await this.sendSetup((gameId, token) => apiSelectMission(gameId, token, season, missionId));
+	}
+
+	async startGame(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiStartGame(gameId, token));
+	}
+
+	private async sendSetup(action: (gameId: string, token: string) => Promise<void>): Promise<void> {
+		if (!this.session) return;
+		this.error = null;
+		try {
+			await action(this.session.gameId, this.session.token);
+			await this.refreshState();
+		} catch (error) {
+			this.error = error instanceof Error ? error.message : 'Action failed.';
+		}
 	}
 
 	/** Leaves locally (main menu / closed / finished) — the server-side game stays as it is. */

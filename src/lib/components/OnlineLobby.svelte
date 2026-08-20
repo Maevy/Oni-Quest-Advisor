@@ -1,15 +1,37 @@
 <script lang="ts">
-	import type { OnlineGameView } from '$lib/domain';
+	import type {
+		Faction,
+		Mission,
+		PublicSeatState,
+		ResultObjectiveDef,
+		SchemeCard,
+		OnlineGameView
+	} from '$lib/domain';
+	import OnlineMissionView from './OnlineMissionView.svelte';
+	import OnlineSchemeSetup from './OnlineSchemeSetup.svelte';
 
 	type Props = {
 		view: OnlineGameView;
 		isLeader: boolean;
 		inviteUrl: string;
 		error: string | null;
+		factions: Faction[];
+		schemes: SchemeCard[];
+		seasons: string[];
+		missionsBySeason: Record<string, Mission[]>;
+		selectedMission: Mission | null;
+		resultsForMission: ResultObjectiveDef[];
 		onAcceptJoin: () => Promise<void>;
 		onDenyJoin: () => Promise<void>;
 		onCloseGame: () => Promise<void>;
 		onReturnToMenu: () => void;
+		onDraftFaction: (factionId: string) => void;
+		onDraftIntelligence: (intelligence: number | null) => void;
+		onDrawSchemes: () => void;
+		onChooseScheme: (schemeId: string) => void;
+		onDeleteScheme: () => void;
+		onSelectMission: (season: string, missionId: string) => void;
+		onStartGame: () => void;
 	};
 
 	let {
@@ -17,15 +39,61 @@
 		isLeader,
 		inviteUrl,
 		error,
+		factions,
+		schemes,
+		seasons,
+		missionsBySeason,
+		selectedMission,
+		resultsForMission,
 		onAcceptJoin,
 		onDenyJoin,
 		onCloseGame,
-		onReturnToMenu
+		onReturnToMenu,
+		onDraftFaction,
+		onDraftIntelligence,
+		onDrawSchemes,
+		onChooseScheme,
+		onDeleteScheme,
+		onSelectMission,
+		onStartGame
 	}: Props = $props();
 
 	let confirmingClose = $state(false);
 	let copied = $state(false);
 	let acting = $state(false);
+	let seasonPick = $state('');
+	let missionPick = $state('');
+
+	function handleSeasonChange(event: Event): void {
+		seasonPick = (event.target as HTMLSelectElement).value;
+		missionPick = '';
+	}
+
+	let setupUnlocked = $derived(view.status === 'lobby' && view.opponent !== null);
+	let opponent = $derived(view.opponent);
+
+	let drawnCards = $derived(
+		view.self.drawnSchemeIds
+			.map((id) => schemes.find((card) => card.id === id))
+			.filter((card): card is SchemeCard => card !== undefined)
+	);
+	let chosenCardSelf = $derived(
+		view.self.progress.scheme
+			? (schemes.find((card) => card.id === view.self.progress.scheme?.schemeId) ?? null)
+			: null
+	);
+
+	function factionName(publicSeat: PublicSeatState): string | null {
+		if (!publicSeat.factionId) return null;
+		return factions.find((faction) => faction.id === publicSeat.factionId)?.name ?? null;
+	}
+
+	let canStart = $derived(
+		view.status === 'lobby' &&
+			view.missionId !== null &&
+			view.self.progress.scheme !== null &&
+			(view.opponent?.hasScheme ?? false)
+	);
 
 	async function copyInvite() {
 		try {
@@ -66,6 +134,10 @@
 		} finally {
 			acting = false;
 		}
+	}
+
+	function handleSelectMission() {
+		if (seasonPick && missionPick) onSelectMission(seasonPick, missionPick);
 	}
 </script>
 
@@ -129,22 +201,17 @@
 				Return to Main Menu
 			</button>
 		</div>
-	{:else if view.status === 'active'}
-		<div
-			class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 text-center backdrop-blur"
-		>
-			<p class="text-slate-200">The battle is underway.</p>
-			<p class="mt-2 text-sm text-slate-400">Round tracking lands in the next update.</p>
-		</div>
 	{:else}
-		{#if isLeader}
+		{#if view.status === 'lobby' && isLeader}
 			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
 				<div class="flex items-center justify-between gap-2">
 					<div class="min-w-0">
 						<p class="text-sm font-semibold tracking-wide text-sky-300 uppercase">
 							Share link to invite player
 						</p>
-						<p class="truncate font-mono text-sm text-slate-200" title={inviteUrl}>{inviteUrl}</p>
+						<p class="truncate font-mono text-sm text-slate-200" title={inviteUrl}>
+							{inviteUrl}
+						</p>
 					</div>
 					<button
 						type="button"
@@ -160,27 +227,48 @@
 				<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">
 					Mission Selection
 				</p>
-				<div class="flex flex-col gap-2">
-					<select
-						disabled
-						class="rounded-xl border-2 border-slate-600/30 bg-slate-900/30 px-3 py-2.5 text-slate-500"
-					>
-						<option>Season (locked until a player joins)</option>
-					</select>
-					<select
-						disabled
-						class="rounded-xl border-2 border-slate-600/30 bg-slate-900/30 px-3 py-2.5 text-slate-500"
-					>
-						<option>Mission (locked until a player joins)</option>
-					</select>
-					<button
-						type="button"
-						disabled
-						class="cursor-not-allowed rounded-xl border-2 border-slate-600/30 bg-slate-900/30 px-6 py-2.5 font-medium text-slate-600"
-					>
-						Select Mission
-					</button>
-				</div>
+				{#if view.missionId && selectedMission}
+					<p class="text-slate-200">
+						{view.season} — <span class="font-semibold">{selectedMission.name}</span>
+					</p>
+				{:else}
+					<div class="flex flex-col gap-2">
+						<select
+							class="rounded-xl border-2 bg-slate-900/60 px-3 py-2.5 backdrop-blur enabled:border-sky-500/50 enabled:text-sky-100 disabled:border-slate-600/30 disabled:text-slate-500"
+							value={seasonPick}
+							disabled={!setupUnlocked}
+							onchange={handleSeasonChange}
+						>
+							<option value="" disabled>
+								{setupUnlocked ? 'Select a season…' : 'Season (locked until a player joins)'}
+							</option>
+							{#each seasons as season (season)}
+								<option value={season}>{season}</option>
+							{/each}
+						</select>
+						<select
+							class="rounded-xl border-2 bg-slate-900/60 px-3 py-2.5 backdrop-blur enabled:border-sky-500/50 enabled:text-sky-100 disabled:border-slate-600/30 disabled:text-slate-500"
+							value={missionPick}
+							disabled={!setupUnlocked || !seasonPick}
+							onchange={(event) => (missionPick = (event.target as HTMLSelectElement).value)}
+						>
+							<option value="" disabled>
+								{seasonPick ? 'Select a mission…' : 'Mission'}
+							</option>
+							{#each missionsBySeason[seasonPick] ?? [] as mission (mission.id)}
+								<option value={mission.id}>{mission.name}</option>
+							{/each}
+						</select>
+						<button
+							type="button"
+							disabled={!setupUnlocked || !seasonPick || !missionPick}
+							class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-6 py-2.5 font-medium text-sky-100 transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+							onclick={handleSelectMission}
+						>
+							Select Mission
+						</button>
+					</div>
+				{/if}
 			</div>
 		{/if}
 
@@ -193,36 +281,128 @@
 						Game Leader
 					</span>
 				</div>
-				<span class="text-slate-100">{view.self.nickname}</span>
+				<span class="text-slate-100">
+					{view.seat === 'player1' ? view.self.nickname : (opponent?.nickname ?? '')}
+				</span>
 			</div>
-			<div
-				class="mt-3 rounded-xl border border-slate-600/30 bg-slate-900/30 p-3 text-sm text-slate-500"
-			>
-				Faction &amp; Scheme selection
-				{#if view.opponent}
-					(unlocks in the next update)
-				{:else}
-					(locked until a player joins)
+			<div class="mt-3">
+				{#if view.seat === 'player1'}
+					{#if view.status === 'lobby' && setupUnlocked}
+						<OnlineSchemeSetup
+							{factions}
+							schemeDraft={view.self.progress.schemeDraft}
+							{drawnCards}
+							chosenCard={chosenCardSelf}
+							onSetFaction={onDraftFaction}
+							onSetIntelligence={onDraftIntelligence}
+							onDraw={onDrawSchemes}
+							onChoose={onChooseScheme}
+							onDelete={onDeleteScheme}
+						/>
+					{:else if view.status === 'lobby'}
+						<p class="text-sm text-slate-500">
+							Faction &amp; Scheme selection (locked until a player joins)
+						</p>
+					{:else if chosenCardSelf}
+						<div class="rounded-xl border border-sky-500/40 bg-slate-900/40 p-3">
+							<h3 class="font-semibold text-sky-100">{chosenCardSelf.title}</h3>
+							<p class="mt-1 text-sm text-slate-300">{chosenCardSelf.ruleText}</p>
+						</div>
+					{/if}
+				{:else if opponent}
+					<p class="text-sm text-slate-300">Faction: {factionName(opponent) ?? '—'}</p>
+					<div class="mt-2">
+						{#if opponent.schemeRevealed && opponent.revealedScheme}
+							{@const revealedCard = schemes.find(
+								(card) => card.id === opponent.revealedScheme?.schemeId
+							)}
+							<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
+								<h3 class="font-semibold text-orange-100">{revealedCard?.title ?? ''}</h3>
+								<p class="mt-1 text-sm text-slate-300">{revealedCard?.ruleText ?? ''}</p>
+							</div>
+						{:else if opponent.hasScheme}
+							<p class="text-sm text-slate-400 italic">Hidden Scheme</p>
+						{:else}
+							<p class="text-sm text-slate-400 italic">No schemes</p>
+						{/if}
+					</div>
 				{/if}
 			</div>
 		</div>
 
 		<!-- Player 2 seat -->
 		<div class="rounded-2xl border border-orange-500/30 bg-slate-800/40 p-4 backdrop-blur">
-			{#if view.opponent}
+			{#if view.seat === 'player2'}
 				<div class="flex items-center justify-between gap-2">
 					<span class="font-semibold text-orange-300">Player 2</span>
-					<span class="text-slate-100">{view.opponent.nickname}</span>
+					<span class="text-slate-100">{view.self.nickname}</span>
 				</div>
-				<div
-					class="mt-3 rounded-xl border border-slate-600/30 bg-slate-900/30 p-3 text-sm text-slate-500"
-				>
-					Faction &amp; Scheme selection (unlocks in the next update)
+				<div class="mt-3">
+					{#if view.status === 'lobby' && setupUnlocked}
+						<OnlineSchemeSetup
+							{factions}
+							schemeDraft={view.self.progress.schemeDraft}
+							{drawnCards}
+							chosenCard={chosenCardSelf}
+							onSetFaction={onDraftFaction}
+							onSetIntelligence={onDraftIntelligence}
+							onDraw={onDrawSchemes}
+							onChoose={onChooseScheme}
+							onDelete={onDeleteScheme}
+						/>
+					{:else if chosenCardSelf}
+						<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
+							<h3 class="font-semibold text-orange-100">{chosenCardSelf.title}</h3>
+							<p class="mt-1 text-sm text-slate-300">{chosenCardSelf.ruleText}</p>
+						</div>
+					{/if}
+				</div>
+			{:else if opponent}
+				<div class="flex items-center justify-between gap-2">
+					<span class="font-semibold text-orange-300">Player 2</span>
+					<span class="text-slate-100">{opponent.nickname}</span>
+				</div>
+				<div class="mt-3">
+					<p class="text-sm text-slate-300">Faction: {factionName(opponent) ?? '—'}</p>
+					<div class="mt-2">
+						{#if opponent.schemeRevealed && opponent.revealedScheme}
+							{@const revealedCard = schemes.find(
+								(card) => card.id === opponent.revealedScheme?.schemeId
+							)}
+							<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
+								<h3 class="font-semibold text-orange-100">{revealedCard?.title ?? ''}</h3>
+								<p class="mt-1 text-sm text-slate-300">{revealedCard?.ruleText ?? ''}</p>
+							</div>
+						{:else if opponent.hasScheme}
+							<p class="text-sm text-slate-400 italic">Hidden Scheme</p>
+						{:else}
+							<p class="text-sm text-slate-400 italic">No schemes</p>
+						{/if}
+					</div>
 				</div>
 			{:else}
 				<p class="text-center text-slate-400">No Player 2, invite someone</p>
 			{/if}
 		</div>
+
+		{#if selectedMission}
+			<OnlineMissionView mission={selectedMission} results={resultsForMission} />
+		{/if}
+
+		{#if view.status === 'active'}
+			<p class="text-center text-xs text-slate-500">Round controls arrive in the next update.</p>
+		{/if}
+
+		{#if view.status === 'lobby' && isLeader}
+			<button
+				type="button"
+				disabled={!canStart}
+				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+				onclick={onStartGame}
+			>
+				Start Game
+			</button>
+		{/if}
 	{/if}
 </div>
 
