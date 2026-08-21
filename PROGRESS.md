@@ -9,9 +9,10 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - Latest release: **v0.4.1** (tag on `main`). Day-to-day work happens on `develop`,
   pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the working branch is
   `develop`, not `main`).
-- `develop` carries the **online 2-player mode** (phases 1–4, see below):
-  feature-complete and verified locally, **not yet released or deployed**. Deploying
-  it requires creating the Fly volume first:
+- `develop` carries the **online 2-player mode** (phases 1–4) **plus a
+  cross-cutting hardening pass** (integrity, security, operability — both
+  summarized below): feature-complete and verified locally, **not yet released
+  or deployed**. Deploying it requires creating the Fly volume first:
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1`.
 - The planning basis for the online mode lives in `MULTIPLAYER_PLAN.md` at the
   project root — **gitignored, local-only, never pushed**. It holds the full player
@@ -20,7 +21,40 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
 
-## What was done in the last session (online 2-player mode, phases 1–4)
+## What was done in the last session (online-mode hardening: integrity, security, ops)
+
+Cross-cutting audit of the phase 1–4 backend, then fixes — everything below
+lives on `develop` together with the online mode itself:
+
+1. **Lost-update race fixed**: every mutating endpoint used to read state,
+   compute the next state, then write — two concurrent actions on the same game
+   (both players scoring in the same Scoring phase is the normal case) could
+   overwrite each other. The whole auth + read + guard + write cycle now runs
+   inside one write transaction via `mutateOpen` / `mutateAsSeat` /
+   `mutateAsLeader` (`gameRepository.ts`), serialized behind an in-process FIFO
+   queue. The queue is necessary: the libsql client fails concurrent write
+   transactions with `SQLITE_BUSY` instead of queueing them — the new
+   concurrency spec caught this before it shipped.
+2. **HTTP hardening** (new `src/hooks.server.ts`): 64 KB body cap on API
+   requests, per-IP rate limits (game creation 20/hour, other actions
+   120/minute), one log line per API request (path only — query strings can
+   carry seat tokens and are never logged), `handleError` logging for
+   unhandled errors.
+3. **Ops baseline**: new unauthenticated `/api/health` probe (games per
+   status, DB file size, open SSE streams — aggregates only) wired to a Fly
+   HTTP check in `fly.toml`; the 30-day cleanup scheduler logs failures instead
+   of swallowing them; SQLite runs in WAL mode with a busy timeout.
+4. **Abuse caps**: SSE streams capped at 8 subscribers per game; unbounded
+   game-creation growth is bounded by the rate limit. Note: abandoned
+   lobby/active games are still kept indefinitely (MULTIPLAYER_PLAN.md §9),
+   and the seat token still travels in the `/events` + `/join/status` URLs
+   (EventSource limitation; one-time tickets noted as a follow-up).
+
+**Testing status:** 104 unit tests — the 94 existing ones plus repository
+specs (auth failures, rollback on guard errors, event ordering, concurrent
+mutations) and rate-limiter specs; check/lint clean.
+
+## What was done in the session before (online 2-player mode, phases 1–4)
 
 The big iteration: two players play together, each on their own phone, with the
 server as the source of truth. The backend lives **in this project** (SvelteKit
@@ -68,7 +102,7 @@ logic with colocated specs); lint/check clean; API smoke tests walked the full f
 all passed. The interactive browser walkthrough on two phones is the outstanding
 step before release.
 
-## What was done in the previous session (v0.4.0 / v0.4.1)
+## What was done in earlier sessions (v0.4.0 / v0.4.1)
 
 1. **v0.4.0 — two-player hot-seat mode**: `TwoPlayerMissionProgress` with
    per-player objectives, per-player secret schemes (`schemeRevealed`, "Hidden" for

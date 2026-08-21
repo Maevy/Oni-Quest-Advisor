@@ -91,7 +91,8 @@ src/
   lib/
     components/    → presentation: reusable UI pieces (props in, callbacks out)
     stores/        → application/state layer (class-based singletons)
-    server/        → server-only: SQLite persistence, SSE, auth (online mode)
+    server/        → server-only: SQLite persistence, SSE, auth, rate limiting
+                      (online mode)
     domain/         → domain: types + pure logic functions (shared client/server)
     data/            → infrastructure: content loading + localStorage/API wrappers
 ```
@@ -128,9 +129,12 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `MissionDetail` or `MissionDetailTwoPlayer` by `navigationStore.gameMode`) plus the
   online screens (`online-create` → `online-join` → `online-game`). It also resumes a
   stored online seat on mount. `api/games/**/+server.ts` are the online-mode
-  endpoints (thin handlers over `lib/server`), and `join/[code]/` is the invite-link
-  entry point. No business logic, no direct `fetch`/`localStorage`, no new type
-  definitions. `+layout.svelte` renders the fixed background and the site-wide footer
+  endpoints (thin handlers over `lib/server`), `api/health/` is the
+  unauthenticated ops probe, and `join/[code]/` is the invite-link entry point.
+  No business logic, no direct `fetch`/`localStorage`, no new type definitions.
+  Cross-cutting API concerns (body cap, rate limits, request logging) live in
+  `src/hooks.server.ts`. `+layout.svelte` renders the fixed background and the
+  site-wide footer
   (fan-project disclaimer + app version — `__APP_VERSION__`, injected by
   `vite.config.ts` from `package.json`; bump the version there for releases).
 - `components` are presentational: `$props()` in, callbacks up. Avoid importing

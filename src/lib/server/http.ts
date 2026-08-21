@@ -1,16 +1,10 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { seatForTokenHash, type OnlineGameState, type PlayerKey } from '$lib/domain';
+import { ApiError } from './errors';
 import { getGame } from './gameRepository';
 import { hashToken } from './ids';
 
-export class ApiError extends Error {
-	constructor(
-		public status: number,
-		message: string
-	) {
-		super(message);
-	}
-}
+export { ApiError } from './errors';
 
 export function bearerToken(request: Request): string | null {
 	const header = request.headers.get('authorization');
@@ -32,16 +26,6 @@ export async function requireSeat(
 	const seat = seatForTokenHash(game, hashToken(token));
 	if (!seat) throw new ApiError(401, 'Invalid seat token');
 	return { game, seat };
-}
-
-/** The creator (seat player1) is the leader for the whole game. */
-export async function requireLeader(
-	id: string,
-	token: string | null
-): Promise<{ game: OnlineGameState }> {
-	const { game, seat } = await requireSeat(id, token);
-	if (seat !== 'player1') throw new ApiError(403, 'Only the game leader may do this');
-	return { game };
 }
 
 type ApiContext = { params: { id: string }; request: Request };

@@ -25,9 +25,14 @@ const SCHEMA = [
 
 let ready: Promise<Client> | null = null;
 
-function databaseUrl(): string {
+/** Absolute path of the SQLite file (without creating the directory). */
+export function dbFilePath(): string {
 	const dataDir = process.env.DATA_DIR ?? '.data';
-	const file = resolve(dataDir, 'oni-quest.db');
+	return resolve(dataDir, 'oni-quest.db');
+}
+
+function databaseUrl(): string {
+	const file = dbFilePath();
 	mkdirSync(dirname(file), { recursive: true });
 	return pathToFileURL(file).href;
 }
@@ -37,6 +42,11 @@ export function getDb(): Promise<Client> {
 	if (!ready) {
 		ready = (async () => {
 			const client = createClient({ url: databaseUrl() });
+			// WAL keeps state reads (every SSE-triggered refetch) from blocking
+			// behind write transactions; busy_timeout waits instead of failing
+			// when a write transaction is briefly held.
+			await client.execute('PRAGMA journal_mode = WAL');
+			await client.execute('PRAGMA busy_timeout = 5000');
 			await client.batch(SCHEMA);
 			startCleanupSchedule(client);
 			return client;

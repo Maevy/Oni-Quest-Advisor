@@ -1,24 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { setSeatSchemeChecked } from '$lib/domain';
 import { getSchemes } from '$lib/server/content';
-import { ApiError, api, bearerToken, requireSeat } from '$lib/server/http';
-import { updateGame } from '$lib/server/gameRepository';
+import { ApiError, api, bearerToken } from '$lib/server/http';
+import { mutateAsSeat } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
 
 /** Owner-only scheme-box toggle during the Scoring phase; boxes unlock only once the scheme is revealed. */
 export const POST = api(async ({ params, request }) => {
-	const { game, seat } = await requireSeat(params.id, bearerToken(request));
-	if (game.status !== 'active' || game.phase !== 'scoring') {
-		throw new ApiError(409, 'Scheme boxes are locked outside the Scoring phase');
-	}
-	const chosen = game[seat]?.progress.scheme;
-	if (!chosen) throw new ApiError(409, 'No scheme chosen');
-	if (!game[seat]?.progress.schemeRevealed) {
-		throw new ApiError(409, 'Reveal your scheme to score its boxes');
-	}
-	const card = getSchemes().find((c) => c.id === chosen.schemeId);
-	if (!card) throw new ApiError(500, 'Scheme content missing');
-
 	const body: unknown = await request.json().catch(() => null);
 	const checkedIncrements =
 		typeof body === 'object' && body !== null && 'checkedIncrements' in body
@@ -26,11 +14,27 @@ export const POST = api(async ({ params, request }) => {
 			: NaN;
 	if (!Number.isFinite(checkedIncrements)) throw new ApiError(400, 'Invalid checkedIncrements');
 
-	const next = setSeatSchemeChecked(game, seat, checkedIncrements, card.maxIncrements);
-	await updateGame(next, {
-		type: 'scheme-box-toggled',
-		actor: seat,
-		payload: { checkedIncrements: next[seat]!.progress.scheme?.checkedIncrements ?? 0 }
+	await mutateAsSeat(params.id, bearerToken(request), (game, seat) => {
+		if (game.status !== 'active' || game.phase !== 'scoring') {
+			throw new ApiError(409, 'Scheme boxes are locked outside the Scoring phase');
+		}
+		const chosen = game[seat]?.progress.scheme;
+		if (!chosen) throw new ApiError(409, 'No scheme chosen');
+		if (!game[seat]?.progress.schemeRevealed) {
+			throw new ApiError(409, 'Reveal your scheme to score its boxes');
+		}
+		const card = getSchemes().find((c) => c.id === chosen.schemeId);
+		if (!card) throw new ApiError(500, 'Scheme content missing');
+
+		const next = setSeatSchemeChecked(game, seat, checkedIncrements, card.maxIncrements);
+		return {
+			next,
+			events: {
+				type: 'scheme-box-toggled',
+				actor: seat,
+				payload: { checkedIncrements: next[seat]!.progress.scheme?.checkedIncrements ?? 0 }
+			}
+		};
 	});
 	notifyGameChanged(params.id, 'scheme-box-toggled');
 	return json({ ok: true });

@@ -26,9 +26,9 @@ export async function cleanupStaleGames(db: Client): Promise<number> {
 
 /** Runs cleanup once on startup, then daily. Failures never take the server down. */
 export function startCleanupSchedule(db: Client): void {
-	void cleanupStaleGames(db).catch(() => {});
+	void cleanupStaleGames(db).catch((error) => console.error('Game cleanup failed', error));
 	const timer = setInterval(() => {
-		void cleanupStaleGames(db).catch(() => {});
+		void cleanupStaleGames(db).catch((error) => console.error('Game cleanup failed', error));
 	}, CLEANUP_INTERVAL_MS);
 	timer.unref();
 }

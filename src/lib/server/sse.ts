@@ -5,6 +5,18 @@ type Sender = (frame: string) => void;
 /** In-process channel registry, keyed by game id. One Node process = one registry. */
 const channels = new Map<string, Set<Sender>>();
 
+/** How many SSE streams are currently attached to a game (0 when none). */
+export function subscriberCount(gameId: string): number {
+	return channels.get(gameId)?.size ?? 0;
+}
+
+/** Total number of open SSE streams across all games (operational probe). */
+export function openStreamCount(): number {
+	let total = 0;
+	for (const channel of channels.values()) total += channel.size;
+	return total;
+}
+
 /**
  * SSE events are lightweight change notifications — clients refetch the full
  * (visibility-filtered) state when they receive one, so no replay logic is needed.

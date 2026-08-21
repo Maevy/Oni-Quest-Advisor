@@ -1,15 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { canEditSetup, setSeatDraft, type SchemeDraft } from '$lib/domain';
 import { getFactions } from '$lib/server/content';
-import { ApiError, api, bearerToken, requireSeat } from '$lib/server/http';
-import { updateGame } from '$lib/server/gameRepository';
+import { ApiError, api, bearerToken } from '$lib/server/http';
+import { mutateAsSeat } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
 
 /** Sets the seat's faction and/or intelligence draft. */
 export const POST = api(async ({ params, request }) => {
-	const { game, seat } = await requireSeat(params.id, bearerToken(request));
-	if (!canEditSetup(game)) throw new ApiError(409, 'Setup is locked');
-
 	const body: unknown = await request.json().catch(() => null);
 	const payload =
 		typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
@@ -41,8 +38,13 @@ export const POST = api(async ({ params, request }) => {
 		}
 	}
 
-	const next = setSeatDraft(game, seat, draft);
-	await updateGame(next, { type: 'faction-drafted', actor: seat, payload: draft });
+	await mutateAsSeat(params.id, bearerToken(request), (game, seat) => {
+		if (!canEditSetup(game)) throw new ApiError(409, 'Setup is locked');
+		return {
+			next: setSeatDraft(game, seat, draft),
+			events: { type: 'faction-drafted', actor: seat, payload: draft }
+		};
+	});
 	notifyGameChanged(params.id, 'faction-drafted');
 	return json({ ok: true });
 });
