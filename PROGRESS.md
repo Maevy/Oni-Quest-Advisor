@@ -204,11 +204,17 @@ mode the server advances rounds via the phase engine (`lib/domain/online.ts`).
 - Fly app: `oni-quest-advisor`, region `fra`, https://oni-quest-advisor.fly.dev/
 - `min_machines_running = 0` in `fly.toml` — machines stop when idle and cold-start
   on the next request. Online mode is built around this: state lives in SQLite,
-  phones refetch + resubscribe SSE on wake.
-- **Online mode requires the volume**: `fly.toml` mounts `oni_quest_data` at
-  `/data` (`DATA_DIR=/data`). Before the first deploy containing the online mode,
-  run `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` — the
-  deploy fails if the volume is missing.
+  phones refetch + resubscribe SSE on wake. Measured: ~9 s cold start right after
+  a deploy, ~1–2 s for later auto-stop wakes.
+- **The volume exists since v0.5.0**: `fly.toml` mounts `oni_quest_data` at
+  `/data` (`DATA_DIR=/data`); the 1 GB volume (fra, encrypted, scheduled
+  snapshots) was created 2026-08-21. A fresh app clone would need
+  `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` before its
+  first deploy.
+- **Exactly one machine**: the architecture (single SQLite file + in-process SSE
+  registry + mutation queue) cannot run on two machines — their databases would
+  diverge. The legacy second machine was destroyed during the v0.5.0 deploy;
+  after any manual scaling, check `fly machines list` and keep it at one.
 - To redeploy: `fly deploy` from the project root. Needs either `fly auth login` or
   `FLY_API_TOKEN` set in the environment.
 
