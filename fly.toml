@@ -24,14 +24,14 @@ primary_region = "fra"
   auto_start_machines = true
   min_machines_running = 0
 
-  # Probes /api/health on running machines (DB reachable, aggregates report).
-  # Health checks do not auto-start a stopped machine — requests still do.
-  [http_service.checks]
-    grace_period = "10s"
-    interval = "1m"
-    method = "GET"
-    path = "/api/health"
-    timeout = "5s"
+# Probes /api/health on running machines (DB reachable, aggregates report).
+# Health checks do not auto-start a stopped machine — requests still do.
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "1m"
+  method = "GET"
+  path = "/api/health"
+  timeout = "5s"
 
 [[vm]]
   memory = "256mb"

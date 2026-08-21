@@ -191,8 +191,8 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.4.1**; the online 2-player mode
-  (phases 1–4) lives on `develop`, unreleased and untested in production.
+  and push branch + tag. Current release: **v0.5.0** — the online 2-player mode
+  (phases 1–4) plus a cross-cutting hardening pass, deployed to Fly.io.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
   entry in `fly.toml` expects it; the deploy fails without it).

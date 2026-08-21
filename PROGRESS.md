@@ -6,14 +6,15 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.4.1** (tag on `main`). Day-to-day work happens on `develop`,
-  pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the working branch is
-  `develop`, not `main`).
-- `develop` carries the **online 2-player mode** (phases 1–4) **plus a
-  cross-cutting hardening pass** (integrity, security, operability — both
-  summarized below): feature-complete and verified locally, **not yet released
-  or deployed**. Deploying it requires creating the Fly volume first:
-  `fly volumes create oni_quest_data -a oni-quest-advisor --size 1`.
+- Latest release: **v0.5.0** (tag on `main`) — the online 2-player mode
+  (phases 1–4) plus the cross-cutting hardening pass (integrity, security,
+  operability — both summarized below), deployed to Fly.io. Day-to-day work
+  happens on `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`
+  (note the working branch is `develop`, not `main`).
+- The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
+  v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
+  would have to create the volume first:
+  `fly volumes create oni_quest_data -a oni-quest-advisor --size 1`.)
 - The planning basis for the online mode lives in `MULTIPLAYER_PLAN.md` at the
   project root — **gitignored, local-only, never pushed**. It holds the full player
   journey spec, the phase/state model, the phasing table and the decisions log.
