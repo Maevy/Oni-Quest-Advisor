@@ -11,6 +11,11 @@ primary_region = "fra"
   PORT = "3000"
   ORIGIN = "https://oni-quest-advisor.fly.dev"
   DATA_DIR = "/data"
+  # Without this, getClientAddress() returns the Fly proxy's internal IP for
+  # every player, keying the rate limiter on one shared bucket. adapter-node
+  # reads the rightmost x-forwarded-for entry (XFF_DEPTH=1) — the one Fly's
+  # edge appends, i.e. the real client IP.
+  ADDRESS_HEADER = "x-forwarded-for"
 
 [http_service]
   internal_port = 3000

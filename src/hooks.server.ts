@@ -17,7 +17,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 			return json({ error: 'Payload too large' }, { status: 413 });
 		}
 
-		const ip = event.getClientAddress();
+		let ip = 'unknown';
+		try {
+			ip = event.getClientAddress();
+		} catch {
+			// ADDRESS_HEADER set but absent (e.g. direct internal request) —
+			// all such traffic shares one bucket, the conservative direction.
+		}
 		const allowed =
 			event.url.pathname === '/api/games'
 				? checkRateLimit(`create:${ip}`, GAME_CREATION_LIMIT_PER_HOUR, 60 * 60 * 1000)
