@@ -133,8 +133,14 @@
 		onRequestJoin={(nickname) =>
 			onlineGameStore.requestJoin(navigationStore.onlineJoinCode ?? '', nickname)}
 		onPollPending={() => onlineGameStore.pollPendingJoin()}
-		onAccepted={() => navigationStore.enterOnlineGame()}
-		onReturn={() => navigationStore.leaveOnline()}
+		onAccepted={() => {
+			onlineGameStore.completePendingJoin();
+			navigationStore.enterOnlineGame();
+		}}
+		onReturn={() => {
+			onlineGameStore.cancelPendingJoin();
+			navigationStore.leaveOnline();
+		}}
 	/>
 {:else if navigationStore.screen === 'online-game' && onlineGameStore.view}
 	{#if onlineGameStore.view.status === 'active' && onlineMission}

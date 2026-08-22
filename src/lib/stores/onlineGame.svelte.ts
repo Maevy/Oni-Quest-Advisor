@@ -91,7 +91,12 @@ class OnlineGameStore {
 		this.pendingJoin = { gameId, nickname, token };
 	}
 
-	/** Polls the join request; when accepted, takes the seat and loads the game. */
+	/**
+	 * Polls the join request; when accepted, takes the seat and loads the game.
+	 * The attempt stays pending until the page calls `completePendingJoin()` —
+	 * clearing it earlier would tear down the join screen's polling effect
+	 * before it can navigate into the game.
+	 */
 	async pollPendingJoin(): Promise<JoinStatus> {
 		const attempt = this.pendingJoin;
 		if (!attempt) return 'pending';
@@ -105,12 +110,16 @@ class OnlineGameStore {
 		if (status === 'accepted') {
 			this.session = { gameId: attempt.gameId, seat: 'player2', token: attempt.token };
 			saveOnlineSession(this.session);
-			this.pendingJoin = null;
 			this.error = null;
 			await this.refreshState();
 			this.subscribeToEvents();
 		}
 		return status;
+	}
+
+	/** Clears a successful join attempt once the page has transitioned into the game. */
+	completePendingJoin(): void {
+		this.pendingJoin = null;
 	}
 
 	cancelPendingJoin(): void {
