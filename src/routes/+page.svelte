@@ -16,6 +16,7 @@
 	import MissionDetailTwoPlayer from '$lib/components/MissionDetailTwoPlayer.svelte';
 	import OnlineCreate from '$lib/components/OnlineCreate.svelte';
 	import OnlineGameView from '$lib/components/OnlineGameView.svelte';
+	import OnlineIntroNotice from '$lib/components/OnlineIntroNotice.svelte';
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
@@ -111,6 +112,13 @@
 	);
 	let isTwoPlayer = $derived(navigationStore.gameMode === 'two-player');
 </script>
+
+{#if navigationStore.showOnlineIntro}
+	<OnlineIntroNotice
+		onConfirm={() => navigationStore.acceptOnlineIntro()}
+		onCancel={() => navigationStore.cancelOnlineIntro()}
+	/>
+{/if}
 
 {#if navigationStore.screen === 'game-mode'}
 	<GameModeSelect

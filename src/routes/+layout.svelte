@@ -1,9 +1,16 @@
 <script lang="ts">
 	import './layout.css';
+	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import background from '$lib/assets/OniQuestAdvisorBackgroundv3.jpg';
+	import PrivacyNotice from '$lib/components/PrivacyNotice.svelte';
+	import { navigationStore } from '$lib/stores';
 
 	let { children } = $props();
+
+	onMount(() => {
+		navigationStore.initNotices();
+	});
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
@@ -24,3 +31,7 @@
 		<span class="mt-1 block">v{__APP_VERSION__}</span>
 	</footer>
 </div>
+
+{#if navigationStore.showPrivacyNotice}
+	<PrivacyNotice onDismiss={() => navigationStore.dismissPrivacyNotice()} />
+{/if}

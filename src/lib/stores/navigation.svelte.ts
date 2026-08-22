@@ -1,4 +1,10 @@
 import * as domain from '$lib/domain';
+import {
+	acknowledgePrivacyNotice,
+	isOnlineIntroSeen,
+	isPrivacyNoticeAcknowledged,
+	markOnlineIntroSeen
+} from '$lib/data/notices';
 import { contentStore } from './content.svelte';
 import { missionProgressStore } from './missionProgress.svelte';
 import { twoPlayerProgressStore } from './twoPlayerProgress.svelte';
@@ -19,6 +25,10 @@ class NavigationStore {
 	gameMode = $state<domain.GameMode>('solo');
 	/** Game code from an invite link, consumed by the online-join screen. */
 	onlineJoinCode = $state<string | null>(null);
+	/** One-time local-storage/privacy notice, dismissed permanently per device. */
+	showPrivacyNotice = $state(false);
+	/** One-time heads-up shown before first entering the experimental online mode. */
+	showOnlineIntro = $state(false);
 
 	selectSoloMode(): void {
 		this.gameMode = 'solo';
@@ -30,8 +40,32 @@ class NavigationStore {
 		this.screen = 'season-select';
 	}
 
+	/** Call once on app start (browser only) to surface the privacy notice if unseen. */
+	initNotices(): void {
+		this.showPrivacyNotice = !isPrivacyNoticeAcknowledged();
+	}
+
+	dismissPrivacyNotice(): void {
+		acknowledgePrivacyNotice();
+		this.showPrivacyNotice = false;
+	}
+
 	selectOnlineMode(): void {
+		if (!isOnlineIntroSeen()) {
+			this.showOnlineIntro = true;
+			return;
+		}
 		this.screen = 'online-create';
+	}
+
+	acceptOnlineIntro(): void {
+		markOnlineIntroSeen();
+		this.showOnlineIntro = false;
+		this.screen = 'online-create';
+	}
+
+	cancelOnlineIntro(): void {
+		this.showOnlineIntro = false;
 	}
 
 	prepareOnlineJoin(code: string): void {
