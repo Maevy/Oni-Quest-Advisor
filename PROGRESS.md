@@ -6,11 +6,13 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.5.0** (tag on `main`) — the online 2-player mode
-  (phases 1–4) plus the cross-cutting hardening pass (integrity, security,
-  operability — both summarized below), deployed to Fly.io. Day-to-day work
-  happens on `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`
-  (note the working branch is `develop`, not `main`).
+- Latest release: **v0.5.1** (tag on `main`) — v0.5.0 (online 2-player mode,
+  phases 1–4, plus the cross-cutting hardening pass — both summarized below)
+  plus the player-feedback round summarized further down (join-accept fix,
+  official artwork, neon border, one-time notices, LF pin), deployed to Fly.io.
+  Day-to-day work happens on `develop`, pushed to
+  `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the working branch is
+  `develop`, not `main`).
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
   v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
   would have to create the volume first:
@@ -21,8 +23,6 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - Missions currently in the app (`src/lib/data/content/missions/`): Treasure Hunt,
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
-- `develop` is deployed ahead of the v0.5.0 tag (player-feedback round below) —
-  the next release tag will cover it.
 
 ## What was done in the last session (player-feedback round after v0.5.0)
 
@@ -44,7 +44,14 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
    button on the mode-select screen.
 4. **`.gitattributes`** (`* text=auto eol=lf`, `*.png`/`*.jpg` binary) ends the
    Windows `core.autocrlf` status noise — `git status` is clean again.
-5. Pushed to `develop` and deployed to Fly (untagged, see "Where things stand").
+5. **Privacy notice** (EU ePrivacy/GDPR): one-time bottom banner explaining that
+   the app stores game data in browser local storage (similar to cookies), never
+   stores personal data and uses no tracking; the dismissal persists per device
+   (`data/notices.ts`, `PrivacyNotice.svelte`, wired via `navigationStore`).
+6. **Online intro notice**: one-time modal the first time "Online 2 Player Game"
+   is pressed — experimental-feature heads-up; "Continue" proceeds and persists,
+   "Back" returns to the mode select (`OnlineIntroNotice.svelte`).
+7. Released as **v0.5.1** and deployed to Fly.
 
 ## What was done in the session before (online-mode hardening: integrity, security, ops)
 
