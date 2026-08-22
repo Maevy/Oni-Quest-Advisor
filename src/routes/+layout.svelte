@@ -1,7 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import background from '$lib/assets/oniquestCompanion_background.jpg';
+	import background from '$lib/assets/OniQuestAdvisorBackgroundv3.jpg';
 
 	let { children } = $props();
 </script>
@@ -17,6 +17,10 @@
 	<div class="flex-1">{@render children()}</div>
 	<footer class="px-4 pt-6 pb-3 text-center text-[10px] leading-relaxed text-slate-500">
 		Oni Quest Advisor is a pure fan project and not affiliated in any kind with FreeCompany d.o.o.
+		<span class="mt-1 block">
+			Artwork for this fan project has been provided by Freecompany d.o.o. under a free license for
+			use in connection with the project.
+		</span>
 		<span class="mt-1 block">v{__APP_VERSION__}</span>
 	</footer>
 </div>
