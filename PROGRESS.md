@@ -21,8 +21,32 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - Missions currently in the app (`src/lib/data/content/missions/`): Treasure Hunt,
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
+- `develop` is deployed ahead of the v0.5.0 tag (player-feedback round below) —
+  the next release tag will cover it.
 
-## What was done in the last session (online-mode hardening: integrity, security, ops)
+## What was done in the last session (player-feedback round after v0.5.0)
+
+1. **Join-accept race fixed** (`onlineGame.svelte.ts` + `+page.svelte`): the joining
+   phone's poll cleared `pendingJoin` the moment the leader accepted — before the
+   game-state fetch resolved — which tore down `OnlineJoin`'s polling `$effect`
+   (its `cancelled` guard) before `onAccepted()` could navigate into the game.
+   Players sat on the join screen until a reload (which resumed via the
+   already-saved seat). The attempt now stays pending until the page calls the new
+   `completePendingJoin()` after transitioning; `onReturn` cancels a pending
+   attempt (`cancelPendingJoin()` had been dead code).
+2. **Official artwork**: background swapped to the Eldfall Chronicles key art the
+   game company provided (`OniQuestAdvisorBackgroundv3.jpg`, old background
+   deleted); the footer gained the agreed artwork-credit line for Freecompany
+   d.o.o.
+3. **Neon border** for the headline feature: `.neon-border` utility in
+   `layout.css` (rotating conic-gradient beam masked to the border ring, soft
+   glow, `prefers-reduced-motion` aware), applied to the "Online 2 Player Game"
+   button on the mode-select screen.
+4. **`.gitattributes`** (`* text=auto eol=lf`, `*.png`/`*.jpg` binary) ends the
+   Windows `core.autocrlf` status noise — `git status` is clean again.
+5. Pushed to `develop` and deployed to Fly (untagged, see "Where things stand").
+
+## What was done in the session before (online-mode hardening: integrity, security, ops)
 
 Cross-cutting audit of the phase 1–4 backend, then fixes — everything below
 lives on `develop` together with the online mode itself:
@@ -55,7 +79,7 @@ lives on `develop` together with the online mode itself:
 specs (auth failures, rollback on guard errors, event ordering, concurrent
 mutations) and rate-limiter specs; check/lint clean.
 
-## What was done in the session before (online 2-player mode, phases 1–4)
+## What was done in earlier sessions (online 2-player mode, phases 1–4)
 
 The big iteration: two players play together, each on their own phone, with the
 server as the source of truth. The backend lives **in this project** (SvelteKit
