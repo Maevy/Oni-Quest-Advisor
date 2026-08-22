@@ -45,7 +45,7 @@
 			</button>
 			<button
 				type="button"
-				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-emerald-100 backdrop-blur transition hover:bg-emerald-500/10 active:bg-emerald-500/20"
+				class="neon-border rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-emerald-100 backdrop-blur transition hover:bg-emerald-500/10 active:bg-emerald-500/20"
 				onclick={onOnlineSelect}
 			>
 				Online 2 Player Game

@@ -6,3 +6,56 @@
 		@apply bg-slate-950 text-slate-100;
 	}
 }
+
+@property --neon-angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 0deg;
+}
+
+@layer components {
+	/* Rotating neon border: a bright beam travels once around the element's border. */
+	.neon-border {
+		position: relative;
+	}
+
+	.neon-border::after {
+		content: '';
+		position: absolute;
+		inset: -2px;
+		border-radius: inherit;
+		padding: 2px;
+		background: conic-gradient(
+			from var(--neon-angle),
+			transparent 0%,
+			transparent 70%,
+			#6ee7b7 80%,
+			#ecfdf5 85%,
+			#6ee7b7 90%,
+			transparent 100%
+		);
+		-webkit-mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		mask-composite: exclude;
+		filter: drop-shadow(0 0 6px rgb(110 231 183 / 0.7));
+		pointer-events: none;
+		animation: neon-sweep 3.2s linear infinite;
+	}
+}
+
+@keyframes neon-sweep {
+	to {
+		--neon-angle: 360deg;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.neon-border::after {
+		animation: none;
+	}
+}
