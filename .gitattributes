@@ -1,0 +1,6 @@
+# Enforce LF checkouts on every machine, overriding local core.autocrlf.
+* text=auto eol=lf
+
+# Binary assets must never be EOL-normalized.
+*.png binary
+*.jpg binary
