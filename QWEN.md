@@ -109,7 +109,9 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `localStorage` under the `oni-quest-advisor:mission-progress:` prefix (solo) and
   `oni-quest-advisor:2p-progress:` prefix (two-player), keyed by mission ID. Online
   mode adds the remote seam: `onlineApi.ts` (fetch wrapper for `/api/games/...`) and
-  `onlineSession.ts` (seat session under `oni-quest-advisor:online-session`).
+  `onlineSession.ts` (seat session under `oni-quest-advisor:online-session`), plus
+  `notices.ts` (one-time acknowledgements for the privacy notice and the online
+  intro, under `oni-quest-advisor:notice:`).
 - `stores` are classes in `.svelte.ts` files (`contentStore`, `navigationStore`,
   `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`), exported as
   singletons from `stores/index.ts`. They orchestrate — decisions live in `domain`,
@@ -121,8 +123,9 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   state locally. Persisted progress is loaded by merging it onto
   `domain.createEmptyProgress()` / `domain.createEmptyTwoPlayerProgress()`, so fields
   added later get their defaults — keep this pattern when extending either progress
-  type. `navigationStore` tracks `gameMode` and routes `selectMission()` to the
-  correct progress store.
+  type. `navigationStore` tracks `gameMode`, routes `selectMission()` to the correct
+  progress store, and gates the one-time notices (privacy banner on first visit,
+  online intro before first entering the online mode).
 - `routes` (`+page.svelte`) switches screens on `navigationStore.screen` and wires
   store state/methods to component props/callbacks: the local flow
   (`game-mode` → `season-select` → `mission-select` → `mission-detail`, rendering
@@ -133,10 +136,11 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   unauthenticated ops probe, and `join/[code]/` is the invite-link entry point.
   No business logic, no direct `fetch`/`localStorage`, no new type definitions.
   Cross-cutting API concerns (body cap, rate limits, request logging) live in
-  `src/hooks.server.ts`. `+layout.svelte` renders the fixed background and the
-  site-wide footer
-  (fan-project disclaimer + app version — `__APP_VERSION__`, injected by
-  `vite.config.ts` from `package.json`; bump the version there for releases).
+  `src/hooks.server.ts`. `+layout.svelte` renders the fixed background (official
+  Eldfall Chronicles key art), the site-wide footer (fan-project disclaimer +
+  artwork credit for Freecompany d.o.o. + app version — `__APP_VERSION__`, injected
+  by `vite.config.ts` from `package.json`; bump the version there for releases) and
+  the one-time `PrivacyNotice`.
 - `components` are presentational: `$props()` in, callbacks up. Avoid importing
   stores directly — the page wires them. Domain _types_ are fine for prop typing,
   domain _logic_ is not. Fixed-position overlays (e.g. the `CommandPanel` tab pinned
@@ -148,8 +152,9 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   (`DescriptionPanel`, `SetupPanel`, `MissionMap`, `QuestRulesPanel`, `Panel`,
   `IncrementBoxes`) unchanged. Online mode has its own set (`OnlineCreate`,
   `OnlineJoin`, `OnlineLobby`, `OnlineGameView`, `OnlineStats`, `OnlineSchemeSetup`,
-  `OnlineMissionView`, `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`),
-  also reusing the shared panels (collapsible there via `Panel`'s `collapsible` prop).
+  `OnlineMissionView`, `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`,
+  plus the one-time `OnlineIntroNotice` shown before first entry), also reusing the
+  shared panels (collapsible there via `Panel`'s `collapsible` prop).
 
 Each layer folder has its own `CLAUDE.md` with the specific rules for that layer —
 read it before adding files there.
@@ -166,15 +171,17 @@ read it before adding files there.
   cold, blueish; outlined buttons; translucent "frosted glass" panels (see
   `docs/technical-spec/01-visual-theme.md`). In 2-player mode, Player 1 uses the
   standard sky-blue accent and Player 2 uses orange (`border-orange-500/40`,
-  `text-orange-300`/`text-orange-400`).
+  `text-orange-300`/`text-orange-400`). The online-mode entry button carries a
+  rotating neon border (`.neon-border` utility in `layout.css`, reduced-motion
+  aware).
 - Prefer pure functions in `domain` over logic in components/stores/routes. Game
   rules (draw counts, clamping, VP math, unique draws) belong there, covered by a
   colocated `*.spec.ts`.
 - Formatting is Prettier: tabs, single quotes, no trailing commas, print width 100.
   Run `npm run format` rather than hand-formatting.
-- Repo files are committed with LF endings (Prettier enforces LF). On a Windows
-  checkout with `core.autocrlf=true`, `git status` can list many files whose
-  `git diff` is empty — trust the diff, not the status file count.
+- Repo files are committed with LF endings (Prettier enforces LF). `.gitattributes`
+  (`* text=auto eol=lf`, `*.png`/`*.jpg` binary) pins LF checkouts on every machine,
+  so `core.autocrlf=true` on Windows no longer produces phantom `git status` noise.
 
 ## Commands
 
@@ -191,8 +198,10 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.5.0** — the online 2-player mode
-  (phases 1–4) plus a cross-cutting hardening pass, deployed to Fly.io.
+  and push branch + tag. Current release: **v0.5.1** — v0.5.0 (online 2-player mode,
+  phases 1–4, plus the hardening pass) plus the player-feedback round (join-accept
+  fix, official artwork + footer credit, neon border, one-time privacy/online-intro
+  notices, LF pin), deployed to Fly.io.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
   entry in `fly.toml` expects it; the deploy fails without it).
