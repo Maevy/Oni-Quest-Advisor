@@ -1,0 +1,32 @@
+[
+	{
+		"id": "bladebrethren-elite",
+		"name": "Bladebrethren Elite",
+		"points": 23,
+		"limit": 1
+	},
+	{
+		"id": "night-temple-priestess",
+		"name": "Night-Temple Priestess",
+		"points": 21,
+		"limit": 1
+	},
+	{
+		"id": "nightshade",
+		"name": "Nightshade",
+		"points": 22,
+		"limit": 1
+	},
+	{
+		"id": "rangers-guild-hunter",
+		"name": "Rangers-Guild Hunter",
+		"points": 19,
+		"limit": 2
+	},
+	{
+		"id": "tharos",
+		"name": "Tharos, One-Eyed Wolf ",
+		"points": 28,
+		"limit": 1
+	}
+]

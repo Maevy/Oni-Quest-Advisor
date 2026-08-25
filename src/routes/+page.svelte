@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { getMissionsForSeason, getScoreableResults, getSeasons } from '$lib/domain';
 	import {
+		getMissionsForSeason,
+		getScoreableResults,
+		getSeasons,
+		resolveArmyEntries
+	} from '$lib/domain';
+	import {
+		armyBuilderStore,
 		contentStore,
 		missionProgressStore,
 		navigationStore,
@@ -10,6 +16,8 @@
 		twoPlayerProgressStore
 	} from '$lib/stores';
 	import GameModeSelect from '$lib/components/GameModeSelect.svelte';
+	import ArmyBuilderView from '$lib/components/ArmyBuilderView.svelte';
+	import ArmyFactionSelect from '$lib/components/ArmyFactionSelect.svelte';
 	import SeasonSelect from '$lib/components/SeasonSelect.svelte';
 	import MissionSelect from '$lib/components/MissionSelect.svelte';
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
@@ -111,6 +119,16 @@
 		selectedMission ? twoPlayerProgressStore.totalVP('player2', selectedMission, chosenCardP2) : 0
 	);
 	let isTwoPlayer = $derived(navigationStore.gameMode === 'two-player');
+
+	// Army builder derived values
+	let armyFaction = $derived(
+		armyBuilderStore.factionId
+			? (contentStore.armyFactions.find((faction) => faction.id === armyBuilderStore.factionId) ??
+					null)
+			: null
+	);
+	let armyRows = $derived(resolveArmyEntries(armyBuilderStore.entries, armyBuilderStore.units));
+	let armyCounts = $derived(Object.fromEntries(armyRows.map((row) => [row.unitId, row.count])));
 </script>
 
 {#if navigationStore.showOnlineIntro}
@@ -125,6 +143,28 @@
 		onSoloSelect={() => navigationStore.selectSoloMode()}
 		onTwoPlayerSelect={() => navigationStore.selectTwoPlayerMode()}
 		onOnlineSelect={() => navigationStore.selectOnlineMode()}
+		onArmyBuilderSelect={() => navigationStore.selectArmyBuilder()}
+	/>
+{:else if navigationStore.screen === 'army-faction-select'}
+	<ArmyFactionSelect
+		factions={contentStore.armyFactions}
+		onSelect={(factionId) => navigationStore.selectArmyFaction(factionId)}
+		onReturn={() => navigationStore.returnToGameMode()}
+	/>
+{:else if navigationStore.screen === 'army-builder' && armyFaction}
+	<ArmyBuilderView
+		faction={armyFaction}
+		units={armyBuilderStore.units}
+		{armyRows}
+		counts={armyCounts}
+		format={armyBuilderStore.format}
+		points={armyBuilderStore.points}
+		limit={armyBuilderStore.limit}
+		isOverLimit={armyBuilderStore.isOverLimit}
+		onReturn={() => navigationStore.leaveArmyBuilder()}
+		onSetFormat={(format) => armyBuilderStore.setFormat(format)}
+		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
+		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 	/>
 {:else if navigationStore.screen === 'online-create'}
 	<OnlineCreate

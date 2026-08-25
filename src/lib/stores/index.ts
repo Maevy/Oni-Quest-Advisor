@@ -3,3 +3,4 @@ export * from './navigation.svelte';
 export * from './missionProgress.svelte';
 export * from './twoPlayerProgress.svelte';
 export * from './onlineGame.svelte';
+export * from './armyBuilder.svelte';

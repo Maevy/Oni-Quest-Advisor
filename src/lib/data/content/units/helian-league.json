@@ -1,0 +1,44 @@
+[
+	{
+		"id": "anari",
+		"name": "Anari, Erudite Prodigy",
+		"points": 28,
+		"limit": 1
+	},
+	{
+		"id": "citadel-guard",
+		"name": "Citadel Guard",
+		"points": 18,
+		"limit": 2
+	},
+	{
+		"id": "expeditionary-hierophant",
+		"name": "Expeditionary Hierophant",
+		"points": 23,
+		"limit": 1
+	},
+	{
+		"id": "flameshaper",
+		"name": "Flameshaper",
+		"points": 15,
+		"limit": 3
+	},
+	{
+		"id": "flameweaver-errant",
+		"name": "Flameweaver Errant",
+		"points": 21,
+		"limit": 2
+	},
+	{
+		"id": "flameweaver-noble",
+		"name": "Flameweaver Noble",
+		"points": 21,
+		"limit": 2
+	},
+	{
+		"id": "paladin-of-the-order",
+		"name": "Paladin of the Order",
+		"points": 22,
+		"limit": 1
+	}
+]

@@ -1,0 +1,62 @@
+[
+	{
+		"id": "blue-rasetsu",
+		"name": "Blue Rasetsu",
+		"points": 37,
+		"limit": 1
+	},
+	{
+		"id": "blue-yaksha",
+		"name": "Blue Yaksha",
+		"points": 30,
+		"limit": 2
+	},
+	{
+		"id": "bonewalker",
+		"name": "Bonewalker, Tier I",
+		"points": 10,
+		"limit": 10
+	},
+	{
+		"id": "chiyohime",
+		"name": "Chiyohime",
+		"points": 45,
+		"limit": 1
+	},
+	{
+		"id": "forgotten-hero",
+		"name": "Forgotten Hero, Tier II",
+		"points": 20,
+		"limit": 2
+	},
+	{
+		"id": "oni-marauder",
+		"name": "Oni Marauder",
+		"points": 24,
+		"limit": 2
+	},
+	{
+		"id": "oni-pariah",
+		"name": "Oni Pariah",
+		"points": 40,
+		"limit": 1
+	},
+	{
+		"id": "red-rasetsu",
+		"name": "Red Rasetsu",
+		"points": 35,
+		"limit": 1
+	},
+	{
+		"id": "red-yaksha",
+		"name": "Red Yaksha",
+		"points": 30,
+		"limit": 2
+	},
+	{
+		"id": "vengeful-spirit",
+		"name": "Vengeful Spirit, Tier I",
+		"points": 10,
+		"limit": 10
+	}
+]

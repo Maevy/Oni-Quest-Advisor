@@ -1,0 +1,98 @@
+[
+	{
+		"id": "amazon-gladiatrix",
+		"name": "Amazon Gladiatrix",
+		"points": 32,
+		"limit": 2
+	},
+	{
+		"id": "eonian-runner",
+		"name": "Eonian Runner",
+		"points": 17,
+		"limit": 3
+	},
+	{
+		"id": "guildsworn-knight",
+		"name": "Guildsworn Knight",
+		"points": 30,
+		"limit": 1
+	},
+	{
+		"id": "helrin-expatriate",
+		"name": "Helrin Expatriate",
+		"points": 16,
+		"limit": 3
+	},
+	{
+		"id": "hired-blade",
+		"name": "Hired Blade",
+		"points": 17,
+		"limit": 2
+	},
+	{
+		"id": "kogetsu",
+		"name": "Kogetsu, Cursed Monk",
+		"points": 30,
+		"limit": 1
+	},
+	{
+		"id": "lupus-rex",
+		"name": "Lupus Rex",
+		"points": 5,
+		"limit": 2
+	},
+	{
+		"id": "musha-blademaster",
+		"name": "Musha Blademaster",
+		"points": 17,
+		"limit": 2
+	},
+	{
+		"id": "onitaoshi",
+		"name": "Onitaoshi",
+		"points": 21,
+		"limit": 2
+	},
+	{
+		"id": "renegade-rasetsu",
+		"name": "Renegade Rasetsu",
+		"points": 27,
+		"limit": 1
+	},
+	{
+		"id": "scholar-of-the-true-word",
+		"name": "Scholar of the True Word",
+		"points": 19,
+		"limit": 1
+	},
+	{
+		"id": "shieldbearer",
+		"name": "Shieldbearer",
+		"points": 18,
+		"limit": 4
+	},
+	{
+		"id": "slayer-dragon",
+		"name": "Slayer Dragoon",
+		"points": 17,
+		"limit": 2
+	},
+	{
+		"id": "taskmage-explorer",
+		"name": "Taskmage Explorer",
+		"points": 19,
+		"limit": 2
+	},
+	{
+		"id": "thenrin-swashbuckler",
+		"name": "Thenrin Swashbuckler",
+		"points": 16,
+		"limit": 2
+	},
+	{
+		"id": "tomoe",
+		"name": "Tomoe, Endless Rain",
+		"points": 28,
+		"limit": 1
+	}
+]

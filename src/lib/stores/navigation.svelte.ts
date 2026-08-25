@@ -5,12 +5,15 @@ import {
 	isPrivacyNoticeAcknowledged,
 	markOnlineIntroSeen
 } from '$lib/data/notices';
+import { armyBuilderStore } from './armyBuilder.svelte';
 import { contentStore } from './content.svelte';
 import { missionProgressStore } from './missionProgress.svelte';
 import { twoPlayerProgressStore } from './twoPlayerProgress.svelte';
 
 export type Screen =
 	| 'game-mode'
+	| 'army-faction-select'
+	| 'army-builder'
 	| 'season-select'
 	| 'mission-select'
 	| 'mission-detail'
@@ -87,6 +90,20 @@ class NavigationStore {
 		this.selectedSeason = null;
 		this.selectedMissionId = null;
 		this.gameMode = 'solo';
+	}
+
+	selectArmyBuilder(): void {
+		this.screen = 'army-faction-select';
+	}
+
+	selectArmyFaction(factionId: domain.ArmyFactionId): void {
+		armyBuilderStore.selectFaction(factionId);
+		this.screen = 'army-builder';
+	}
+
+	leaveArmyBuilder(): void {
+		armyBuilderStore.leave();
+		this.screen = 'game-mode';
 	}
 
 	selectSeason(season: string): void {

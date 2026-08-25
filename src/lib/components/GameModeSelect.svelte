@@ -6,9 +6,10 @@
 		onSoloSelect: () => void;
 		onTwoPlayerSelect: () => void;
 		onOnlineSelect: () => void;
+		onArmyBuilderSelect: () => void;
 	};
 
-	let { onSoloSelect, onTwoPlayerSelect, onOnlineSelect }: Props = $props();
+	let { onSoloSelect, onTwoPlayerSelect, onOnlineSelect, onArmyBuilderSelect }: Props = $props();
 </script>
 
 <div class="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 text-center">
@@ -49,6 +50,13 @@
 				onclick={onOnlineSelect}
 			>
 				Online 2 Player Game
+			</button>
+			<button
+				type="button"
+				class="rounded-xl border-2 border-violet-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-violet-100 backdrop-blur transition hover:bg-violet-500/10 active:bg-violet-500/20"
+				onclick={onArmyBuilderSelect}
+			>
+				Army Builder
 			</button>
 		</div>
 	</div>

@@ -1,0 +1,38 @@
+[
+	{
+		"id": "chanre",
+		"name": "Chanra, Goblin Shaman, Tier III",
+		"points": 28,
+		"limit": 1
+	},
+	{
+		"id": "goblin-brawlers",
+		"name": "Goblin Brawlers, Tier I",
+		"points": 8,
+		"limit": 10
+	},
+	{
+		"id": "goblin-shaman",
+		"name": "Goblin Shaman, Tier III",
+		"points": 24,
+		"limit": 1
+	},
+	{
+		"id": "goblin-skirmishers",
+		"name": "Goblin Skirmishers, Tier I",
+		"points": 9,
+		"limit": 10
+	},
+	{
+		"id": "goblin-warchief",
+		"name": "Goblin Warchief, Tier II",
+		"points": 22,
+		"limit": 2
+	},
+	{
+		"id": "troll-prowler",
+		"name": "Troll Prowler, Tier III",
+		"points": 24,
+		"limit": 2
+	}
+]

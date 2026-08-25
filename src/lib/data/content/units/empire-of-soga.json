@@ -1,0 +1,38 @@
+[
+	{
+		"id": "bushi-attendant",
+		"name": "Bushi Attendant",
+		"points": 13,
+		"limit": 4
+	},
+	{
+		"id": "clan-champion",
+		"name": "Clan Champion",
+		"points": 23,
+		"limit": 1
+	},
+	{
+		"id": "great-guard",
+		"name": "Great Guard",
+		"points": 23,
+		"limit": 1
+	},
+	{
+		"id": "kitsune-spellmaiden",
+		"name": "Kitsune Spellmaiden",
+		"points": 16,
+		"limit": 1
+	},
+	{
+		"id": "musha-bowman",
+		"name": "Musha Bowmaster",
+		"points": 19,
+		"limit": 2
+	},
+	{
+		"id": "seigen",
+		"name": "Seigen, of the Keshobarai",
+		"points": 28,
+		"limit": 1
+	}
+]

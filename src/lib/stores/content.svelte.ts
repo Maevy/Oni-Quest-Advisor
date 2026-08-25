@@ -1,9 +1,17 @@
-import { loadFactions, loadMissions, loadSchemes } from '$lib/data';
-import type { Faction, Mission, SchemeCard } from '$lib/domain';
+import {
+	loadArmyFactions,
+	loadArmyUnits,
+	loadFactions,
+	loadMissions,
+	loadSchemes
+} from '$lib/data';
+import type { ArmyFactionConfig, ArmyUnitContent, Faction, Mission, SchemeCard } from '$lib/domain';
 
 class ContentStore {
 	missions = $state<Mission[]>([]);
 	factions = $state<Faction[]>([]);
+	armyFactions = $state<ArmyFactionConfig[]>([]);
+	armyUnits = $state<ArmyUnitContent>({ factionUnits: {}, neutralUnits: [] });
 	schemes = $state<SchemeCard[]>([]);
 	loaded = $state(false);
 
@@ -11,6 +19,8 @@ class ContentStore {
 		if (this.loaded) return;
 		this.missions = loadMissions();
 		this.factions = loadFactions();
+		this.armyFactions = loadArmyFactions();
+		this.armyUnits = loadArmyUnits();
 		this.schemes = loadSchemes();
 		this.loaded = true;
 	}
