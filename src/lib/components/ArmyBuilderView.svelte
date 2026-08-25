@@ -33,6 +33,11 @@
 
 	let showArmy = $state(false);
 
+	// Swipe detection: a mostly-horizontal pointer gesture flips the panels.
+	const SWIPE_MIN_PX = 50;
+	let swipeStartX = 0;
+	let swipeStartY = 0;
+
 	function formatTabClasses(target: ArmyFormat): string {
 		return format === target ? 'bg-sky-500/20 text-sky-100' : 'text-slate-400';
 	}
@@ -75,7 +80,22 @@
 		</div>
 	</div>
 
-	<div class="relative min-h-0 flex-1 overflow-hidden">
+	<div
+		class="relative min-h-0 flex-1 overflow-hidden"
+		role="group"
+		aria-label="Army list panels"
+		onpointerdown={(e) => {
+			swipeStartX = e.clientX;
+			swipeStartY = e.clientY;
+		}}
+		onpointerup={(e) => {
+			const dx = e.clientX - swipeStartX;
+			const dy = e.clientY - swipeStartY;
+			if (Math.abs(dx) > SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy)) {
+				showArmy = dx < 0;
+			}
+		}}
+	>
 		<div
 			class={'flex h-full w-[200%] transition-transform duration-300 ease-in-out' +
 				(showArmy ? ' -translate-x-1/2' : '')}
@@ -104,15 +124,31 @@
 									</div>
 									<p class="text-xs text-slate-400">{unit.points} points</p>
 								</div>
-								<button
-									type="button"
-									disabled={(counts[unit.id] ?? 0) >= unit.limit}
-									aria-label={'Add ' + unit.name}
-									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-xl font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-									onclick={() => onAddUnit(unit.id)}
-								>
-									+
-								</button>
+								<div class="flex shrink-0 items-center gap-1.5">
+									<button
+										type="button"
+										disabled={(counts[unit.id] ?? 0) === 0}
+										aria-label={'Remove ' + unit.name}
+										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+										onclick={() => onRemoveUnit(unit.id)}
+									>
+										−
+									</button>
+									<span
+										class="min-w-5 text-center text-sm font-semibold text-slate-300 tabular-nums"
+									>
+										{counts[unit.id] ?? 0}
+									</span>
+									<button
+										type="button"
+										disabled={(counts[unit.id] ?? 0) >= unit.limit}
+										aria-label={'Add ' + unit.name}
+										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-xl font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+										onclick={() => onAddUnit(unit.id)}
+									>
+										+
+									</button>
+								</div>
 							</div>
 						{/each}
 					</div>
