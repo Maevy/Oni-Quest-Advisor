@@ -23,6 +23,42 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - Missions currently in the app (`src/lib/data/content/missions/`): Treasure Hunt,
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
+- Army builder feature is on `develop` (unreleased): faction select, producer unit
+  import (`scripts/importUnits.mjs`), unit cards, mounts.
+
+## What was done in the last session (abandoned-game retention + army builder)
+
+1. **Abandoned-game lifecycle** (`cleanup.ts`): retention windows — lobbies idle
+   7 days and mid-play games (rounds 1–4) idle 30 days are deleted; stale
+   **round-5** games are auto-finished server-side (existing `advanceToScoring` +
+   `finishGame`, `game-finished` event with actor `server` + `autoFinished`
+   payload flag) so a forgotten final click keeps its result for the future KPI
+   export; finished/closed retention extended 30 → 90 days as a bridge until
+   that export exists. Decisions logged in `MULTIPLAYER_PLAN.md` §9/§10.
+2. **Army builder** (new main-menu feature): faction select (7 factions, RAL
+   colors as border/text, faction logos, 3 per row) → builder view with
+   Standard/Tournament toggle (85/125 caps, green/red points badge), sliding
+   Available-Units/Your-Army panels (edge arrows + swipe), per-unit +/− stepper
+   with counts and copy limits.
+3. **Producer unit import pipeline**: `scripts/importUnits.mjs` transforms the
+   producer's Next.js dump (`data-import/units.json`, git-tracking undecided)
+   into our schema — per-faction `content/units/<faction>.json` + `neutral.json`
+   (NEUTRAL-tagged units available to every non-monster faction) + `mounts.json`.
+   57 recruitable units, 6 faction-less summons skipped. Portraits in
+   `assets/uniticons/<Faction>/` unified to 70×70, matched by normalized name
+   (Renegade Rasetsu borrows Red Rasetsu's portrait via alias); Vite inlines
+   them (< 4 KB each).
+4. **Unit card**: tapping a unit (either panel) opens a popup — portrait, name,
+   faction name, 11-column stat table (STA…M, − for null); closes on outside
+   click or Escape.
+5. **Mounts**: Lupus Rex moved out of the roster into `mounts.json`; the Slayer
+   Dragoon carries `mount: { unitId, points }` — army rows show the mount's icon
+   as a toggle (green ✓ / red ✕), points adjust live (rider + mount cost per
+   copy). Mount stats are split: `stats` override the rider's (non-null only),
+   `statChanges` add on top (derived from the source's + prefixes and negative
+   values); the unit card shows the mounted unit's effective stats.
+6. Tests 104 → 134. All on `develop`, unreleased; pushing and the
+   `data-import/units.json` track-or-ignore decision are pending.
 
 ## What was done in the last session (player-feedback round after v0.5.0)
 
