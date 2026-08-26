@@ -77,6 +77,15 @@ describe('resolveArmyEntries', () => {
 	it('skips entries whose unit no longer exists', () => {
 		expect(resolveArmyEntries([{ unitId: 'ghost', count: 1 }], UNITS)).toEqual([]);
 	});
+
+	it('carries the optional icon through for display', () => {
+		const units: ArmyUnitSpec[] = [
+			{ id: 'oni', name: 'Oni', points: 5, limit: 1, icon: 'oni.jpg' }
+		];
+		expect(resolveArmyEntries([{ unitId: 'oni', count: 1 }], units)).toEqual([
+			{ unitId: 'oni', name: 'Oni', unitPoints: 5, count: 1, totalPoints: 5, icon: 'oni.jpg' }
+		]);
+	});
 });
 
 describe('armyPoints', () => {

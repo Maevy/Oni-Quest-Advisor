@@ -29,6 +29,7 @@ export type ArmyUnitSpec = {
 	name: string;
 	points: number;
 	limit: number;
+	icon?: string;
 };
 
 /** One unit type in the current army plus how many copies were added. */
@@ -44,6 +45,7 @@ export type ArmyRosterRow = {
 	unitPoints: number;
 	count: number;
 	totalPoints: number;
+	icon?: string;
 };
 
 /** Adds one copy of a unit, creating the entry on first use; stops at the unit limit. */
@@ -82,7 +84,8 @@ export function resolveArmyEntries(entries: ArmyEntry[], units: ArmyUnitSpec[]):
 				name: unit.name,
 				unitPoints: unit.points,
 				count: entry.count,
-				totalPoints: unit.points * entry.count
+				totalPoints: unit.points * entry.count,
+				icon: unit.icon
 			}
 		];
 	});

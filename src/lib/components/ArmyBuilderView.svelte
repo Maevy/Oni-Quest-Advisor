@@ -113,6 +113,14 @@
 							<div
 								class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
 							>
+								{#if unit.icon}
+									<img
+										src={unit.icon}
+										alt=""
+										class="h-[70px] w-[70px] shrink-0 rounded-lg border-2 bg-slate-900/60 object-contain"
+										style="border-color: {faction.color}"
+									/>
+								{/if}
 								<div>
 									<div class="flex flex-wrap items-center gap-1.5">
 										<p class="font-medium text-slate-100">{unit.name}</p>
@@ -169,6 +177,14 @@
 								<div
 									class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
 								>
+									{#if row.icon}
+										<img
+											src={row.icon}
+											alt=""
+											class="h-[70px] w-[70px] shrink-0 rounded-lg border-2 bg-slate-900/60 object-contain"
+											style="border-color: {faction.color}"
+										/>
+									{/if}
 									<div>
 										<p class="font-medium text-slate-100">
 											{row.name} <span class="text-slate-400">×{row.count}</span>
