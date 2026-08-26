@@ -3,60 +3,190 @@
 		"id": "blue-rasetsu",
 		"name": "Blue Rasetsu",
 		"points": 37,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 3,
+			"SPD": 6,
+			"OFF": 13,
+			"DEF": 16,
+			"ACC": 13,
+			"INT": 15,
+			"AG": 13,
+			"T": 15,
+			"ARM": 3,
+			"HP": 4,
+			"M": 16
+		}
 	},
 	{
 		"id": "blue-yaksha",
 		"name": "Blue Yaksha",
 		"points": 30,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 3,
+			"SPD": 5,
+			"OFF": 15,
+			"DEF": 13,
+			"ACC": 10,
+			"INT": 12,
+			"AG": 14,
+			"T": 15,
+			"ARM": 3,
+			"HP": 4,
+			"M": 14
+		}
 	},
 	{
 		"id": "bonewalker",
 		"name": "Bonewalker, Tier I",
 		"points": 10,
-		"limit": 10
+		"limit": 10,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 10,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 6,
+			"AG": 8,
+			"T": 10,
+			"ARM": 2,
+			"HP": 1,
+			"M": 20
+		}
 	},
 	{
 		"id": "chiyohime",
 		"name": "Chiyohime",
 		"points": 45,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 3,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 12,
+			"ACC": 10,
+			"INT": 17,
+			"AG": 13,
+			"T": 15,
+			"ARM": 3,
+			"HP": 4,
+			"M": 16
+		}
 	},
 	{
 		"id": "forgotten-hero",
 		"name": "Forgotten Hero, Tier II",
 		"points": 20,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 14,
+			"ACC": 14,
+			"INT": 8,
+			"AG": 8,
+			"T": 13,
+			"ARM": 6,
+			"HP": 2,
+			"M": 20
+		}
 	},
 	{
 		"id": "oni-marauder",
 		"name": "Oni Marauder",
 		"points": 24,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 8,
+			"T": 15,
+			"ARM": 3,
+			"HP": 4,
+			"M": 14
+		}
 	},
 	{
 		"id": "oni-pariah",
 		"name": "Oni Pariah",
 		"points": 40,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 3,
+			"SPD": 5,
+			"OFF": 16,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 8,
+			"T": 17,
+			"ARM": 4,
+			"HP": 8,
+			"M": 18
+		}
 	},
 	{
 		"id": "red-rasetsu",
 		"name": "Red Rasetsu",
 		"points": 35,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 3,
+			"SPD": 6,
+			"OFF": 16,
+			"DEF": 13,
+			"ACC": 13,
+			"INT": 10,
+			"AG": 13,
+			"T": 15,
+			"ARM": 3,
+			"HP": 6,
+			"M": 16
+		}
 	},
 	{
 		"id": "red-yaksha",
 		"name": "Red Yaksha",
 		"points": 30,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 3,
+			"SPD": 5,
+			"OFF": 16,
+			"DEF": 12,
+			"ACC": 8,
+			"INT": 12,
+			"AG": 13,
+			"T": 15,
+			"ARM": 3,
+			"HP": 5,
+			"M": 14
+		}
 	},
 	{
 		"id": "vengeful-spirit",
 		"name": "Vengeful Spirit, Tier I",
 		"points": 10,
-		"limit": 10
+		"limit": 10,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 10,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 6,
+			"AG": 8,
+			"T": 10,
+			"ARM": 0,
+			"HP": 1,
+			"M": 20
+		}
 	}
 ]

@@ -127,7 +127,9 @@
 					null)
 			: null
 	);
-	let armyRows = $derived(resolveArmyEntries(armyBuilderStore.entries, armyBuilderStore.units));
+	let armyRows = $derived(
+		resolveArmyEntries(armyBuilderStore.entries, armyBuilderStore.units, armyBuilderStore.mounts)
+	);
 	let armyCounts = $derived(Object.fromEntries(armyRows.map((row) => [row.unitId, row.count])));
 </script>
 
@@ -165,6 +167,7 @@
 		onSetFormat={(format) => armyBuilderStore.setFormat(format)}
 		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
+		onToggleMount={(unitId) => armyBuilderStore.toggleMount(unitId)}
 	/>
 {:else if navigationStore.screen === 'online-create'}
 	<OnlineCreate

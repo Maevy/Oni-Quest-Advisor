@@ -3,42 +3,133 @@
 		"id": "academy-expeditioner",
 		"name": "Academy Expeditioner",
 		"points": 18,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 10,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 14,
+			"AG": 10,
+			"T": 10,
+			"ARM": 4,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "djinnborn-marzban",
 		"name": "Djinnborn Marzban",
 		"points": 25,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 16,
+			"AG": 12,
+			"T": 10,
+			"ARM": 0,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "faris-outrider",
 		"name": "Faris Outrider",
 		"points": 18,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 11,
+			"ACC": 8,
+			"INT": 13,
+			"AG": 12,
+			"T": 13,
+			"ARM": 1,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "nara",
 		"name": "Na'ra, Veil Watcher",
 		"points": 28,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 7,
+			"OFF": 15,
+			"DEF": 12,
+			"ACC": 8,
+			"INT": 13,
+			"AG": 13,
+			"T": 12,
+			"ARM": 0,
+			"HP": 2,
+			"M": 14
+		}
 	},
 	{
 		"id": "spelldancer-aeroturge",
 		"name": "Spelldancer Aeroturge",
 		"points": 15,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 12,
+			"AG": 14,
+			"T": 8,
+			"ARM": 0,
+			"HP": 1,
+			"M": 12
+		}
 	},
 	{
 		"id": "spelldancer-voidcaster",
 		"name": "Spelldancer Voidcaster",
 		"points": 17,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 12,
+			"AG": 14,
+			"T": 8,
+			"ARM": 0,
+			"HP": 1,
+			"M": 12
+		}
 	},
 	{
 		"id": "vizier-of-conjurations",
 		"name": "Vizier of Conjurations",
 		"points": 22,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 16,
+			"AG": 10,
+			"T": 8,
+			"ARM": 0,
+			"HP": 1,
+			"M": 8
+		}
 	}
 ]

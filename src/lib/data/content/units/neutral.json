@@ -3,96 +3,289 @@
 		"id": "amazon-gladiatrix",
 		"name": "Amazon Gladiatrix",
 		"points": 32,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 3,
+			"SPD": 5,
+			"OFF": 16,
+			"DEF": 12,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 12,
+			"T": 14,
+			"ARM": 2,
+			"HP": 3,
+			"M": 16
+		}
 	},
 	{
 		"id": "eonian-runner",
 		"name": "Eonian Runner",
 		"points": 17,
-		"limit": 3
+		"limit": 3,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 12,
+			"DEF": 10,
+			"ACC": 14,
+			"INT": 8,
+			"AG": 12,
+			"T": 13,
+			"ARM": 3,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "guildsworn-knight",
 		"name": "Guildsworn Knight",
 		"points": 30,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 15,
+			"DEF": 15,
+			"ACC": 12,
+			"INT": 13,
+			"AG": 8,
+			"T": 14,
+			"ARM": 7,
+			"HP": 4,
+			"M": 17
+		}
 	},
 	{
 		"id": "helrin-expatriate",
 		"name": "Helrin Expatriate",
 		"points": 16,
-		"limit": 3
+		"limit": 3,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 13,
+			"DEF": 13,
+			"ACC": 8,
+			"INT": 10,
+			"AG": 10,
+			"T": 12,
+			"ARM": 6,
+			"HP": 2,
+			"M": 16
+		}
 	},
 	{
 		"id": "hired-blade",
 		"name": "Hired Blade",
 		"points": 17,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 15,
+			"DEF": 8,
+			"ACC": 10,
+			"INT": 10,
+			"AG": 14,
+			"T": 10,
+			"ARM": 1,
+			"HP": 1,
+			"M": 8
+		}
 	},
 	{
 		"id": "kogetsu",
 		"name": "Kogetsu, Cursed Monk",
 		"points": 30,
-		"limit": 1
-	},
-	{
-		"id": "lupus-rex",
-		"name": "Lupus Rex",
-		"points": 5,
-		"limit": 2
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 16,
+			"ACC": 10,
+			"INT": 10,
+			"AG": 10,
+			"T": 13,
+			"ARM": 3,
+			"HP": 3,
+			"M": 14
+		}
 	},
 	{
 		"id": "musha-blademaster",
 		"name": "Musha Blademaster",
 		"points": 17,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 12,
+			"ACC": 12,
+			"INT": 10,
+			"AG": 11,
+			"T": 13,
+			"ARM": 2,
+			"HP": 2,
+			"M": 17
+		}
 	},
 	{
 		"id": "onitaoshi",
 		"name": "Onitaoshi",
 		"points": 21,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 16,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 10,
+			"AG": 10,
+			"T": 13,
+			"ARM": 6,
+			"HP": 3,
+			"M": 17
+		}
 	},
 	{
 		"id": "renegade-rasetsu",
 		"name": "Renegade Rasetsu",
 		"points": 27,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 16,
+			"DEF": 13,
+			"ACC": 8,
+			"INT": 10,
+			"AG": 13,
+			"T": 15,
+			"ARM": 3,
+			"HP": 4,
+			"M": 16
+		}
 	},
 	{
 		"id": "scholar-of-the-true-word",
 		"name": "Scholar of the True Word",
 		"points": 19,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 12,
+			"ACC": 8,
+			"INT": 13,
+			"AG": 10,
+			"T": 13,
+			"ARM": 1,
+			"HP": 2,
+			"M": 16
+		}
 	},
 	{
 		"id": "shieldbearer",
 		"name": "Shieldbearer",
 		"points": 18,
-		"limit": 4
+		"limit": 4,
+		"stats": {
+			"STA": 2,
+			"SPD": 4,
+			"OFF": 13,
+			"DEF": 13,
+			"ACC": 10,
+			"INT": 8,
+			"AG": 8,
+			"T": 13,
+			"ARM": 5,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "slayer-dragon",
 		"name": "Slayer Dragoon",
 		"points": 17,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 17,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 10,
+			"AG": 12,
+			"T": 12,
+			"ARM": 5,
+			"HP": 2,
+			"M": 15
+		},
+		"mount": {
+			"unitId": "lupus-rex",
+			"points": 5
+		}
 	},
 	{
 		"id": "taskmage-explorer",
 		"name": "Taskmage Explorer",
 		"points": 19,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 14,
+			"AG": 12,
+			"T": 10,
+			"ARM": 0,
+			"HP": 1,
+			"M": 12
+		}
 	},
 	{
 		"id": "thenrin-swashbuckler",
 		"name": "Thenrin Swashbuckler",
 		"points": 16,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 15,
+			"DEF": 10,
+			"ACC": 10,
+			"INT": 11,
+			"AG": 13,
+			"T": 12,
+			"ARM": 3,
+			"HP": 2,
+			"M": 10
+		}
 	},
 	{
 		"id": "tomoe",
 		"name": "Tomoe, Endless Rain",
 		"points": 28,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 10,
+			"DEF": 10,
+			"ACC": 12,
+			"INT": 10,
+			"AG": 12,
+			"T": 10,
+			"ARM": 1,
+			"HP": 2,
+			"M": 14
+		}
 	}
 ]

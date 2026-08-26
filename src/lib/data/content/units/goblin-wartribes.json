@@ -3,36 +3,114 @@
 		"id": "chanre",
 		"name": "Chanra, Goblin Shaman, Tier III",
 		"points": 28,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 10,
+			"ACC": 10,
+			"INT": 13,
+			"AG": 12,
+			"T": 12,
+			"ARM": 0,
+			"HP": 3,
+			"M": 15
+		}
 	},
 	{
 		"id": "goblin-brawlers",
 		"name": "Goblin Brawlers, Tier I",
 		"points": 8,
-		"limit": 10
+		"limit": 10,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 10,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 6,
+			"AG": 10,
+			"T": 12,
+			"ARM": 3,
+			"HP": 1,
+			"M": 8
+		}
 	},
 	{
 		"id": "goblin-shaman",
 		"name": "Goblin Shaman, Tier III",
 		"points": 24,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 10,
+			"ACC": 10,
+			"INT": 12,
+			"AG": 12,
+			"T": 12,
+			"ARM": 0,
+			"HP": 2,
+			"M": 14
+		}
 	},
 	{
 		"id": "goblin-skirmishers",
 		"name": "Goblin Skirmishers, Tier I",
 		"points": 9,
-		"limit": 10
+		"limit": 10,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 10,
+			"INT": 6,
+			"AG": 10,
+			"T": 10,
+			"ARM": 1,
+			"HP": 1,
+			"M": 8
+		}
 	},
 	{
 		"id": "goblin-warchief",
 		"name": "Goblin Warchief, Tier II",
 		"points": 22,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 8,
+			"T": 14,
+			"ARM": 3,
+			"HP": 5,
+			"M": 12
+		}
 	},
 	{
 		"id": "troll-prowler",
 		"name": "Troll Prowler, Tier III",
 		"points": 24,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 16,
+			"DEF": 8,
+			"ACC": 10,
+			"INT": 6,
+			"AG": 8,
+			"T": 15,
+			"ARM": 3,
+			"HP": 6,
+			"M": 10
+		}
 	}
 ]

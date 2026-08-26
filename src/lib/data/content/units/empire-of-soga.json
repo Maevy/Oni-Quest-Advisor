@@ -3,36 +3,114 @@
 		"id": "bushi-attendant",
 		"name": "Bushi Attendant",
 		"points": 13,
-		"limit": 4
+		"limit": 4,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 10,
+			"ACC": 12,
+			"INT": 10,
+			"AG": 10,
+			"T": 13,
+			"ARM": 4,
+			"HP": 2,
+			"M": 16
+		}
 	},
 	{
 		"id": "clan-champion",
 		"name": "Clan Champion",
 		"points": 23,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 16,
+			"DEF": 12,
+			"ACC": 12,
+			"INT": 13,
+			"AG": 10,
+			"T": 13,
+			"ARM": 5,
+			"HP": 3,
+			"M": 17
+		}
 	},
 	{
 		"id": "great-guard",
 		"name": "Great Guard",
 		"points": 23,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 4,
+			"OFF": 12,
+			"DEF": 16,
+			"ACC": 10,
+			"INT": 10,
+			"AG": 8,
+			"T": 13,
+			"ARM": 7,
+			"HP": 3,
+			"M": 17
+		}
 	},
 	{
 		"id": "kitsune-spellmaiden",
 		"name": "Kitsune Spellmaiden",
 		"points": 16,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 14,
+			"AG": 14,
+			"T": 8,
+			"ARM": 1,
+			"HP": 1,
+			"M": 15
+		}
 	},
 	{
 		"id": "musha-bowman",
 		"name": "Musha Bowmaster",
 		"points": 19,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 12,
+			"ACC": 14,
+			"INT": 10,
+			"AG": 11,
+			"T": 13,
+			"ARM": 2,
+			"HP": 2,
+			"M": 17
+		}
 	},
 	{
 		"id": "seigen",
 		"name": "Seigen, of the Keshobarai",
 		"points": 28,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 16,
+			"ACC": 12,
+			"INT": 13,
+			"AG": 11,
+			"T": 13,
+			"ARM": 6,
+			"HP": 3,
+			"M": 17
+		}
 	}
 ]

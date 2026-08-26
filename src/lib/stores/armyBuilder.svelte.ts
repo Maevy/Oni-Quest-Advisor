@@ -4,6 +4,7 @@ import {
 	armyPoints,
 	isOverArmyLimit,
 	removeArmyUnit,
+	toggleArmyMount,
 	unitsForFaction,
 	type ArmyEntry,
 	type ArmyFactionId,
@@ -30,6 +31,11 @@ class ArmyBuilderStore {
 		return this.factionId ? unitsForFaction(this.factionId, contentStore.armyUnits) : [];
 	}
 
+	/** Mount options (never recruitable standalone). */
+	get mounts(): ArmyUnitSpec[] {
+		return contentStore.armyUnits.mounts;
+	}
+
 	selectFaction(factionId: ArmyFactionId): void {
 		this.factionId = factionId;
 		this.format = 'standard';
@@ -46,6 +52,10 @@ class ArmyBuilderStore {
 
 	removeUnit(unitId: string): void {
 		this.entries = removeArmyUnit(this.entries, unitId);
+	}
+
+	toggleMount(unitId: string): void {
+		this.entries = toggleArmyMount(this.entries, unitId, this.units);
 	}
 
 	/** Resets the builder when returning to the main menu. */

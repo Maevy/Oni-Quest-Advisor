@@ -3,42 +3,133 @@
 		"id": "anari",
 		"name": "Anari, Erudite Prodigy",
 		"points": 28,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 9,
+			"DEF": 9,
+			"ACC": 8,
+			"INT": 16,
+			"AG": 12,
+			"T": 8,
+			"ARM": 3,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "citadel-guard",
 		"name": "Citadel Guard",
 		"points": 18,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 4,
+			"OFF": 12,
+			"DEF": 16,
+			"ACC": 8,
+			"INT": 12,
+			"AG": 10,
+			"T": 12,
+			"ARM": 6,
+			"HP": 2,
+			"M": 14
+		}
 	},
 	{
 		"id": "expeditionary-hierophant",
 		"name": "Expeditionary Hierophant",
 		"points": 23,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 15,
+			"AG": 11,
+			"T": 8,
+			"ARM": 4,
+			"HP": 1,
+			"M": 12
+		}
 	},
 	{
 		"id": "flameshaper",
 		"name": "Flameshaper",
 		"points": 15,
-		"limit": 3
+		"limit": 3,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 8,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 12,
+			"AG": 12,
+			"T": 8,
+			"ARM": 1,
+			"HP": 1,
+			"M": 12
+		}
 	},
 	{
 		"id": "flameweaver-errant",
 		"name": "Flameweaver Errant",
 		"points": 21,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 14,
+			"ACC": 8,
+			"INT": 13,
+			"AG": 12,
+			"T": 12,
+			"ARM": 3,
+			"HP": 2,
+			"M": 16
+		}
 	},
 	{
 		"id": "flameweaver-noble",
 		"name": "Flameweaver Noble",
 		"points": 21,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 8,
+			"DEF": 10,
+			"ACC": 8,
+			"INT": 14,
+			"AG": 12,
+			"T": 8,
+			"ARM": 3,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "paladin-of-the-order",
 		"name": "Paladin of the Order",
 		"points": 22,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 14,
+			"DEF": 14,
+			"ACC": 10,
+			"INT": 12,
+			"AG": 10,
+			"T": 12,
+			"ARM": 6,
+			"HP": 2,
+			"M": 15
+		}
 	}
 ]

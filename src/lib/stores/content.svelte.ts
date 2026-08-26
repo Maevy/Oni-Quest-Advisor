@@ -11,7 +11,7 @@ class ContentStore {
 	missions = $state<Mission[]>([]);
 	factions = $state<Faction[]>([]);
 	armyFactions = $state<ArmyFactionConfig[]>([]);
-	armyUnits = $state<ArmyUnitContent>({ factionUnits: {}, neutralUnits: [] });
+	armyUnits = $state<ArmyUnitContent>({ factionUnits: {}, neutralUnits: [], mounts: [] });
 	schemes = $state<SchemeCard[]>([]);
 	loaded = $state(false);
 

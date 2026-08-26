@@ -1,0 +1,27 @@
+[
+	{
+		"id": "lupus-rex",
+		"name": "Lupus Rex",
+		"points": 5,
+		"limit": 2,
+		"stats": {
+			"STA": null,
+			"SPD": 9,
+			"OFF": null,
+			"DEF": null,
+			"ACC": null,
+			"INT": null,
+			"AG": null,
+			"T": null,
+			"ARM": null,
+			"HP": null,
+			"M": null
+		},
+		"statChanges": {
+			"DEF": 3,
+			"T": 2,
+			"ARM": -2,
+			"HP": 1
+		}
+	}
+]

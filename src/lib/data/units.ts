@@ -42,13 +42,16 @@ function withIcons(units: ArmyUnitSpec[]): ArmyUnitSpec[] {
 export function loadArmyUnits(): ArmyUnitContent {
 	const factionUnits: ArmyUnitContent['factionUnits'] = {};
 	let neutralUnits: ArmyUnitSpec[] = [];
+	let mounts: ArmyUnitSpec[] = [];
 	for (const [path, module] of Object.entries(unitModules)) {
 		const key = path.split('/').pop()?.replace('.json', '') ?? '';
 		if (key === 'neutral') {
 			neutralUnits = withIcons(module.default);
+		} else if (key === 'mounts') {
+			mounts = withIcons(module.default);
 		} else {
 			factionUnits[key as ArmyFactionId] = withIcons(module.default);
 		}
 	}
-	return { factionUnits, neutralUnits };
+	return { factionUnits, neutralUnits, mounts };
 }

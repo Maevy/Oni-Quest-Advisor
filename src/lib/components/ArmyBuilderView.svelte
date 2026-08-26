@@ -1,5 +1,12 @@
 <script lang="ts">
-	import type { ArmyFactionConfig, ArmyFormat, ArmyRosterRow, ArmyUnitSpec } from '$lib/domain';
+	import type {
+		ArmyFactionConfig,
+		ArmyFormat,
+		ArmyRosterRow,
+		ArmyStats,
+		ArmyUnitSpec
+	} from '$lib/domain';
+	import UnitCard from './UnitCard.svelte';
 
 	type Props = {
 		faction: ArmyFactionConfig;
@@ -14,6 +21,7 @@
 		onSetFormat: (format: ArmyFormat) => void;
 		onAddUnit: (unitId: string) => void;
 		onRemoveUnit: (unitId: string) => void;
+		onToggleMount: (unitId: string) => void;
 	};
 
 	let {
@@ -28,10 +36,17 @@
 		onReturn,
 		onSetFormat,
 		onAddUnit,
-		onRemoveUnit
+		onRemoveUnit,
+		onToggleMount
 	}: Props = $props();
 
 	let showArmy = $state(false);
+	let selectedCard = $state<{
+		unit: ArmyUnitSpec;
+		stats: ArmyStats;
+		mounted: boolean;
+		mountName?: string;
+	} | null>(null);
 
 	// Swipe detection: a mostly-horizontal pointer gesture flips the panels.
 	const SWIPE_MIN_PX = 50;
@@ -111,7 +126,14 @@
 					<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
 						{#each units as unit (unit.id)}
 							<div
-								class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+								class="flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+								role="button"
+								tabindex="0"
+								onclick={() => (selectedCard = { unit, stats: unit.stats, mounted: false })}
+								onkeydown={(event) => {
+									if (event.key === 'Enter')
+										selectedCard = { unit, stats: unit.stats, mounted: false };
+								}}
 							>
 								{#if unit.icon}
 									<img
@@ -138,7 +160,10 @@
 										disabled={(counts[unit.id] ?? 0) === 0}
 										aria-label={'Remove ' + unit.name}
 										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-										onclick={() => onRemoveUnit(unit.id)}
+										onclick={(event) => {
+											event.stopPropagation();
+											onRemoveUnit(unit.id);
+										}}
 									>
 										−
 									</button>
@@ -152,7 +177,10 @@
 										disabled={(counts[unit.id] ?? 0) >= unit.limit}
 										aria-label={'Add ' + unit.name}
 										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-xl font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-										onclick={() => onAddUnit(unit.id)}
+										onclick={(event) => {
+											event.stopPropagation();
+											onAddUnit(unit.id);
+										}}
 									>
 										+
 									</button>
@@ -175,7 +203,31 @@
 						<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
 							{#each armyRows as row (row.unitId)}
 								<div
-									class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+									class="flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+									role="button"
+									tabindex="0"
+									onclick={() => {
+										const found = units.find((candidate) => candidate.id === row.unitId);
+										if (found)
+											selectedCard = {
+												unit: found,
+												stats: row.effectiveStats,
+												mounted: row.mounted,
+												mountName: row.mount?.name
+											};
+									}}
+									onkeydown={(event) => {
+										if (event.key === 'Enter') {
+											const found = units.find((candidate) => candidate.id === row.unitId);
+											if (found)
+												selectedCard = {
+													unit: found,
+													stats: row.effectiveStats,
+													mounted: row.mounted,
+													mountName: row.mount?.name
+												};
+										}
+									}}
 								>
 									{#if row.icon}
 										<img
@@ -191,11 +243,41 @@
 										</p>
 										<p class="text-xs text-slate-400">{row.totalPoints} points</p>
 									</div>
+									{#if row.mount}
+										<button
+											type="button"
+											aria-label={(row.mounted ? 'Remove ' : 'Add ') +
+												row.mount.name +
+												' mount for ' +
+												row.name}
+											class={'relative shrink-0 rounded-lg border-2 p-0.5 transition ' +
+												(row.mounted ? 'border-emerald-500/60' : 'border-slate-600/60')}
+											onclick={(event) => {
+												event.stopPropagation();
+												onToggleMount(row.unitId);
+											}}
+										>
+											{#if row.mount.icon}
+												<img src={row.mount.icon} alt="" class="h-9 w-9 rounded object-contain" />
+											{/if}
+											<span
+												class={'absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ' +
+													(row.mounted
+														? 'bg-emerald-500 text-slate-950'
+														: 'bg-red-500/80 text-slate-100')}
+											>
+												{row.mounted ? '✓' : '✕'}
+											</span>
+										</button>
+									{/if}
 									<button
 										type="button"
 										aria-label={'Remove ' + row.name}
 										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
-										onclick={() => onRemoveUnit(row.unitId)}
+										onclick={(event) => {
+											event.stopPropagation();
+											onRemoveUnit(row.unitId);
+										}}
 									>
 										−
 									</button>
@@ -226,5 +308,16 @@
 		>
 			›
 		</button>
+	{/if}
+
+	{#if selectedCard}
+		<UnitCard
+			unit={selectedCard.unit}
+			{faction}
+			stats={selectedCard.stats}
+			mounted={selectedCard.mounted}
+			mountName={selectedCard.mountName}
+			onClose={() => (selectedCard = null)}
+		/>
 	{/if}
 </div>

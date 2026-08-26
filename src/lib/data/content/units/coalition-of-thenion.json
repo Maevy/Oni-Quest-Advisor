@@ -3,30 +3,95 @@
 		"id": "bladebrethren-elite",
 		"name": "Bladebrethren Elite",
 		"points": 23,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 16,
+			"DEF": 13,
+			"ACC": 11,
+			"INT": 11,
+			"AG": 14,
+			"T": 12,
+			"ARM": 3,
+			"HP": 2,
+			"M": 12
+		}
 	},
 	{
 		"id": "night-temple-priestess",
 		"name": "Night-Temple Priestess",
 		"points": 21,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 13,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 14,
+			"AG": 14,
+			"T": 12,
+			"ARM": 2,
+			"HP": 1,
+			"M": 8
+		}
 	},
 	{
 		"id": "nightshade",
 		"name": "Nightshade",
 		"points": 22,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 17,
+			"DEF": 8,
+			"ACC": 10,
+			"INT": 13,
+			"AG": 16,
+			"T": 10,
+			"ARM": 1,
+			"HP": 1,
+			"M": 8
+		}
 	},
 	{
 		"id": "rangers-guild-hunter",
 		"name": "Rangers-Guild Hunter",
 		"points": 19,
-		"limit": 2
+		"limit": 2,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 13,
+			"DEF": 8,
+			"ACC": 14,
+			"INT": 10,
+			"AG": 13,
+			"T": 10,
+			"ARM": 2,
+			"HP": 1,
+			"M": 10
+		}
 	},
 	{
 		"id": "tharos",
 		"name": "Tharos, One-Eyed Wolf ",
 		"points": 28,
-		"limit": 1
+		"limit": 1,
+		"stats": {
+			"STA": 2,
+			"SPD": 6,
+			"OFF": 13,
+			"DEF": 10,
+			"ACC": 14,
+			"INT": 13,
+			"AG": 13,
+			"T": 12,
+			"ARM": 3,
+			"HP": 2,
+			"M": 12
+		}
 	}
 ]
