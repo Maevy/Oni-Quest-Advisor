@@ -178,13 +178,11 @@
 					</div>
 				</div>
 			{/if}
-			{#if combatArtTags.length > 0}
+			{#if traitTags.length > 0}
 				<div>
-					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
-						Combat Arts
-					</h3>
+					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">Traits</h3>
 					<div class="flex flex-wrap gap-1.5">
-						{#each combatArtTags as tag (tag.title)}
+						{#each traitTags as tag (tag.title)}
 							<button
 								type="button"
 								class="rounded-full bg-orange-400 px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-orange-300 active:bg-orange-300"
@@ -196,11 +194,13 @@
 					</div>
 				</div>
 			{/if}
-			{#if traitTags.length > 0}
+			{#if combatArtTags.length > 0}
 				<div>
-					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">Traits</h3>
+					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+						Combat Arts
+					</h3>
 					<div class="flex flex-wrap gap-1.5">
-						{#each traitTags as tag (tag.title)}
+						{#each combatArtTags as tag (tag.title)}
 							<button
 								type="button"
 								class="rounded-full bg-orange-400 px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-orange-300 active:bg-orange-300"

@@ -33,8 +33,8 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 1. **Combat arts migrated**: `content/units/combat-arts.json` ←
    `combatArtGroupList` — Archery, Assassination, Berserk, Fencing, Metamagic
    with the full per-level rule texts. Units carry `combatArts` refs
-   (`{ id, level }`), the level being the *highest* one the unit has access to;
-   a new Combat Arts panel sits between Skills and Traits (orange tags).
+   (`{ id, level }`), the level being the _highest_ one the unit has access to;
+   the unit card's panel order is Skills → Traits → Combat Arts (orange tags).
 2. **Level-list popups**: leveled entries (skills, traits, combat arts) now
    store the catalog's text per level in a `levels` map on `ArmyRulesSpec`
    (replaces the old `levelText` overrides). Their popups show every level as
