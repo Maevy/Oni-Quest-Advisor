@@ -3,7 +3,8 @@ import {
 	addArmyUnit,
 	armyPoints,
 	isOverArmyLimit,
-	removeArmyUnit,
+	removeArmyCopy,
+	removeArmyEntry,
 	toggleArmyMount,
 	unitsForFaction,
 	type ArmyEntry,
@@ -47,15 +48,20 @@ class ArmyBuilderStore {
 	}
 
 	addUnit(unitId: string): void {
-		this.entries = addArmyUnit(this.entries, unitId, this.units);
+		this.entries = addArmyUnit(this.entries, unitId, this.units, crypto.randomUUID());
 	}
 
+	/** Removes one copy via the available-units stepper (the most recently added). */
 	removeUnit(unitId: string): void {
-		this.entries = removeArmyUnit(this.entries, unitId);
+		this.entries = removeArmyCopy(this.entries, unitId);
 	}
 
-	toggleMount(unitId: string): void {
-		this.entries = toggleArmyMount(this.entries, unitId, this.units);
+	removeEntry(entryId: string): void {
+		this.entries = removeArmyEntry(this.entries, entryId);
+	}
+
+	toggleMount(entryId: string): void {
+		this.entries = toggleArmyMount(this.entries, entryId, this.units);
 	}
 
 	/** Resets the builder when returning to the main menu. */

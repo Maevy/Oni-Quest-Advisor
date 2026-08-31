@@ -55,20 +55,20 @@ export type ArmyUnitSpec = {
 	icon?: string;
 };
 
-/** One unit type in the current army plus how many copies were added. */
+/** One copy of a unit in the current army - every copy is its own entry. */
 export type ArmyEntry = {
+	id: string;
 	unitId: string;
-	count: number;
 	mounted?: boolean;
 };
 
-/** Selected entry joined with its unit spec, ready for display. */
+/** One army copy joined with its unit spec, ready for display. */
 export type ArmyRosterRow = {
+	entryId: string;
 	unitId: string;
 	name: string;
-	unitPoints: number;
-	count: number;
-	totalPoints: number;
+	/** Cost of this copy, including the mount when mounted. */
+	points: number;
 	icon?: string;
 	mounted: boolean;
 	mount?: ArmyUnitSpec;
@@ -76,32 +76,36 @@ export type ArmyRosterRow = {
 	effectiveStats: ArmyStats;
 };
 
-/** Adds one copy of a unit, creating the entry on first use; stops at the unit limit. */
+/** Adds one copy of a unit as its own entry; stops at the unit limit. */
 export function addArmyUnit(
 	entries: ArmyEntry[],
 	unitId: string,
-	units: ArmyUnitSpec[]
+	units: ArmyUnitSpec[],
+	entryId: string
 ): ArmyEntry[] {
-	const existing = entries.find((entry) => entry.unitId === unitId);
 	const limit = units.find((unit) => unit.id === unitId)?.limit;
-	if (existing && limit !== undefined && existing.count >= limit) return entries;
-	if (!existing) return [...entries, { unitId, count: 1 }];
-	return entries.map((entry) =>
-		entry.unitId === unitId ? { ...entry, count: entry.count + 1 } : entry
-	);
+	const copies = entries.filter((entry) => entry.unitId === unitId).length;
+	if (limit !== undefined && copies >= limit) return entries;
+	return [...entries, { id: entryId, unitId }];
 }
 
-/** Removes one copy of a unit, dropping the entry once the last copy is gone. */
-export function removeArmyUnit(entries: ArmyEntry[], unitId: string): ArmyEntry[] {
-	const existing = entries.find((entry) => entry.unitId === unitId);
-	if (!existing) return entries;
-	if (existing.count <= 1) return entries.filter((entry) => entry.unitId !== unitId);
-	return entries.map((entry) =>
-		entry.unitId === unitId ? { ...entry, count: entry.count - 1 } : entry
-	);
+/** Removes one specific copy from the army. */
+export function removeArmyEntry(entries: ArmyEntry[], entryId: string): ArmyEntry[] {
+	if (!entries.some((entry) => entry.id === entryId)) return entries;
+	return entries.filter((entry) => entry.id !== entryId);
 }
 
-/** Joins the selected entries with their unit specs for display. */
+/** Removes the most recently added copy of a unit. */
+export function removeArmyCopy(entries: ArmyEntry[], unitId: string): ArmyEntry[] {
+	for (let index = entries.length - 1; index >= 0; index -= 1) {
+		if (entries[index].unitId === unitId) {
+			return [...entries.slice(0, index), ...entries.slice(index + 1)];
+		}
+	}
+	return entries;
+}
+
+/** Joins the army entries with their unit specs for display - one row per copy. */
 export function resolveArmyEntries(
 	entries: ArmyEntry[],
 	units: ArmyUnitSpec[],
@@ -115,15 +119,14 @@ export function resolveArmyEntries(
 		const mount = mountSpec
 			? mounts.find((candidate) => candidate.id === mountSpec.unitId)
 			: undefined;
-		const each = unit.points + (mounted && mountSpec ? mountSpec.points : 0);
+		const points = unit.points + (mounted && mountSpec ? mountSpec.points : 0);
 		const effectiveStats = mounted && mount ? effectiveMountedStats(unit, mount) : unit.stats;
 		return [
 			{
+				entryId: entry.id,
 				unitId: entry.unitId,
 				name: unit.name,
-				unitPoints: unit.points,
-				count: entry.count,
-				totalPoints: each * entry.count,
+				points,
 				icon: unit.icon,
 				mounted,
 				mount,
@@ -137,9 +140,16 @@ export function armyPoints(entries: ArmyEntry[], units: ArmyUnitSpec[]): number 
 	return entries.reduce((total, entry) => {
 		const unit = units.find((candidate) => candidate.id === entry.unitId);
 		if (!unit) return total;
-		const each = unit.points + (entry.mounted && unit.mount ? unit.mount.points : 0);
-		return total + each * entry.count;
+		return total + unit.points + (entry.mounted && unit.mount ? unit.mount.points : 0);
 	}, 0);
+}
+
+/** Copies per unit id, feeding the stepper counts in the available-units list. */
+export function armyCopyCounts(entries: ArmyEntry[]): Record<string, number> {
+	return entries.reduce<Record<string, number>>((counts, entry) => {
+		counts[entry.unitId] = (counts[entry.unitId] ?? 0) + 1;
+		return counts;
+	}, {});
 }
 
 /** Rider stats when mounted: non-null mount stats override, statChanges add on top. */
@@ -158,16 +168,18 @@ export function effectiveMountedStats(unit: ArmyUnitSpec, mount: ArmyUnitSpec): 
 	return stats;
 }
 
-/** Flips the mount on an entry; units without a mount option stay untouched. */
+/** Flips the mount on one copy; units without a mount option stay untouched. */
 export function toggleArmyMount(
 	entries: ArmyEntry[],
-	unitId: string,
+	entryId: string,
 	units: ArmyUnitSpec[]
 ): ArmyEntry[] {
-	const unit = units.find((candidate) => candidate.id === unitId);
+	const entry = entries.find((candidate) => candidate.id === entryId);
+	if (!entry) return entries;
+	const unit = units.find((candidate) => candidate.id === entry.unitId);
 	if (!unit?.mount) return entries;
-	return entries.map((entry) =>
-		entry.unitId === unitId ? { ...entry, mounted: !entry.mounted } : entry
+	return entries.map((candidate) =>
+		candidate.id === entryId ? { ...candidate, mounted: !candidate.mounted } : candidate
 	);
 }
 

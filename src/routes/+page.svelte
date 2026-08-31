@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import {
+		armyCopyCounts,
 		getMissionsForSeason,
 		getScoreableResults,
 		getSeasons,
@@ -130,7 +131,7 @@
 	let armyRows = $derived(
 		resolveArmyEntries(armyBuilderStore.entries, armyBuilderStore.units, armyBuilderStore.mounts)
 	);
-	let armyCounts = $derived(Object.fromEntries(armyRows.map((row) => [row.unitId, row.count])));
+	let armyCounts = $derived(armyCopyCounts(armyBuilderStore.entries));
 </script>
 
 {#if navigationStore.showOnlineIntro}
@@ -167,7 +168,8 @@
 		onSetFormat={(format) => armyBuilderStore.setFormat(format)}
 		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
-		onToggleMount={(unitId) => armyBuilderStore.toggleMount(unitId)}
+		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}
+		onToggleMount={(entryId) => armyBuilderStore.toggleMount(entryId)}
 	/>
 {:else if navigationStore.screen === 'online-create'}
 	<OnlineCreate

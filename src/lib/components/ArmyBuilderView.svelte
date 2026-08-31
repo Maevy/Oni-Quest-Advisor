@@ -21,7 +21,8 @@
 		onSetFormat: (format: ArmyFormat) => void;
 		onAddUnit: (unitId: string) => void;
 		onRemoveUnit: (unitId: string) => void;
-		onToggleMount: (unitId: string) => void;
+		onRemoveEntry: (entryId: string) => void;
+		onToggleMount: (entryId: string) => void;
 	};
 
 	let {
@@ -37,6 +38,7 @@
 		onSetFormat,
 		onAddUnit,
 		onRemoveUnit,
+		onRemoveEntry,
 		onToggleMount
 	}: Props = $props();
 
@@ -126,22 +128,18 @@
 					<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
 						{#each units as unit (unit.id)}
 							<div
-								class="flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
-								role="button"
-								tabindex="0"
-								onclick={() => (selectedCard = { unit, stats: unit.stats, mounted: false })}
-								onkeydown={(event) => {
-									if (event.key === 'Enter')
-										selectedCard = { unit, stats: unit.stats, mounted: false };
-								}}
+								class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
 							>
 								{#if unit.icon}
-									<img
-										src={unit.icon}
-										alt=""
-										class="h-[70px] w-[70px] shrink-0 rounded-lg border-2 bg-slate-900/60 object-contain"
+									<button
+										type="button"
+										aria-label={'Show unit details for ' + unit.name}
+										class="h-[70px] w-[70px] shrink-0 overflow-hidden rounded-lg border-2 bg-slate-900/60 transition hover:bg-slate-800/60 active:bg-slate-800/80"
 										style="border-color: {faction.color}"
-									/>
+										onclick={() => (selectedCard = { unit, stats: unit.stats, mounted: false })}
+									>
+										<img src={unit.icon} alt="" class="h-full w-full object-contain" />
+									</button>
 								{/if}
 								<div>
 									<div class="flex flex-wrap items-center gap-1.5">
@@ -160,10 +158,7 @@
 										disabled={(counts[unit.id] ?? 0) === 0}
 										aria-label={'Remove ' + unit.name}
 										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-										onclick={(event) => {
-											event.stopPropagation();
-											onRemoveUnit(unit.id);
-										}}
+										onclick={() => onRemoveUnit(unit.id)}
 									>
 										−
 									</button>
@@ -177,10 +172,7 @@
 										disabled={(counts[unit.id] ?? 0) >= unit.limit}
 										aria-label={'Add ' + unit.name}
 										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-xl font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-										onclick={(event) => {
-											event.stopPropagation();
-											onAddUnit(unit.id);
-										}}
+										onclick={() => onAddUnit(unit.id)}
 									>
 										+
 									</button>
@@ -201,47 +193,35 @@
 						<p class="text-sm text-slate-500">No units yet. Add some from the unit list.</p>
 					{:else}
 						<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-							{#each armyRows as row (row.unitId)}
+							{#each armyRows as row (row.entryId)}
 								<div
-									class="flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
-									role="button"
-									tabindex="0"
-									onclick={() => {
-										const found = units.find((candidate) => candidate.id === row.unitId);
-										if (found)
-											selectedCard = {
-												unit: found,
-												stats: row.effectiveStats,
-												mounted: row.mounted,
-												mountName: row.mount?.name
-											};
-									}}
-									onkeydown={(event) => {
-										if (event.key === 'Enter') {
-											const found = units.find((candidate) => candidate.id === row.unitId);
-											if (found)
-												selectedCard = {
-													unit: found,
-													stats: row.effectiveStats,
-													mounted: row.mounted,
-													mountName: row.mount?.name
-												};
-										}
-									}}
+									class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
 								>
 									{#if row.icon}
-										<img
-											src={row.icon}
-											alt=""
-											class="h-[70px] w-[70px] shrink-0 rounded-lg border-2 bg-slate-900/60 object-contain"
+										<button
+											type="button"
+											aria-label={'Show unit details for ' + row.name}
+											class="h-[70px] w-[70px] shrink-0 overflow-hidden rounded-lg border-2 bg-slate-900/60 transition hover:bg-slate-800/60 active:bg-slate-800/80"
 											style="border-color: {faction.color}"
-										/>
+											onclick={() => {
+												const found = units.find((candidate) => candidate.id === row.unitId);
+												if (found)
+													selectedCard = {
+														unit: found,
+														stats: row.effectiveStats,
+														mounted: row.mounted,
+														mountName: row.mount?.name
+													};
+											}}
+										>
+											<img src={row.icon} alt="" class="h-full w-full object-contain" />
+										</button>
 									{/if}
 									<div>
 										<p class="font-medium text-slate-100">
-											{row.name} <span class="text-slate-400">×{row.count}</span>
+											{row.name}
 										</p>
-										<p class="text-xs text-slate-400">{row.totalPoints} points</p>
+										<p class="text-xs text-slate-400">{row.points} points</p>
 									</div>
 									{#if row.mount}
 										<button
@@ -252,10 +232,7 @@
 												row.name}
 											class={'relative shrink-0 rounded-lg border-2 p-0.5 transition ' +
 												(row.mounted ? 'border-emerald-500/60' : 'border-slate-600/60')}
-											onclick={(event) => {
-												event.stopPropagation();
-												onToggleMount(row.unitId);
-											}}
+											onclick={() => onToggleMount(row.entryId)}
 										>
 											{#if row.mount.icon}
 												<img src={row.mount.icon} alt="" class="h-9 w-9 rounded object-contain" />
@@ -274,10 +251,7 @@
 										type="button"
 										aria-label={'Remove ' + row.name}
 										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
-										onclick={(event) => {
-											event.stopPropagation();
-											onRemoveUnit(row.unitId);
-										}}
+										onclick={() => onRemoveEntry(row.entryId)}
 									>
 										−
 									</button>

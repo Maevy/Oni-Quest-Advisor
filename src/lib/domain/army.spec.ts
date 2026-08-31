@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	addArmyUnit,
+	armyCopyCounts,
 	armyPoints,
 	effectiveMountedStats,
 	isOverArmyLimit,
-	removeArmyUnit,
+	removeArmyCopy,
+	removeArmyEntry,
 	resolveArmyEntries,
 	toggleArmyMount,
 	unitsForFaction,
@@ -68,64 +70,99 @@ const MOUNTS: ArmyUnitSpec[] = [
 const DRAGOON = UNITS.find((unit) => unit.id === 'dragoon') ?? UNITS[0];
 
 describe('addArmyUnit', () => {
-	it('creates an entry with one copy on first use', () => {
-		expect(addArmyUnit([], 'warrior', UNITS)).toEqual([{ unitId: 'warrior', count: 1 }]);
+	it('adds the first copy as a new entry', () => {
+		expect(addArmyUnit([], 'warrior', UNITS, 'w1')).toEqual([{ id: 'w1', unitId: 'warrior' }]);
 	});
 
-	it('increments the count of an existing entry', () => {
-		const entries: ArmyEntry[] = [{ unitId: 'warrior', count: 2 }];
-		expect(addArmyUnit(entries, 'warrior', UNITS)).toEqual([{ unitId: 'warrior', count: 3 }]);
+	it('adds every further copy as its own entry', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(addArmyUnit(entries, 'warrior', UNITS, 'w2')).toEqual([
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'w2', unitId: 'warrior' }
+		]);
 	});
 
 	it('leaves other entries untouched and does not mutate the input', () => {
-		const entries: ArmyEntry[] = [{ unitId: 'warrior', count: 1 }];
-		const next = addArmyUnit(entries, 'mage', UNITS);
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		const next = addArmyUnit(entries, 'mage', UNITS, 'm1');
 		expect(next).toEqual([
-			{ unitId: 'warrior', count: 1 },
-			{ unitId: 'mage', count: 1 }
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'm1', unitId: 'mage' }
 		]);
-		expect(entries).toEqual([{ unitId: 'warrior', count: 1 }]);
+		expect(entries).toEqual([{ id: 'w1', unitId: 'warrior' }]);
 	});
 
-	it('stops adding once the unit limit is reached', () => {
-		const entries: ArmyEntry[] = [{ unitId: 'warrior', count: 3 }];
-		expect(addArmyUnit(entries, 'warrior', UNITS)).toBe(entries);
-		expect(addArmyUnit([{ unitId: 'mage', count: 1 }], 'mage', UNITS)).toEqual([
-			{ unitId: 'mage', count: 1 }
+	it('stops adding once the unit limit is reached across entries', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'w2', unitId: 'warrior' },
+			{ id: 'w3', unitId: 'warrior' }
+		];
+		expect(addArmyUnit(entries, 'warrior', UNITS, 'w4')).toBe(entries);
+		expect(addArmyUnit([{ id: 'm1', unitId: 'mage' }], 'mage', UNITS, 'm2')).toEqual([
+			{ id: 'm1', unitId: 'mage' }
 		]);
 	});
 
 	it('adds units without roster info, since no limit applies', () => {
-		expect(addArmyUnit([], 'ghost', UNITS)).toEqual([{ unitId: 'ghost', count: 1 }]);
+		expect(addArmyUnit([], 'ghost', UNITS, 'g1')).toEqual([{ id: 'g1', unitId: 'ghost' }]);
 	});
 });
 
-describe('removeArmyUnit', () => {
-	it('decrements the count when copies remain', () => {
-		expect(removeArmyUnit([{ unitId: 'warrior', count: 2 }], 'warrior')).toEqual([
-			{ unitId: 'warrior', count: 1 }
+describe('removeArmyEntry', () => {
+	it('removes the entry with the given id', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'w2', unitId: 'warrior' }
+		];
+		expect(removeArmyEntry(entries, 'w1')).toEqual([{ id: 'w2', unitId: 'warrior' }]);
+	});
+
+	it('is a no-op for an unknown entry id', () => {
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		expect(removeArmyEntry(entries, 'ghost')).toBe(entries);
+	});
+});
+
+describe('removeArmyCopy', () => {
+	it('removes the most recently added copy of the unit', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', mounted: true },
+			{ id: 'm1', unitId: 'mage' },
+			{ id: 'w2', unitId: 'warrior' }
+		];
+		expect(removeArmyCopy(entries, 'warrior')).toEqual([
+			{ id: 'w1', unitId: 'warrior', mounted: true },
+			{ id: 'm1', unitId: 'mage' }
 		]);
 	});
 
-	it('drops the entry when the last copy is removed', () => {
-		expect(removeArmyUnit([{ unitId: 'warrior', count: 1 }], 'warrior')).toEqual([]);
-	});
-
 	it('is a no-op for an unknown unit', () => {
-		const entries: ArmyEntry[] = [{ unitId: 'mage', count: 1 }];
-		expect(removeArmyUnit(entries, 'warrior')).toBe(entries);
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		expect(removeArmyCopy(entries, 'warrior')).toBe(entries);
 	});
 });
 
 describe('resolveArmyEntries', () => {
-	it('joins entries with their unit specs', () => {
-		expect(resolveArmyEntries([{ unitId: 'warrior', count: 3 }], UNITS, MOUNTS)).toEqual([
+	it('returns one row per copy', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'w2', unitId: 'warrior' }
+		];
+		expect(resolveArmyEntries(entries, UNITS, MOUNTS)).toEqual([
 			{
+				entryId: 'w1',
 				unitId: 'warrior',
 				name: 'Warrior',
-				unitPoints: 25,
-				count: 3,
-				totalPoints: 75,
+				points: 25,
+				mounted: false,
+				effectiveStats: STATS
+			},
+			{
+				entryId: 'w2',
+				unitId: 'warrior',
+				name: 'Warrior',
+				points: 25,
 				mounted: false,
 				effectiveStats: STATS
 			}
@@ -133,23 +170,50 @@ describe('resolveArmyEntries', () => {
 	});
 
 	it('skips entries whose unit no longer exists', () => {
-		expect(resolveArmyEntries([{ unitId: 'ghost', count: 1 }], UNITS, MOUNTS)).toEqual([]);
+		expect(resolveArmyEntries([{ id: 'g1', unitId: 'ghost' }], UNITS, MOUNTS)).toEqual([]);
 	});
 
 	it('carries the optional icon through for display', () => {
 		const units: ArmyUnitSpec[] = [
 			{ id: 'oni', name: 'Oni', points: 5, limit: 1, stats: STATS, icon: 'oni.jpg' }
 		];
-		expect(resolveArmyEntries([{ unitId: 'oni', count: 1 }], units, [])).toEqual([
+		expect(resolveArmyEntries([{ id: 'o1', unitId: 'oni' }], units, [])).toEqual([
 			{
+				entryId: 'o1',
 				unitId: 'oni',
 				name: 'Oni',
-				unitPoints: 5,
-				count: 1,
-				totalPoints: 5,
+				points: 5,
 				icon: 'oni.jpg',
 				mounted: false,
 				effectiveStats: STATS
+			}
+		]);
+	});
+
+	it('marks a copy as mounted and adds the mount cost and stats', () => {
+		expect(
+			resolveArmyEntries([{ id: 'd1', unitId: 'dragoon', mounted: true }], UNITS, MOUNTS)
+		).toEqual([
+			{
+				entryId: 'd1',
+				unitId: 'dragoon',
+				name: 'Slayer Dragoon',
+				points: 22,
+				mounted: true,
+				mount: MOUNTS[0],
+				effectiveStats: {
+					STA: 1,
+					SPD: 9,
+					OFF: 3,
+					DEF: 7,
+					ACC: 5,
+					INT: 6,
+					AG: 7,
+					T: 10,
+					ARM: 7,
+					HP: 11,
+					M: 11
+				}
 			}
 		]);
 	});
@@ -162,10 +226,36 @@ describe('armyPoints', () => {
 
 	it('sums every copy of every selected unit', () => {
 		const entries: ArmyEntry[] = [
-			{ unitId: 'warrior', count: 3 },
-			{ unitId: 'archer', count: 2 }
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'w2', unitId: 'warrior' },
+			{ id: 'w3', unitId: 'warrior' },
+			{ id: 'a1', unitId: 'archer' },
+			{ id: 'a2', unitId: 'archer' }
 		];
 		expect(armyPoints(entries, UNITS)).toBe(115);
+	});
+
+	it('adds the mount cost per mounted copy only', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'd1', unitId: 'dragoon', mounted: true },
+			{ id: 'd2', unitId: 'dragoon' }
+		];
+		expect(armyPoints(entries, UNITS)).toBe(39);
+	});
+});
+
+describe('armyCopyCounts', () => {
+	it('counts copies per unit id', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior' },
+			{ id: 'm1', unitId: 'mage' },
+			{ id: 'w2', unitId: 'warrior' }
+		];
+		expect(armyCopyCounts(entries)).toEqual({ warrior: 2, mage: 1 });
+	});
+
+	it('returns an empty record for an empty army', () => {
+		expect(armyCopyCounts([])).toEqual({});
 	});
 });
 
@@ -212,57 +302,33 @@ describe('unitsForFaction', () => {
 		]);
 		expect(unitsForFaction('goblin-wartribes', CONTENT)).toEqual([]);
 	});
-
-	it('marks a rider as mounted and adds the mount to the row', () => {
-		expect(
-			resolveArmyEntries([{ unitId: 'dragoon', count: 1, mounted: true }], UNITS, MOUNTS)
-		).toEqual([
-			{
-				unitId: 'dragoon',
-				name: 'Slayer Dragoon',
-				unitPoints: 17,
-				count: 1,
-				totalPoints: 22,
-				mounted: true,
-				mount: MOUNTS[0],
-				effectiveStats: {
-					STA: 1,
-					SPD: 9,
-					OFF: 3,
-					DEF: 7,
-					ACC: 5,
-					INT: 6,
-					AG: 7,
-					T: 10,
-					ARM: 7,
-					HP: 11,
-					M: 11
-				}
-			}
-		]);
-	});
 });
 
 describe('toggleArmyMount', () => {
-	it('flips the mount state of a rider entry', () => {
-		const entries: ArmyEntry[] = [{ unitId: 'dragoon', count: 1 }];
-		const toggled = toggleArmyMount(entries, 'dragoon', UNITS);
-		expect(toggled).toEqual([{ unitId: 'dragoon', count: 1, mounted: true }]);
-		expect(toggleArmyMount(toggled, 'dragoon', UNITS)).toEqual([
-			{ unitId: 'dragoon', count: 1, mounted: false }
+	it('flips the mount state of a single copy only', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'd1', unitId: 'dragoon' },
+			{ id: 'd2', unitId: 'dragoon' }
+		];
+		const toggled = toggleArmyMount(entries, 'd1', UNITS);
+		expect(toggled).toEqual([
+			{ id: 'd1', unitId: 'dragoon', mounted: true },
+			{ id: 'd2', unitId: 'dragoon' }
+		]);
+		expect(toggleArmyMount(toggled, 'd1', UNITS)).toEqual([
+			{ id: 'd1', unitId: 'dragoon', mounted: false },
+			{ id: 'd2', unitId: 'dragoon' }
 		]);
 	});
 
-	it('ignores units without a mount option', () => {
-		const entries: ArmyEntry[] = [{ unitId: 'warrior', count: 1 }];
-		expect(toggleArmyMount(entries, 'warrior', UNITS)).toBe(entries);
+	it('ignores copies of units without a mount option', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(toggleArmyMount(entries, 'w1', UNITS)).toBe(entries);
 	});
-});
 
-describe('mounted army points', () => {
-	it('adds the mount cost per copy while mounted', () => {
-		expect(armyPoints([{ unitId: 'dragoon', count: 2, mounted: true }], UNITS)).toBe(44);
-		expect(armyPoints([{ unitId: 'dragoon', count: 2 }], UNITS)).toBe(34);
+	it('ignores unknown entries', () => {
+		const entries: ArmyEntry[] = [{ id: 'd1', unitId: 'dragoon' }];
+		expect(toggleArmyMount(entries, 'ghost', UNITS)).toBe(entries);
 	});
 });
 
