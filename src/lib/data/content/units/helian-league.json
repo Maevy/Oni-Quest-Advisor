@@ -4,6 +4,7 @@
 		"name": "Anari, Erudite Prodigy",
 		"points": 28,
 		"limit": 1,
+		"classes": ["enchanter", "mage"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -16,13 +17,31 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "foresight",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire", "Water"]
+			},
+			{
+				"id": "strategist",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "citadel-guard",
 		"name": "Citadel Guard",
 		"points": 18,
 		"limit": 2,
+		"classes": ["sentinel", "soldier"],
 		"stats": {
 			"STA": 2,
 			"SPD": 4,
@@ -35,13 +54,35 @@
 			"ARM": 6,
 			"HP": 2,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "follow-up",
+				"level": 1
+			},
+			{
+				"id": "protector",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "resistance--x",
+				"level": 2,
+				"dynamicValue": "Sorcery, Enchantment"
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "expeditionary-hierophant",
 		"name": "Expeditionary Hierophant",
 		"points": 23,
 		"limit": 1,
+		"classes": ["mage", "vitalist"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -54,13 +95,27 @@
 			"ARM": 4,
 			"HP": 1,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "clairvoyance",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Divine"]
+			}
+		]
 	},
 	{
 		"id": "flameshaper",
 		"name": "Flameshaper",
 		"points": 15,
 		"limit": 3,
+		"classes": ["soldier", "sorcerer"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -73,13 +128,27 @@
 			"ARM": 1,
 			"HP": 1,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "chain-attack",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire"]
+			}
+		]
 	},
 	{
 		"id": "flameweaver-errant",
 		"name": "Flameweaver Errant",
 		"points": 21,
 		"limit": 2,
+		"classes": ["artificer", "soldier"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -92,13 +161,29 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 16
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire"]
+			},
+			{
+				"id": "resourceful",
+				"level": 1
+			},
+			{
+				"id": "tactician",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "flameweaver-noble",
 		"name": "Flameweaver Noble",
 		"points": 21,
 		"limit": 2,
+		"classes": ["mage", "enchanter"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -111,13 +196,21 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire"]
+			}
+		]
 	},
 	{
 		"id": "paladin-of-the-order",
 		"name": "Paladin of the Order",
 		"points": 22,
 		"limit": 1,
+		"classes": ["mystic", "soldier"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -130,6 +223,18 @@
 			"ARM": 6,
 			"HP": 2,
 			"M": 15
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicValue": "Divine",
+				"dynamicElements": ["Divine"]
+			},
+			{
+				"id": "fearless",
+				"level": 1
+			}
+		]
 	}
 ]

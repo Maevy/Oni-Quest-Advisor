@@ -24,9 +24,42 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
 - Army builder feature is on `develop` (unreleased): faction select, producer unit
-  import (`scripts/importUnits.mjs`), unit cards, mounts.
+  import (`scripts/importUnits.mjs`), unit cards with classes, skills and traits
+  (centralized rules entries, clickable tags, stacked rules popups), mounts.
 
-## What was done in the last session (abandoned-game retention + army builder)
+## What was done in the last session (army builder: per-copy entries + unit rules)
+
+1. **Per-copy army entries**: every copy of a unit is now its own `ArmyEntry`
+   (`addArmyUnit` takes an injected id, `removeArmyEntry`/`removeArmyCopy`,
+   `armyCopyCounts`), so a single copy can be mounted or removed independently
+   (the mount toggle flipped per-unit before, affecting all copies).
+2. **Rules catalogs migrated**: the producer dropped a fuller export (now
+   `data-import/units.json` — it carries the global catalogs in addition to the
+   same 63 characters; the only character diff was Djinnborn Marzban's Affinity
+   gaining Elder/Fire/Water). The import builds the centralized content from
+   those catalogs: `classes.json` ← `classList` (23 entries), `skills.json` ←
+   `skillGroupList` (24), `traits.json` ← `traitGroupList` (68 — includes the
+   condition traits Knockdown, Bleeding, Engaged, Panicked, ...). One entry per
+   group code with `levelText` where higher levels differ (Charm, Infiltration,
+   Regeneration, Stealth; Resistance, Resourceful, Undead, Menacing); groups
+   without per-level entries (Flight, Vigilance, Acute Senses, Special) fall
+   back to the group description.
+3. **Unit card rules UI**: classes as sky-blue tags (Broken-Morale-tag style)
+   below the faction name; Skills/Traits panels below the stat table with
+   orange tags (Random-button style). Units carry class ids plus `{ id, level }`
+   skill refs and trait refs with `dynamicValue`/`dynamicElements`, which fill
+   the `(X)`/`(Element)` template placeholders at display time
+   (`substituteArmyTemplate`, e.g. "Resistance (Spell) 2", "Survival (Scorching
+   Environment)").
+4. **Rich-text links & stacked popups**: rules texts are stored as segments;
+   the producer's `(Knockdown)[trait.KNOCKDOWN]` cross-references become link
+   segments. A tag or link opens a popup; a link inside a popup pushes another
+   popup on top (salami-style, e.g. Rogue → Knockdown → Crouched), outside
+   click/Escape unwinds one layer at a time. All 17 distinct link targets in
+   the imported texts resolve against the catalogs — zero dangling.
+5. Tests 134 → 156; check/lint/build clean.
+
+## What was done in the session before (abandoned-game retention + army builder)
 
 1. **Abandoned-game lifecycle** (`cleanup.ts`): retention windows — lobbies idle
    7 days and mid-play games (rounds 1–4) idle 30 days are deleted; stale

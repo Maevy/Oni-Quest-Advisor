@@ -1,0 +1,949 @@
+[
+	{
+		"id": "acute-senses",
+		"name": "Acute Senses",
+		"description": [
+			{
+				"text": "A model with this trait may perform the Perceive and Uncover Actions with its AG instead of INT. The model’s Awareness is increased by 3 inches. When performing a Dodge without LoS, its AG is not halved."
+			}
+		]
+	},
+	{
+		"id": "advantage--x",
+		"name": "Advantage (X)",
+		"description": [
+			{
+				"text": "Once per Activation Sequence, the model with this Trait may reroll any number of dice (once) during an Attack Action against a target with (X) characteristic (Size, Class, Trait, etc.)."
+			}
+		]
+	},
+	{
+		"id": "affinity--element",
+		"name": "Affinity (Element)",
+		"description": [
+			{
+				"text": "A model with this Trait can cast (Element) Spells. (For example: element = fire, water, profane, etc.)"
+			}
+		]
+	},
+	{
+		"id": "armor-piercing",
+		"name": "Armor-Piercing",
+		"description": [
+			{
+				"text": "When making a Damage Roll for a Hit with this Trait you only add halved ARM value."
+			}
+		]
+	},
+	{
+		"id": "bleed",
+		"name": "Bleed",
+		"description": [
+			{
+				"text": "If a model suffers at least one Wound with this Trait, it enters the "
+			},
+			{
+				"text": "Bleeding State",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "bleeding",
+		"name": "Bleeding",
+		"description": [
+			{
+				"text": "A model in this state must perform a Toughness roll in its every Strategic phase. A failed roll causes the model to suffer a Wound."
+			}
+		]
+	},
+	{
+		"id": "blinded",
+		"name": "Blinded",
+		"description": [
+			{
+				"text": "A model in this state has no LoS (other than to itself) and cannot perform any actions other than Assist, Dodge or Nothing."
+			}
+		]
+	},
+	{
+		"id": "brute",
+		"name": "Brute",
+		"description": [
+			{
+				"text": "A model with this trait gains +1 STK when using Equipment with the Two-Handed Trait. It ignores the restrictions of the "
+			},
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": " trait."
+			}
+		]
+	},
+	{
+		"id": "burn--x",
+		"name": "BURN (X)",
+		"description": [
+			{
+				"text": "When a model suffers at least one Wound with this Trait, the attacking player may perform an X amount of Damage Rolls with ARM value 0. Every successful Damage Roll causes the model to suffer a Wound. If this wound causes a model to become Dead (State), the model is removed from the field."
+			}
+		]
+	},
+	{
+		"id": "cleave",
+		"name": "Cleave",
+		"description": [
+			{
+				"text": "If a model suffers at least one Wound with this Trait, it automatically suffers another Wound."
+			}
+		]
+	},
+	{
+		"id": "confused",
+		"name": "Confused",
+		"description": [
+			{
+				"text": "A model in this state has halved Offense, Defense, Accuracy, Intellect, Agility and Morale."
+			}
+		]
+	},
+	{
+		"id": "construct",
+		"name": "Construct",
+		"description": [
+			{
+				"text": "This model cannot be affected by the following Traits: Surprise Attack, Stagger, Vampirism, Mindgame and Burn. It cannot be affected by the Charm Skill or Toxic Environment. It cannot enter "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Confused",
+				"link": {
+					"type": "trait",
+					"id": "confused"
+				}
+			},
+			{
+				"text": " States. Spells or Abilities that allow the attacker to regain HP when it deals a Wound to a model cannot affect this model. It cannot regain HP from Spells or Skills without the Earth Element. If the model’s HP reaches 0, it is removed from the field."
+			}
+		]
+	},
+	{
+		"id": "crippled",
+		"name": "Crippled",
+		"description": [
+			{
+				"text": "A model in this state has halved Speed and Agility."
+			}
+		]
+	},
+	{
+		"id": "crippling",
+		"name": "Crippling",
+		"description": [
+			{
+				"text": "If a model suffers at least one Wound with this trait, it must perform a T roll. A failed roll causes the model to become "
+			},
+			{
+				"text": "Crippled",
+				"link": {
+					"type": "trait",
+					"id": "crippled"
+				}
+			},
+			{
+				"text": " (State)."
+			}
+		]
+	},
+	{
+		"id": "crouched",
+		"name": "Crouched",
+		"description": [
+			{
+				"text": "The Hitbox of a Crouched model becomes the size and volume of its base. While in this state, the model’s Speed and Armor value is halved and its Attack Strike value becomes 1. Crouched models cannot make other models Engaged (state). During the movement step, a model in this state may only declare Walk or Idle. In the Active role, this state may be voluntarily canceled during the model’s movement step. This state may also be canceled with a Dodge."
+			}
+		]
+	},
+	{
+		"id": "dead",
+		"name": "Dead",
+		"description": [
+			{
+				"text": "A Dead model’s Hitbox becomes the size and volume of its base. A Dead model cannot receive Activation Points and cannot perform Activations nor Reactions. Unless Stated otherwise, it cannot use or benefit from any Skills, Traits, Upgrades, Items etc. Unless stated otherwise it is ignored for all impacts like scoring in Quests, (Ranged) Friendly Fire, etc. and does not obstruct Movement, but a model may not end their Movement on top of a Dead model. When a model enters Dead State, it retains its other States. Unless specified otherwise, a Dead model cannot regain HP."
+			}
+		]
+	},
+	{
+		"id": "demon",
+		"name": "Demon",
+		"description": [
+			{
+				"text": "When this model deals a Wound to a model, that model must perform a M roll. If failed, the wounded model becomes"
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " (State) until the end of the turn. If this model scores a Critical Hit, the hit model automatically becomes "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " (State) until the end of the turn. This model’s Attack receives +4 Modifier when it is declared against a model in the Panicked State. This trait does not work against models with this Trait."
+			}
+		]
+	},
+	{
+		"id": "duelist",
+		"name": "Duelist",
+		"description": [
+			{
+				"text": "The target of this model’s Attack Action cannot use its Combat Arts of level III or less."
+			}
+		]
+	},
+	{
+		"id": "elemental",
+		"name": "Elemental",
+		"description": [
+			{
+				"text": "This model cannot be affected by the following Traits: "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ", Vampirism, "
+			},
+			{
+				"text": "Mindgame",
+				"link": {
+					"type": "trait",
+					"id": "mindgame"
+				}
+			},
+			{
+				"text": ". It cannot be affected by the "
+			},
+			{
+				"text": "Charm",
+				"link": {
+					"type": "skill",
+					"id": "charm"
+				}
+			},
+			{
+				"text": " or Toxic Environment. It cannot enter "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", and "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ". If the model’s HP reaches 0, it is removed from the field."
+			}
+		]
+	},
+	{
+		"id": "elemental-essence--element",
+		"name": "Elemental Essence (Element)",
+		"description": [
+			{
+				"text": "This model cannot suffer Effects from (Element) Attacks (it still suffers Damage as normal). Melee Attacks with this model’s Natural Weapons deal (Element) Spell Damage."
+			}
+		]
+	},
+	{
+		"id": "engaged",
+		"name": "Engaged",
+		"description": [
+			{
+				"text": "During the movement step when in the Active role, an Engaged activated model may only declare Idle or Walk. However, if it declares Walk, it can only move directly towards the enemy model that is causing the Engaged state. If a model is Engaged by more than one model, it must choose one of the enemy models causing the Engaged state when declaring the Walk action and it must move directly towards that enemy model. While Engaged, a model may declare only Melee Attack, Assist (targeting itself) or Dodge. A model ceases to be Engaged when it leaves the melee weapon reach of the enemy model, Disengages with a Dodge, or by rendering the enemy model into the Incapacitated, Petrified, Crouched or Dead state. While a model is Engaged, it automatically has LoS to all enemy models that are causing it to be Engaged, but cannot react against models outside of its Awareness."
+			}
+		]
+	},
+	{
+		"id": "familiar",
+		"name": "Familiar",
+		"description": [
+			{
+				"text": "When summoning a creature with this trait (with a Conjuration Spell), the caster receives additional Abilities and Stat Modifiers as shown on the creature’s profile. If the caster is dealt damage and suffers one or more Wounds, the familiar may be removed instead (if there is more than one, the player may decide which is to be removed). Creatures with this trait do not have a Summoning Limit, however, the caster may not have more than one creature of the same name under their control. Note: Such creatures are not considered as fully-fledged models, however, you may use their miniatures as visual elements. Some familiars have their miniatures and some are attached to their caster's miniature. The caster receives the familiar's abilities and stat modifiers only if the familiar is summoned (even if their miniature would already have the familiar attached)."
+			}
+		]
+	},
+	{
+		"id": "fatigued",
+		"name": "Fatigued",
+		"description": [
+			{
+				"text": "A model in this State cannot regain AP during the Upkeep Phase. This state is canceled at the beginning of this model’s next Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "fearless",
+		"name": "Fearless",
+		"description": [
+			{
+				"text": "This model cannot become Panicked (State)."
+			}
+		]
+	},
+	{
+		"id": "flying",
+		"name": "Flying",
+		"description": [
+			{
+				"text": "While in this state, the model: - Has doubled Speed. - Has Melee Attack Strike value of 1. - May move over scenery, obstacles and models, or end its movement above them (unless the scenery is of an infinite height). - Cannot benefit from Cover. - Always has LoS to all models, and all models have LoS to the Flying model. - Cannot become Engaged (state) or cause Engaged (state). - Cannot voluntarily become Crouched (state). - Cannot be targeted by Melee Attacks, except by models that are also in the Flying state. However, if a model in this state declares a Melee Attack against a model that is not in the Flying state, the attacked model can declare a Melee Attack, targeting the Flying model. - Always has LoS to all models, and all models have LoS to the Flying model. The Flying state is automatically canceled if a model in this state becomes Incapacitated, Dead, Immobilized, Petrified or Crouched (states). Attack and movement Distances are measured as if the figure were placed on the field."
+			}
+		]
+	},
+	{
+		"id": "focus",
+		"name": "Focus",
+		"description": [
+			{
+				"text": "Spells or Items with this Trait do not have a target when declaring Attack or Assist. Instead, the caster or the user is the center of the Effect and the specified models within the caster’s Casting Aura become affected by the Effect of the Spell or Item with this Trait."
+			}
+		]
+	},
+	{
+		"id": "frostbite",
+		"name": "Frostbite",
+		"description": [
+			{
+				"text": "If a model suffers at least one Wound with this Trait, it must perform a single T roll, regardless of the number of Hits. A failed roll causes the model to suffer another Wound."
+			}
+		]
+	},
+	{
+		"id": "ignore-armor",
+		"name": "Ignore Armor",
+		"description": [
+			{
+				"text": "A Hit with this Trait reduces the target's ARM to 0 for the duration of the Damage roll."
+			}
+		]
+	},
+	{
+		"id": "ignore-shield",
+		"name": "Ignore Shield",
+		"description": [
+			{
+				"text": "Attacks with this Trait ignore Effects of Shield equipment."
+			}
+		]
+	},
+	{
+		"id": "immobilized",
+		"name": "Immobilized",
+		"description": [
+			{
+				"text": "A model in this state cannot perform any Movement,Special Movement or Special Action. This state can be canceled with a successful Dodge, which may be performed either with Agility or Toughness. When it declares Dodge, it cannot move or enter/cancel the Crouched state, unless it performs a successful Dodge."
+			}
+		]
+	},
+	{
+		"id": "incapacitated",
+		"name": "Incapacitated",
+		"description": [
+			{
+				"text": "When a model’s HP reaches 0, it becomes Incapacitated and immediately enters the Crouched State. The model retains all other States. An Incapacitated model cannot receive Activation Points and cannot perform Activations nor Reactions. (Note: If it had remaining Activation Points at the time when it became Incapacitated, it keeps them until the End Phase of that turn). This State is canceled if the model regains at least 1 HP. If a model enters the Incapacitated State due to an effect but has more than 0 HP, the State is canceled during the model’s next Strategic Phase. When canceled, the model may voluntarily cancel Crouched. An incapacitated Leader cannot use Stratagems. An already Incapacitated model that would suffer another Wound automatically becomes Dead. Unless stated otherwise, it cannot use or benefit from any Skills, Traits, Upgrades, Items, etc., and is ignored for all impacts such as scoring in Quests and Ranged Friendly Fire. They are still hit by Attacks, like AoEs or Sweep Attacks."
+			}
+		]
+	},
+	{
+		"id": "incorporeal",
+		"name": "Incorporeal",
+		"description": [
+			{
+				"text": "The PW of a Hit lacking the Spell Type or Burn against this model is halved. This model ignores Environment rules and Movement penalties, allowing it to move through obstacles and vertically. It cannot end within an obstacle and cannot become Engaged."
+			}
+		]
+	},
+	{
+		"id": "inspiring",
+		"name": "Inspiring",
+		"description": [
+			{
+				"text": "Other allied models within this model’s Awareness and with the same Affiliation gain +6 M."
+			}
+		]
+	},
+	{
+		"id": "intimidating",
+		"name": "Intimidating",
+		"description": [
+			{
+				"text": "Models in the "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " state with LoS towards this model suffer -6 M"
+			}
+		]
+	},
+	{
+		"id": "knockback--x",
+		"name": "Knockback (X)",
+		"description": [
+			{
+				"text": "A model Hit with this Trait is moved from the point where its Movement ended during the Movement step. It is moved for X inches away from the attacker at the end of the Resolution step (exact direction is the attacker's choosing). This Trait does not affect models two or more Sizes larger than the attacker."
+			}
+		]
+	},
+	{
+		"id": "knockdown",
+		"name": "Knockdown",
+		"description": [
+			{
+				"text": "A model that suffers a Hit with this Trait becomes "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": " (State). This trait does not affect models two or more Sizes larger than the attacker."
+			}
+		]
+	},
+	{
+		"id": "mana-cost--x",
+		"name": "Mana Cost (X)",
+		"description": [
+			{
+				"text": "To cast a Spell with this Trait, the caster must spend an amount of Mana Counters equal to the X value."
+			}
+		]
+	},
+	{
+		"id": "menacing",
+		"name": "Menacing",
+		"description": [
+			{
+				"text": "Models with LoS to this model suffer a -2 M modifier for every level of this ability."
+			}
+		]
+	},
+	{
+		"id": "mindgame",
+		"name": "Mindgame",
+		"description": [
+			{
+				"text": "A Dodge against an Attack with this Trait uses INT instead of AG. If a model suffers a Mindgame Hit with PW, it rolls INT instead of making a Damage Roll. On a failed roll, the model suffers damage."
+			}
+		]
+	},
+	{
+		"id": "panicked",
+		"name": "Panicked",
+		"description": [
+			{
+				"text": "On a failed Intellect roll, the enemy model must also perform Walk towards the user for its entire Speed value (if able) at the end of the Activation Sequence. If it starts its turn Engaged it will declare Idle and Dodge. If the Movement of the model in this State would end past the edge of the field, the model is removed from play and counts as a loss. If the model fails the roll in its Reactive Role, it can only declare Dodge towards the edge of the field or Nothing as its Reaction."
+			}
+		]
+	},
+	{
+		"id": "poison",
+		"name": "Poison",
+		"description": [
+			{
+				"text": "WEAK POISON; If a model suffers a Wound with this Trait, it becomes "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " (State) until its next Strategic phase."
+			}
+		],
+		"levelText": {
+			"2": [
+				{
+					"text": "STRONG POISON; If a model suffers a Wound with this Trait, it becomes "
+				},
+				{
+					"text": "Weakened",
+					"link": {
+						"type": "trait",
+						"id": "weakened"
+					}
+				},
+				{
+					"text": " and "
+				},
+				{
+					"text": "Poisoned",
+					"link": {
+						"type": "trait",
+						"id": "poisoned"
+					}
+				},
+				{
+					"text": " (States)."
+				}
+			]
+		}
+	},
+	{
+		"id": "poisoned",
+		"name": "Poisoned",
+		"description": [
+			{
+				"text": "A model in this state must perform a Toughness roll with a -6 modifier in its every Strategic phase. A failed roll causes the model to suffer a Wound."
+			}
+		]
+	},
+	{
+		"id": "resistance--x",
+		"name": "Resistance (X)",
+		"description": [
+			{
+				"text": "Power of a Hit dealt to this model by an Attack with the (X) Type or Trait is halved."
+			}
+		],
+		"levelText": {
+			"2": [
+				{
+					"text": "Hits and related Effects dealt to this model by an Attack with the (X) Type or Trait are negated."
+				}
+			]
+		}
+	},
+	{
+		"id": "resourceful",
+		"name": "Resourceful",
+		"description": [
+			{
+				"text": "A model with this Trait may receive 1 additional Upgrade."
+			}
+		],
+		"levelText": {
+			"2": [
+				{
+					"text": "A model with this trait may receive another 1 additional Upgrade."
+				}
+			]
+		}
+	},
+	{
+		"id": "ricochet--x",
+		"name": "Ricochet (X)",
+		"description": [
+			{
+				"text": "When a model gets hit by an Attack with this Trait, the nearest enemy model within 5’’ gets hit with the same Attack. Whenever possible, the Effect repeats up to X times in a single Activation Sequence. It cannot affect the same model again in the same Activation Sequence. If two or more enemy models are the same distance away from the hit model, they all suffer this Effect."
+			}
+		]
+	},
+	{
+		"id": "shrouded",
+		"name": "Shrouded",
+		"description": [
+			{
+				"text": "While a model is in this state, it is represented on the field by a Shrouded token. A model in this state cannot be a target of Actions other than Perceive (note that Dodge Action does not have a target, so it is a valid Reaction). The Shrouded state is automatically canceled if the model declares a Normal action (other than Nothing) or Special Action. Performing an Attack in this state reveals the model, but grants the Surprise Attack trait to its Attack. The model and its profile that are being concealed by the Shrouded token are considered secret information. The player who controls the model is not obliged to disclose the model's identity and its profile to other players as long as the model remains in this state. Note: Shrouded models retain all of their Skills, Traits, Size, etc.; however, this information is not publicly disclosed. The model has 360° Line of Sight (LoS)."
+			}
+		]
+	},
+	{
+		"id": "slowed",
+		"name": "Slowed",
+		"description": [
+			{
+				"text": "A model in this state has halved SPD."
+			}
+		]
+	},
+	{
+		"id": "special",
+		"name": "Special (X)",
+		"description": [
+			{
+				"text": "This model has a unique (X) ability."
+			}
+		]
+	},
+	{
+		"id": "spellbound--x",
+		"name": "Spellbound (X)",
+		"description": [
+			{
+				"text": "A model or an Item with this Trait is enchanted by the Enchantment Spell listed in the brackets. In addition, the Enchantment Spell does not wear off and lasts throughout the game."
+			}
+		]
+	},
+	{
+		"id": "stagger",
+		"name": "Stagger",
+		"description": [
+			{
+				"text": "A model that suffers a Hit with this Trait loses 1 Activation Point (until the end of the turn). This Trait does not affect models two or more Sizes larger than the attacker."
+			}
+		]
+	},
+	{
+		"id": "strategist",
+		"name": "Strategist",
+		"description": [
+			{
+				"text": "This model can use two Stratagems of different names in its Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "stun",
+		"name": "Stun",
+		"description": [
+			{
+				"text": "A model that suffers at least one Wound with this Trait must perform a Toughness roll. If failed, the model loses all Activation Points (until the end of the turn)."
+			}
+		]
+	},
+	{
+		"id": "surprise-attack",
+		"name": "Surprise Attack",
+		"description": [
+			{
+				"text": "An Attack with this Trait halves the target model’s OFF, DEF, ACC, AG and INT Stats until the end of the Activation Sequence."
+			}
+		]
+	},
+	{
+		"id": "survival--x-environment",
+		"name": "Survival (X Environment)",
+		"description": [
+			{
+				"text": "This model is not affected by the X Environment."
+			}
+		]
+	},
+	{
+		"id": "sweep",
+		"name": "Sweep",
+		"description": [
+			{
+				"text": "On a successful Attack roll, all models within this model’s LoS and Melee Reach suffer a Hit."
+			}
+		],
+		"levelText": {
+			"2": [
+				{
+					"text": "On a successful Attack roll, this model’s Front arc becomes 360° for the remainder of the Activation Sequence. All models within this model’s Melee RCH and LoS suffer a Hit."
+				}
+			]
+		}
+	},
+	{
+		"id": "tactician",
+		"name": "Tactician",
+		"description": [
+			{
+				"text": "The Deployment Zone of the party in which this model is present is extended for 5 inches (towards the middle of the field)."
+			}
+		]
+	},
+	{
+		"id": "targetless",
+		"name": "Targetless",
+		"description": [
+			{
+				"text": "When in the Active role, an Attack with this Trait does not require a model as a target. Instead, the target can be any surface on the field. If the Spell has both Casting Aura and AoE Reach, and the target is a flat surface/ground, then the template must be placed wholly within the Casting Aura."
+			}
+		]
+	},
+	{
+		"id": "throwing",
+		"name": "Throwing",
+		"description": [
+			{
+				"text": "An Item with this trait enables a Ranged Attack with RCH equal to the user's T. The STK value can be up to the Quantity of the Item. Upon use, remove QTY of the item equal to the STK, even if the Attack is unsuccessful. If the Attack incapacitates or kills the target model, you can recover the Item by making Base Contact with the target."
+			}
+		]
+	},
+	{
+		"id": "trample",
+		"name": "Trample",
+		"description": [
+			{
+				"text": "When this model declares Run Special Movement, it can move through any model of a smaller Size. When it moves through or touches another model’s Hitbox in such a way, that model suffers a Hit with the "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": " Trait and PW equal to the T of this model. (Note: the Reacting model can avoid receiving a Hit with a successful Dodge.)"
+			}
+		]
+	},
+	{
+		"id": "two-handed",
+		"name": "Two-Handed",
+		"description": [
+			{
+				"text": "A weapon with this Trait cannot be used in combination with an equipped Shield or another equipped Weapon."
+			}
+		]
+	},
+	{
+		"id": "undead",
+		"name": "Undead",
+		"description": [
+			{
+				"text": "This model cannot be affected by "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", or "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " States. Spells with "
+			},
+			{
+				"text": "Mindgame",
+				"link": {
+					"type": "trait",
+					"id": "mindgame"
+				}
+			},
+			{
+				"text": " cannot target or affect it. Healing-type Spells of the Divine Element do not restore any HP but instead, deal 15 PW damage to it. If this model's HP reaches 0, it becomes Dead."
+			}
+		],
+		"levelText": {
+			"2": [
+				{
+					"text": "It may voluntarily pass or fail M rolls (except in the case of a Confrontation). If a leader with this Trait becomes "
+				},
+				{
+					"text": "Incapacitated",
+					"link": {
+						"type": "trait",
+						"id": "incapacitated"
+					}
+				},
+				{
+					"text": " or "
+				},
+				{
+					"text": "Dead",
+					"link": {
+						"type": "trait",
+						"id": "dead"
+					}
+				},
+				{
+					"text": ", it can still use its Stratagems."
+				}
+			]
+		}
+	},
+	{
+		"id": "unkeen",
+		"name": "Unkeen",
+		"description": [
+			{
+				"text": "If a model would suffer a Wound with this Trait, it must first perform a T roll. A failed roll causes the model to suffer the Wound, while a successful roll negates the Wound."
+			}
+		]
+	},
+	{
+		"id": "unstoppable",
+		"name": "Unstoppable",
+		"description": [
+			{
+				"text": "If the target of an Attack Action is smaller than this model, Confrontation among these models does not occur for that Attack Action. Successful Attack Rolls from one model do not block the other’s."
+			}
+		]
+	},
+	{
+		"id": "unwieldy",
+		"name": "Unwieldy",
+		"description": [
+			{
+				"text": "When used by a Size: Medium or a smaller model, STK of this item can never exceed 1. When performing an Attack with this item while not Mounted, the model may re-roll 1 Attack roll once."
+			}
+		]
+	},
+	{
+		"id": "vigilance",
+		"name": "Vigilance",
+		"description": [
+			{
+				"text": "This model is immune to the Surprise Attack Trait. This model’s Front arc extends to 360°. This model does not have a Back arc."
+			}
+		]
+	},
+	{
+		"id": "watchful",
+		"name": "Watchful",
+		"description": [
+			{
+				"text": "This model receives a double amount of Activation Points in its Reactive role."
+			}
+		]
+	},
+	{
+		"id": "weakened",
+		"name": "Weakened",
+		"description": [
+			{
+				"text": "A model in this state has halved Toughness, and -1 Stamina."
+			}
+		]
+	},
+	{
+		"id": "weakening",
+		"name": "Weakening",
+		"description": [
+			{
+				"text": "If a model suffers a Wound with this Trait, it becomes "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " (State)."
+			}
+		]
+	}
+]

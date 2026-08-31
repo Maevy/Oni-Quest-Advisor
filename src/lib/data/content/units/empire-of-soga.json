@@ -4,6 +4,7 @@
 		"name": "Bushi Attendant",
 		"points": 13,
 		"limit": 4,
+		"classes": ["warrior"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -23,6 +24,7 @@
 		"name": "Clan Champion",
 		"points": 23,
 		"limit": 1,
+		"classes": ["warrior", "armsmaster"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -35,13 +37,30 @@
 			"ARM": 5,
 			"HP": 3,
 			"M": 17
-		}
+		},
+		"skills": [
+			{
+				"id": "dash",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "resourceful",
+				"level": 1
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "great-guard",
 		"name": "Great Guard",
 		"points": 23,
 		"limit": 1,
+		"classes": ["sentinel", "warrior"],
 		"stats": {
 			"STA": 2,
 			"SPD": 4,
@@ -54,13 +73,30 @@
 			"ARM": 7,
 			"HP": 3,
 			"M": 17
-		}
+		},
+		"skills": [
+			{
+				"id": "impede",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "vigilance",
+				"level": 1
+			},
+			{
+				"id": "watchful",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "kitsune-spellmaiden",
 		"name": "Kitsune Spellmaiden",
 		"points": 16,
 		"limit": 1,
+		"classes": ["mystic"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -73,13 +109,35 @@
 			"ARM": 1,
 			"HP": 1,
 			"M": 15
-		}
+		},
+		"skills": [
+			{
+				"id": "charm",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "acute-senses",
+				"level": 1
+			},
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire"]
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "musha-bowman",
 		"name": "Musha Bowmaster",
 		"points": 19,
 		"limit": 2,
+		"classes": ["warrior", "marksman"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -92,13 +150,24 @@
 			"ARM": 2,
 			"HP": 2,
 			"M": 17
-		}
+		},
+		"traits": [
+			{
+				"id": "duelist",
+				"level": 1
+			},
+			{
+				"id": "resourceful",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "seigen",
 		"name": "Seigen, of the Keshobarai",
 		"points": 28,
 		"limit": 1,
+		"classes": ["sentinel", "ranger"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -111,6 +180,35 @@
 			"ARM": 6,
 			"HP": 3,
 			"M": 17
-		}
+		},
+		"skills": [
+			{
+				"id": "finishing-strike",
+				"level": 1
+			},
+			{
+				"id": "impede",
+				"level": 1
+			},
+			{
+				"id": "protector",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "fearless",
+				"level": 1
+			},
+			{
+				"id": "resistance--x",
+				"level": 1,
+				"dynamicValue": "Spells, Profane"
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	}
 ]

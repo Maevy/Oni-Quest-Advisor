@@ -43,16 +43,63 @@ export type ArmyStatKey = (typeof ARMY_STAT_KEYS)[number];
 /** Flat statline; null when the model has no value for that stat. */
 export type ArmyStats = Record<ArmyStatKey, number | null>;
 
+/** A reference from rules text to another rules entry, e.g. `(Knockdown)[trait.KNOCKDOWN]`. */
+export type ArmyRulesLink = {
+	type: string;
+	id: string;
+};
+
+/** One piece of rules text; `link` marks it as a clickable cross-reference. */
+export type ArmyTextSegment = {
+	text: string;
+	link?: ArmyRulesLink;
+};
+
+/** A class, skill or trait entry with its rules text; shared across units. */
+export type ArmyRulesSpec = {
+	id: string;
+	name: string;
+	description: ArmyTextSegment[];
+	/** Rule text per level, for levels whose text differs from the base. */
+	levelText?: Record<number, ArmyTextSegment[]>;
+};
+
+/** A skill on a unit, referencing the centralized skill entry. */
+export type ArmySkillRef = {
+	id: string;
+	level: number;
+};
+
+/** A trait on a unit; dynamic values fill the entry's (X)/(Element) placeholders. */
+export type ArmyTraitRef = {
+	id: string;
+	level: number;
+	dynamicValue?: string;
+	dynamicElements?: string[];
+};
+
 export type ArmyUnitSpec = {
 	id: string;
 	name: string;
 	points: number;
 	limit: number;
 	stats: ArmyStats;
+	/** Class ids, resolved against the centralized class list. */
+	classes: string[];
+	/** Skill references; a few units have none. */
+	skills?: ArmySkillRef[];
+	/** Trait references; a few units have none. */
+	traits?: ArmyTraitRef[];
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
 	mount?: { unitId: string; points: number };
 	icon?: string;
+};
+
+/** A resolved rules popup: heading plus rich rule text. */
+export type ArmyRulesPopup = {
+	title: string;
+	body: ArmyTextSegment[];
 };
 
 /** One copy of a unit in the current army - every copy is its own entry. */
@@ -150,6 +197,88 @@ export function armyCopyCounts(entries: ArmyEntry[]): Record<string, number> {
 		counts[entry.unitId] = (counts[entry.unitId] ?? 0) + 1;
 		return counts;
 	}, {});
+}
+
+/** Rules entries keyed by id, for resolving a unit's class/skill/trait references. */
+export function indexArmyRules(entries: ArmyRulesSpec[]): Record<string, ArmyRulesSpec> {
+	return Object.fromEntries(entries.map((entry) => [entry.id, entry]));
+}
+
+/** Display title of a rules entry at a level - a level suffix only above 1. */
+export function armyRulesTitle(name: string, level: number): string {
+	return level > 1 ? name + ' ' + level : name;
+}
+
+/**
+ * Fills a trait template with its concrete dynamic value. Parenthesized
+ * placeholders keep their parens for display names, become the bare value in
+ * rules text; a bare X always becomes the value.
+ */
+export function substituteArmyTemplate(
+	text: string,
+	value: string | undefined,
+	keepParens: boolean
+): string {
+	if (!value) return text;
+	const parenthesized = '(' + value + ')';
+	return text
+		.replace(/\(X\)/g, () => (keepParens ? parenthesized : value))
+		.replace(/\(Element\)/g, () => (keepParens ? parenthesized : value))
+		.replace(/\bX\b/g, () => value);
+}
+
+/** The popup content for a unit's skill reference; null for a missing entry. */
+export function skillPopupFor(
+	entry: ArmyRulesSpec | undefined,
+	ref: ArmySkillRef
+): ArmyRulesPopup | null {
+	if (!entry) return null;
+	return {
+		title: armyRulesTitle(entry.name, ref.level),
+		body: entry.levelText?.[ref.level] ?? entry.description
+	};
+}
+
+/** The popup content for a unit's trait reference, placeholders filled; null for a missing entry. */
+export function traitPopupFor(
+	entry: ArmyRulesSpec | undefined,
+	ref: ArmyTraitRef
+): ArmyRulesPopup | null {
+	if (!entry) return null;
+	const value = ref.dynamicValue ?? ref.dynamicElements?.join(', ');
+	const segments = entry.levelText?.[ref.level] ?? entry.description;
+	return {
+		title: armyRulesTitle(substituteArmyTemplate(entry.name, value, true), ref.level),
+		body: segments.map((segment) => ({
+			...segment,
+			text: substituteArmyTemplate(segment.text, value, false)
+		}))
+	};
+}
+
+/** The three rules indexes the popup stack resolves its links against. */
+export type ArmyRulesIndexes = {
+	classes: Record<string, ArmyRulesSpec>;
+	skills: Record<string, ArmyRulesSpec>;
+	traits: Record<string, ArmyRulesSpec>;
+};
+
+/** Resolves a rules link to a popup; null when the target is not in the imported content. */
+export function rulesLinkPopup(
+	indexes: ArmyRulesIndexes,
+	link: ArmyRulesLink
+): ArmyRulesPopup | null {
+	const index =
+		link.type === 'class'
+			? indexes.classes
+			: link.type === 'skill'
+				? indexes.skills
+				: link.type === 'trait'
+					? indexes.traits
+					: undefined;
+	const entry = index?.[link.id];
+	if (!entry) return null;
+	return { title: entry.name, body: entry.description };
 }
 
 /** Rider stats when mounted: non-null mount stats override, statChanges add on top. */

@@ -4,6 +4,7 @@
 		"name": "Lupus Rex",
 		"points": 5,
 		"limit": 2,
+		"classes": ["mount"],
 		"stats": {
 			"STA": null,
 			"SPD": 9,
@@ -17,6 +18,22 @@
 			"HP": null,
 			"M": null
 		},
+		"skills": [
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "acute-senses",
+				"level": 1
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		],
 		"statChanges": {
 			"DEF": 3,
 			"T": 2,

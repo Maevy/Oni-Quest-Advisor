@@ -4,6 +4,7 @@
 		"name": "Academy Expeditioner",
 		"points": 18,
 		"limit": 2,
+		"classes": ["sorcerer", "mage"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -16,13 +17,26 @@
 			"ARM": 4,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Elder"]
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "djinnborn-marzban",
 		"name": "Djinnborn Marzban",
 		"points": 25,
 		"limit": 1,
+		"classes": ["mage", "sorcerer"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -35,13 +49,36 @@
 			"ARM": 0,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "flicker",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Elder", "Fire", "Water"]
+			},
+			{
+				"id": "resistance--x",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "faris-outrider",
 		"name": "Faris Outrider",
 		"points": 18,
 		"limit": 2,
+		"classes": ["artificer", "rogue"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -54,13 +91,40 @@
 			"ARM": 1,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "follow-up",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 1
+			},
+			{
+				"id": "taunt",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Elder"]
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "nara",
 		"name": "Na'ra, Veil Watcher",
 		"points": 28,
 		"limit": 1,
+		"classes": ["artificer"],
 		"stats": {
 			"STA": 2,
 			"SPD": 7,
@@ -73,13 +137,52 @@
 			"ARM": 0,
 			"HP": 2,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "climbing",
+				"level": 1
+			},
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "acute-senses",
+				"level": 1
+			},
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching, Dark"
+			}
+		]
 	},
 	{
 		"id": "spelldancer-aeroturge",
 		"name": "Spelldancer Aeroturge",
 		"points": 15,
 		"limit": 2,
+		"classes": ["enchanter", "mage"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -92,13 +195,32 @@
 			"ARM": 0,
 			"HP": 1,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "charm",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Air", "Elder"]
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "spelldancer-voidcaster",
 		"name": "Spelldancer Voidcaster",
 		"points": 17,
 		"limit": 2,
+		"classes": ["wizard", "artificer"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -111,13 +233,32 @@
 			"ARM": 0,
 			"HP": 1,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Elder"]
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "vizier-of-conjurations",
 		"name": "Vizier of Conjurations",
 		"points": 22,
 		"limit": 1,
+		"classes": ["mage", "summoner"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -130,6 +271,17 @@
 			"ARM": 0,
 			"HP": 1,
 			"M": 8
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Elder", "Earth"]
+			},
+			{
+				"id": "resourceful",
+				"level": 2
+			}
+		]
 	}
 ]

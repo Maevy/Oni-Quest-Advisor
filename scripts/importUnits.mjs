@@ -15,6 +15,17 @@
  * - mount  <- MOUNT_ASSIGNMENTS below (rider -> mount; the producer dump leaves
  *   mount_character empty, so this pairing is our game-rule knowledge). Mount units
  *   (MOUNT_CODES) are written to mounts.json instead of the recruitable roster.
+ * - classes <- classList, written to classes.json; each unit keeps only the class ids.
+ * - skills  <- skillGroupList, written to skills.json (one entry per skill group,
+ *   per-level rule text where the levels differ); units keep { id, level }.
+ * - traits  <- traitGroupList, written to traits.json (template texts with
+ *   (X)/(Element) placeholders for the parameterized groups); units keep
+ *   { id, level } plus their dynamic value/elements, which fill the
+ *   placeholders at display time.
+ * Rules texts (class/skill/trait) are stored as segments; cross-references like
+ * `(Knockdown)[trait.KNOCKDOWN]` become link segments, mid-sentence line breaks
+ * are normalized to spaces. The catalogs are written in full - they also hold
+ * the condition traits (Knockdown, Bleeding, ...) that rules texts link to.
  * - faction availability from attributes.factions:
  *   - exactly one faction -> that faction's exclusive file
  *   - NEUTRAL-tagged (alone or combined) -> neutral.json, available to every faction
@@ -25,8 +36,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const source = JSON.parse(readFileSync(join(root, 'data-import', 'units.json'), 'utf8'));
-const characters = source.pageProps.characterList.data;
+const dump = JSON.parse(readFileSync(join(root, 'data-import', 'units.json'), 'utf8'));
+const pageProps = dump.pageProps;
+const characters = pageProps.characterList.data;
 
 const STAT_KEYS = ['STA', 'SPD', 'OFF', 'DEF', 'ACC', 'INT', 'AG', 'T', 'ARM', 'HP', 'M'];
 
@@ -51,8 +63,78 @@ const MOUNT_CODES = new Set(['LUPUS_REX']);
 /** Rider code -> mount code; mount cost is the mount's own recruitment_cost. */
 const MOUNT_ASSIGNMENTS = { SLAYER_DRAGON: 'LUPUS_REX' };
 
-for (const entry of characters) {
-	const attributes = entry.attributes;
+function kebab(code) {
+	return code.toLowerCase().replace(/_/g, '-');
+}
+
+function normalize(text) {
+	return (text ?? '').replace(/\s*\n\s*/g, ' ').trim();
+}
+
+/** Rich-text segments; `(Knockdown)[trait.KNOCKDOWN]` becomes a link segment. */
+function richText(text) {
+	const normalized = normalize(text);
+	const segments = [];
+	let last = 0;
+	const linkPattern = /\(([^()]*)\)\[([A-Za-z_-]+)\.([A-Z0-9_]+)(?:\.\d+)?\]/g;
+	for (const match of normalized.matchAll(linkPattern)) {
+		if (match.index > last) segments.push({ text: normalized.slice(last, match.index) });
+		segments.push({
+			text: match[1],
+			link: { type: match[2].toLowerCase(), id: kebab(match[3]) }
+		});
+		last = match.index + match[0].length;
+	}
+	if (last < normalized.length) segments.push({ text: normalized.slice(last) });
+	return segments;
+}
+
+/** One entry per class from the producer's class catalog. */
+function buildClassEntries() {
+	return pageProps.classList.data
+		.map((wrapper) => {
+			const classAttributes = wrapper.attributes;
+			return {
+				id: kebab(classAttributes.code),
+				name: classAttributes.name,
+				description: richText(classAttributes.description)
+			};
+		})
+		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * One entry per group from a skill/trait catalog. The lowest level's text is
+ * the base description; higher levels with differing text go into levelText.
+ * Groups without per-level entries fall back to the group description.
+ */
+function buildCatalogEntries(list, levelKey) {
+	const entries = [];
+	for (const wrapper of list) {
+		const group = wrapper.attributes;
+		const levels = (group[levelKey]?.data ?? [])
+			.map((entry) => ({ level: entry.attributes.level, text: entry.attributes.description }))
+			.filter((entry) => entry.text)
+			.sort((a, b) => a.level - b.level);
+		const baseText = levels[0]?.text ?? group.description;
+		const entry = { id: kebab(group.code), name: group.name, description: richText(baseText) };
+		const levelText = {};
+		for (const variant of levels.slice(1)) {
+			if (variant.text !== baseText) levelText[variant.level] = richText(variant.text);
+		}
+		if (Object.keys(levelText).length > 0) entry.levelText = levelText;
+		entries.push(entry);
+	}
+	entries.sort((a, b) => a.name.localeCompare(b.name));
+	return entries;
+}
+
+function titleCase(code) {
+	return code.charAt(0) + code.slice(1).toLowerCase();
+}
+
+for (const character of characters) {
+	const attributes = character.attributes;
 	const codes = attributes.factions.data.map((faction) => faction.attributes.code);
 	const isMount = MOUNT_CODES.has(attributes.code);
 	const stats = {};
@@ -68,13 +150,40 @@ for (const entry of characters) {
 			stats[key] = value;
 		}
 	}
+	const skillRefs = (attributes.skills?.data ?? [])
+		.map((wrapper) => wrapper.attributes)
+		.filter((skillAttributes) => skillAttributes?.skill_group?.data?.attributes)
+		.map((skillAttributes) => ({
+			id: kebab(skillAttributes.skill_group.data.attributes.code),
+			level: skillAttributes.level
+		}))
+		.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
+	const traitRefs = [];
+	for (const traitEntry of attributes.traits ?? []) {
+		const traitAttributes = traitEntry.trait?.data?.attributes;
+		const group = traitAttributes?.trait_group?.data?.attributes;
+		if (!traitAttributes || !group) continue;
+		const ref = { id: kebab(group.code), level: traitAttributes.level };
+		if (traitEntry.dynamic_value) ref.dynamicValue = traitEntry.dynamic_value;
+		const elements = (traitEntry.dynamic_elements?.data ?? []).map((element) =>
+			titleCase(element.attributes.code)
+		);
+		if (elements.length > 0) ref.dynamicElements = elements;
+		traitRefs.push(ref);
+	}
+	traitRefs.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
 	const unit = {
-		id: attributes.code.toLowerCase().replace(/_/g, '-'),
+		id: kebab(attributes.code),
 		name: attributes.name,
 		points: attributes.recruitment_cost,
 		limit: attributes.limit,
+		classes: (attributes.classes?.data ?? []).map((classEntry) =>
+			kebab(classEntry.attributes.code)
+		),
 		stats
 	};
+	if (skillRefs.length > 0) unit.skills = skillRefs;
+	if (traitRefs.length > 0) unit.traits = traitRefs;
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -84,7 +193,7 @@ for (const entry of characters) {
 			(candidate) => candidate.attributes.code === mountCode
 		).attributes;
 		unit.mount = {
-			unitId: mountCode.toLowerCase().replace(/_/g, '-'),
+			unitId: kebab(mountCode),
 			points: mountAttributes.recruitment_cost
 		};
 	}
@@ -106,6 +215,15 @@ for (const [key, units] of Object.entries(buckets)) {
 	writeFileSync(join(outDir, key + '.json'), JSON.stringify(units, null, '\t') + '\n');
 	console.log(key + ': ' + units.length + ' units');
 }
+const classes = buildClassEntries();
+writeFileSync(join(outDir, 'classes.json'), JSON.stringify(classes, null, '\t') + '\n');
+console.log('classes: ' + classes.length + ' classes');
+const skills = buildCatalogEntries(pageProps.skillGroupList.data, 'skills');
+writeFileSync(join(outDir, 'skills.json'), JSON.stringify(skills, null, '\t') + '\n');
+console.log('skills: ' + skills.length + ' skills');
+const traits = buildCatalogEntries(pageProps.traitGroupList.data, 'traits');
+writeFileSync(join(outDir, 'traits.json'), JSON.stringify(traits, null, '\t') + '\n');
+console.log('traits: ' + traits.length + ' traits');
 if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
 	for (const entry of skipped) console.log(' - ' + entry);

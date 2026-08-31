@@ -4,6 +4,7 @@
 		"name": "Amazon Gladiatrix",
 		"points": 32,
 		"limit": 2,
+		"classes": ["berserker"],
 		"stats": {
 			"STA": 3,
 			"SPD": 5,
@@ -16,13 +17,39 @@
 			"ARM": 2,
 			"HP": 3,
 			"M": 16
-		}
+		},
+		"skills": [
+			{
+				"id": "finishing-strike",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "brute",
+				"level": 1
+			},
+			{
+				"id": "duelist",
+				"level": 1
+			},
+			{
+				"id": "fearless",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "eonian-runner",
 		"name": "Eonian Runner",
 		"points": 17,
 		"limit": 3,
+		"classes": ["ranger"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -35,13 +62,28 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			},
+			{
+				"id": "tracking",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "guildsworn-knight",
 		"name": "Guildsworn Knight",
 		"points": 30,
 		"limit": 1,
+		"classes": ["armsmaster", "warrior"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -54,13 +96,39 @@
 			"ARM": 7,
 			"HP": 4,
 			"M": 17
-		}
+		},
+		"skills": [
+			{
+				"id": "finishing-strike",
+				"level": 1
+			},
+			{
+				"id": "follow-up",
+				"level": 1
+			},
+			{
+				"id": "protector",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "fearless",
+				"level": 1
+			},
+			{
+				"id": "resistance--x",
+				"level": 1,
+				"dynamicValue": "Bleed, Knockback"
+			}
+		]
 	},
 	{
 		"id": "helrin-expatriate",
 		"name": "Helrin Expatriate",
 		"points": 16,
 		"limit": 3,
+		"classes": ["artificer", "ranger"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -73,13 +141,40 @@
 			"ARM": 6,
 			"HP": 2,
 			"M": 16
-		}
+		},
+		"skills": [
+			{
+				"id": "chain-attack",
+				"level": 1
+			},
+			{
+				"id": "impede",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire"]
+			},
+			{
+				"id": "resourceful",
+				"level": 2
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult, Forest"
+			}
+		]
 	},
 	{
 		"id": "hired-blade",
 		"name": "Hired Blade",
 		"points": 17,
 		"limit": 2,
+		"classes": ["assassin", "rogue"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -92,13 +187,28 @@
 			"ARM": 1,
 			"HP": 1,
 			"M": 8
-		}
+		},
+		"skills": [
+			{
+				"id": "dual-wield",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 2
+			},
+			{
+				"id": "stealth",
+				"level": 2
+			}
+		]
 	},
 	{
 		"id": "kogetsu",
 		"name": "Kogetsu, Cursed Monk",
 		"points": 30,
 		"limit": 1,
+		"classes": ["warrior", "sentinel"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -111,13 +221,35 @@
 			"ARM": 3,
 			"HP": 3,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "impede",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "advantage--x",
+				"level": 1,
+				"dynamicValue": "Demon"
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "musha-blademaster",
 		"name": "Musha Blademaster",
 		"points": 17,
 		"limit": 2,
+		"classes": ["warrior", "berserker"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -130,13 +262,24 @@
 			"ARM": 2,
 			"HP": 2,
 			"M": 17
-		}
+		},
+		"traits": [
+			{
+				"id": "duelist",
+				"level": 1
+			},
+			{
+				"id": "resourceful",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "onitaoshi",
 		"name": "Onitaoshi",
 		"points": 21,
 		"limit": 2,
+		"classes": ["warrior", "armsmaster"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -149,13 +292,35 @@
 			"ARM": 6,
 			"HP": 3,
 			"M": 17
-		}
+		},
+		"skills": [
+			{
+				"id": "finishing-strike",
+				"level": 1
+			},
+			{
+				"id": "taunt",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "advantage--x",
+				"level": 1,
+				"dynamicValue": "Size: Large, Huge"
+			},
+			{
+				"id": "fearless",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "renegade-rasetsu",
 		"name": "Renegade Rasetsu",
 		"points": 27,
 		"limit": 1,
+		"classes": ["berserker"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -168,13 +333,48 @@
 			"ARM": 3,
 			"HP": 4,
 			"M": 16
-		}
+		},
+		"skills": [
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "duelist",
+				"level": 1
+			},
+			{
+				"id": "fearless",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "scholar-of-the-true-word",
 		"name": "Scholar of the True Word",
 		"points": 19,
 		"limit": 1,
+		"classes": ["artificer", "mystic"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -187,13 +387,21 @@
 			"ARM": 1,
 			"HP": 2,
 			"M": 16
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Earth"]
+			}
+		]
 	},
 	{
 		"id": "shieldbearer",
 		"name": "Shieldbearer",
 		"points": 18,
 		"limit": 4,
+		"classes": ["soldier", "warrior"],
 		"stats": {
 			"STA": 2,
 			"SPD": 4,
@@ -206,13 +414,32 @@
 			"ARM": 5,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "shield-wall",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "advantage--x",
+				"level": 1,
+				"dynamicValue": "Creature"
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "slayer-dragon",
 		"name": "Slayer Dragoon",
 		"points": 17,
 		"limit": 2,
+		"classes": ["assassin", "rider"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -226,6 +453,23 @@
 			"HP": 2,
 			"M": 15
 		},
+		"skills": [
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "follow-up",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "advantage--x",
+				"level": 1,
+				"dynamicValue": "Large, Huge, Colossal"
+			}
+		],
 		"mount": {
 			"unitId": "lupus-rex",
 			"points": 5
@@ -236,6 +480,7 @@
 		"name": "Taskmage Explorer",
 		"points": 19,
 		"limit": 2,
+		"classes": ["wizard", "mage"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -248,13 +493,40 @@
 			"ARM": 0,
 			"HP": 1,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "stealth",
+				"level": 1
+			},
+			{
+				"id": "tracking",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Elder"]
+			},
+			{
+				"id": "resourceful",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		]
 	},
 	{
 		"id": "thenrin-swashbuckler",
 		"name": "Thenrin Swashbuckler",
 		"points": 16,
 		"limit": 2,
+		"classes": ["warrior", "rogue"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -267,13 +539,30 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 10
-		}
+		},
+		"skills": [
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "dual-wield",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "duelist",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "tomoe",
 		"name": "Tomoe, Endless Rain",
 		"points": 28,
 		"limit": 1,
+		"classes": ["mage", "mystic", "sorcerer"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -286,6 +575,13 @@
 			"ARM": 1,
 			"HP": 2,
 			"M": 14
-		}
+		},
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Air", "Water"]
+			}
+		]
 	}
 ]

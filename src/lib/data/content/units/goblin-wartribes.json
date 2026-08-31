@@ -4,6 +4,7 @@
 		"name": "Chanra, Goblin Shaman, Tier III",
 		"points": 28,
 		"limit": 1,
+		"classes": ["mystic", "ranger"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -16,13 +17,41 @@
 			"ARM": 0,
 			"HP": 3,
 			"M": 15
-		}
+		},
+		"skills": [
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicValue": "Any",
+				"dynamicElements": ["Air", "Divine", "Earth", "Elder", "Fire", "Profane", "Water"]
+			},
+			{
+				"id": "inspiring",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "goblin-brawlers",
 		"name": "Goblin Brawlers, Tier I",
 		"points": 8,
 		"limit": 10,
+		"classes": ["soldier"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -35,13 +64,31 @@
 			"ARM": 3,
 			"HP": 1,
 			"M": 8
-		}
+		},
+		"skills": [
+			{
+				"id": "climbing",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "goblin-shaman",
 		"name": "Goblin Shaman, Tier III",
 		"points": 24,
 		"limit": 1,
+		"classes": ["mystic", "ranger"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -54,13 +101,41 @@
 			"ARM": 0,
 			"HP": 2,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicValue": "Any",
+				"dynamicElements": ["Air", "Divine", "Earth", "Elder", "Profane", "Fire", "Water"]
+			},
+			{
+				"id": "inspiring",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "goblin-skirmishers",
 		"name": "Goblin Skirmishers, Tier I",
 		"points": 9,
 		"limit": 10,
+		"classes": ["soldier"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -73,13 +148,31 @@
 			"ARM": 1,
 			"HP": 1,
 			"M": 8
-		}
+		},
+		"skills": [
+			{
+				"id": "climbing",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "goblin-warchief",
 		"name": "Goblin Warchief, Tier II",
 		"points": 22,
 		"limit": 2,
+		"classes": ["soldier"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -92,13 +185,40 @@
 			"ARM": 3,
 			"HP": 5,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "finishing-strike",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "advantage--x",
+				"level": 1,
+				"dynamicValue": "Medium"
+			},
+			{
+				"id": "fearless",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "troll-prowler",
 		"name": "Troll Prowler, Tier III",
 		"points": 24,
 		"limit": 2,
+		"classes": ["creature"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -111,6 +231,28 @@
 			"ARM": 3,
 			"HP": 6,
 			"M": 10
-		}
+		},
+		"skills": [
+			{
+				"id": "infiltration",
+				"level": 1
+			},
+			{
+				"id": "regeneration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "resistance--x",
+				"level": 2,
+				"dynamicValue": "Poison"
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Aquatic, Difficult, Toxic"
+			}
+		]
 	}
 ]

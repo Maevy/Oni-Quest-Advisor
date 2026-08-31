@@ -3,6 +3,7 @@
 		ArmyFactionConfig,
 		ArmyFormat,
 		ArmyRosterRow,
+		ArmyRulesSpec,
 		ArmyStats,
 		ArmyUnitSpec
 	} from '$lib/domain';
@@ -11,6 +12,9 @@
 	type Props = {
 		faction: ArmyFactionConfig;
 		units: ArmyUnitSpec[];
+		classIndex: Record<string, ArmyRulesSpec>;
+		skillIndex: Record<string, ArmyRulesSpec>;
+		traitIndex: Record<string, ArmyRulesSpec>;
 		armyRows: ArmyRosterRow[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -28,6 +32,9 @@
 	let {
 		faction,
 		units,
+		classIndex,
+		skillIndex,
+		traitIndex,
 		armyRows,
 		counts,
 		format,
@@ -288,6 +295,9 @@
 		<UnitCard
 			unit={selectedCard.unit}
 			{faction}
+			{classIndex}
+			{skillIndex}
+			{traitIndex}
 			stats={selectedCard.stats}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}

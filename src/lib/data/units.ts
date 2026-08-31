@@ -1,9 +1,14 @@
-import type { ArmyFactionId, ArmyUnitContent, ArmyUnitSpec } from '$lib/domain';
+import type { ArmyFactionId, ArmyRulesSpec, ArmyUnitContent, ArmyUnitSpec } from '$lib/domain';
 
 const unitModules = import.meta.glob('./content/units/*.json', { eager: true }) as Record<
 	string,
 	{ default: ArmyUnitSpec[] }
 >;
+
+/** Centralized rules entries (classes/skills/traits) referenced by the units. */
+const rulesModules = import.meta.glob('./content/units/{classes,skills,traits}.json', {
+	eager: true
+}) as Record<string, { default: ArmyRulesSpec[] }>;
 
 const iconModules = import.meta.glob('../assets/uniticons/*/*.jpg', {
 	eager: true,
@@ -45,6 +50,7 @@ export function loadArmyUnits(): ArmyUnitContent {
 	let mounts: ArmyUnitSpec[] = [];
 	for (const [path, module] of Object.entries(unitModules)) {
 		const key = path.split('/').pop()?.replace('.json', '') ?? '';
+		if (key === 'classes' || key === 'skills' || key === 'traits') continue;
 		if (key === 'neutral') {
 			neutralUnits = withIcons(module.default);
 		} else if (key === 'mounts') {
@@ -54,4 +60,26 @@ export function loadArmyUnits(): ArmyUnitContent {
 		}
 	}
 	return { factionUnits, neutralUnits, mounts };
+}
+
+function rulesFile(fileName: string): ArmyRulesSpec[] {
+	const module = Object.entries(rulesModules).find(([path]) =>
+		path.endsWith('/' + fileName + '.json')
+	)?.[1];
+	return module?.default ?? [];
+}
+
+/** Loads the centralized class list referenced by unit `classes` ids. */
+export function loadArmyClasses(): ArmyRulesSpec[] {
+	return rulesFile('classes');
+}
+
+/** Loads the centralized skill list referenced by unit `skills` refs. */
+export function loadArmySkills(): ArmyRulesSpec[] {
+	return rulesFile('skills');
+}
+
+/** Loads the centralized trait list referenced by unit `traits` refs. */
+export function loadArmyTraits(): ArmyRulesSpec[] {
+	return rulesFile('traits');
 }

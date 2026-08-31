@@ -1,0 +1,219 @@
+[
+	{
+		"id": "alchemist",
+		"name": "ALCHEMIST",
+		"description": [
+			{
+				"text": "Consumables of Alchemists replenish during their Strategic phase. When casting a Transmutation-Type Spell, an Alchemist may reroll up to 1 failed roll."
+			}
+		]
+	},
+	{
+		"id": "armsmaster",
+		"name": "ARMSMASTER",
+		"description": [
+			{
+				"text": "In the Active role, Armsmasters may gain +1 STK when performing a Melee Attack."
+			}
+		]
+	},
+	{
+		"id": "artificer",
+		"name": "ARTIFICER",
+		"description": [
+			{
+				"text": "During their Strategic phase, Artificers may select an Enchantment Spell available to them and apply its Effect to themselves, without performing a roll, until their next Strategic phase."
+			}
+		]
+	},
+	{
+		"id": "assassin",
+		"name": "ASSASSIN",
+		"description": [
+			{
+				"text": "Assassins score a Critical Hit on roll results of 1, 2, 3."
+			}
+		]
+	},
+	{
+		"id": "berserker",
+		"name": "BERSERKER",
+		"description": [
+			{
+				"text": "Once per turn, if Berserkers would suffer one or more Wounds as a consequence of Damage Roll(s), they may perform a T roll for every Wound they would suffer. If a roll is successful, the corresponding damage is prevented."
+			}
+		]
+	},
+	{
+		"id": "civilian",
+		"name": "CIVILIAN",
+		"description": [
+			{
+				"text": "Civilians have no particular abilities connected to their Class. However, some Quests may have rules that add a specific Effect to the Civilian Class."
+			}
+		]
+	},
+	{
+		"id": "creature",
+		"name": "CREATURE",
+		"description": [
+			{
+				"text": "Creatures have no particular abilities connected to their Class. However, some Quests may have rules that add a specific Effect to the Creature Class."
+			}
+		]
+	},
+	{
+		"id": "druid",
+		"name": "DRUID",
+		"description": [
+			{
+				"text": "Druids gain a +4 Modifier when casting Spells of the Earth element. Furthermore, Druids can choose to cast Spells with either their INT or M value."
+			}
+		]
+	},
+	{
+		"id": "enchanter",
+		"name": "ENCHANTER",
+		"description": [
+			{
+				"text": "Enchanters may cast Enchantment-Type Spells on allied models without performing a roll."
+			}
+		]
+	},
+	{
+		"id": "mage",
+		"name": "MAGE",
+		"description": [
+			{
+				"text": "When casting a Spell, a Mage may spend an unspent Activation Point to reroll any number of dice. Mana Counters are a resource that represents mana - the energy required for casting Spells. Mana Counters can be spent to cover the price of Conjuration-type Spells or some other powerful Spells. When in the Active role, a Mage can convert any number of its Activation Points into the corresponding number of Mana Counters (replace Activation Points with Mana Counters) and place them in their personal pool. Mana counters are cumulative and do not disappear at the end of the turn!"
+			}
+		]
+	},
+	{
+		"id": "marksman",
+		"name": "MARKSMAN",
+		"description": [
+			{
+				"text": "If a Marksman declares Idle during their Movement step, it gains +4 ACC until the end of the Activation Sequence."
+			}
+		]
+	},
+	{
+		"id": "mount",
+		"name": "MOUNT",
+		"description": [
+			{
+				"text": "This class indicates that this model can be mounted (ridden by a Rider). The Rider can be any model with this Mount’s name on its Profile. See Mounts - Advanced Rules for details."
+			}
+		]
+	},
+	{
+		"id": "mystic",
+		"name": "MYSTIC",
+		"description": [
+			{
+				"text": "Mystics must use the M value instead of the INT value when casting Spells."
+			}
+		]
+	},
+	{
+		"id": "ranger",
+		"name": "RANGER",
+		"description": [
+			{
+				"text": "In the End phase of the Active role, Rangers may perform a Normal Movement (note: this does not provoke Reaction from the Reactive Player)."
+			}
+		]
+	},
+	{
+		"id": "rider",
+		"name": "RIDER",
+		"description": [
+			{
+				"text": "A Rider can ride a Mount. They will have the name of the Mount they can ride specified on the back of their profile card. When mounted, the profile card of the Mount and the Rider connect and influence each other. See Mounts - Advanced Rules for details."
+			}
+		]
+	},
+	{
+		"id": "rogue",
+		"name": "ROGUE",
+		"description": [
+			{
+				"text": "Once per Activation, on at least one successful Hit against the target, a Rogue may perform one AG roll. If successful, the Rogue’s Hit gains "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "sentinel",
+		"name": "SENTINEL",
+		"description": [
+			{
+				"text": "In their Reactive role, Sentinels may gain +1 STK when performing an Attack."
+			}
+		]
+	},
+	{
+		"id": "soldier",
+		"name": "SOLDIER",
+		"description": [
+			{
+				"text": "Soldiers receive +1 OFF, +1 DEF, +1 ACC, +1 INT and +1 M for each other Soldier in their Awareness from the same Party, not in the Incapacitated or Dead State, up to a maximum of +3."
+			}
+		]
+	},
+	{
+		"id": "sorcerer",
+		"name": "SORCERER",
+		"description": [
+			{
+				"text": "In their Active role, when casting a Sorcery-Type Spell, a Sorcerer may reroll up to 1 failed roll."
+			}
+		]
+	},
+	{
+		"id": "summoner",
+		"name": "SUMMONER",
+		"description": [
+			{
+				"text": "A Summoner can start the game with a Tier II or lower summoned creature in its Awareness area, which could be brought to the field by one of the Conjuration Spells available to them (with no roll nor spending of an Activation Point required). A Summoner may share its pool of Mana Counters with other Summoners in the party. (If the Summoner becomes Incapacitated, its accumulated Mana Counters are discarded.)"
+			}
+		]
+	},
+	{
+		"id": "vitalist",
+		"name": "VITALIST",
+		"description": [
+			{
+				"text": "Vitalists can cast Healing-Type Spells on allied models that are not in the Incapacitated or Dead state without having to perform a roll."
+			}
+		]
+	},
+	{
+		"id": "warrior",
+		"name": "WARRIOR",
+		"description": [
+			{
+				"text": "During their Strategic phase, a Warrior may shift to a Defensive Stance; the player indicates this by placing a Defensive Stance token next to the model. A Warrior in Defensive Stance has STK of 1 in its Active role and retains the default STK in its Reactive role (the same as if in Active role). The Defensive Stance lasts until the Warrior's next Strategic phase unless specified otherwise."
+			}
+		]
+	},
+	{
+		"id": "wizard",
+		"name": "WIZARD",
+		"description": [
+			{
+				"text": "When casting a Spell of the Elder Element, a Wizard may reroll up to 1 failed roll."
+			}
+		]
+	}
+]

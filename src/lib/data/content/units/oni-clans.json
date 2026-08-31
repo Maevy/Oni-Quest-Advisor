@@ -4,6 +4,7 @@
 		"name": "Blue Rasetsu",
 		"points": 37,
 		"limit": 1,
+		"classes": ["sentinel"],
 		"stats": {
 			"STA": 3,
 			"SPD": 6,
@@ -16,13 +17,44 @@
 			"ARM": 3,
 			"HP": 4,
 			"M": 16
-		}
+		},
+		"skills": [
+			{
+				"id": "charm",
+				"level": 2
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "menacing",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "blue-yaksha",
 		"name": "Blue Yaksha",
 		"points": 30,
 		"limit": 2,
+		"classes": ["creature"],
 		"stats": {
 			"STA": 3,
 			"SPD": 5,
@@ -35,13 +67,48 @@
 			"ARM": 3,
 			"HP": 4,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "flicker",
+				"level": 1
+			},
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "menacing",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "bonewalker",
 		"name": "Bonewalker, Tier I",
 		"points": 10,
 		"limit": 10,
+		"classes": ["creature"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -54,13 +121,25 @@
 			"ARM": 2,
 			"HP": 1,
 			"M": 20
-		}
+		},
+		"traits": [
+			{
+				"id": "elemental-essence--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "undead",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "chiyohime",
 		"name": "Chiyohime",
 		"points": 45,
 		"limit": 1,
+		"classes": ["mage", "sorcerer"],
 		"stats": {
 			"STA": 3,
 			"SPD": 5,
@@ -73,13 +152,49 @@
 			"ARM": 3,
 			"HP": 4,
 			"M": 16
-		}
+		},
+		"skills": [
+			{
+				"id": "chain-attack",
+				"level": 1
+			},
+			{
+				"id": "charm",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "menacing",
+				"level": 1
+			},
+			{
+				"id": "resistance--x",
+				"level": 1,
+				"dynamicValue": "Spell"
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "forgotten-hero",
 		"name": "Forgotten Hero, Tier II",
 		"points": 20,
 		"limit": 2,
+		"classes": ["warrior", "marksman"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -92,13 +207,29 @@
 			"ARM": 6,
 			"HP": 2,
 			"M": 20
-		}
+		},
+		"traits": [
+			{
+				"id": "elemental-essence--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "undead",
+				"level": 1
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "oni-marauder",
 		"name": "Oni Marauder",
 		"points": 24,
 		"limit": 2,
+		"classes": ["creature"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -111,13 +242,40 @@
 			"ARM": 3,
 			"HP": 4,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "leap",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "menacing",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "oni-pariah",
 		"name": "Oni Pariah",
 		"points": 40,
 		"limit": 1,
+		"classes": ["creature", "berserker"],
 		"stats": {
 			"STA": 3,
 			"SPD": 5,
@@ -130,13 +288,40 @@
 			"ARM": 4,
 			"HP": 8,
 			"M": 18
-		}
+		},
+		"skills": [
+			{
+				"id": "regeneration",
+				"level": 2
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			},
+			{
+				"id": "unstoppable",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "red-rasetsu",
 		"name": "Red Rasetsu",
 		"points": 35,
 		"limit": 1,
+		"classes": ["berserker"],
 		"stats": {
 			"STA": 3,
 			"SPD": 6,
@@ -149,13 +334,52 @@
 			"ARM": 3,
 			"HP": 6,
 			"M": 16
-		}
+		},
+		"skills": [
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "duelist",
+				"level": 1
+			},
+			{
+				"id": "fearless",
+				"level": 1
+			},
+			{
+				"id": "menacing",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "red-yaksha",
 		"name": "Red Yaksha",
 		"points": 30,
 		"limit": 2,
+		"classes": ["creature"],
 		"stats": {
 			"STA": 3,
 			"SPD": 5,
@@ -168,13 +392,56 @@
 			"ARM": 3,
 			"HP": 5,
 			"M": 14
-		}
+		},
+		"skills": [
+			{
+				"id": "backstab",
+				"level": 1
+			},
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "hit-and-retreat",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "menacing",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
 	},
 	{
 		"id": "vengeful-spirit",
 		"name": "Vengeful Spirit, Tier I",
 		"points": 10,
 		"limit": 10,
+		"classes": ["creature"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -187,6 +454,31 @@
 			"ARM": 0,
 			"HP": 1,
 			"M": 20
-		}
+		},
+		"skills": [
+			{
+				"id": "infiltration",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "elemental-essence--element",
+				"level": 1,
+				"dynamicElements": ["Profane"]
+			},
+			{
+				"id": "incorporeal",
+				"level": 1
+			},
+			{
+				"id": "undead",
+				"level": 1
+			}
+		]
 	}
 ]

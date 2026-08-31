@@ -6,6 +6,7 @@
 		getMissionsForSeason,
 		getScoreableResults,
 		getSeasons,
+		indexArmyRules,
 		resolveArmyEntries
 	} from '$lib/domain';
 	import {
@@ -132,6 +133,9 @@
 		resolveArmyEntries(armyBuilderStore.entries, armyBuilderStore.units, armyBuilderStore.mounts)
 	);
 	let armyCounts = $derived(armyCopyCounts(armyBuilderStore.entries));
+	let armyClassIndex = $derived(indexArmyRules(contentStore.armyClasses));
+	let armySkillIndex = $derived(indexArmyRules(contentStore.armySkills));
+	let armyTraitIndex = $derived(indexArmyRules(contentStore.armyTraits));
 </script>
 
 {#if navigationStore.showOnlineIntro}
@@ -158,6 +162,9 @@
 	<ArmyBuilderView
 		faction={armyFaction}
 		units={armyBuilderStore.units}
+		classIndex={armyClassIndex}
+		skillIndex={armySkillIndex}
+		traitIndex={armyTraitIndex}
 		{armyRows}
 		counts={armyCounts}
 		format={armyBuilderStore.format}

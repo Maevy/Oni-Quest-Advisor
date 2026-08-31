@@ -3,14 +3,22 @@ import {
 	addArmyUnit,
 	armyCopyCounts,
 	armyPoints,
+	armyRulesTitle,
 	effectiveMountedStats,
+	indexArmyRules,
 	isOverArmyLimit,
 	removeArmyCopy,
 	removeArmyEntry,
 	resolveArmyEntries,
+	rulesLinkPopup,
+	skillPopupFor,
+	substituteArmyTemplate,
 	toggleArmyMount,
+	traitPopupFor,
 	unitsForFaction,
 	type ArmyEntry,
+	type ArmyRulesIndexes,
+	type ArmyRulesSpec,
 	type ArmyStats,
 	type ArmyUnitContent,
 	type ArmyUnitSpec
@@ -31,15 +39,16 @@ const STATS: ArmyStats = {
 };
 
 const UNITS: ArmyUnitSpec[] = [
-	{ id: 'warrior', name: 'Warrior', points: 25, limit: 3, stats: STATS },
-	{ id: 'mage', name: 'Mage', points: 25, limit: 1, stats: STATS },
-	{ id: 'archer', name: 'Archer', points: 20, limit: 2, stats: STATS },
+	{ id: 'warrior', name: 'Warrior', points: 25, limit: 3, stats: STATS, classes: ['warrior'] },
+	{ id: 'mage', name: 'Mage', points: 25, limit: 1, stats: STATS, classes: ['mage'] },
+	{ id: 'archer', name: 'Archer', points: 20, limit: 2, stats: STATS, classes: ['ranger'] },
 	{
 		id: 'dragoon',
 		name: 'Slayer Dragoon',
 		points: 17,
 		limit: 2,
 		stats: STATS,
+		classes: ['assassin', 'rider'],
 		mount: { unitId: 'lupus-rex', points: 5 }
 	}
 ];
@@ -63,6 +72,7 @@ const MOUNTS: ArmyUnitSpec[] = [
 			HP: null,
 			M: null
 		},
+		classes: ['mount'],
 		statChanges: { DEF: 3, T: 2, ARM: -2, HP: 1 }
 	}
 ];
@@ -175,7 +185,15 @@ describe('resolveArmyEntries', () => {
 
 	it('carries the optional icon through for display', () => {
 		const units: ArmyUnitSpec[] = [
-			{ id: 'oni', name: 'Oni', points: 5, limit: 1, stats: STATS, icon: 'oni.jpg' }
+			{
+				id: 'oni',
+				name: 'Oni',
+				points: 5,
+				limit: 1,
+				stats: STATS,
+				classes: ['creature'],
+				icon: 'oni.jpg'
+			}
 		];
 		expect(resolveArmyEntries([{ id: 'o1', unitId: 'oni' }], units, [])).toEqual([
 			{
@@ -275,32 +293,263 @@ describe('unitsForFaction', () => {
 	const CONTENT: ArmyUnitContent = {
 		factionUnits: {
 			'helian-league': [
-				{ id: 'legionnaire', name: 'Legionnaire', points: 12, limit: 1, stats: STATS }
+				{
+					id: 'legionnaire',
+					name: 'Legionnaire',
+					points: 12,
+					limit: 1,
+					stats: STATS,
+					classes: ['soldier']
+				}
 			],
-			'oni-clans': [{ id: 'lesser-oni', name: 'Lesser Oni', points: 8, limit: 2, stats: STATS }]
+			'oni-clans': [
+				{
+					id: 'lesser-oni',
+					name: 'Lesser Oni',
+					points: 8,
+					limit: 2,
+					stats: STATS,
+					classes: ['creature']
+				}
+			]
 		},
-		neutralUnits: [{ id: 'hired-blade', name: 'Hired Blade', points: 17, limit: 3, stats: STATS }],
+		neutralUnits: [
+			{
+				id: 'hired-blade',
+				name: 'Hired Blade',
+				points: 17,
+				limit: 3,
+				stats: STATS,
+				classes: ['soldier']
+			}
+		],
 		mounts: MOUNTS
 	};
 
 	it('combines the faction exclusives with the neutral pool', () => {
 		expect(unitsForFaction('helian-league', CONTENT)).toEqual([
-			{ id: 'legionnaire', name: 'Legionnaire', points: 12, limit: 1, stats: STATS },
-			{ id: 'hired-blade', name: 'Hired Blade', points: 17, limit: 3, stats: STATS }
+			{
+				id: 'legionnaire',
+				name: 'Legionnaire',
+				points: 12,
+				limit: 1,
+				stats: STATS,
+				classes: ['soldier']
+			},
+			{
+				id: 'hired-blade',
+				name: 'Hired Blade',
+				points: 17,
+				limit: 3,
+				stats: STATS,
+				classes: ['soldier']
+			}
 		]);
 	});
 
 	it('falls back to the neutral pool for factions without exclusives', () => {
 		expect(unitsForFaction('adventurers-guild', CONTENT)).toEqual([
-			{ id: 'hired-blade', name: 'Hired Blade', points: 17, limit: 3, stats: STATS }
+			{
+				id: 'hired-blade',
+				name: 'Hired Blade',
+				points: 17,
+				limit: 3,
+				stats: STATS,
+				classes: ['soldier']
+			}
 		]);
 	});
 
 	it('withholds the neutral pool from monster factions', () => {
 		expect(unitsForFaction('oni-clans', CONTENT)).toEqual([
-			{ id: 'lesser-oni', name: 'Lesser Oni', points: 8, limit: 2, stats: STATS }
+			{
+				id: 'lesser-oni',
+				name: 'Lesser Oni',
+				points: 8,
+				limit: 2,
+				stats: STATS,
+				classes: ['creature']
+			}
 		]);
 		expect(unitsForFaction('goblin-wartribes', CONTENT)).toEqual([]);
+	});
+});
+
+const RESISTANCE: ArmyRulesSpec = {
+	id: 'resistance--x',
+	name: 'Resistance (X)',
+	description: [
+		{ text: 'Power of a Hit dealt to this model by an Attack with the ' },
+		{ text: '(X)' },
+		{ text: ' Type or Trait is halved.' }
+	],
+	levelText: {
+		2: [
+			{
+				text: 'Hits and related Effects dealt to this model by an Attack with the (X) Type or Trait are negated.'
+			}
+		]
+	}
+};
+
+const CHARM: ArmyRulesSpec = {
+	id: 'charm',
+	name: 'Charm',
+	description: [
+		{ text: 'The target becomes ' },
+		{ text: 'Confused', link: { type: 'trait', id: 'confused' } },
+		{ text: '.' }
+	]
+};
+
+const WIZARD: ArmyRulesSpec = {
+	id: 'wizard',
+	name: 'WIZARD',
+	description: [
+		{ text: 'When casting a Spell of the Elder Element, a Wizard may reroll up to 1 failed roll.' }
+	]
+};
+
+describe('indexArmyRules', () => {
+	it('indexes rules entries by id', () => {
+		expect(indexArmyRules([WIZARD, CHARM])).toEqual({ wizard: WIZARD, charm: CHARM });
+	});
+
+	it('returns an empty record for an empty list', () => {
+		expect(indexArmyRules([])).toEqual({});
+	});
+});
+
+describe('armyRulesTitle', () => {
+	it('leaves level 1 without a suffix', () => {
+		expect(armyRulesTitle('Stealth', 1)).toBe('Stealth');
+	});
+
+	it('adds the level suffix above level 1', () => {
+		expect(armyRulesTitle('Stealth', 2)).toBe('Stealth 2');
+	});
+});
+
+describe('substituteArmyTemplate', () => {
+	it('replaces (X) and bare X with the value, dropping the parens in rules text', () => {
+		expect(substituteArmyTemplate('an Attack with the (X) Type', 'Spell', false)).toBe(
+			'an Attack with the Spell Type'
+		);
+		expect(substituteArmyTemplate('not affected by the X Environment.', 'Scorching', false)).toBe(
+			'not affected by the Scorching Environment.'
+		);
+	});
+
+	it('keeps the parens for display names', () => {
+		expect(substituteArmyTemplate('Resistance (X)', 'Poison', true)).toBe('Resistance (Poison)');
+	});
+
+	it('replaces (Element) with the element name', () => {
+		expect(substituteArmyTemplate('can cast (Element) Spells', 'Elder', false)).toBe(
+			'can cast Elder Spells'
+		);
+		expect(substituteArmyTemplate('Affinity (Element)', 'Elder', true)).toBe('Affinity (Elder)');
+	});
+
+	it('leaves the text untouched without a value', () => {
+		expect(substituteArmyTemplate('Resistance (X)', undefined, false)).toBe('Resistance (X)');
+	});
+});
+
+describe('skillPopupFor', () => {
+	it('uses the base text and no level suffix at level 1', () => {
+		expect(skillPopupFor(CHARM, { id: 'charm', level: 1 })).toEqual({
+			title: 'Charm',
+			body: CHARM.description
+		});
+	});
+
+	it('selects the level text and adds the suffix for higher levels', () => {
+		expect(skillPopupFor(RESISTANCE, { id: 'resistance--x', level: 2 })).toEqual({
+			title: 'Resistance (X) 2',
+			body: RESISTANCE.levelText?.[2]
+		});
+	});
+
+	it('is null for a missing entry', () => {
+		expect(skillPopupFor(undefined, { id: 'ghost', level: 1 })).toBeNull();
+	});
+});
+
+describe('traitPopupFor', () => {
+	it('fills the dynamic value into title and body', () => {
+		expect(
+			traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 1, dynamicValue: 'Spell' })
+		).toEqual({
+			title: 'Resistance (Spell)',
+			body: [
+				{ text: 'Power of a Hit dealt to this model by an Attack with the ' },
+				{ text: 'Spell' },
+				{ text: ' Type or Trait is halved.' }
+			]
+		});
+	});
+
+	it('uses the level text for higher levels', () => {
+		expect(
+			traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 2, dynamicValue: 'Poison' })
+		).toEqual({
+			title: 'Resistance (Poison) 2',
+			body: [
+				{
+					text: 'Hits and related Effects dealt to this model by an Attack with the Poison Type or Trait are negated.'
+				}
+			]
+		});
+	});
+
+	it('falls back to the dynamic elements as the value', () => {
+		const affinity: ArmyRulesSpec = {
+			id: 'affinity--element',
+			name: 'Affinity (Element)',
+			description: [{ text: 'A model with this Trait can cast (Element) Spells.' }]
+		};
+		expect(
+			traitPopupFor(affinity, { id: 'affinity--element', level: 1, dynamicElements: ['Elder'] })
+		).toEqual({
+			title: 'Affinity (Elder)',
+			body: [{ text: 'A model with this Trait can cast Elder Spells.' }]
+		});
+	});
+
+	it('keeps the template without any dynamic value', () => {
+		expect(traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 1 })).toEqual({
+			title: 'Resistance (X)',
+			body: RESISTANCE.description
+		});
+	});
+
+	it('is null for a missing entry', () => {
+		expect(traitPopupFor(undefined, { id: 'ghost', level: 1 })).toBeNull();
+	});
+});
+
+describe('rulesLinkPopup', () => {
+	const INDEXES: ArmyRulesIndexes = {
+		classes: { wizard: WIZARD },
+		skills: { charm: CHARM },
+		traits: {}
+	};
+
+	it('resolves class, skill and trait links', () => {
+		expect(rulesLinkPopup(INDEXES, { type: 'class', id: 'wizard' })).toEqual({
+			title: 'WIZARD',
+			body: WIZARD.description
+		});
+		expect(rulesLinkPopup(INDEXES, { type: 'skill', id: 'charm' })).toEqual({
+			title: 'Charm',
+			body: CHARM.description
+		});
+	});
+
+	it('is null for unknown targets, like condition traits missing from the dump', () => {
+		expect(rulesLinkPopup(INDEXES, { type: 'trait', id: 'knockdown' })).toBeNull();
+		expect(rulesLinkPopup(INDEXES, { type: 'spellcraft', id: 'armamancy' })).toBeNull();
 	});
 });
 

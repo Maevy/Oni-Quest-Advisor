@@ -4,6 +4,7 @@
 		"name": "Bladebrethren Elite",
 		"points": 23,
 		"limit": 1,
+		"classes": ["rogue", "warrior"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -16,13 +17,42 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "dash",
+				"level": 1
+			},
+			{
+				"id": "dual-wield",
+				"level": 1
+			},
+			{
+				"id": "follow-up",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "duelist",
+				"level": 1
+			},
+			{
+				"id": "resourceful",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "night-temple-priestess",
 		"name": "Night-Temple Priestess",
 		"points": 21,
 		"limit": 1,
+		"classes": ["mage", "enchanter"],
 		"stats": {
 			"STA": 2,
 			"SPD": 5,
@@ -35,13 +65,47 @@
 			"ARM": 2,
 			"HP": 1,
 			"M": 8
-		}
+		},
+		"skills": [
+			{
+				"id": "charm",
+				"level": 2
+			},
+			{
+				"id": "flight",
+				"level": 1
+			},
+			{
+				"id": "foresight",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Fire", "Profane"]
+			},
+			{
+				"id": "demon",
+				"level": 1
+			},
+			{
+				"id": "inspiring",
+				"level": 1
+			}
+		]
 	},
 	{
 		"id": "nightshade",
 		"name": "Nightshade",
 		"points": 22,
 		"limit": 1,
+		"classes": ["assassin", "rogue"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -54,13 +118,32 @@
 			"ARM": 1,
 			"HP": 1,
 			"M": 8
-		}
+		},
+		"skills": [
+			{
+				"id": "dual-wield",
+				"level": 1
+			},
+			{
+				"id": "flicker",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 2
+			},
+			{
+				"id": "stealth",
+				"level": 2
+			}
+		]
 	},
 	{
 		"id": "rangers-guild-hunter",
 		"name": "Rangers-Guild Hunter",
 		"points": 19,
 		"limit": 2,
+		"classes": ["assassin", "ranger"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -73,13 +156,44 @@
 			"ARM": 2,
 			"HP": 1,
 			"M": 10
-		}
+		},
+		"skills": [
+			{
+				"id": "climbing",
+				"level": 1
+			},
+			{
+				"id": "infiltration",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 2
+			},
+			{
+				"id": "tracking",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "advantage--x",
+				"level": 1,
+				"dynamicValue": "Beast"
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Forest, Difficult"
+			}
+		]
 	},
 	{
 		"id": "tharos",
 		"name": "Tharos, One-Eyed Wolf ",
 		"points": 28,
 		"limit": 1,
+		"classes": ["alchemist", "rogue"],
 		"stats": {
 			"STA": 2,
 			"SPD": 6,
@@ -92,6 +206,35 @@
 			"ARM": 3,
 			"HP": 2,
 			"M": 12
-		}
+		},
+		"skills": [
+			{
+				"id": "clairvoyance",
+				"level": 1
+			},
+			{
+				"id": "climbing",
+				"level": 1
+			},
+			{
+				"id": "snipe",
+				"level": 1
+			},
+			{
+				"id": "stealth",
+				"level": 2
+			}
+		],
+		"traits": [
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult, Hazy"
+			},
+			{
+				"id": "tactician",
+				"level": 1
+			}
+		]
 	}
 ]
