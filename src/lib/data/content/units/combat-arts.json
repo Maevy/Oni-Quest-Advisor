@@ -1,0 +1,227 @@
+[
+	{
+		"id": "archery",
+		"name": "Archery",
+		"levels": {
+			"1": [
+				{
+					"text": "Overdraw: The first RCH interval of the used Ranged Weapon is increased by 6 inches."
+				}
+			],
+			"2": [
+				{
+					"text": "Impeding Momentum: If hit, the target becomes "
+				},
+				{
+					"text": "Slowed",
+					"link": {
+						"type": "trait",
+						"id": "slowed"
+					}
+				},
+				{
+					"text": " (State) until the end of the turn."
+				}
+			],
+			"3": [
+				{
+					"text": "Staggering Precision: User’s Ranged Attack gains "
+				},
+				{
+					"text": "Stagger",
+					"link": {
+						"type": "trait",
+						"id": "stagger"
+					}
+				},
+				{
+					"text": "."
+				}
+			],
+			"4": [
+				{
+					"text": "Quickdraw: User's Ranged Attack gains +1 STK."
+				}
+			]
+		}
+	},
+	{
+		"id": "assassination",
+		"name": "Assassination",
+		"levels": {
+			"1": [
+				{
+					"text": "Aiming for the Vitals: User’s Attack gains +6 PW."
+				}
+			],
+			"2": [
+				{
+					"text": "Cunning Precaution: User’s Attack gains "
+				},
+				{
+					"text": "Poison I",
+					"link": {
+						"type": "trait",
+						"id": "poison"
+					}
+				},
+				{
+					"text": " Trait."
+				}
+			],
+			"3": [
+				{
+					"text": "Overwhelming Assault: User’s Attack gains +1 STK."
+				}
+			],
+			"4": [
+				{
+					"text": "Decisive Blow: In the Active Role, User’s successful Attack rolls become Critical Hits."
+				}
+			],
+			"5": [
+				{
+					"text": "Deadly Precision: if a model suffers a Wound by this ability, it automatically dies."
+				}
+			]
+		}
+	},
+	{
+		"id": "berserk",
+		"name": "Berserk",
+		"levels": {
+			"1": [
+				{
+					"text": "Grapple & Thrash: User’s Melee Attack gains "
+				},
+				{
+					"text": "Knockdown",
+					"link": {
+						"type": "trait",
+						"id": "knockdown"
+					}
+				},
+				{
+					"text": "."
+				}
+			],
+			"2": [
+				{
+					"text": "Onslaught: User’s Melee Attack gains "
+				},
+				{
+					"text": "Sweep I",
+					"link": {
+						"type": "trait",
+						"id": "sweep"
+					}
+				},
+				{
+					"text": "."
+				}
+			],
+			"3": [
+				{
+					"text": "Limb Fracture: User’s Melee Attack gains "
+				},
+				{
+					"text": "Crippling",
+					"link": {
+						"type": "trait",
+						"id": "crippling"
+					}
+				},
+				{
+					"text": "."
+				}
+			],
+			"4": [
+				{
+					"text": "Mortal Wound: User’s Melee Attack gains "
+				},
+				{
+					"text": "Cleave",
+					"link": {
+						"type": "trait",
+						"id": "cleave"
+					}
+				},
+				{
+					"text": "."
+				}
+			]
+		}
+	},
+	{
+		"id": "fencing",
+		"name": "Fencing",
+		"levels": {
+			"1": [
+				{
+					"text": "Masterful Parry: Target’s Melee Attack suffers -3 Modifier."
+				}
+			],
+			"2": [
+				{
+					"text": "Harsh Riposte: Target’s Melee Attack suffers -1 STK (cannot be reduced below 1)."
+				}
+			],
+			"3": [
+				{
+					"text": "Second Wind: User’s Melee Attack gains +1 STK."
+				}
+			],
+			"4": [
+				{
+					"text": "Grapple & Thrash: User’s Melee Attack gains "
+				},
+				{
+					"text": "Knockdown",
+					"link": {
+						"type": "trait",
+						"id": "knockdown"
+					}
+				},
+				{
+					"text": "."
+				}
+			],
+			"5": [
+				{
+					"text": "Striking the Gaps: User’s Melee Attack gains "
+				},
+				{
+					"text": "Ignore Armor",
+					"link": {
+						"type": "trait",
+						"id": "ignore-armor"
+					}
+				},
+				{
+					"text": "."
+				}
+			]
+		}
+	},
+	{
+		"id": "metamagic",
+		"name": "Metamagic",
+		"levels": {
+			"1": [
+				{
+					"text": "Amplified Control: This model's Spell Attacks ignore Cover."
+				}
+			],
+			"2": [
+				{
+					"text": "Veil of Disruption: The target suffers -3 to its Attack Roll."
+				}
+			],
+			"3": [
+				{
+					"text": "Overchannel: This model may spend up to 2 Mana. It receives +1 STK for each Mana spent."
+				}
+			]
+		}
+	}
+]

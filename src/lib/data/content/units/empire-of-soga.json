@@ -53,6 +53,12 @@
 				"id": "vigilance",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 4
+			}
 		]
 	},
 	{
@@ -88,6 +94,12 @@
 			{
 				"id": "watchful",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 4
 			}
 		]
 	},
@@ -160,6 +172,16 @@
 				"id": "resourceful",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "archery",
+				"level": 3
+			},
+			{
+				"id": "fencing",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -208,6 +230,12 @@
 			{
 				"id": "vigilance",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 4
 			}
 		]
 	}

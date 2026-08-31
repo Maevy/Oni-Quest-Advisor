@@ -16,12 +16,15 @@
  *   mount_character empty, so this pairing is our game-rule knowledge). Mount units
  *   (MOUNT_CODES) are written to mounts.json instead of the recruitable roster.
  * - classes <- classList, written to classes.json; each unit keeps only the class ids.
- * - skills  <- skillGroupList, written to skills.json (one entry per skill group,
- *   per-level rule text where the levels differ); units keep { id, level }.
+ * - skills  <- skillGroupList, written to skills.json; units keep { id, level }.
  * - traits  <- traitGroupList, written to traits.json (template texts with
  *   (X)/(Element) placeholders for the parameterized groups); units keep
  *   { id, level } plus their dynamic value/elements, which fill the
  *   placeholders at display time.
+ * - combatArts <- combatArtGroupList, written to combat-arts.json; units keep
+ *   { id, level }, the level being the highest one the unit has access to.
+ * Skill/trait/combat-art entries carry the catalog's rule text per level in a
+ * `levels` map (groups without per-level entries fall back to `description`).
  * Rules texts (class/skill/trait) are stored as segments; cross-references like
  * `(Knockdown)[trait.KNOCKDOWN]` become link segments, mid-sentence line breaks
  * are normalized to spaces. The catalogs are written in full - they also hold
@@ -104,25 +107,22 @@ function buildClassEntries() {
 }
 
 /**
- * One entry per group from a skill/trait catalog. The lowest level's text is
- * the base description; higher levels with differing text go into levelText.
- * Groups without per-level entries fall back to the group description.
+ * One entry per group from a skill/trait/combat-art catalog: the catalog's
+ * rule text for every level that has one. Groups without per-level entries
+ * fall back to the group description.
  */
 function buildCatalogEntries(list, levelKey) {
 	const entries = [];
 	for (const wrapper of list) {
 		const group = wrapper.attributes;
-		const levels = (group[levelKey]?.data ?? [])
-			.map((entry) => ({ level: entry.attributes.level, text: entry.attributes.description }))
-			.filter((entry) => entry.text)
-			.sort((a, b) => a.level - b.level);
-		const baseText = levels[0]?.text ?? group.description;
-		const entry = { id: kebab(group.code), name: group.name, description: richText(baseText) };
-		const levelText = {};
-		for (const variant of levels.slice(1)) {
-			if (variant.text !== baseText) levelText[variant.level] = richText(variant.text);
+		const levels = {};
+		for (const levelEntry of group[levelKey]?.data ?? []) {
+			const text = levelEntry.attributes.description;
+			if (text) levels[levelEntry.attributes.level] = richText(text);
 		}
-		if (Object.keys(levelText).length > 0) entry.levelText = levelText;
+		const entry = { id: kebab(group.code), name: group.name };
+		if (Object.keys(levels).length > 0) entry.levels = levels;
+		else entry.description = richText(group.description);
 		entries.push(entry);
 	}
 	entries.sort((a, b) => a.name.localeCompare(b.name));
@@ -158,6 +158,14 @@ for (const character of characters) {
 			level: skillAttributes.level
 		}))
 		.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
+	const combatArtRefs = (attributes.combat_arts?.data ?? [])
+		.map((wrapper) => wrapper.attributes)
+		.filter((artAttributes) => artAttributes?.combat_art_group?.data?.attributes)
+		.map((artAttributes) => ({
+			id: kebab(artAttributes.combat_art_group.data.attributes.code),
+			level: artAttributes.level
+		}))
+		.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
 	const traitRefs = [];
 	for (const traitEntry of attributes.traits ?? []) {
 		const traitAttributes = traitEntry.trait?.data?.attributes;
@@ -184,6 +192,7 @@ for (const character of characters) {
 	};
 	if (skillRefs.length > 0) unit.skills = skillRefs;
 	if (traitRefs.length > 0) unit.traits = traitRefs;
+	if (combatArtRefs.length > 0) unit.combatArts = combatArtRefs;
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -224,6 +233,9 @@ console.log('skills: ' + skills.length + ' skills');
 const traits = buildCatalogEntries(pageProps.traitGroupList.data, 'traits');
 writeFileSync(join(outDir, 'traits.json'), JSON.stringify(traits, null, '\t') + '\n');
 console.log('traits: ' + traits.length + ' traits');
+const combatArts = buildCatalogEntries(pageProps.combatArtGroupList.data, 'combat_arts');
+writeFileSync(join(outDir, 'combat-arts.json'), JSON.stringify(combatArts, null, '\t') + '\n');
+console.log('combat arts: ' + combatArts.length + ' combat arts');
 if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
 	for (const entry of skipped) console.log(' - ' + entry);

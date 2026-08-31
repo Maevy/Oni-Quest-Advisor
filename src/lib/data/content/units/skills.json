@@ -2,30 +2,34 @@
 	{
 		"id": "backstab",
 		"name": "Backstab",
-		"description": [
-			{
-				"text": "During an Attack Action against a Target that lacks Line of Sight (LoS) to this model, this model's Hits gain +3 PW for that attack, and one of this model’s Strikes automatically becomes a Hit (resolve any remaining Strikes normally). This automatic Hit is ignored for Confrontation rolls. If this model loses the Confrontation roll, both models may score successful Hits."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "During an Attack Action against a Target that lacks Line of Sight (LoS) to this model, this model's Hits gain +3 PW for that attack, and one of this model’s Strikes automatically becomes a Hit (resolve any remaining Strikes normally). This automatic Hit is ignored for Confrontation rolls. If this model loses the Confrontation roll, both models may score successful Hits."
+				}
+			]
+		}
 	},
 	{
 		"id": "chain-attack",
 		"name": "Chain Attack",
-		"description": [
-			{
-				"text": "Once per Activation Sequence, if an allied model scores a Hit against an enemy within this model’s LoS, this model may perform an unmodified STK 1 Attack against that enemy (before DMG rolls). If there are multiple targets, choose one. This Skill is not an Activation or Reaction and does not consume AP. It ignores “(Ranged) Friendly Fire”. Hits generated from Chain Attack cannot generate further Chain Attacks."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "Once per Activation Sequence, if an allied model scores a Hit against an enemy within this model’s LoS, this model may perform an unmodified STK 1 Attack against that enemy (before DMG rolls). If there are multiple targets, choose one. This Skill is not an Activation or Reaction and does not consume AP. It ignores “(Ranged) Friendly Fire”. Hits generated from Chain Attack cannot generate further Chain Attacks."
+				}
+			]
+		}
 	},
 	{
 		"id": "charm",
 		"name": "Charm",
-		"description": [
-			{
-				"text": "When an enemy model declares Reaction against this model, it must first perform an Intellect roll. If it fails the roll, it may not declare any Normal Action other than Nothing until the end of the Activation Sequence."
-			}
-		],
-		"levelText": {
+		"levels": {
+			"1": [
+				{
+					"text": "When an enemy model declares Reaction against this model, it must first perform an Intellect roll. If it fails the roll, it may not declare any Normal Action other than Nothing until the end of the Activation Sequence."
+				}
+			],
 			"2": [
 				{
 					"text": "On a failed Intellect roll, the enemy model must also perform Walk towards the user for its entire Speed value (if able) at the end of the Activation Sequence."
@@ -36,66 +40,78 @@
 	{
 		"id": "clairvoyance",
 		"name": "Clairvoyance",
-		"description": [
-			{
-				"text": "In the Reactive Role, this model may declare a Reaction using Casting Aura Spells to target enemy models within its Awareness without requiring LoS. It ignores LoS restrictions caused by Environments, as well as the Blinded State and the Surprise Attack Trait of enemy models within its Awareness. In the Active Role, it does not suffer halving modifiers when casting Spells without LoS."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "In the Reactive Role, this model may declare a Reaction using Casting Aura Spells to target enemy models within its Awareness without requiring LoS. It ignores LoS restrictions caused by Environments, as well as the Blinded State and the Surprise Attack Trait of enemy models within its Awareness. In the Active Role, it does not suffer halving modifiers when casting Spells without LoS."
+				}
+			]
+		}
 	},
 	{
 		"id": "climbing",
 		"name": "Climbing",
-		"description": [
-			{
-				"text": "This model can perform the Climb Special Movement as if it were a Normal Movement, ignoring “A model cannot perform any other Action while on a vertical surface”. While performing Climb, its SPD is not halved."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "This model can perform the Climb Special Movement as if it were a Normal Movement, ignoring “A model cannot perform any other Action while on a vertical surface”. While performing Climb, its SPD is not halved."
+				}
+			]
+		}
 	},
 	{
 		"id": "dash",
 		"name": "Dash",
-		"description": [
-			{
-				"text": "When this model performs a Run Special Movement, it may declare an unmodified Strike 1 Melee Attack in its Action Step."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "When this model performs a Run Special Movement, it may declare an unmodified Strike 1 Melee Attack in its Action Step."
+				}
+			]
+		}
 	},
 	{
 		"id": "dual-wield",
 		"name": "Dual-Wield",
-		"description": [
-			{
-				"text": "A model with this skill can equip a 2nd (Melee) Weapon in place of a Shield. Both weapons must have a RCH of 1 or less and must not have the "
-			},
-			{
-				"text": "Two-Handed",
-				"link": {
-					"type": "trait",
-					"id": "two-handed"
+		"levels": {
+			"1": [
+				{
+					"text": "A model with this skill can equip a 2nd (Melee) Weapon in place of a Shield. Both weapons must have a RCH of 1 or less and must not have the "
+				},
+				{
+					"text": "Two-Handed",
+					"link": {
+						"type": "trait",
+						"id": "two-handed"
+					}
+				},
+				{
+					"text": " trait. This skill allows the model to re-roll a single Melee Attack roll. This model must decide which weapon’s PW and Strike values to apply during an Attack action. The model may apply effects of both Weapons if applicable."
 				}
-			},
-			{
-				"text": " trait. This skill allows the model to re-roll a single Melee Attack roll. This model must decide which weapon’s PW and Strike values to apply during an Attack action. The model may apply effects of both Weapons if applicable."
-			}
-		]
+			]
+		}
 	},
 	{
 		"id": "finishing-strike",
 		"name": "Finishing Strike",
-		"description": [
-			{
-				"text": "When this model causes at least one Wound to a target, it may immediately make an unmodified STK 1 Attack against the same target. It must use the same Item or Skill. If there are more targets, choose only one."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "When this model causes at least one Wound to a target, it may immediately make an unmodified STK 1 Attack against the same target. It must use the same Item or Skill. If there are more targets, choose only one."
+				}
+			]
+		}
 	},
 	{
 		"id": "flicker",
 		"name": "Flicker",
-		"description": [
-			{
-				"text": "When declaring Movement, this model may ignore obstacles and other models, moving in any direction, even vertically. Distance is measured as a straight line between start and end positions. This model cannot end Movement on another model or in scenery. If ending mid-air, place it underneath and test for Fall Damage. Enemies can react if they have LoS to the start or end positions or if this model moves into their Awareness."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "When declaring Movement, this model may ignore obstacles and other models, moving in any direction, even vertically. Distance is measured as a straight line between start and end positions. This model cannot end Movement on another model or in scenery. If ending mid-air, place it underneath and test for Fall Damage. Enemies can react if they have LoS to the start or end positions or if this model moves into their Awareness."
+				}
+			]
+		}
 	},
 	{
 		"id": "flight",
@@ -139,97 +155,107 @@
 	{
 		"id": "follow-up",
 		"name": "Follow Up",
-		"description": [
-			{
-				"text": "If an enemy model disengages from this model, this model may move up to its halved SPD value towards the disengaged model."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "If an enemy model disengages from this model, this model may move up to its halved SPD value towards the disengaged model."
+				}
+			]
+		}
 	},
 	{
 		"id": "foresight",
 		"name": "Foresight",
-		"description": [
-			{
-				"text": "When this model becomes the target of an Attack in the Reactive Role and did not declare a Reaction during the Reaction Step, it may instead declare a Reaction during the Action Step of the Activation Sequence, after the Active model has declared its Action."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "When this model becomes the target of an Attack in the Reactive Role and did not declare a Reaction during the Reaction Step, it may instead declare a Reaction during the Action Step of the Activation Sequence, after the Active model has declared its Action."
+				}
+			]
+		}
 	},
 	{
 		"id": "hit-and-retreat",
 		"name": "Hit and Retreat",
-		"description": [
-			{
-				"text": "During its Movement step, this model may cancel the "
-			},
-			{
-				"text": "Engaged",
-				"link": {
-					"type": "trait",
-					"id": "engaged"
+		"levels": {
+			"1": [
+				{
+					"text": "During its Movement step, this model may cancel the "
+				},
+				{
+					"text": "Engaged",
+					"link": {
+						"type": "trait",
+						"id": "engaged"
+					}
+				},
+				{
+					"text": " state without any roll required. If it declares an Attack in its Activation, it may perform Walk during the end of Resolution step."
 				}
-			},
-			{
-				"text": " state without any roll required. If it declares an Attack in its Activation, it may perform Walk during the end of Resolution step."
-			}
-		]
+			]
+		}
 	},
 	{
 		"id": "hurl",
 		"name": "Hurl",
-		"description": [
-			{
-				"text": "This model may declare a STK 1 Ranged Attack with RCH distance and PW equal to its T value, AoE: Circular S, and "
-			},
-			{
-				"text": "Stagger",
-				"link": {
-					"type": "trait",
-					"id": "stagger"
+		"levels": {
+			"1": [
+				{
+					"text": "This model may declare a STK 1 Ranged Attack with RCH distance and PW equal to its T value, AoE: Circular S, and "
+				},
+				{
+					"text": "Stagger",
+					"link": {
+						"type": "trait",
+						"id": "stagger"
+					}
+				},
+				{
+					"text": " Trait. The STK value cannot be modified. If the target is within 1/2 RCH distance, this model benefits from +4 ACC for the duration of this Attack action. (It may not use any other Ranged Weapon or Spell during this Activation Sequence.)"
 				}
-			},
-			{
-				"text": " Trait. The STK value cannot be modified. If the target is within 1/2 RCH distance, this model benefits from +4 ACC for the duration of this Attack action. (It may not use any other Ranged Weapon or Spell during this Activation Sequence.)"
-			}
-		]
+			]
+		}
 	},
 	{
 		"id": "impede",
 		"name": "Impede",
-		"description": [
-			{
-				"text": "When this model declares an Attack of Opportunity with a Melee Attack against a non-"
-			},
-			{
-				"text": "Engaged",
-				"link": {
-					"type": "trait",
-					"id": "engaged"
+		"levels": {
+			"1": [
+				{
+					"text": "When this model declares an Attack of Opportunity with a Melee Attack against a non-"
+				},
+				{
+					"text": "Engaged",
+					"link": {
+						"type": "trait",
+						"id": "engaged"
+					}
+				},
+				{
+					"text": " model, that model’s Movement ends at the point where the Attack of Opportunity is performed. If Attack of Opportunity was a Melee Attack, the target also becomes "
+				},
+				{
+					"text": "Engaged",
+					"link": {
+						"type": "trait",
+						"id": "engaged"
+					}
+				},
+				{
+					"text": " immediately."
 				}
-			},
-			{
-				"text": " model, that model’s Movement ends at the point where the Attack of Opportunity is performed. If Attack of Opportunity was a Melee Attack, the target also becomes "
-			},
-			{
-				"text": "Engaged",
-				"link": {
-					"type": "trait",
-					"id": "engaged"
-				}
-			},
-			{
-				"text": " immediately."
-			}
-		]
+			]
+		}
 	},
 	{
 		"id": "infiltration",
 		"name": "Infiltration",
-		"description": [
-			{
-				"text": "You may deploy this model up to the middle line of the field (on your half of the field)."
-			}
-		],
-		"levelText": {
+		"levels": {
+			"1": [
+				{
+					"text": "You may deploy this model up to the middle line of the field (on your half of the field)."
+				}
+			],
 			"2": [
 				{
 					"text": "You may deploy this model anywhere outside of the opponent’s Deployment Zone."
@@ -240,30 +266,34 @@
 	{
 		"id": "leap",
 		"name": "Leap",
-		"description": [
-			{
-				"text": "This model can perform the Jump Special Movement as if it were a Normal Movement. While performing Jump, its SPD is not halved."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "This model can perform the Jump Special Movement as if it were a Normal Movement. While performing Jump, its SPD is not halved."
+				}
+			]
+		}
 	},
 	{
 		"id": "protector",
 		"name": "Protector",
-		"description": [
-			{
-				"text": "This skill may only be used in the Reactive Role. When an allied model within 1/2 SPD distance is targeted in an Attack in this model’s Reactive Role, this model can spend an Activation Point to move into Base Contact with the ally. (While moving, it cannot pass through objects taller than its Hitbox.) By doing this, the model becomes the new target of the Attack Action."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "This skill may only be used in the Reactive Role. When an allied model within 1/2 SPD distance is targeted in an Attack in this model’s Reactive Role, this model can spend an Activation Point to move into Base Contact with the ally. (While moving, it cannot pass through objects taller than its Hitbox.) By doing this, the model becomes the new target of the Attack Action."
+				}
+			]
+		}
 	},
 	{
 		"id": "regeneration",
 		"name": "Regeneration",
-		"description": [
-			{
-				"text": "During its Strategic phase, this model may regain 1 HP and cancel the Bleeding, Weakened and Crippled States."
-			}
-		],
-		"levelText": {
+		"levels": {
+			"1": [
+				{
+					"text": "During its Strategic phase, this model may regain 1 HP and cancel the Bleeding, Weakened and Crippled States."
+				}
+			],
 			"2": [
 				{
 					"text": "During its Strategic phase, this model may regain 2 HP and cancel the Bleeding, Weakened and Crippled States."
@@ -274,30 +304,34 @@
 	{
 		"id": "shield-wall",
 		"name": "Shield Wall",
-		"description": [
-			{
-				"text": "Other allied models in Base Contact with this model gain its Shield ARM bonus against Ranged Attacks."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "Other allied models in Base Contact with this model gain its Shield ARM bonus against Ranged Attacks."
+				}
+			]
+		}
 	},
 	{
 		"id": "snipe",
 		"name": "Snipe",
-		"description": [
-			{
-				"text": "STK of an Attack using this ability is 1, unmodifiable. This model ignores Cover and \"(Ranged) Friendly Fire\"."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "STK of an Attack using this ability is 1, unmodifiable. This model ignores Cover and \"(Ranged) Friendly Fire\"."
+				}
+			]
+		}
 	},
 	{
 		"id": "stealth",
 		"name": "Stealth",
-		"description": [
-			{
-				"text": "When this model activates it does not provoke a Reaction from enemy models that do not have LoS to it, regardless of whether this model is within an enemy model’s Awareness or not."
-			}
-		],
-		"levelText": {
+		"levels": {
+			"1": [
+				{
+					"text": "When this model activates it does not provoke a Reaction from enemy models that do not have LoS to it, regardless of whether this model is within an enemy model’s Awareness or not."
+				}
+			],
 			"2": [
 				{
 					"text": "You may deploy this model in the "
@@ -328,19 +362,23 @@
 	{
 		"id": "taunt",
 		"name": "Taunt",
-		"description": [
-			{
-				"text": "When this model performs a Movement, it may force enemy models with LoS to this model or within whose awareness this model enters, to perform an INT roll. Every enemy that fails needs to declare a Reaction."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "When this model performs a Movement, it may force enemy models with LoS to this model or within whose awareness this model enters, to perform an INT roll. Every enemy that fails needs to declare a Reaction."
+				}
+			]
+		}
 	},
 	{
 		"id": "tracking",
 		"name": "Tracking",
-		"description": [
-			{
-				"text": "This model gains a +3 Modifier when performing Perceive and Uncover Actions. The user does not suffer the penalty to its INT Stat when it performs the Uncover Action. When performing Perceive, it may reroll a single roll."
-			}
-		]
+		"levels": {
+			"1": [
+				{
+					"text": "This model gains a +3 Modifier when performing Perceive and Uncover Actions. The user does not suffer the penalty to its INT Stat when it performs the Uncover Action. When performing Perceive, it may reroll a single roll."
+				}
+			]
+		}
 	}
 ]

@@ -75,6 +75,12 @@
 				"id": "vigilance",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -176,6 +182,12 @@
 				"id": "tactician",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -234,6 +246,12 @@
 			{
 				"id": "fearless",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 2
 			}
 		]
 	}

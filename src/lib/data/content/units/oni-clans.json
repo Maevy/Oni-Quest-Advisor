@@ -47,6 +47,12 @@
 				"id": "vigilance",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "berserk",
+				"level": 2
+			}
 		]
 	},
 	{
@@ -222,6 +228,16 @@
 				"id": "vigilance",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "archery",
+				"level": 1
+			},
+			{
+				"id": "fencing",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -372,6 +388,12 @@
 				"level": 1,
 				"dynamicValue": "Difficult"
 			}
+		],
+		"combatArts": [
+			{
+				"id": "berserk",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -433,6 +455,12 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Difficult"
+			}
+		],
+		"combatArts": [
+			{
+				"id": "berserk",
+				"level": 2
 			}
 		]
 	},

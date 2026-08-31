@@ -71,6 +71,12 @@
 				"level": 1,
 				"dynamicValue": "Scorching"
 			}
+		],
+		"combatArts": [
+			{
+				"id": "metamagic",
+				"level": 3
+			}
 		]
 	},
 	{

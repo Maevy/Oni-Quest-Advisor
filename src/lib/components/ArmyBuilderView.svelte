@@ -15,6 +15,7 @@
 		classIndex: Record<string, ArmyRulesSpec>;
 		skillIndex: Record<string, ArmyRulesSpec>;
 		traitIndex: Record<string, ArmyRulesSpec>;
+		combatArtIndex: Record<string, ArmyRulesSpec>;
 		armyRows: ArmyRosterRow[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -35,6 +36,7 @@
 		classIndex,
 		skillIndex,
 		traitIndex,
+		combatArtIndex,
 		armyRows,
 		counts,
 		format,
@@ -298,6 +300,7 @@
 			{classIndex}
 			{skillIndex}
 			{traitIndex}
+			{combatArtIndex}
 			stats={selectedCard.stats}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}

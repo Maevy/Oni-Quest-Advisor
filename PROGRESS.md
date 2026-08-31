@@ -24,10 +24,29 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
 - Army builder feature is on `develop` (unreleased): faction select, producer unit
-  import (`scripts/importUnits.mjs`), unit cards with classes, skills and traits
-  (centralized rules entries, clickable tags, stacked rules popups), mounts.
+  import (`scripts/importUnits.mjs`), unit cards with classes, skills, traits and
+  combat arts (centralized rules entries, clickable tags, stacked rules popups
+  with level lists), mounts.
 
-## What was done in the last session (army builder: per-copy entries + unit rules)
+## What was done in the last session (combat arts + level lists)
+
+1. **Combat arts migrated**: `content/units/combat-arts.json` ←
+   `combatArtGroupList` — Archery, Assassination, Berserk, Fencing, Metamagic
+   with the full per-level rule texts. Units carry `combatArts` refs
+   (`{ id, level }`), the level being the *highest* one the unit has access to;
+   a new Combat Arts panel sits between Skills and Traits (orange tags).
+2. **Level-list popups**: leveled entries (skills, traits, combat arts) now
+   store the catalog's text per level in a `levels` map on `ArmyRulesSpec`
+   (replaces the old `levelText` overrides). Their popups show every level as
+   its own section — levels up to the unit's level render normally, higher ones
+   greyed out (Fencing III shows I–III normally, IV–V greyed). Titles and tags
+   use roman level suffixes as printed (Charm I, Fencing III).
+3. **Layout**: the unit card and rules popups became scrollable
+   (`max-h`/`overflow-y-auto`) — the card outgrew phone screens with the extra
+   panels.
+4. Tests 156 → 161; check/lint/build clean.
+
+## What was done in the session before (army builder: per-copy entries + unit rules)
 
 1. **Per-copy army entries**: every copy of a unit is now its own `ArmyEntry`
    (`addArmyUnit` takes an injected id, `removeArmyEntry`/`removeArmyCopy`,

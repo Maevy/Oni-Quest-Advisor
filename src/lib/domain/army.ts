@@ -55,17 +55,24 @@ export type ArmyTextSegment = {
 	link?: ArmyRulesLink;
 };
 
-/** A class, skill or trait entry with its rules text; shared across units. */
+/** A class, skill, trait or combat-art entry with its rules text; shared across units. */
 export type ArmyRulesSpec = {
 	id: string;
 	name: string;
-	description: ArmyTextSegment[];
-	/** Rule text per level, for levels whose text differs from the base. */
-	levelText?: Record<number, ArmyTextSegment[]>;
+	/** Rules text for entries without per-level texts (classes, level-less groups). */
+	description?: ArmyTextSegment[];
+	/** Rules text per level, for entries whose rules are leveled. */
+	levels?: Record<number, ArmyTextSegment[]>;
 };
 
 /** A skill on a unit, referencing the centralized skill entry. */
 export type ArmySkillRef = {
+	id: string;
+	level: number;
+};
+
+/** A combat art on a unit; the level is the highest level the unit has access to. */
+export type ArmyCombatArtRef = {
 	id: string;
 	level: number;
 };
@@ -90,16 +97,26 @@ export type ArmyUnitSpec = {
 	skills?: ArmySkillRef[];
 	/** Trait references; a few units have none. */
 	traits?: ArmyTraitRef[];
+	/** Combat-art references; most units have none. */
+	combatArts?: ArmyCombatArtRef[];
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
 	mount?: { unitId: string; points: number };
 	icon?: string;
 };
 
-/** A resolved rules popup: heading plus rich rule text. */
+/** One block of rules text in a popup, optionally tied to a level. */
+export type ArmyRulesSection = {
+	level?: number;
+	/** False when the unit's level does not grant access - rendered greyed out. */
+	available: boolean;
+	text: ArmyTextSegment[];
+};
+
+/** A resolved rules popup: heading plus its level sections. */
 export type ArmyRulesPopup = {
 	title: string;
-	body: ArmyTextSegment[];
+	sections: ArmyRulesSection[];
 };
 
 /** One copy of a unit in the current army - every copy is its own entry. */
@@ -204,9 +221,30 @@ export function indexArmyRules(entries: ArmyRulesSpec[]): Record<string, ArmyRul
 	return Object.fromEntries(entries.map((entry) => [entry.id, entry]));
 }
 
-/** Display title of a rules entry at a level - a level suffix only above 1. */
-export function armyRulesTitle(name: string, level: number): string {
-	return level > 1 ? name + ' ' + level : name;
+const ROMAN_VALUES: [number, string][] = [
+	[10, 'X'],
+	[9, 'IX'],
+	[5, 'V'],
+	[4, 'IV'],
+	[1, 'I']
+];
+
+/** Roman numeral for a rules level (the game prints Fencing III, Charm II, ...). */
+export function romanNumeral(level: number): string {
+	let remaining = level;
+	let numeral = '';
+	for (const [value, symbol] of ROMAN_VALUES) {
+		while (remaining >= value) {
+			numeral += symbol;
+			remaining -= value;
+		}
+	}
+	return numeral;
+}
+
+/** Display title of a rules entry - a roman level suffix when it is leveled. */
+export function armyRulesTitle(name: string, level?: number): string {
+	return level === undefined ? name : name + ' ' + romanNumeral(level);
 }
 
 /**
@@ -227,7 +265,40 @@ export function substituteArmyTemplate(
 		.replace(/\bX\b/g, () => value);
 }
 
-/** The popup content for a unit's skill reference; null for a missing entry. */
+/** The popup for a class entry: its rules text as a single section. */
+export function classPopupFor(entry: ArmyRulesSpec | undefined): ArmyRulesPopup | null {
+	if (!entry) return null;
+	return { title: entry.name, sections: [{ available: true, text: entry.description ?? [] }] };
+}
+
+function leveledSections(
+	entry: ArmyRulesSpec,
+	level: number,
+	transform?: (text: string) => string
+): ArmyRulesSection[] {
+	const apply = (segments: ArmyTextSegment[]): ArmyTextSegment[] =>
+		transform
+			? segments.map((segment) => ({ ...segment, text: transform(segment.text) }))
+			: segments;
+	const levels = entry.levels ?? {};
+	const numbers = Object.keys(levels)
+		.map(Number)
+		.sort((a, b) => a - b);
+	if (numbers.length === 0) {
+		return [{ available: true, text: apply(entry.description ?? []) }];
+	}
+	return numbers.map((entryLevel) => ({
+		level: entryLevel,
+		available: entryLevel <= level,
+		text: apply(levels[entryLevel])
+	}));
+}
+
+/**
+ * The popup for a leveled rules reference (skill, trait, combat art): every
+ * catalog level as its own section, accessible up to the unit's level and
+ * greyed out beyond it. Null for a missing entry.
+ */
 export function skillPopupFor(
 	entry: ArmyRulesSpec | undefined,
 	ref: ArmySkillRef
@@ -235,32 +306,43 @@ export function skillPopupFor(
 	if (!entry) return null;
 	return {
 		title: armyRulesTitle(entry.name, ref.level),
-		body: entry.levelText?.[ref.level] ?? entry.description
+		sections: leveledSections(entry, ref.level)
 	};
 }
 
-/** The popup content for a unit's trait reference, placeholders filled; null for a missing entry. */
+/** The popup for a unit's combat-art reference; the level is its highest accessible one. */
+export function combatArtPopupFor(
+	entry: ArmyRulesSpec | undefined,
+	ref: ArmyCombatArtRef
+): ArmyRulesPopup | null {
+	if (!entry) return null;
+	return {
+		title: armyRulesTitle(entry.name, ref.level),
+		sections: leveledSections(entry, ref.level)
+	};
+}
+
+/** The popup for a unit's trait reference, placeholders filled; null for a missing entry. */
 export function traitPopupFor(
 	entry: ArmyRulesSpec | undefined,
 	ref: ArmyTraitRef
 ): ArmyRulesPopup | null {
 	if (!entry) return null;
 	const value = ref.dynamicValue ?? ref.dynamicElements?.join(', ');
-	const segments = entry.levelText?.[ref.level] ?? entry.description;
 	return {
 		title: armyRulesTitle(substituteArmyTemplate(entry.name, value, true), ref.level),
-		body: segments.map((segment) => ({
-			...segment,
-			text: substituteArmyTemplate(segment.text, value, false)
-		}))
+		sections: leveledSections(entry, ref.level, (text) =>
+			substituteArmyTemplate(text, value, false)
+		)
 	};
 }
 
-/** The three rules indexes the popup stack resolves its links against. */
+/** The rules indexes the popup stack resolves its links against. */
 export type ArmyRulesIndexes = {
 	classes: Record<string, ArmyRulesSpec>;
 	skills: Record<string, ArmyRulesSpec>;
 	traits: Record<string, ArmyRulesSpec>;
+	combatArts: Record<string, ArmyRulesSpec>;
 };
 
 /** Resolves a rules link to a popup; null when the target is not in the imported content. */
@@ -275,10 +357,20 @@ export function rulesLinkPopup(
 				? indexes.skills
 				: link.type === 'trait'
 					? indexes.traits
-					: undefined;
+					: link.type === 'combat-art'
+						? indexes.combatArts
+						: undefined;
 	const entry = index?.[link.id];
 	if (!entry) return null;
-	return { title: entry.name, body: entry.description };
+	const levels = entry.levels ?? {};
+	const numbers = Object.keys(levels)
+		.map(Number)
+		.sort((a, b) => a - b);
+	const sections: ArmyRulesSection[] =
+		numbers.length > 0
+			? numbers.map((level) => ({ level, available: true, text: levels[level] }))
+			: [{ available: true, text: entry.description ?? [] }];
+	return { title: entry.name, sections };
 }
 
 /** Rider stats when mounted: non-null mount stats override, statChanges add on top. */

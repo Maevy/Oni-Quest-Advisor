@@ -4,12 +4,15 @@ import {
 	armyCopyCounts,
 	armyPoints,
 	armyRulesTitle,
+	classPopupFor,
+	combatArtPopupFor,
 	effectiveMountedStats,
 	indexArmyRules,
 	isOverArmyLimit,
 	removeArmyCopy,
 	removeArmyEntry,
 	resolveArmyEntries,
+	romanNumeral,
 	rulesLinkPopup,
 	skillPopupFor,
 	substituteArmyTemplate,
@@ -378,12 +381,12 @@ describe('unitsForFaction', () => {
 const RESISTANCE: ArmyRulesSpec = {
 	id: 'resistance--x',
 	name: 'Resistance (X)',
-	description: [
-		{ text: 'Power of a Hit dealt to this model by an Attack with the ' },
-		{ text: '(X)' },
-		{ text: ' Type or Trait is halved.' }
-	],
-	levelText: {
+	levels: {
+		1: [
+			{ text: 'Power of a Hit dealt to this model by an Attack with the ' },
+			{ text: '(X)' },
+			{ text: ' Type or Trait is halved.' }
+		],
 		2: [
 			{
 				text: 'Hits and related Effects dealt to this model by an Attack with the (X) Type or Trait are negated.'
@@ -395,11 +398,31 @@ const RESISTANCE: ArmyRulesSpec = {
 const CHARM: ArmyRulesSpec = {
 	id: 'charm',
 	name: 'Charm',
-	description: [
-		{ text: 'The target becomes ' },
-		{ text: 'Confused', link: { type: 'trait', id: 'confused' } },
-		{ text: '.' }
-	]
+	levels: {
+		1: [
+			{ text: 'The target becomes ' },
+			{ text: 'Confused', link: { type: 'trait', id: 'confused' } },
+			{ text: '.' }
+		],
+		2: [{ text: 'On a failed roll, the target must also perform Walk towards the user.' }]
+	}
+};
+
+const DASH: ArmyRulesSpec = {
+	id: 'dash',
+	name: 'Dash',
+	levels: { 1: [{ text: 'This model may perform a Dash move.' }] }
+};
+
+const FENCING: ArmyRulesSpec = {
+	id: 'fencing',
+	name: 'Fencing',
+	levels: {
+		1: [{ text: 'Fencing level one.' }],
+		2: [{ text: 'Fencing level two.' }],
+		3: [{ text: 'Fencing level three.' }],
+		4: [{ text: 'Fencing level four.' }]
+	}
 };
 
 const WIZARD: ArmyRulesSpec = {
@@ -420,13 +443,33 @@ describe('indexArmyRules', () => {
 	});
 });
 
+describe('romanNumeral', () => {
+	it('converts the levels the game prints', () => {
+		expect([1, 2, 3, 4, 5].map(romanNumeral)).toEqual(['I', 'II', 'III', 'IV', 'V']);
+	});
+});
+
 describe('armyRulesTitle', () => {
-	it('leaves level 1 without a suffix', () => {
-		expect(armyRulesTitle('Stealth', 1)).toBe('Stealth');
+	it('leaves unleveled entries without a suffix', () => {
+		expect(armyRulesTitle('WIZARD')).toBe('WIZARD');
 	});
 
-	it('adds the level suffix above level 1', () => {
-		expect(armyRulesTitle('Stealth', 2)).toBe('Stealth 2');
+	it('adds a roman level suffix for leveled entries, including level 1', () => {
+		expect(armyRulesTitle('Charm', 1)).toBe('Charm I');
+		expect(armyRulesTitle('Fencing', 3)).toBe('Fencing III');
+	});
+});
+
+describe('classPopupFor', () => {
+	it('wraps the description in a single available section', () => {
+		expect(classPopupFor(WIZARD)).toEqual({
+			title: 'WIZARD',
+			sections: [{ available: true, text: WIZARD.description }]
+		});
+	});
+
+	it('is null for a missing entry', () => {
+		expect(classPopupFor(undefined)).toBeNull();
 	});
 });
 
@@ -457,17 +500,34 @@ describe('substituteArmyTemplate', () => {
 });
 
 describe('skillPopupFor', () => {
-	it('uses the base text and no level suffix at level 1', () => {
+	it('lists every level, available up to the unit level and greyed out beyond', () => {
 		expect(skillPopupFor(CHARM, { id: 'charm', level: 1 })).toEqual({
-			title: 'Charm',
-			body: CHARM.description
+			title: 'Charm I',
+			sections: [
+				{ level: 1, available: true, text: CHARM.levels?.[1] },
+				{ level: 2, available: false, text: CHARM.levels?.[2] }
+			]
+		});
+		expect(skillPopupFor(CHARM, { id: 'charm', level: 2 })).toEqual({
+			title: 'Charm II',
+			sections: [
+				{ level: 1, available: true, text: CHARM.levels?.[1] },
+				{ level: 2, available: true, text: CHARM.levels?.[2] }
+			]
 		});
 	});
 
-	it('selects the level text and adds the suffix for higher levels', () => {
-		expect(skillPopupFor(RESISTANCE, { id: 'resistance--x', level: 2 })).toEqual({
-			title: 'Resistance (X) 2',
-			body: RESISTANCE.levelText?.[2]
+	it('renders a single-level entry as one available section', () => {
+		expect(skillPopupFor(DASH, { id: 'dash', level: 1 })).toEqual({
+			title: 'Dash I',
+			sections: [{ level: 1, available: true, text: DASH.levels?.[1] }]
+		});
+	});
+
+	it('falls back to the description for level-less entries', () => {
+		expect(skillPopupFor(WIZARD, { id: 'wizard', level: 1 })).toEqual({
+			title: 'WIZARD I',
+			sections: [{ available: true, text: WIZARD.description }]
 		});
 	});
 
@@ -476,28 +536,48 @@ describe('skillPopupFor', () => {
 	});
 });
 
-describe('traitPopupFor', () => {
-	it('fills the dynamic value into title and body', () => {
-		expect(
-			traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 1, dynamicValue: 'Spell' })
-		).toEqual({
-			title: 'Resistance (Spell)',
-			body: [
-				{ text: 'Power of a Hit dealt to this model by an Attack with the ' },
-				{ text: 'Spell' },
-				{ text: ' Type or Trait is halved.' }
+describe('combatArtPopupFor', () => {
+	it('greys out the levels above the unit access level', () => {
+		expect(combatArtPopupFor(FENCING, { id: 'fencing', level: 3 })).toEqual({
+			title: 'Fencing III',
+			sections: [
+				{ level: 1, available: true, text: FENCING.levels?.[1] },
+				{ level: 2, available: true, text: FENCING.levels?.[2] },
+				{ level: 3, available: true, text: FENCING.levels?.[3] },
+				{ level: 4, available: false, text: FENCING.levels?.[4] }
 			]
 		});
 	});
 
-	it('uses the level text for higher levels', () => {
+	it('is null for a missing entry', () => {
+		expect(combatArtPopupFor(undefined, { id: 'ghost', level: 1 })).toBeNull();
+	});
+});
+
+describe('traitPopupFor', () => {
+	it('fills the dynamic value into the title and every level section', () => {
 		expect(
-			traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 2, dynamicValue: 'Poison' })
+			traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 1, dynamicValue: 'Spell' })
 		).toEqual({
-			title: 'Resistance (Poison) 2',
-			body: [
+			title: 'Resistance (Spell) I',
+			sections: [
 				{
-					text: 'Hits and related Effects dealt to this model by an Attack with the Poison Type or Trait are negated.'
+					level: 1,
+					available: true,
+					text: [
+						{ text: 'Power of a Hit dealt to this model by an Attack with the ' },
+						{ text: 'Spell' },
+						{ text: ' Type or Trait is halved.' }
+					]
+				},
+				{
+					level: 2,
+					available: false,
+					text: [
+						{
+							text: 'Hits and related Effects dealt to this model by an Attack with the Spell Type or Trait are negated.'
+						}
+					]
 				}
 			]
 		});
@@ -507,20 +587,29 @@ describe('traitPopupFor', () => {
 		const affinity: ArmyRulesSpec = {
 			id: 'affinity--element',
 			name: 'Affinity (Element)',
-			description: [{ text: 'A model with this Trait can cast (Element) Spells.' }]
+			levels: { 1: [{ text: 'A model with this Trait can cast (Element) Spells.' }] }
 		};
 		expect(
 			traitPopupFor(affinity, { id: 'affinity--element', level: 1, dynamicElements: ['Elder'] })
 		).toEqual({
-			title: 'Affinity (Elder)',
-			body: [{ text: 'A model with this Trait can cast Elder Spells.' }]
+			title: 'Affinity (Elder) I',
+			sections: [
+				{
+					level: 1,
+					available: true,
+					text: [{ text: 'A model with this Trait can cast Elder Spells.' }]
+				}
+			]
 		});
 	});
 
 	it('keeps the template without any dynamic value', () => {
-		expect(traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 1 })).toEqual({
-			title: 'Resistance (X)',
-			body: RESISTANCE.description
+		expect(traitPopupFor(RESISTANCE, { id: 'resistance--x', level: 2 })).toEqual({
+			title: 'Resistance (X) II',
+			sections: [
+				{ level: 1, available: true, text: RESISTANCE.levels?.[1] },
+				{ level: 2, available: true, text: RESISTANCE.levels?.[2] }
+			]
 		});
 	});
 
@@ -533,22 +622,28 @@ describe('rulesLinkPopup', () => {
 	const INDEXES: ArmyRulesIndexes = {
 		classes: { wizard: WIZARD },
 		skills: { charm: CHARM },
-		traits: {}
+		traits: {},
+		combatArts: { fencing: FENCING }
 	};
 
-	it('resolves class, skill and trait links', () => {
+	it('resolves class links to a single section and leveled links to all levels', () => {
 		expect(rulesLinkPopup(INDEXES, { type: 'class', id: 'wizard' })).toEqual({
 			title: 'WIZARD',
-			body: WIZARD.description
+			sections: [{ available: true, text: WIZARD.description }]
 		});
-		expect(rulesLinkPopup(INDEXES, { type: 'skill', id: 'charm' })).toEqual({
-			title: 'Charm',
-			body: CHARM.description
+		expect(rulesLinkPopup(INDEXES, { type: 'combat-art', id: 'fencing' })).toEqual({
+			title: 'Fencing',
+			sections: [
+				{ level: 1, available: true, text: FENCING.levels?.[1] },
+				{ level: 2, available: true, text: FENCING.levels?.[2] },
+				{ level: 3, available: true, text: FENCING.levels?.[3] },
+				{ level: 4, available: true, text: FENCING.levels?.[4] }
+			]
 		});
 	});
 
-	it('is null for unknown targets, like condition traits missing from the dump', () => {
-		expect(rulesLinkPopup(INDEXES, { type: 'trait', id: 'knockdown' })).toBeNull();
+	it('is null for unknown targets', () => {
+		expect(rulesLinkPopup(INDEXES, { type: 'trait', id: 'ghost' })).toBeNull();
 		expect(rulesLinkPopup(INDEXES, { type: 'spellcraft', id: 'armamancy' })).toBeNull();
 	});
 });

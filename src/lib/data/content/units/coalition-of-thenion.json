@@ -45,6 +45,12 @@
 				"id": "resourceful",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -136,6 +142,12 @@
 				"id": "stealth",
 				"level": 2
 			}
+		],
+		"combatArts": [
+			{
+				"id": "assassination",
+				"level": 4
+			}
 		]
 	},
 	{
@@ -186,6 +198,12 @@
 				"level": 1,
 				"dynamicValue": "Forest, Difficult"
 			}
+		],
+		"combatArts": [
+			{
+				"id": "assassination",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -234,6 +252,12 @@
 			{
 				"id": "tactician",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "assassination",
+				"level": 3
 			}
 		]
 	}

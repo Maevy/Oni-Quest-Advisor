@@ -42,6 +42,12 @@
 				"level": 1,
 				"dynamicValue": "Scorching"
 			}
+		],
+		"combatArts": [
+			{
+				"id": "berserk",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -120,6 +126,12 @@
 				"id": "resistance--x",
 				"level": 1,
 				"dynamicValue": "Bleed, Knockback"
+			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 4
 			}
 		]
 	},
@@ -201,6 +213,12 @@
 				"id": "stealth",
 				"level": 2
 			}
+		],
+		"combatArts": [
+			{
+				"id": "assassination",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -242,6 +260,12 @@
 				"id": "vigilance",
 				"level": 1
 			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 2
+			}
 		]
 	},
 	{
@@ -271,6 +295,16 @@
 			{
 				"id": "resourceful",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "archery",
+				"level": 1
+			},
+			{
+				"id": "fencing",
+				"level": 3
 			}
 		]
 	},
@@ -312,6 +346,12 @@
 			{
 				"id": "fearless",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 3
 			}
 		]
 	},
@@ -366,6 +406,12 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Difficult"
+			}
+		],
+		"combatArts": [
+			{
+				"id": "berserk",
+				"level": 3
 			}
 		]
 	},
@@ -470,6 +516,12 @@
 				"dynamicValue": "Large, Huge, Colossal"
 			}
 		],
+		"combatArts": [
+			{
+				"id": "assassination",
+				"level": 1
+			}
+		],
 		"mount": {
 			"unitId": "lupus-rex",
 			"points": 5
@@ -554,6 +606,12 @@
 			{
 				"id": "duelist",
 				"level": 1
+			}
+		],
+		"combatArts": [
+			{
+				"id": "fencing",
+				"level": 2
 			}
 		]
 	},

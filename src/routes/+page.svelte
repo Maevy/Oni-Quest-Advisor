@@ -136,6 +136,7 @@
 	let armyClassIndex = $derived(indexArmyRules(contentStore.armyClasses));
 	let armySkillIndex = $derived(indexArmyRules(contentStore.armySkills));
 	let armyTraitIndex = $derived(indexArmyRules(contentStore.armyTraits));
+	let armyCombatArtIndex = $derived(indexArmyRules(contentStore.armyCombatArts));
 </script>
 
 {#if navigationStore.showOnlineIntro}
@@ -165,6 +166,7 @@
 		classIndex={armyClassIndex}
 		skillIndex={armySkillIndex}
 		traitIndex={armyTraitIndex}
+		combatArtIndex={armyCombatArtIndex}
 		{armyRows}
 		counts={armyCounts}
 		format={armyBuilderStore.format}

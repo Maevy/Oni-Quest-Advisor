@@ -1,5 +1,6 @@
 import {
 	loadArmyClasses,
+	loadArmyCombatArts,
 	loadArmyFactions,
 	loadArmySkills,
 	loadArmyTraits,
@@ -25,6 +26,7 @@ class ContentStore {
 	armyClasses = $state<ArmyRulesSpec[]>([]);
 	armySkills = $state<ArmyRulesSpec[]>([]);
 	armyTraits = $state<ArmyRulesSpec[]>([]);
+	armyCombatArts = $state<ArmyRulesSpec[]>([]);
 	schemes = $state<SchemeCard[]>([]);
 	loaded = $state(false);
 
@@ -37,6 +39,7 @@ class ContentStore {
 		this.armyClasses = loadArmyClasses();
 		this.armySkills = loadArmySkills();
 		this.armyTraits = loadArmyTraits();
+		this.armyCombatArts = loadArmyCombatArts();
 		this.schemes = loadSchemes();
 		this.loaded = true;
 	}

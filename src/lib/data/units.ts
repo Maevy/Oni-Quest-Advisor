@@ -5,8 +5,8 @@ const unitModules = import.meta.glob('./content/units/*.json', { eager: true }) 
 	{ default: ArmyUnitSpec[] }
 >;
 
-/** Centralized rules entries (classes/skills/traits) referenced by the units. */
-const rulesModules = import.meta.glob('./content/units/{classes,skills,traits}.json', {
+/** Centralized rules entries (classes/skills/traits/combat arts) referenced by the units. */
+const rulesModules = import.meta.glob('./content/units/{classes,skills,traits,combat-arts}.json', {
 	eager: true
 }) as Record<string, { default: ArmyRulesSpec[] }>;
 
@@ -50,7 +50,9 @@ export function loadArmyUnits(): ArmyUnitContent {
 	let mounts: ArmyUnitSpec[] = [];
 	for (const [path, module] of Object.entries(unitModules)) {
 		const key = path.split('/').pop()?.replace('.json', '') ?? '';
-		if (key === 'classes' || key === 'skills' || key === 'traits') continue;
+		if (key === 'classes' || key === 'skills' || key === 'traits' || key === 'combat-arts') {
+			continue;
+		}
 		if (key === 'neutral') {
 			neutralUnits = withIcons(module.default);
 		} else if (key === 'mounts') {
@@ -82,4 +84,9 @@ export function loadArmySkills(): ArmyRulesSpec[] {
 /** Loads the centralized trait list referenced by unit `traits` refs. */
 export function loadArmyTraits(): ArmyRulesSpec[] {
 	return rulesFile('traits');
+}
+
+/** Loads the centralized combat-art list referenced by unit `combatArts` refs. */
+export function loadArmyCombatArts(): ArmyRulesSpec[] {
+	return rulesFile('combat-arts');
 }

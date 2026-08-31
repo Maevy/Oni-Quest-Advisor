@@ -1,6 +1,9 @@
 <script lang="ts">
 	import {
 		ARMY_STAT_KEYS,
+		classPopupFor,
+		combatArtPopupFor,
+		romanNumeral,
 		rulesLinkPopup,
 		skillPopupFor,
 		traitPopupFor,
@@ -18,6 +21,7 @@
 		classIndex: Record<string, ArmyRulesSpec>;
 		skillIndex: Record<string, ArmyRulesSpec>;
 		traitIndex: Record<string, ArmyRulesSpec>;
+		combatArtIndex: Record<string, ArmyRulesSpec>;
 		stats: ArmyStats;
 		mounted: boolean;
 		mountName?: string;
@@ -30,6 +34,7 @@
 		classIndex,
 		skillIndex,
 		traitIndex,
+		combatArtIndex,
 		stats,
 		mounted,
 		mountName,
@@ -42,17 +47,24 @@
 	let indexes = $derived<ArmyRulesIndexes>({
 		classes: classIndex,
 		skills: skillIndex,
-		traits: traitIndex
+		traits: traitIndex,
+		combatArts: combatArtIndex
 	});
 	let classTags = $derived(
 		unit.classes.flatMap((id) => {
-			const entry = classIndex[id];
-			return entry ? [{ title: entry.name, body: entry.description }] : [];
+			const popup = classPopupFor(classIndex[id]);
+			return popup ? [popup] : [];
 		})
 	);
 	let skillTags = $derived(
 		(unit.skills ?? []).flatMap((ref) => {
 			const popup = skillPopupFor(skillIndex[ref.id], ref);
+			return popup ? [popup] : [];
+		})
+	);
+	let combatArtTags = $derived(
+		(unit.combatArts ?? []).flatMap((ref) => {
+			const popup = combatArtPopupFor(combatArtIndex[ref.id], ref);
 			return popup ? [popup] : [];
 		})
 	);
@@ -84,7 +96,7 @@
 		role="dialog"
 		tabindex="-1"
 		aria-label={unit.name}
-		class="w-full max-w-md rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
+		class="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
 		style="border-color: {faction.color}"
 		onclick={(event) => event.stopPropagation()}
 		onkeydown={(event) => {
@@ -166,6 +178,24 @@
 					</div>
 				</div>
 			{/if}
+			{#if combatArtTags.length > 0}
+				<div>
+					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+						Combat Arts
+					</h3>
+					<div class="flex flex-wrap gap-1.5">
+						{#each combatArtTags as tag (tag.title)}
+							<button
+								type="button"
+								class="rounded-full bg-orange-400 px-3 py-1 text-xs font-semibold text-slate-950 transition hover:bg-orange-300 active:bg-orange-300"
+								onclick={() => openPopup(tag)}
+							>
+								{tag.title}
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
 			{#if traitTags.length > 0}
 				<div>
 					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">Traits</h3>
@@ -199,7 +229,7 @@
 				role="dialog"
 				tabindex="-1"
 				aria-label={popup.title}
-				class="w-full max-w-sm rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
+				class="max-h-[75dvh] w-full max-w-sm overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
 				style="border-color: {faction.color}"
 				onclick={(event) => event.stopPropagation()}
 				onkeydown={(event) => {
@@ -210,26 +240,37 @@
 				}}
 			>
 				<h3 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">{popup.title}</h3>
-				<p class="mt-2 text-sm text-slate-300">
-					{#each popup.body as segment, segmentIndex (segmentIndex)}
-						{#if segment.link}
-							{@const target = rulesLinkPopup(indexes, segment.link)}
-							{#if target}
-								<button
-									type="button"
-									class="font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-2 transition hover:text-orange-200"
-									onclick={() => openPopup(target)}
-								>
-									{segment.text}
-								</button>
-							{:else}
-								{segment.text}
+				<div class="mt-2 space-y-3">
+					{#each popup.sections as section, sectionIndex (sectionIndex)}
+						<div class={section.available ? '' : 'opacity-50'}>
+							{#if popup.sections.length > 1 && section.level !== undefined}
+								<p class="text-xs font-semibold tracking-wide text-sky-300 uppercase">
+									Level {romanNumeral(section.level)}
+								</p>
 							{/if}
-						{:else}
-							{segment.text}
-						{/if}
+							<p class="text-sm text-slate-300">
+								{#each section.text as segment, segmentIndex (segmentIndex)}
+									{#if segment.link}
+										{@const target = rulesLinkPopup(indexes, segment.link)}
+										{#if target}
+											<button
+												type="button"
+												class="font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-2 transition hover:text-orange-200"
+												onclick={() => openPopup(target)}
+											>
+												{segment.text}
+											</button>
+										{:else}
+											{segment.text}
+										{/if}
+									{:else}
+										{segment.text}
+									{/if}
+								{/each}
+							</p>
+						</div>
 					{/each}
-				</p>
+				</div>
 			</div>
 		</div>
 	{/each}
