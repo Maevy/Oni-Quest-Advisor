@@ -299,6 +299,9 @@
 					</div>
 				</div>
 			{/if}
+			{#if spellcraftTags.length > 0 || stratagems.length > 0}
+				<hr class="border-slate-700/50" />
+			{/if}
 			{#if spellcraftTags.length > 0}
 				<div>
 					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
