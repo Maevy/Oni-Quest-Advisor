@@ -146,6 +146,18 @@
 	let armySpellcraftIndex = $derived(indexArmyRules(contentStore.armySpellcrafts));
 	let armyStratagemIndex = $derived(indexArmyRules(contentStore.armyStratagems));
 	let armyItemIndex = $derived(indexArmyRules(contentStore.armyItems));
+
+	/** Copies the army share code; falls back to showing it when clipboard access fails. */
+	async function copyArmyCode(): Promise<boolean> {
+		const code = armyBuilderStore.exportArmyCode();
+		if (!code) return false;
+		try {
+			await navigator.clipboard.writeText(code);
+			return true;
+		} catch {
+			return window.prompt('Copy the army code:', code) !== null;
+		}
+	}
 </script>
 
 {#if navigationStore.showOnlineIntro}
@@ -166,6 +178,11 @@
 	<ArmyFactionSelect
 		factions={contentStore.armyFactions}
 		onSelect={(factionId) => navigationStore.selectArmyFaction(factionId)}
+		onImportCode={(code) => {
+			const error = armyBuilderStore.importArmy(code);
+			if (error === null) navigationStore.openImportedArmy();
+			return error;
+		}}
 		onReturn={() => navigationStore.returnToGameMode()}
 	/>
 {:else if navigationStore.screen === 'army-builder' && armyFaction}
@@ -190,8 +207,10 @@
 		points={armyBuilderStore.points}
 		limit={armyBuilderStore.limit}
 		isOverLimit={armyBuilderStore.isOverLimit}
+		startOnArmyPanel={armyBuilderStore.startOnArmyPanel}
 		onReturn={() => navigationStore.leaveArmyBuilder()}
 		onSetFormat={(format) => armyBuilderStore.setFormat(format)}
+		onCopyCode={copyArmyCode}
 		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}

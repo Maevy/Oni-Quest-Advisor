@@ -1,16 +1,31 @@
 <script lang="ts">
-	import type { ArmyFactionConfig, ArmyFactionId } from '$lib/domain';
+	import type { ArmyCodeDecodeError, ArmyFactionConfig, ArmyFactionId } from '$lib/domain';
 
 	type Props = {
 		factions: ArmyFactionConfig[];
 		onSelect: (factionId: ArmyFactionId) => void;
+		/** Imports a pasted army code; null on success, the error otherwise. */
+		onImportCode: (code: string) => ArmyCodeDecodeError | null;
 		onReturn: () => void;
 	};
 
-	let { factions, onSelect, onReturn }: Props = $props();
+	let { factions, onSelect, onImportCode, onReturn }: Props = $props();
+
+	const ERROR_MESSAGES: Record<ArmyCodeDecodeError, string> = {
+		invalid: 'This is not a valid army code.',
+		'roster-mismatch': 'This code was created with a different roster version.'
+	};
+
+	let code = $state('');
+	let error = $state<string | null>(null);
+
+	function importArmy(): void {
+		const result = onImportCode(code);
+		error = result ? ERROR_MESSAGES[result] : null;
+	}
 </script>
 
-<div class="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 text-center">
+<div class="flex min-h-dvh flex-col items-center justify-center gap-8 px-6 py-10 text-center">
 	<button
 		type="button"
 		class="fixed top-4 left-4 rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
@@ -40,6 +55,34 @@
 					<span class="text-xs leading-tight font-semibold">{faction.name}</span>
 				</button>
 			{/each}
+		</div>
+
+		<div class="flex w-full flex-col items-center gap-3">
+			<p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+				Or import an army code
+			</p>
+			<input
+				type="text"
+				bind:value={code}
+				oninput={() => (error = null)}
+				placeholder="Paste the army code"
+				aria-label="Army code"
+				autocomplete="off"
+				autocapitalize="off"
+				spellcheck="false"
+				class="w-full max-w-sm rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-center text-sm text-sky-100 backdrop-blur outline-none placeholder:text-slate-500 focus:border-sky-400"
+			/>
+			<button
+				type="button"
+				disabled={code.trim() === ''}
+				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+				onclick={importArmy}
+			>
+				Import Army
+			</button>
+			{#if error}
+				<p class="text-sm text-red-400" role="alert">{error}</p>
+			{/if}
 		</div>
 	</div>
 </div>

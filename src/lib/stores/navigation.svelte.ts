@@ -101,6 +101,11 @@ class NavigationStore {
 		this.screen = 'army-builder';
 	}
 
+	/** Enters the builder after an army code import (faction and list already loaded). */
+	openImportedArmy(): void {
+		this.screen = 'army-builder';
+	}
+
 	leaveArmyBuilder(): void {
 		armyBuilderStore.leave();
 		this.screen = 'game-mode';

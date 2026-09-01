@@ -43,8 +43,11 @@
 		points: number;
 		limit: number;
 		isOverLimit: boolean;
+		/** Import flow: open directly on the Your-Army panel. */
+		startOnArmyPanel: boolean;
 		onReturn: () => void;
 		onSetFormat: (format: ArmyFormat) => void;
+		onCopyCode: () => Promise<boolean>;
 		onAddUnit: (unitId: string) => void;
 		onRemoveUnit: (unitId: string) => void;
 		onRemoveEntry: (entryId: string) => void;
@@ -74,8 +77,10 @@
 		points,
 		limit,
 		isOverLimit,
+		startOnArmyPanel,
 		onReturn,
 		onSetFormat,
+		onCopyCode,
 		onAddUnit,
 		onRemoveUnit,
 		onRemoveEntry,
@@ -85,6 +90,12 @@
 	}: Props = $props();
 
 	let showArmy = $state(false);
+	// Import flow: the store flags a code import, open on the Your-Army panel.
+	$effect(() => {
+		if (startOnArmyPanel) showArmy = true;
+	});
+	/** Brief "Copied" feedback after the army code reaches the clipboard. */
+	let copied = $state(false);
 	let selectedCard = $state<{
 		unit: ArmyUnitSpec;
 		stats: ArmyStats;
@@ -127,6 +138,13 @@
 	function formatTabClasses(target: ArmyFormat): string {
 		return format === target ? 'bg-sky-500/20 text-sky-100' : 'text-slate-400';
 	}
+
+	async function copyArmyCode(): Promise<void> {
+		const success = await onCopyCode();
+		if (!success) return;
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
+	}
 </script>
 
 <div class="flex min-h-dvh flex-col gap-4 px-4 pt-4 pb-6">
@@ -141,7 +159,7 @@
 		<span class="text-sm font-semibold" style="color: {faction.color}">{faction.name}</span>
 	</div>
 
-	<div class="flex items-center justify-between gap-3">
+	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
 			<button
 				type="button"
@@ -158,6 +176,19 @@
 				Tournament
 			</button>
 		</div>
+		<button
+			type="button"
+			aria-label="Copy Army Code to Clipboard"
+			disabled={entries.length === 0}
+			class={'rounded-xl border-2 px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
+				(copied
+					? 'border-emerald-500/60 text-emerald-300'
+					: 'border-sky-500/60 text-sky-300 hover:bg-sky-500/10 active:bg-sky-500/20') +
+				' disabled:cursor-not-allowed disabled:opacity-50'}
+			onclick={copyArmyCode}
+		>
+			{copied ? 'Copied ✓' : 'Copy Army Code to Clipboard'}
+		</button>
 		<div
 			class={'rounded-xl border-2 px-4 py-2 text-sm font-bold tabular-nums ' +
 				(isOverLimit ? 'border-red-500/60 text-red-400' : 'border-emerald-500/60 text-emerald-300')}
