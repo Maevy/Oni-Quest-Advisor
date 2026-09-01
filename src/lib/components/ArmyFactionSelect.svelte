@@ -45,7 +45,7 @@
 			>
 				Army Builder
 			</h1>
-			<p class="text-slate-400">Choose your faction.</p>
+			<p class="text-slate-100">Choose your faction.</p>
 		</div>
 
 		<div class="grid w-full grid-cols-3 gap-3">
@@ -63,7 +63,7 @@
 		</div>
 
 		<div class="flex w-full flex-col items-center gap-3">
-			<p class="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+			<p class="text-xs font-semibold tracking-wide text-slate-100 uppercase">
 				Or import an army code
 			</p>
 			<input

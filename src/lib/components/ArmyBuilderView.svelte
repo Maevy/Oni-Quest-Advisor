@@ -181,10 +181,10 @@
 			type="button"
 			aria-label="Copy Army Code to Clipboard"
 			disabled={entries.length === 0}
-			class={'rounded-xl border-2 px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
+			class={'rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
 				(copyResult?.copied
-					? 'border-emerald-500/60 text-emerald-300'
-					: 'border-sky-500/60 text-sky-300 hover:bg-sky-500/10 active:bg-sky-500/20') +
+					? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200 active:bg-emerald-200'
+					: 'bg-sky-300 text-slate-950 hover:bg-sky-200 active:bg-sky-200') +
 				' disabled:cursor-not-allowed disabled:opacity-50'}
 			onclick={copyArmyCode}
 		>
