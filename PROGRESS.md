@@ -6,17 +6,15 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.6.0** (tag on `main`) — the whole army builder:
-  faction select, producer unit import, unit cards with the full rules
-  catalogs (classes, skills, traits, combat arts, spellcraft spell tables,
-  inline inventories and stratagems), mounts, standard-mode upgrades with
-  picker (slots, gating, conditional effects, cost reduction, spellcraft
-  level-up + inscribe/affinity choice upgrades), army codes (clipboard
-  export + import with roster-fingerprint versioning) and the
-  Roster/Save-Army teasers, deployed to Fly.io. The per-session details are
-  all recorded below. Day-to-day work happens on `develop`, pushed to
-  `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the working branch is
-  `develop`, not `main`).
+- Latest release: **v0.6.1** (tag on `main`) — v0.6.0 shipped the whole
+  army builder (faction select, producer unit import, unit cards with the
+  full rules catalogs, mounts, standard-mode upgrades with picker and
+  choice dialogs, army codes with roster-fingerprinted export/import,
+  Roster/Save-Army teasers); v0.6.1 is the rules-link hotfix (repaired
+  Piercing Stream's Armor-Piercing link, leveled trait links). The
+  per-session details are all recorded below. Day-to-day work happens on
+  `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note
+  the working branch is `develop`, not `main`).
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
   v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
   would have to create the volume first:
@@ -36,7 +34,26 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   persistence) are the pending follow-ups — both buttons already sit greyed
   out in the builder header as teasers.
 
-## What was done in the last session (army codes: export/import)
+## What was done in the last session (v0.6.1 hotfix: rules-link repairs)
+
+Today's `develop` commit: `5c9684f`.
+
+1. **Piercing Stream link repaired**: the producer dump ships the spell's
+   effect as broken markup `(Armor-Piercing([trait.ARMOR_PIERCING]` (stray
+   paren), which leaked as raw text without a link. A new `SOURCE_LINK_FIXES`
+   table in the import repairs known bad producer markup before parsing
+   (also a `trait.POSION` typo in one item), so the spell shows the
+   clickable Armor-Piercing trait link.
+2. **Leveled links parsed**: Roman (`[trait.POISON.II]`) and numeric
+   (`[trait.KNOCKDOWN.1]`) level suffixes are kept on the link as a level;
+   Roman suffixes previously leaked as raw text in two stratagems, numeric
+   ones were silently dropped on ~180 links. `rulesLinkPopup` opens leveled
+   links with the levels above the suffix greyed out. Content regenerated —
+   zero raw-markup leaks left. (One producer inconsistency kept as-is:
+   `(Sweep I)[trait.SWEEP.2]` — text and code disagree.)
+3. Tests 260 → 261; check/lint/build clean. Released as v0.6.1 hotfix.
+
+## What was done in earlier sessions (army codes: export/import)
 
 Today's `develop` commit: `1f82129`.
 
