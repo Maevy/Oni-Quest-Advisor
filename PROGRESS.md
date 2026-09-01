@@ -56,10 +56,16 @@ Today's `develop` commit: `1f82129`.
    builder opens directly on the Your-Army panel.
 4. **Export UI**: "Copy Army Code to Clipboard" button beside the
    Standard/Tournament toggle (wraps below it on narrow screens, disabled
-   while the army is empty, 2 s "Copied ✓" state; `window.prompt` fallback
-   when clipboard access is denied).
+   while the army is empty). The outcome shows in a persistent panel under
+   the header — "Army code copied to clipboard ✓" or a clipboard-unavailable
+   hint — with the code itself selectable/long-pressable, cleared on any
+   army change (the original 2 s label flash + `window.prompt` fallback
+   looked like the button did nothing, especially on phones).
 5. **Import UI**: a centered input + "Import Army" button below the faction
-   grid on the faction select screen, with inline error messages.
+   grid on the faction select screen, with inline error messages; the handler
+   catches unexpected throws and shows a "reload the app" hint (added after a
+   stale hot-reloaded store in dev made the button silently dead —
+   `openImportedArmy` missing from the old in-memory navigation store).
 6. Tests 248 → 260; check/lint/build clean. (Note: the eagerly loaded
    content chunk crossed 500 kB and tripped Vite's size warning for the
    first time — a future lazy-loading candidate.)

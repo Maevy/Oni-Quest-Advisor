@@ -103,8 +103,8 @@ native/platform-specific one. Used on a phone screen during a game session.
   instead of decoding wrong units. `armyBuilderStore.importArmy` replays
   every pick through the domain guards (an import can never be invalid) and
   opens the builder on the Your-Army panel; export is the "Copy Army Code
-  to Clipboard" button in the builder header (clipboard API, prompt
-  fallback).
+  to Clipboard" button in the builder header (clipboard API; when the
+  clipboard is unavailable the code is shown inline for manual copying).
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
   is a hot-seat mode where both players share one device. The third

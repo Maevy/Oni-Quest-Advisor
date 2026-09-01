@@ -20,8 +20,13 @@
 	let error = $state<string | null>(null);
 
 	function importArmy(): void {
-		const result = onImportCode(code);
-		error = result ? ERROR_MESSAGES[result] : null;
+		try {
+			const result = onImportCode(code);
+			error = result ? ERROR_MESSAGES[result] : null;
+		} catch {
+			// E.g. a stale hot-reloaded store in dev - surface it instead of a dead button.
+			error = 'Import failed — please reload the app and try again.';
+		}
 	}
 </script>
 
