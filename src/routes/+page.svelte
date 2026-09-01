@@ -147,15 +147,15 @@
 	let armyStratagemIndex = $derived(indexArmyRules(contentStore.armyStratagems));
 	let armyItemIndex = $derived(indexArmyRules(contentStore.armyItems));
 
-	/** Copies the army share code; falls back to showing it when clipboard access fails. */
-	async function copyArmyCode(): Promise<boolean> {
+	/** Copies the army share code; returns it so the UI can show it either way. */
+	async function copyArmyCode(): Promise<{ code: string; copied: boolean } | null> {
 		const code = armyBuilderStore.exportArmyCode();
-		if (!code) return false;
+		if (!code) return null;
 		try {
 			await navigator.clipboard.writeText(code);
-			return true;
+			return { code, copied: true };
 		} catch {
-			return window.prompt('Copy the army code:', code) !== null;
+			return { code, copied: false };
 		}
 	}
 </script>

@@ -47,7 +47,7 @@
 		startOnArmyPanel: boolean;
 		onReturn: () => void;
 		onSetFormat: (format: ArmyFormat) => void;
-		onCopyCode: () => Promise<boolean>;
+		onCopyCode: () => Promise<{ code: string; copied: boolean } | null>;
 		onAddUnit: (unitId: string) => void;
 		onRemoveUnit: (unitId: string) => void;
 		onRemoveEntry: (entryId: string) => void;
@@ -94,8 +94,12 @@
 	$effect(() => {
 		if (startOnArmyPanel) showArmy = true;
 	});
-	/** Brief "Copied" feedback after the army code reaches the clipboard. */
-	let copied = $state(false);
+	/** Outcome of the last copy attempt, shown until the army changes. */
+	let copyResult = $state<{ code: string; copied: boolean } | null>(null);
+	// A stale code is worse than none - drop the panel on any army change.
+	$effect(() => {
+		if (entries && format) copyResult = null;
+	});
 	let selectedCard = $state<{
 		unit: ArmyUnitSpec;
 		stats: ArmyStats;
@@ -140,10 +144,7 @@
 	}
 
 	async function copyArmyCode(): Promise<void> {
-		const success = await onCopyCode();
-		if (!success) return;
-		copied = true;
-		setTimeout(() => (copied = false), 2000);
+		copyResult = await onCopyCode();
 	}
 </script>
 
@@ -181,13 +182,13 @@
 			aria-label="Copy Army Code to Clipboard"
 			disabled={entries.length === 0}
 			class={'rounded-xl border-2 px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
-				(copied
+				(copyResult?.copied
 					? 'border-emerald-500/60 text-emerald-300'
 					: 'border-sky-500/60 text-sky-300 hover:bg-sky-500/10 active:bg-sky-500/20') +
 				' disabled:cursor-not-allowed disabled:opacity-50'}
 			onclick={copyArmyCode}
 		>
-			{copied ? 'Copied ✓' : 'Copy Army Code to Clipboard'}
+			{copyResult?.copied ? 'Copied ✓' : 'Copy Army Code to Clipboard'}
 		</button>
 		<div
 			class={'rounded-xl border-2 px-4 py-2 text-sm font-bold tabular-nums ' +
@@ -196,6 +197,19 @@
 			{points}/{limit}
 		</div>
 	</div>
+
+	{#if copyResult}
+		<div class="rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2">
+			{#if copyResult.copied}
+				<p class="text-xs font-semibold text-emerald-300">Army code copied to clipboard ✓</p>
+			{:else}
+				<p class="text-xs font-semibold text-orange-300">
+					Clipboard unavailable — long-press the code below to copy it.
+				</p>
+			{/if}
+			<p class="mt-1 font-mono text-xs break-all text-sky-100 select-all">{copyResult.code}</p>
+		</div>
+	{/if}
 
 	<div
 		class="relative min-h-0 flex-1 overflow-hidden"
