@@ -595,7 +595,29 @@
 				"text": "Choose one: (1): Inscribed Item: Select a Weapon or a Shield in the model’s Inventory; its Wgt is reduced by 1 and Strike increased by 1. (2): Inscribed Armor: The model receives +1 AG, +1 SPD and its Inventory is increased by 1."
 			}
 		],
-		"effects": []
+		"effects": [
+			{
+				"kind": "choice",
+				"options": [
+					{
+						"id": "inscribed-item",
+						"label": "Inscribed Item",
+						"inscribeItem": {
+							"except": ["casting-amplifier", "imported-casting-amplifier"]
+						}
+					},
+					{
+						"id": "inscribed-armor",
+						"label": "Inscribed Armor",
+						"statChanges": {
+							"AG": 1,
+							"SPD": 1
+						},
+						"inventorySpace": 1
+					}
+				]
+			}
+		]
 	},
 	{
 		"id": "imported-casting-amplifier",

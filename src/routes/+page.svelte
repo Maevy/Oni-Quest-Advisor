@@ -196,7 +196,8 @@
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}
 		onToggleMount={(entryId) => armyBuilderStore.toggleMount(entryId)}
-		onAddUpgrade={(entryId, upgradeId) => armyBuilderStore.addUpgrade(entryId, upgradeId)}
+		onAddUpgrade={(entryId, upgradeId, selection) =>
+			armyBuilderStore.addUpgrade(entryId, upgradeId, selection)}
 		onRemoveUpgrade={(entryId, upgradeId) => armyBuilderStore.removeUpgrade(entryId, upgradeId)}
 	/>
 {:else if navigationStore.screen === 'online-create'}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		spellcraftLevelCap,
 		upgradeCostInArmy,
 		upgradeSlotsFor,
 		type ArmyEntry,
@@ -10,9 +11,11 @@
 		type ArmyRulesIndexes,
 		type ArmyRulesSpec,
 		type ArmySpellSpec,
+		type ArmySpellcraftOption,
 		type ArmyStats,
 		type ArmyStratagemSpec,
 		type ArmyUnitSpec,
+		type ArmyUpgradeSelection,
 		type ArmyUpgradeSpec
 	} from '$lib/domain';
 	import ArmyUpgradeDetail from './ArmyUpgradeDetail.svelte';
@@ -46,7 +49,7 @@
 		onRemoveUnit: (unitId: string) => void;
 		onRemoveEntry: (entryId: string) => void;
 		onToggleMount: (entryId: string) => void;
-		onAddUpgrade: (entryId: string, upgradeId: string) => void;
+		onAddUpgrade: (entryId: string, upgradeId: string, selection?: ArmyUpgradeSelection) => void;
 		onRemoveUpgrade: (entryId: string, upgradeId: string) => void;
 	};
 
@@ -87,6 +90,8 @@
 		stats: ArmyStats;
 		mounted: boolean;
 		mountName?: string;
+		/** Item index with upgrade item overrides merged in (roster cards only). */
+		itemIndex?: Record<string, ArmyItemSpec>;
 	} | null>(null);
 	/** The roster row currently choosing an upgrade, while the picker is open. */
 	let pickerRow = $state<ArmyRosterRow | null>(null);
@@ -100,6 +105,18 @@
 	/** One entry per free upgrade slot, keyed by slot index for the each block. */
 	function upgradeSlotIndexes(row: ArmyRosterRow): number[] {
 		return Array.from({ length: freeUpgradeSlots(row) }, (value, index) => index);
+	}
+
+	/** The row's spellcrafts with their upgradability, for the picker's choice step. */
+	function spellcraftOptionsFor(row: ArmyRosterRow): ArmySpellcraftOption[] {
+		return (row.upgradedUnit.spellcrafts ?? []).flatMap((ref) => {
+			const group = spellcraftIndex[ref.id];
+			if (!group) return [];
+			const cap = spellcraftLevelCap(ref.id, row.upgradedUnit, spells);
+			return [
+				{ id: ref.id, name: group.name, level: ref.level, upgradable: cap > 0 && ref.level < cap }
+			];
+		});
 	}
 
 	// Swipe detection: a mostly-horizontal pointer gesture flips the panels.
@@ -263,7 +280,8 @@
 														unit: row.upgradedUnit,
 														stats: row.effectiveStats,
 														mounted: row.mounted,
-														mountName: row.mount?.name
+														mountName: row.mount?.name,
+														itemIndex: { ...itemIndex, ...row.itemOverrides }
 													};
 												}}
 											>
@@ -406,7 +424,7 @@
 			{spellcraftIndex}
 			{spells}
 			{stratagemIndex}
-			{itemIndex}
+			itemIndex={selectedCard.itemIndex ?? itemIndex}
 			stats={selectedCard.stats}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}
@@ -421,14 +439,26 @@
 			<ArmyUpgradePicker
 				entry={pickerEntry}
 				unitName={row.name}
+				unit={row.upgradedUnit}
 				{upgrades}
 				{entries}
 				{units}
 				{upgradeIndex}
 				{rulesIndexes}
+				{spells}
+				{itemIndex}
+				spellcraftOptions={spellcraftOptionsFor(row)}
 				factionColor={faction.color}
 				onSelect={(upgradeId) => {
 					onAddUpgrade(row.entryId, upgradeId);
+					pickerRow = null;
+				}}
+				onSelectSpellcraft={(upgradeId, spellcraftId) => {
+					onAddUpgrade(row.entryId, upgradeId, { spellcraftId });
+					pickerRow = null;
+				}}
+				onSelectChoice={(upgradeId, optionId, itemId) => {
+					onAddUpgrade(row.entryId, upgradeId, { optionId, itemId });
 					pickerRow = null;
 				}}
 				onClose={() => (pickerRow = null)}

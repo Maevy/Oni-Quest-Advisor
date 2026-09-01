@@ -111,7 +111,24 @@ const UPGRADE_LOCKED_CODES = new Set([
 const UPGRADE_EFFECTS = {
 	// Helian League
 	ADEPT_SHAPER: [{ kind: 'spellcraftLevelUp' }],
-	GLYPHSCRIBE_REDUCE_WEIGHT: [],
+	GLYPHSCRIBE_REDUCE_WEIGHT: [
+		{
+			kind: 'choice',
+			options: [
+				{
+					id: 'inscribed-item',
+					label: 'Inscribed Item',
+					inscribeItem: { except: ['casting-amplifier', 'imported-casting-amplifier'] }
+				},
+				{
+					id: 'inscribed-armor',
+					label: 'Inscribed Armor',
+					statChanges: { AG: 1, SPD: 1 },
+					inventorySpace: 1
+				}
+			]
+		}
+	],
 	SEASONED_COMBATANT: [{ kind: 'trait', traitId: 'fearless', level: 1 }],
 	COMPANION_OF_HAIRON: [],
 	TACTICAL_EXPERTISE: [{ kind: 'trait', traitId: 'tactician', level: 1 }],

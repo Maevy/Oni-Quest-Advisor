@@ -12,7 +12,10 @@ import {
 	effectiveMountedStats,
 	entryUpgradeBlock,
 	indexArmyRules,
+	inscribableItems,
+	inscribedItem,
 	inventorySpaceUsed,
+	isInscribableItem,
 	isOverArmyLimit,
 	itemTypeDisplay,
 	rangeBracketDisplay,
@@ -25,6 +28,7 @@ import {
 	rulesLinkPopup,
 	skillPopupFor,
 	spellCostDisplay,
+	spellcraftLevelCap,
 	spellcraftPopupFor,
 	stratagemsFor,
 	substituteArmyTemplate,
@@ -32,6 +36,8 @@ import {
 	traitPopupFor,
 	upgradedArmyUnit,
 	upgradeCostInArmy,
+	upgradeItemOverrides,
+	upgradeOptionUsable,
 	upgradeSlotsFor,
 	upgradesForFaction,
 	unitsForFaction,
@@ -191,7 +197,8 @@ describe('resolveArmyEntries', () => {
 				mounted: false,
 				effectiveStats: STATS,
 				upgradedUnit: UNITS[0],
-				upgrades: []
+				upgrades: [],
+				itemOverrides: {}
 			},
 			{
 				entryId: 'w2',
@@ -201,7 +208,8 @@ describe('resolveArmyEntries', () => {
 				mounted: false,
 				effectiveStats: STATS,
 				upgradedUnit: UNITS[0],
-				upgrades: []
+				upgrades: [],
+				itemOverrides: {}
 			}
 		]);
 	});
@@ -232,7 +240,8 @@ describe('resolveArmyEntries', () => {
 				mounted: false,
 				effectiveStats: STATS,
 				upgradedUnit: units[0],
-				upgrades: []
+				upgrades: [],
+				itemOverrides: {}
 			}
 		]);
 	});
@@ -262,7 +271,8 @@ describe('resolveArmyEntries', () => {
 					M: 11
 				},
 				upgradedUnit: DRAGOON,
-				upgrades: []
+				upgrades: [],
+				itemOverrides: {}
 			}
 		]);
 	});
@@ -1365,15 +1375,55 @@ describe('entryUpgradeBlock', () => {
 			{ ...UNITS[0], traits: [{ id: 'fearless', level: 1 }] },
 			{
 				...UNITS[1],
+				traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] }],
 				spellcrafts: [{ id: 'art-of-sorcery', level: 2 }]
 			}
 		];
 		expect(entryUpgradeBlock(maxed, 'w1', UPGRADES[1], units, UPGRADE_INDEX, BLOCK_RULES)).toBe(
 			'max-level'
 		);
+		// Art of Sorcery caps at level 2 in SPELLS (the highest fire spell).
 		const casterEntries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
 		expect(
-			entryUpgradeBlock(casterEntries, 'm1', UPGRADES[7], units, UPGRADE_INDEX, BLOCK_RULES)
+			entryUpgradeBlock(casterEntries, 'm1', UPGRADES[7], units, UPGRADE_INDEX, BLOCK_RULES, SPELLS)
+		).toBe('max-level');
+	});
+
+	it('allows a spellcraft level-up while a group level above the unit exists', () => {
+		const units: ArmyUnitSpec[] = [
+			{
+				...UNITS[1],
+				traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] }],
+				spellcrafts: [{ id: 'art-of-sorcery', level: 1 }]
+			}
+		];
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'm1', unitId: 'mage' }],
+				'm1',
+				UPGRADES[7],
+				units,
+				UPGRADE_INDEX,
+				BLOCK_RULES,
+				SPELLS
+			)
+		).toBeNull();
+	});
+
+	it('blocks a spellcraft level-up when no affinity grants access to the group', () => {
+		const units: ArmyUnitSpec[] = [
+			{ ...UNITS[1], spellcrafts: [{ id: 'art-of-sorcery', level: 1 }] }
+		];
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'm1', unitId: 'mage' }],
+				'm1',
+				UPGRADES[7],
+				units,
+				UPGRADE_INDEX,
+				BLOCK_RULES,
+				SPELLS
+			)
 		).toBe('max-level');
 	});
 
@@ -1382,6 +1432,356 @@ describe('entryUpgradeBlock', () => {
 		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[7], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
 			'max-level'
 		);
+	});
+});
+
+describe('spellcraftLevelCap', () => {
+	it('is the highest spell level of the group in the affinity elements', () => {
+		expect(spellcraftLevelCap('art-of-sorcery', FLAMESHAPER, SPELLS)).toBe(2);
+	});
+
+	it('ignores spells of other elements and groups', () => {
+		const unit: ArmyUnitSpec = {
+			...FLAMESHAPER,
+			traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Elder'] }]
+		};
+		expect(spellcraftLevelCap('art-of-sorcery', unit, SPELLS)).toBe(1);
+		expect(spellcraftLevelCap('wizardry', FLAMESHAPER, SPELLS)).toBe(0);
+	});
+});
+
+describe('spellcraft level-up choices', () => {
+	const ADEPT = UPGRADES[7];
+	const CASTER_INDEX = UPGRADE_INDEX;
+	const twoSchoolSpells: ArmySpellSpec[] = [
+		...SPELLS,
+		{
+			id: 'force-lance',
+			name: 'Force Lance',
+			group: 'wizardry',
+			element: 'elder',
+			level: 2,
+			effect: [{ text: 'A stronger bolt.' }]
+		}
+	];
+	const casterUnit: ArmyUnitSpec = {
+		...UNITS[1],
+		traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Fire', 'Elder'] }],
+		spellcrafts: [
+			{ id: 'art-of-sorcery', level: 1 },
+			{ id: 'wizardry', level: 1 }
+		]
+	};
+
+	it('picks the only upgradable spellcraft automatically', () => {
+		const units: ArmyUnitSpec[] = [
+			{
+				...UNITS[1],
+				traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] }],
+				spellcrafts: [{ id: 'art-of-sorcery', level: 1 }]
+			}
+		];
+		expect(
+			addEntryUpgrade(
+				[{ id: 'm1', unitId: 'mage' }],
+				'm1',
+				ADEPT,
+				units,
+				CASTER_INDEX,
+				BLOCK_RULES,
+				SPELLS
+			)
+		).toEqual([
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [ADEPT.id],
+				spellcraftChoices: { [ADEPT.id]: 'art-of-sorcery' }
+			}
+		]);
+	});
+
+	it('requires a valid choice when several spellcrafts can advance', () => {
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		const units: ArmyUnitSpec[] = [casterUnit];
+		expect(
+			addEntryUpgrade(entries, 'm1', ADEPT, units, CASTER_INDEX, BLOCK_RULES, twoSchoolSpells)
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				ADEPT,
+				units,
+				CASTER_INDEX,
+				BLOCK_RULES,
+				twoSchoolSpells,
+				{},
+				{
+					spellcraftId: 'ghost'
+				}
+			)
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				ADEPT,
+				units,
+				CASTER_INDEX,
+				BLOCK_RULES,
+				twoSchoolSpells,
+				{},
+				{
+					spellcraftId: 'wizardry'
+				}
+			)
+		).toEqual([
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [ADEPT.id],
+				spellcraftChoices: { [ADEPT.id]: 'wizardry' }
+			}
+		]);
+	});
+
+	it('raises the chosen spellcraft one level on the upgraded unit', () => {
+		const upgraded = upgradedArmyUnit(casterUnit, [ADEPT], UPGRADE_ITEMS, {
+			[ADEPT.id]: 'wizardry'
+		});
+		expect(upgraded.spellcrafts).toEqual([
+			{ id: 'art-of-sorcery', level: 1 },
+			{ id: 'wizardry', level: 2 }
+		]);
+	});
+
+	it('drops the choice when the upgrade is removed', () => {
+		const entries: ArmyEntry[] = [
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [ADEPT.id],
+				spellcraftChoices: { [ADEPT.id]: 'wizardry' }
+			}
+		];
+		expect(removeEntryUpgrade(entries, 'm1', ADEPT.id)).toEqual([
+			{ id: 'm1', unitId: 'mage', upgrades: [] }
+		]);
+	});
+
+	it('shows the raised level in the roster row', () => {
+		const entries: ArmyEntry[] = [
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [ADEPT.id],
+				spellcraftChoices: { [ADEPT.id]: 'wizardry' }
+			}
+		];
+		const rows = resolveArmyEntries(entries, [casterUnit], MOUNTS, CASTER_INDEX, UPGRADE_ITEMS);
+		expect(rows[0].upgradedUnit.spellcrafts).toEqual([
+			{ id: 'art-of-sorcery', level: 1 },
+			{ id: 'wizardry', level: 2 }
+		]);
+	});
+});
+
+const GLYPH: ArmyUpgradeSpec = {
+	id: 'glyphscribe-reduce-weight-helian-league',
+	name: 'Glyphscribe: Reduce Weight',
+	cost: 2,
+	factionId: 'helian-league',
+	description: [],
+	effects: [
+		{
+			kind: 'choice',
+			options: [
+				{
+					id: 'inscribed-item',
+					label: 'Inscribed Item',
+					inscribeItem: { except: ['casting-amplifier'] }
+				},
+				{
+					id: 'inscribed-armor',
+					label: 'Inscribed Armor',
+					statChanges: { AG: 1, SPD: 1 },
+					inventorySpace: 1
+				}
+			]
+		}
+	]
+};
+const GLYPH_INDEX = indexArmyRules([GLYPH]);
+const GLYPH_ITEMS: Record<string, ArmyItemSpec> = {
+	sword: {
+		id: 'sword',
+		name: 'Sword',
+		category: 'weapon',
+		effect: [],
+		weight: 1,
+		stk: { stat: 'STA' }
+	},
+	'great-shield': {
+		id: 'great-shield',
+		name: 'Great Shield',
+		category: 'shield',
+		effect: [],
+		weight: 3,
+		stk: { fixed: '1' }
+	},
+	'casting-amplifier': {
+		id: 'casting-amplifier',
+		name: 'Casting Amplifier',
+		category: 'accessory',
+		mode: 'melee',
+		effect: [],
+		weight: 0
+	},
+	'haze-bomb': {
+		id: 'haze-bomb',
+		name: 'Haze Bomb',
+		category: 'consumable',
+		effect: [],
+		weight: 1
+	}
+};
+const GLYPH_UNIT: ArmyUnitSpec = {
+	...UNITS[0],
+	inventorySpace: 3,
+	inventory: [
+		{ id: 'sword', qty: 1 },
+		{ id: 'casting-amplifier', qty: 1 },
+		{ id: 'haze-bomb', qty: 1 }
+	]
+};
+
+describe('choice upgrades (Glyphscribe: Reduce Weight)', () => {
+	it('inscribes an item: Strike +1 and weight -1', () => {
+		expect(inscribedItem(GLYPH_ITEMS.sword)).toEqual({
+			...GLYPH_ITEMS.sword,
+			weight: 0,
+			stk: { stat: 'STA', modifier: 1 }
+		});
+		expect(inscribedItem(GLYPH_ITEMS['great-shield'])).toEqual({
+			...GLYPH_ITEMS['great-shield'],
+			weight: 2,
+			stk: { fixed: '2' }
+		});
+	});
+
+	it('never reduces the weight below zero', () => {
+		const light: ArmyItemSpec = { ...GLYPH_ITEMS.sword, weight: 0 };
+		expect(inscribedItem(light).weight).toBe(0);
+	});
+
+	it('only accepts weapons and shields with weight, excluding the listed items', () => {
+		expect(isInscribableItem(GLYPH_ITEMS.sword, ['casting-amplifier'])).toBe(true);
+		expect(isInscribableItem(GLYPH_ITEMS['haze-bomb'], ['casting-amplifier'])).toBe(false);
+		expect(isInscribableItem(GLYPH_ITEMS['casting-amplifier'], ['casting-amplifier'])).toBe(false);
+		expect(isInscribableItem(undefined, ['casting-amplifier'])).toBe(false);
+		expect(
+			inscribableItems(GLYPH_UNIT, GLYPH_ITEMS, ['casting-amplifier']).map((item) => item.id)
+		).toEqual(['sword']);
+	});
+
+	it('marks the inscribe option unusable without an inscribable item', () => {
+		const inscribe = GLYPH.effects[0];
+		if (inscribe.kind !== 'choice') throw new Error('expected a choice effect');
+		expect(upgradeOptionUsable(inscribe.options[0], GLYPH_UNIT, GLYPH_ITEMS)).toBe(true);
+		expect(upgradeOptionUsable(inscribe.options[1], GLYPH_UNIT, GLYPH_ITEMS)).toBe(true);
+		const bare: ArmyUnitSpec = { ...UNITS[0], inventory: [{ id: 'haze-bomb', qty: 1 }] };
+		expect(upgradeOptionUsable(inscribe.options[0], bare, GLYPH_ITEMS)).toBe(false);
+	});
+
+	it('requires an option and validates the inscribed item when adding', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		const units: ArmyUnitSpec[] = [GLYPH_UNIT];
+		expect(addEntryUpgrade(entries, 'w1', GLYPH, units, GLYPH_INDEX, BLOCK_RULES)).toBe(entries);
+		expect(
+			addEntryUpgrade(entries, 'w1', GLYPH, units, GLYPH_INDEX, BLOCK_RULES, [], GLYPH_ITEMS, {
+				optionId: 'inscribed-item'
+			})
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(entries, 'w1', GLYPH, units, GLYPH_INDEX, BLOCK_RULES, [], GLYPH_ITEMS, {
+				optionId: 'inscribed-item',
+				itemId: 'casting-amplifier'
+			})
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(entries, 'w1', GLYPH, units, GLYPH_INDEX, BLOCK_RULES, [], GLYPH_ITEMS, {
+				optionId: 'inscribed-item',
+				itemId: 'sword'
+			})
+		).toEqual([
+			{
+				id: 'w1',
+				unitId: 'warrior',
+				upgrades: [GLYPH.id],
+				upgradeChoices: { [GLYPH.id]: { option: 'inscribed-item', itemId: 'sword' } }
+			}
+		]);
+		expect(
+			addEntryUpgrade(entries, 'w1', GLYPH, units, GLYPH_INDEX, BLOCK_RULES, [], GLYPH_ITEMS, {
+				optionId: 'inscribed-armor'
+			})
+		).toEqual([
+			{
+				id: 'w1',
+				unitId: 'warrior',
+				upgrades: [GLYPH.id],
+				upgradeChoices: { [GLYPH.id]: { option: 'inscribed-armor' } }
+			}
+		]);
+	});
+
+	it('applies the armor option stats and space, and the inscribed item as an override', () => {
+		const armorUnit = upgradedArmyUnit(
+			GLYPH_UNIT,
+			[GLYPH],
+			GLYPH_ITEMS,
+			{},
+			{ [GLYPH.id]: { option: 'inscribed-armor' } }
+		);
+		expect(armorUnit.stats.AG).toBe((GLYPH_UNIT.stats.AG ?? 0) + 1);
+		expect(armorUnit.stats.SPD).toBe((GLYPH_UNIT.stats.SPD ?? 0) + 1);
+		expect(armorUnit.inventorySpace).toBe(4);
+		const itemUnit = upgradedArmyUnit(
+			GLYPH_UNIT,
+			[GLYPH],
+			GLYPH_ITEMS,
+			{},
+			{ [GLYPH.id]: { option: 'inscribed-item', itemId: 'sword' } }
+		);
+		expect(itemUnit.stats).toEqual(GLYPH_UNIT.stats);
+		const overrides = upgradeItemOverrides(
+			[GLYPH],
+			{ [GLYPH.id]: { option: 'inscribed-item', itemId: 'sword' } },
+			GLYPH_ITEMS
+		);
+		expect(overrides.sword).toEqual({
+			...GLYPH_ITEMS.sword,
+			weight: 0,
+			stk: { stat: 'STA', modifier: 1 }
+		});
+	});
+
+	it('carries the item overrides into the roster row and drops the choice on removal', () => {
+		const entries: ArmyEntry[] = [
+			{
+				id: 'w1',
+				unitId: 'warrior',
+				upgrades: [GLYPH.id],
+				upgradeChoices: { [GLYPH.id]: { option: 'inscribed-item', itemId: 'sword' } }
+			}
+		];
+		const rows = resolveArmyEntries(entries, [GLYPH_UNIT], MOUNTS, GLYPH_INDEX, GLYPH_ITEMS);
+		expect(rows[0].itemOverrides.sword.weight).toBe(0);
+		expect(rows[0].itemOverrides.sword.stk).toEqual({ stat: 'STA', modifier: 1 });
+		expect(removeEntryUpgrade(entries, 'w1', GLYPH.id)).toEqual([
+			{ id: 'w1', unitId: 'warrior', upgrades: [] }
+		]);
 	});
 });
 

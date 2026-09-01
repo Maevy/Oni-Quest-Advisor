@@ -171,7 +171,23 @@ export type ArmyUpgradeEffect =
 	| { kind: 'pouch' }
 	| { kind: 'spellcraftLevelUp' }
 	| { kind: 'stratagem'; stratagemIds: string[] }
-	| { kind: 'costReduction'; amount: number };
+	| { kind: 'costReduction'; amount: number }
+	| { kind: 'choice'; options: ArmyUpgradeOption[] };
+
+/** One selectable option of a choice upgrade. */
+export type ArmyUpgradeOption = {
+	id: string;
+	label: string;
+	/** Stat changes applied when this option is chosen. */
+	statChanges?: Partial<Record<ArmyStatKey, number>>;
+	/** Extra inventory space granted by this option. */
+	inventorySpace?: number;
+	/** Option inscribes a chosen inventory item: Wgt -1, Strike +1. */
+	inscribeItem?: { except: string[] };
+};
+
+/** The player's pick for a choice upgrade (plus the target item when needed). */
+export type ArmyUpgradeChoice = { option: string; itemId?: string };
 
 /** Requirements parsed from the upgrade's description. */
 export type ArmyUpgradeRequirement = {
@@ -270,6 +286,10 @@ export type ArmyEntry = {
 	mounted?: boolean;
 	/** Upgrade ids picked for this copy (standard format only). */
 	upgrades?: string[];
+	/** Spellcraft chosen per spellcraftLevelUp upgrade (upgrade id -> group id). */
+	spellcraftChoices?: Record<string, string>;
+	/** Option picked per choice upgrade (upgrade id -> option and target item). */
+	upgradeChoices?: Record<string, ArmyUpgradeChoice>;
 };
 
 /** One army copy joined with its unit spec, ready for display. */
@@ -288,6 +308,8 @@ export type ArmyRosterRow = {
 	upgradedUnit: ArmyUnitSpec;
 	/** The picked upgrades, resolved. */
 	upgrades: ArmyUpgradeSpec[];
+	/** Items modified by picked upgrades (e.g. inscribed), keyed by item id. */
+	itemOverrides: Record<string, ArmyItemSpec>;
 };
 
 /** Adds one copy of a unit as its own entry; stops at the unit limit. */
@@ -360,6 +382,75 @@ export function upgradeCostInArmy(
 	return discountedUpgradeCost(upgrade, armyUpgradeCostReduction(entries, upgradeIndex));
 }
 
+/** Whether an item can be inscribed: a weapon or shield with weight to lose. */
+export function isInscribableItem(
+	item: ArmyItemSpec | undefined,
+	except: string[]
+): item is ArmyItemSpec {
+	if (!item) return false;
+	if (except.includes(item.id)) return false;
+	if (item.category !== 'weapon' && item.category !== 'shield') return false;
+	return (item.weight ?? 0) > 0;
+}
+
+/** The unit's inscribable inventory items for one inscribe option. */
+export function inscribableItems(
+	unit: ArmyUnitSpec,
+	itemIndex: Record<string, ArmyItemSpec>,
+	except: string[]
+): ArmyItemSpec[] {
+	return (unit.inventory ?? [])
+		.map((slot) => itemIndex[slot.id])
+		.filter((item): item is ArmyItemSpec => isInscribableItem(item, except));
+}
+
+/** Whether a choice option is usable for the unit right now. */
+export function upgradeOptionUsable(
+	option: ArmyUpgradeOption,
+	unit: ArmyUnitSpec,
+	itemIndex: Record<string, ArmyItemSpec>
+): boolean {
+	if (option.statChanges || option.inventorySpace) return true;
+	if (option.inscribeItem) {
+		return inscribableItems(unit, itemIndex, option.inscribeItem.except).length > 0;
+	}
+	return false;
+}
+
+/** The item after inscription: Strike +1 (stat modifier or numeric fixed), Wgt -1. */
+export function inscribedItem(item: ArmyItemSpec): ArmyItemSpec {
+	const next: ArmyItemSpec = { ...item, weight: Math.max(0, (item.weight ?? 0) - 1) };
+	if (item.stk) {
+		if ('stat' in item.stk) {
+			next.stk = { ...item.stk, modifier: (item.stk.modifier ?? 0) + 1 };
+		} else if (item.stk.fixed !== undefined && /^\d+$/.test(item.stk.fixed)) {
+			next.stk = { fixed: String(Number(item.stk.fixed) + 1) };
+		}
+	}
+	return next;
+}
+
+/** Item modifications from picked choice upgrades (inscribed items), by item id. */
+export function upgradeItemOverrides(
+	upgrades: ArmyUpgradeSpec[],
+	choices: Record<string, ArmyUpgradeChoice>,
+	itemIndex: Record<string, ArmyItemSpec>
+): Record<string, ArmyItemSpec> {
+	const overrides: Record<string, ArmyItemSpec> = {};
+	for (const upgrade of upgrades) {
+		for (const effect of upgrade.effects) {
+			if (effect.kind !== 'choice') continue;
+			const choice = choices[upgrade.id];
+			if (!choice?.itemId) continue;
+			const option = effect.options.find((candidate) => candidate.id === choice.option);
+			if (!option?.inscribeItem) continue;
+			const item = itemIndex[choice.itemId];
+			if (item) overrides[item.id] = inscribedItem(item);
+		}
+	}
+	return overrides;
+}
+
 /** Joins the army entries with their unit specs for display - one row per copy. */
 export function resolveArmyEntries(
 	entries: ArmyEntry[],
@@ -375,7 +466,13 @@ export function resolveArmyEntries(
 		const upgrades = (entry.upgrades ?? [])
 			.map((id) => upgradeIndex[id])
 			.filter((upgrade): upgrade is ArmyUpgradeSpec => upgrade !== undefined);
-		const upgradedUnit = upgradedArmyUnit(unit, upgrades, itemIndex);
+		const upgradedUnit = upgradedArmyUnit(
+			unit,
+			upgrades,
+			itemIndex,
+			entry.spellcraftChoices ?? {},
+			entry.upgradeChoices ?? {}
+		);
 		const mounted = entry.mounted === true && unit.mount !== undefined;
 		const mountSpec = unit.mount;
 		const mount = mountSpec
@@ -398,7 +495,8 @@ export function resolveArmyEntries(
 				mount,
 				effectiveStats,
 				upgradedUnit,
-				upgrades
+				upgrades,
+				itemOverrides: upgradeItemOverrides(upgrades, entry.upgradeChoices ?? {}, itemIndex)
 			}
 		];
 	});
@@ -492,12 +590,15 @@ function bumpLeveledRef<T extends { id: string; level: number }>(
  * The unit with all picked upgrade effects applied: stat boosts, granted
  * classes/traits/skills/combat arts, items, primary weapon replacement
  * (the first weapon in the inventory), pouch space and stratagems.
- * 'spellcraftLevelUp' is a table-side choice and applies nothing here.
+ * 'spellcraftLevelUp' raises the spellcraft the player chose for that
+ * upgrade (spellcraftChoices maps upgrade id -> spellcraft group id).
  */
 export function upgradedArmyUnit(
 	unit: ArmyUnitSpec,
 	upgrades: ArmyUpgradeSpec[],
-	itemIndex: Record<string, ArmyItemSpec>
+	itemIndex: Record<string, ArmyItemSpec>,
+	spellcraftChoices: Record<string, string> = {},
+	upgradeChoices: Record<string, ArmyUpgradeChoice> = {}
 ): ArmyUnitSpec {
 	if (upgrades.length === 0) return unit;
 	let stats = unit.stats;
@@ -505,6 +606,7 @@ export function upgradedArmyUnit(
 	let traits = unit.traits ?? [];
 	let skills = unit.skills;
 	let combatArts = unit.combatArts;
+	let spellcrafts = unit.spellcrafts;
 	let stratagems = unit.stratagems;
 	let inventory = unit.inventory;
 	let inventorySpace = unit.inventorySpace;
@@ -573,8 +675,35 @@ export function upgradedArmyUnit(
 					if (missing.length > 0) stratagems = [...current, ...missing];
 					break;
 				}
-				case 'spellcraftLevelUp':
+				case 'spellcraftLevelUp': {
+					const chosen = spellcraftChoices[upgrade.id];
+					if (chosen) {
+						spellcrafts = (spellcrafts ?? []).map((ref) =>
+							ref.id === chosen ? { ...ref, level: ref.level + 1 } : ref
+						);
+					}
 					break;
+				}
+				case 'choice': {
+					// The inscribed-item half applies through upgradeItemOverrides.
+					const choice = upgradeChoices[upgrade.id];
+					const option = choice
+						? effect.options.find((candidate) => candidate.id === choice.option)
+						: undefined;
+					if (!option) break;
+					if (option.statChanges) {
+						const next = { ...stats };
+						for (const key of Object.keys(option.statChanges) as ArmyStatKey[]) {
+							const value = next[key];
+							if (value !== null) next[key] = value + (option.statChanges[key] ?? 0);
+						}
+						stats = next;
+					}
+					if (option.inventorySpace) {
+						inventorySpace = (inventorySpace ?? 0) + option.inventorySpace;
+					}
+					break;
+				}
 			}
 		}
 	}
@@ -585,6 +714,7 @@ export function upgradedArmyUnit(
 		traits,
 		skills,
 		combatArts,
+		spellcrafts,
 		stratagems,
 		inventory,
 		inventorySpace
@@ -605,7 +735,9 @@ export function entryUpgradeBlock(
 	upgrade: ArmyUpgradeSpec,
 	units: ArmyUnitSpec[],
 	upgradeIndex: Record<string, ArmyUpgradeSpec>,
-	rules: ArmyRulesIndexes
+	rules: ArmyRulesIndexes,
+	spells: ArmySpellSpec[] = [],
+	itemIndex: Record<string, ArmyItemSpec> = {}
 ): ArmyUpgradeBlock | null {
 	const entry = entries.find((candidate) => candidate.id === entryId);
 	const unit = units.find((candidate) => candidate.id === entry?.unitId);
@@ -615,7 +747,8 @@ export function entryUpgradeBlock(
 		.map((id) => upgradeIndex[id])
 		.filter((pickedUpgrade): pickedUpgrade is ArmyUpgradeSpec => pickedUpgrade !== undefined);
 	if (picked.some((pickedUpgrade) => pickedUpgrade.id === upgrade.id)) return 'owned';
-	if (picked.length >= upgradeSlotsFor(upgradedArmyUnit(unit, picked, {}), picked)) {
+	const choices = entry.spellcraftChoices ?? {};
+	if (picked.length >= upgradeSlotsFor(upgradedArmyUnit(unit, picked, {}, choices), picked)) {
 		return 'slots';
 	}
 	if (upgrade.limit !== undefined) {
@@ -634,7 +767,7 @@ export function entryUpgradeBlock(
 			return 'requirement';
 		}
 	}
-	const upgraded = upgradedArmyUnit(unit, picked, {});
+	const upgraded = upgradedArmyUnit(unit, picked, {}, choices);
 	const levelEffects = upgrade.effects.filter(
 		(effect) =>
 			effect.kind === 'trait' ||
@@ -645,9 +778,11 @@ export function entryUpgradeBlock(
 	if (levelEffects.length > 0) {
 		const maxed = levelEffects.every((effect) => {
 			if (effect.kind === 'spellcraftLevelUp') {
-				// No spellcraft to advance counts as maxed - nothing to pick.
+				// No spellcraft to advance counts as maxed - nothing to pick (an
+				// empty list is vacuously "all at cap"). The cap is the group's
+				// highest spell in the unit's affinity elements.
 				return (upgraded.spellcrafts ?? []).every(
-					(ref) => ref.level >= armyRulesMaxLevel(rules.spellcrafts[ref.id])
+					(ref) => ref.level >= spellcraftLevelCap(ref.id, upgraded, spells)
 				);
 			}
 			const refs =
@@ -674,37 +809,141 @@ export function entryUpgradeBlock(
 		});
 		if (maxed) return 'max-level';
 	}
+	for (const effect of upgrade.effects) {
+		if (effect.kind !== 'choice') continue;
+		if (!effect.options.some((option) => upgradeOptionUsable(option, upgraded, itemIndex))) {
+			return 'requirement';
+		}
+	}
 	return null;
 }
 
-/** Adds an upgrade to an entry unless blocked (see entryUpgradeBlock). */
+/** Player selections made while adding an upgrade (spellcraft, option, item). */
+export type ArmyUpgradeSelection = {
+	spellcraftId?: string;
+	optionId?: string;
+	itemId?: string;
+};
+
+/**
+ * Adds an upgrade to an entry unless blocked (see entryUpgradeBlock).
+ * spellcraftLevelUp upgrades resolve their target here: the only candidate
+ * is picked automatically, otherwise selection.spellcraftId must name one of
+ * the unit's upgradable spellcrafts. Choice upgrades need selection.optionId
+ * (plus selection.itemId for an inscribe option, validated against the
+ * unit's inventory).
+ */
 export function addEntryUpgrade(
 	entries: ArmyEntry[],
 	entryId: string,
 	upgrade: ArmyUpgradeSpec,
 	units: ArmyUnitSpec[],
 	upgradeIndex: Record<string, ArmyUpgradeSpec>,
-	rules: ArmyRulesIndexes
+	rules: ArmyRulesIndexes,
+	spells: ArmySpellSpec[] = [],
+	itemIndex: Record<string, ArmyItemSpec> = {},
+	selection: ArmyUpgradeSelection = {}
 ): ArmyEntry[] {
-	if (entryUpgradeBlock(entries, entryId, upgrade, units, upgradeIndex, rules) !== null) {
+	if (
+		entryUpgradeBlock(entries, entryId, upgrade, units, upgradeIndex, rules, spells, itemIndex) !==
+		null
+	) {
 		return entries;
 	}
-	return entries.map((entry) =>
-		entry.id === entryId ? { ...entry, upgrades: [...(entry.upgrades ?? []), upgrade.id] } : entry
+	const entry = entries.find((candidate) => candidate.id === entryId);
+	const unit = units.find((candidate) => candidate.id === entry?.unitId);
+	if (!entry || !unit) return entries;
+	const picked = (entry.upgrades ?? [])
+		.map((id) => upgradeIndex[id])
+		.filter((candidate): candidate is ArmyUpgradeSpec => candidate !== undefined);
+	const upgraded = upgradedArmyUnit(
+		unit,
+		picked,
+		itemIndex,
+		entry.spellcraftChoices ?? {},
+		entry.upgradeChoices ?? {}
 	);
+	let spellcraftChoice: string | undefined;
+	if (upgrade.effects.some((effect) => effect.kind === 'spellcraftLevelUp')) {
+		const upgradable = (upgraded.spellcrafts ?? []).filter((ref) => {
+			const cap = spellcraftLevelCap(ref.id, upgraded, spells);
+			return cap > 0 && ref.level < cap;
+		});
+		if (upgradable.length === 1) {
+			spellcraftChoice = upgradable[0].id;
+		} else if (
+			selection.spellcraftId !== undefined &&
+			upgradable.some((ref) => ref.id === selection.spellcraftId)
+		) {
+			spellcraftChoice = selection.spellcraftId;
+		} else {
+			return entries;
+		}
+	}
+	let upgradeChoice: ArmyUpgradeChoice | undefined;
+	const choiceEffect = upgrade.effects.find(
+		(effect): effect is Extract<ArmyUpgradeEffect, { kind: 'choice' }> => effect.kind === 'choice'
+	);
+	if (choiceEffect) {
+		const option = choiceEffect.options.find((candidate) => candidate.id === selection.optionId);
+		if (!option || !upgradeOptionUsable(option, upgraded, itemIndex)) return entries;
+		if (option.inscribeItem) {
+			const item = selection.itemId ? itemIndex[selection.itemId] : undefined;
+			if (
+				!selection.itemId ||
+				!isInscribableItem(item, option.inscribeItem.except) ||
+				!(upgraded.inventory ?? []).some((slot) => slot.id === selection.itemId)
+			) {
+				return entries;
+			}
+			upgradeChoice = { option: option.id, itemId: selection.itemId };
+		} else {
+			upgradeChoice = { option: option.id };
+		}
+	}
+	return entries.map((candidate) => {
+		if (candidate.id !== entryId) return candidate;
+		const next: ArmyEntry = { ...candidate, upgrades: [...(candidate.upgrades ?? []), upgrade.id] };
+		if (spellcraftChoice !== undefined) {
+			next.spellcraftChoices = {
+				...(candidate.spellcraftChoices ?? {}),
+				[upgrade.id]: spellcraftChoice
+			};
+		}
+		if (upgradeChoice !== undefined) {
+			next.upgradeChoices = {
+				...(candidate.upgradeChoices ?? {}),
+				[upgrade.id]: upgradeChoice
+			};
+		}
+		return next;
+	});
 }
 
-/** Removes one upgrade from an entry. */
+/** Removes one upgrade from an entry, dropping its selections too. */
 export function removeEntryUpgrade(
 	entries: ArmyEntry[],
 	entryId: string,
 	upgradeId: string
 ): ArmyEntry[] {
-	return entries.map((entry) =>
-		entry.id === entryId && entry.upgrades?.includes(upgradeId)
-			? { ...entry, upgrades: entry.upgrades.filter((id) => id !== upgradeId) }
-			: entry
-	);
+	return entries.map((entry) => {
+		if (entry.id !== entryId || !entry.upgrades?.includes(upgradeId)) return entry;
+		const next: ArmyEntry = {
+			...entry,
+			upgrades: entry.upgrades.filter((id) => id !== upgradeId)
+		};
+		if (entry.spellcraftChoices?.[upgradeId] !== undefined) {
+			const remaining = { ...entry.spellcraftChoices };
+			delete remaining[upgradeId];
+			next.spellcraftChoices = Object.keys(remaining).length > 0 ? remaining : undefined;
+		}
+		if (entry.upgradeChoices?.[upgradeId] !== undefined) {
+			const remaining = { ...entry.upgradeChoices };
+			delete remaining[upgradeId];
+			next.upgradeChoices = Object.keys(remaining).length > 0 ? remaining : undefined;
+		}
+		return next;
+	});
 }
 
 const ROMAN_VALUES: [number, string][] = [
@@ -876,6 +1115,32 @@ export function affinityElements(unit: ArmyUnitSpec): string[] {
 		if (value && value !== 'any') elements.add(value);
 	}
 	return [...elements];
+}
+
+/** One spellcraft a unit could advance, for the upgrade picker's choice step. */
+export type ArmySpellcraftOption = {
+	id: string;
+	name: string;
+	level: number;
+	upgradable: boolean;
+};
+
+/**
+ * Highest spellcraft level a unit can reach in one group: the max spell
+ * level of that group in any of the unit's affinity elements (0 when none).
+ */
+export function spellcraftLevelCap(
+	groupId: string,
+	unit: ArmyUnitSpec,
+	spells: ArmySpellSpec[]
+): number {
+	const elements = new Set(affinityElements(unit));
+	let cap = 0;
+	for (const spell of spells) {
+		if (spell.group !== groupId || !elements.has(spell.element)) continue;
+		if (spell.level > cap) cap = spell.level;
+	}
+	return cap;
 }
 
 /**

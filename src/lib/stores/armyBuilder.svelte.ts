@@ -17,6 +17,7 @@ import {
 	type ArmyItemSpec,
 	type ArmyRulesIndexes,
 	type ArmyUnitSpec,
+	type ArmyUpgradeSelection,
 	type ArmyUpgradeSpec
 } from '$lib/domain';
 import { contentStore } from './content.svelte';
@@ -96,7 +97,7 @@ class ArmyBuilderStore {
 	}
 
 	/** Picks an upgrade for one copy unless the domain rules block it. */
-	addUpgrade(entryId: string, upgradeId: string): void {
+	addUpgrade(entryId: string, upgradeId: string, selection?: ArmyUpgradeSelection): void {
 		const upgrade = this.upgradeIndex[upgradeId];
 		if (!upgrade) return;
 		this.entries = addEntryUpgrade(
@@ -105,7 +106,10 @@ class ArmyBuilderStore {
 			upgrade,
 			this.units,
 			this.upgradeIndex,
-			this.rulesIndexes
+			this.rulesIndexes,
+			contentStore.armySpells,
+			this.itemIndex,
+			selection
 		);
 	}
 
