@@ -337,6 +337,7 @@
 				"id": "grapeshot",
 				"qty": 1
 			}
-		]
+		],
+		"upgradesLocked": true
 	}
 ]

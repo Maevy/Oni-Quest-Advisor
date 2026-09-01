@@ -5,9 +5,12 @@ import {
 	armyCopyCounts,
 	armyPoints,
 	armyRulesTitle,
+	armyUpgradeCostReduction,
+	addEntryUpgrade,
 	classPopupFor,
 	combatArtPopupFor,
 	effectiveMountedStats,
+	entryUpgradeBlock,
 	indexArmyRules,
 	inventorySpaceUsed,
 	isOverArmyLimit,
@@ -16,6 +19,7 @@ import {
 	reachBoxLines,
 	removeArmyCopy,
 	removeArmyEntry,
+	removeEntryUpgrade,
 	resolveArmyEntries,
 	romanNumeral,
 	rulesLinkPopup,
@@ -26,6 +30,10 @@ import {
 	substituteArmyTemplate,
 	toggleArmyMount,
 	traitPopupFor,
+	upgradedArmyUnit,
+	upgradeCostInArmy,
+	upgradeSlotsFor,
+	upgradesForFaction,
 	unitsForFaction,
 	type ArmyEntry,
 	type ArmyItemSpec,
@@ -35,7 +43,8 @@ import {
 	type ArmyStats,
 	type ArmyStratagemSpec,
 	type ArmyUnitContent,
-	type ArmyUnitSpec
+	type ArmyUnitSpec,
+	type ArmyUpgradeSpec
 } from './army';
 
 const STATS: ArmyStats = {
@@ -180,7 +189,9 @@ describe('resolveArmyEntries', () => {
 				name: 'Warrior',
 				points: 25,
 				mounted: false,
-				effectiveStats: STATS
+				effectiveStats: STATS,
+				upgradedUnit: UNITS[0],
+				upgrades: []
 			},
 			{
 				entryId: 'w2',
@@ -188,7 +199,9 @@ describe('resolveArmyEntries', () => {
 				name: 'Warrior',
 				points: 25,
 				mounted: false,
-				effectiveStats: STATS
+				effectiveStats: STATS,
+				upgradedUnit: UNITS[0],
+				upgrades: []
 			}
 		]);
 	});
@@ -217,7 +230,9 @@ describe('resolveArmyEntries', () => {
 				points: 5,
 				icon: 'oni.jpg',
 				mounted: false,
-				effectiveStats: STATS
+				effectiveStats: STATS,
+				upgradedUnit: units[0],
+				upgrades: []
 			}
 		]);
 	});
@@ -245,7 +260,9 @@ describe('resolveArmyEntries', () => {
 					ARM: 7,
 					HP: 11,
 					M: 11
-				}
+				},
+				upgradedUnit: DRAGOON,
+				upgrades: []
 			}
 		]);
 	});
@@ -634,7 +651,8 @@ describe('rulesLinkPopup', () => {
 		classes: { wizard: WIZARD },
 		skills: { charm: CHARM },
 		traits: {},
-		combatArts: { fencing: FENCING }
+		combatArts: { fencing: FENCING },
+		spellcrafts: {}
 	};
 
 	it('resolves class links to a single section and leveled links to all levels', () => {
@@ -1019,5 +1037,458 @@ describe('effectiveMountedStats', () => {
 		expect(stats.T).toBe(10);
 		expect(stats.ARM).toBe(7);
 		expect(stats.HP).toBe(11);
+	});
+});
+
+const UPGRADES: ArmyUpgradeSpec[] = [
+	{
+		id: 'gift-of-longevity-helian-league',
+		name: 'Gift of Longevity',
+		cost: 1,
+		limit: 2,
+		factionId: 'helian-league',
+		description: [],
+		effects: [{ kind: 'stat', changes: { INT: 1 } }]
+	},
+	{
+		id: 'seasoned-combatant-helian-league',
+		name: 'Seasoned Combatant',
+		cost: 2,
+		factionId: 'helian-league',
+		description: [],
+		effects: [{ kind: 'trait', traitId: 'fearless', level: 1 }]
+	},
+	{
+		id: 'seasoned-combatant-empire-of-soga',
+		name: 'Seasoned Combatant',
+		cost: 2,
+		factionId: 'empire-of-soga',
+		description: [],
+		effects: [{ kind: 'trait', traitId: 'fearless', level: 1 }]
+	},
+	{
+		id: 'pouch',
+		name: 'Pouch',
+		cost: 1,
+		description: [],
+		effects: [{ kind: 'pouch' }]
+	},
+	{
+		id: 'imported-crossbow',
+		name: 'Imported Crossbow',
+		cost: 5,
+		limit: 1,
+		description: [],
+		effects: [{ kind: 'item', itemId: 'crossbow' }]
+	},
+	{
+		id: 'kassen-buki-yari-tsukai-empire-of-soga',
+		name: 'Kassen Buki: Yari-tsukai',
+		cost: 2,
+		factionId: 'empire-of-soga',
+		description: [],
+		requirement: { classes: ['warrior'] },
+		effects: [{ kind: 'replacePrimaryWeapon', itemId: 'lance' }]
+	},
+	{
+		id: 'journeyman-adventurer',
+		name: 'Journeyman Adventurer',
+		cost: 3,
+		description: [],
+		effects: [{ kind: 'trait', traitId: 'resourceful', level: 2 }]
+	},
+	{
+		id: 'adept-shaper-helian-league',
+		name: 'Adept Shaper',
+		cost: 3,
+		factionId: 'helian-league',
+		description: [],
+		effects: [{ kind: 'spellcraftLevelUp' }]
+	}
+];
+
+const UPGRADE_INDEX = indexArmyRules(UPGRADES);
+
+const UPGRADE_ITEMS: Record<string, ArmyItemSpec> = {
+	sword: { id: 'sword', name: 'Sword', category: 'weapon', effect: [], weight: 1 },
+	lance: { id: 'lance', name: 'Lance', category: 'weapon', effect: [], weight: 2 },
+	crossbow: { id: 'crossbow', name: 'Crossbow', category: 'weapon', effect: [], weight: 2 },
+	amulet: { id: 'amulet', name: 'Amulet', category: 'accessory', effect: [] }
+};
+
+describe('upgradesForFaction', () => {
+	it('gives a main faction the neutral pool plus its own exclusives', () => {
+		expect(upgradesForFaction('helian-league', UPGRADES).map((upgrade) => upgrade.id)).toEqual([
+			'gift-of-longevity-helian-league',
+			'seasoned-combatant-helian-league',
+			'pouch',
+			'imported-crossbow',
+			'journeyman-adventurer',
+			'adept-shaper-helian-league'
+		]);
+	});
+
+	it('gives monster factions and the guild the neutral pool only', () => {
+		expect(upgradesForFaction('oni-clans', UPGRADES).map((upgrade) => upgrade.id)).toEqual([
+			'pouch',
+			'imported-crossbow',
+			'journeyman-adventurer'
+		]);
+		expect(upgradesForFaction('adventurers-guild', UPGRADES)).toEqual(
+			upgradesForFaction('oni-clans', UPGRADES)
+		);
+	});
+});
+
+describe('upgradedArmyUnit', () => {
+	it('is the unit itself without upgrades', () => {
+		expect(upgradedArmyUnit(UNITS[0], [], UPGRADE_ITEMS)).toBe(UNITS[0]);
+	});
+
+	it('applies stat boosts, trait grants and item grants', () => {
+		const upgraded = upgradedArmyUnit(UNITS[0], [UPGRADES[0], UPGRADES[4]], UPGRADE_ITEMS);
+		expect(upgraded.stats.INT).toBe(7);
+		expect(upgraded.inventory).toEqual([{ id: 'crossbow', qty: 1 }]);
+	});
+
+	it('replaces the primary weapon - the first weapon in the inventory', () => {
+		const unit: ArmyUnitSpec = {
+			...UNITS[0],
+			inventory: [
+				{ id: 'amulet', qty: 1 },
+				{ id: 'sword', qty: 1 }
+			]
+		};
+		const upgraded = upgradedArmyUnit(unit, [UPGRADES[5]], UPGRADE_ITEMS);
+		expect(upgraded.inventory).toEqual([
+			{ id: 'amulet', qty: 1 },
+			{ id: 'lance', qty: 1 }
+		]);
+	});
+
+	it('adds the replacement weapon when the unit carries none', () => {
+		const upgraded = upgradedArmyUnit(UNITS[0], [UPGRADES[5]], UPGRADE_ITEMS);
+		expect(upgraded.inventory).toEqual([{ id: 'lance', qty: 1 }]);
+	});
+
+	it('grants pouch space and bumps an existing trait one level', () => {
+		const unit: ArmyUnitSpec = {
+			...UNITS[0],
+			inventorySpace: 3,
+			traits: [{ id: 'fearless', level: 1 }]
+		};
+		const upgraded = upgradedArmyUnit(unit, [UPGRADES[3], UPGRADES[1]], UPGRADE_ITEMS);
+		expect(upgraded.inventorySpace).toBe(5);
+		expect(upgraded.traits).toEqual([{ id: 'fearless', level: 2 }]);
+	});
+
+	it('replaces the stat change when the insteadIfTrait condition holds', () => {
+		const devotion: ArmyUpgradeSpec = {
+			id: 'devotion-anras',
+			name: 'Devotion: Anras',
+			cost: 3,
+			description: [],
+			effects: [
+				{
+					kind: 'stat',
+					changes: { DEF: 1 },
+					insteadIfTrait: { traitId: 'duelist', changes: { DEF: 2 } }
+				}
+			]
+		};
+		expect(upgradedArmyUnit(UNITS[0], [devotion], UPGRADE_ITEMS).stats.DEF).toBe(5);
+		const duelist: ArmyUnitSpec = { ...UNITS[0], traits: [{ id: 'duelist', level: 1 }] };
+		expect(upgradedArmyUnit(duelist, [devotion], UPGRADE_ITEMS).stats.DEF).toBe(6);
+	});
+
+	it('adds the extra stat change when the extraIfClasses condition holds', () => {
+		const devotion: ArmyUpgradeSpec = {
+			id: 'devotion-tiamat',
+			name: 'Devotion: Tiamat',
+			cost: 3,
+			description: [],
+			effects: [
+				{
+					kind: 'stat',
+					changes: { T: 1 },
+					extraIfClasses: { classIds: ['warrior', 'rogue'], changes: { OFF: 1 } }
+				}
+			]
+		};
+		const warrior = upgradedArmyUnit(UNITS[0], [devotion], UPGRADE_ITEMS);
+		expect(warrior.stats.T).toBe(9);
+		expect(warrior.stats.OFF).toBe(4);
+		const mage = upgradedArmyUnit(UNITS[1], [devotion], UPGRADE_ITEMS);
+		expect(mage.stats.T).toBe(9);
+		expect(mage.stats.OFF).toBe(3);
+	});
+});
+
+describe('upgradeSlotsFor', () => {
+	it('is one base slot', () => {
+		expect(upgradeSlotsFor(UNITS[0], [])).toBe(1);
+	});
+
+	it('adds one slot per resourceful level of the upgraded unit', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], traits: [{ id: 'resourceful', level: 2 }] };
+		expect(upgradeSlotsFor(unit, [])).toBe(3);
+	});
+
+	it('adds one slot per picked pouch', () => {
+		expect(upgradeSlotsFor(UNITS[0], [UPGRADES[3], UPGRADES[3]])).toBe(3);
+	});
+
+	it('is zero for units that can never receive upgrades', () => {
+		expect(upgradeSlotsFor({ ...UNITS[0], upgradesLocked: true }, [])).toBe(0);
+	});
+});
+
+const BLOCK_RULES: ArmyRulesIndexes = {
+	classes: {},
+	skills: {},
+	traits: { fearless: { id: 'fearless', name: 'Fearless', levels: { 1: [] } } },
+	combatArts: {},
+	spellcrafts: {
+		'art-of-sorcery': { id: 'art-of-sorcery', name: 'Art of Sorcery', levels: { 1: [], 2: [] } }
+	}
+};
+
+describe('entryUpgradeBlock', () => {
+	it('is null when the upgrade can be picked', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(
+			entryUpgradeBlock(entries, 'w1', UPGRADES[0], UNITS, UPGRADE_INDEX, BLOCK_RULES)
+		).toBeNull();
+	});
+
+	it('blocks an upgrade the entry already owns', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[0].id] }];
+		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[0], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'owned'
+		);
+	});
+
+	it('blocks every upgrade for units that can never receive them', () => {
+		const units: ArmyUnitSpec[] = [{ ...UNITS[0], upgradesLocked: true }];
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[3], units, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'locked'
+		);
+	});
+
+	it('blocks once every slot is used', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[4].id] }];
+		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[0], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'slots'
+		);
+	});
+
+	it('counts a resourceful grant from a picked upgrade as extra slots', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[6].id, UPGRADES[3].id] }
+		];
+		expect(
+			entryUpgradeBlock(entries, 'w1', UPGRADES[0], UNITS, UPGRADE_INDEX, BLOCK_RULES)
+		).toBeNull();
+	});
+
+	it('blocks when the per-army limit is reached across entries', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: ['gift-of-longevity-helian-league'] },
+			{ id: 'w2', unitId: 'warrior', upgrades: ['gift-of-longevity-helian-league'] },
+			{ id: 'w3', unitId: 'warrior' }
+		];
+		expect(entryUpgradeBlock(entries, 'w3', UPGRADES[0], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'limit'
+		);
+	});
+
+	it('blocks units missing the class requirement', () => {
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		expect(entryUpgradeBlock(entries, 'm1', UPGRADES[5], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'requirement'
+		);
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'w1', unitId: 'warrior' }],
+				'w1',
+				UPGRADES[5],
+				UNITS,
+				UPGRADE_INDEX,
+				BLOCK_RULES
+			)
+		).toBeNull();
+	});
+
+	it('blocks units carrying a forbidden trait', () => {
+		const forbidden: ArmyUpgradeSpec = {
+			id: 'devotion-anras',
+			name: 'Devotion: Anras',
+			cost: 3,
+			description: [],
+			requirement: { notTraits: ['demon'] },
+			effects: [{ kind: 'stat', changes: { DEF: 1 } }]
+		};
+		const index = indexArmyRules([forbidden]);
+		const demon: ArmyUnitSpec[] = [{ ...UNITS[0], traits: [{ id: 'demon', level: 1 }] }];
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'w1', unitId: 'warrior' }],
+				'w1',
+				forbidden,
+				demon,
+				index,
+				BLOCK_RULES
+			)
+		).toBe('requirement');
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'w1', unitId: 'warrior' }],
+				'w1',
+				forbidden,
+				UNITS,
+				index,
+				BLOCK_RULES
+			)
+		).toBeNull();
+	});
+
+	it('blocks level-ups when the unit already sits at the maximum level', () => {
+		const maxed: ArmyEntry[] = [
+			{
+				id: 'w1',
+				unitId: 'warrior',
+				upgrades: []
+			}
+		];
+		const units: ArmyUnitSpec[] = [
+			{ ...UNITS[0], traits: [{ id: 'fearless', level: 1 }] },
+			{
+				...UNITS[1],
+				spellcrafts: [{ id: 'art-of-sorcery', level: 2 }]
+			}
+		];
+		expect(entryUpgradeBlock(maxed, 'w1', UPGRADES[1], units, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'max-level'
+		);
+		const casterEntries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		expect(
+			entryUpgradeBlock(casterEntries, 'm1', UPGRADES[7], units, UPGRADE_INDEX, BLOCK_RULES)
+		).toBe('max-level');
+	});
+
+	it('blocks a spellcraft level-up for units without spellcrafts', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[7], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			'max-level'
+		);
+	});
+});
+
+describe('addEntryUpgrade/removeEntryUpgrade', () => {
+	it('adds the upgrade id to the entry when allowed', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(addEntryUpgrade(entries, 'w1', UPGRADES[0], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toEqual([
+			{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[0].id] }
+		]);
+	});
+
+	it('refuses blocked upgrades without touching the entries', () => {
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		expect(addEntryUpgrade(entries, 'm1', UPGRADES[5], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
+			entries
+		);
+	});
+
+	it('removes the upgrade from the entry', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[0].id, UPGRADES[3].id] }
+		];
+		expect(removeEntryUpgrade(entries, 'w1', UPGRADES[0].id)).toEqual([
+			{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[3].id] }
+		]);
+		expect(removeEntryUpgrade(entries, 'ghost', UPGRADES[0].id)).toEqual(entries);
+	});
+});
+
+describe('armyPoints with upgrades', () => {
+	it('adds the costs of every picked upgrade', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[0].id, UPGRADES[4].id] }
+		];
+		expect(armyPoints(entries, UNITS, UPGRADE_INDEX)).toBe(25 + 1 + 5);
+	});
+
+	it('ignores unknown upgrade ids', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior', upgrades: ['ghost'] }];
+		expect(armyPoints(entries, UNITS, UPGRADE_INDEX)).toBe(25);
+	});
+});
+
+describe('resolveArmyEntries with upgrades', () => {
+	it('carries the upgraded unit, the resolved upgrades and their cost', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: [UPGRADES[0].id, UPGRADES[4].id] }
+		];
+		const rows = resolveArmyEntries(entries, UNITS, MOUNTS, UPGRADE_INDEX, UPGRADE_ITEMS);
+		expect(rows[0].points).toBe(31);
+		expect(rows[0].upgrades.map((upgrade) => upgrade.id)).toEqual([UPGRADES[0].id, UPGRADES[4].id]);
+		expect(rows[0].upgradedUnit.stats.INT).toBe(7);
+		expect(rows[0].upgradedUnit.inventory).toEqual([{ id: 'crossbow', qty: 1 }]);
+		expect(rows[0].effectiveStats.INT).toBe(7);
+	});
+});
+
+const PAIMON: ArmyUpgradeSpec = {
+	id: 'devotion-paimon',
+	name: 'Devotion: Paimon',
+	cost: 3,
+	description: [],
+	effects: [
+		{ kind: 'stat', changes: { INT: 1 } },
+		{ kind: 'costReduction', amount: 1 }
+	]
+};
+const CHEAP: ArmyUpgradeSpec = {
+	id: 'pouch-cheap',
+	name: 'Pouch',
+	cost: 1,
+	description: [],
+	effects: [{ kind: 'pouch' }]
+};
+const COST_INDEX = indexArmyRules([PAIMON, CHEAP, UPGRADES[4]]);
+
+describe('upgrade cost reduction', () => {
+	it('is zero without a cost-reducing upgrade in the army', () => {
+		expect(armyUpgradeCostReduction([{ id: 'w1', unitId: 'warrior' }], COST_INDEX)).toBe(0);
+	});
+
+	it('sums the amounts of every picked cost-reducing upgrade', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: [PAIMON.id] },
+			{ id: 'w2', unitId: 'warrior', upgrades: [PAIMON.id] }
+		];
+		expect(armyUpgradeCostReduction(entries, COST_INDEX)).toBe(2);
+	});
+
+	it('reduces other upgrades by the amount, to a minimum of 1', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior', upgrades: [PAIMON.id] }];
+		expect(upgradeCostInArmy(UPGRADES[4], entries, COST_INDEX)).toBe(4);
+		expect(upgradeCostInArmy(CHEAP, entries, COST_INDEX)).toBe(1);
+	});
+
+	it('never discounts the provider itself', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior', upgrades: [PAIMON.id] }];
+		expect(upgradeCostInArmy(PAIMON, entries, COST_INDEX)).toBe(3);
+	});
+
+	it('flows into armyPoints and roster row points', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: [PAIMON.id] },
+			{ id: 'w2', unitId: 'warrior', upgrades: [UPGRADES[4].id] }
+		];
+		expect(armyPoints(entries, UNITS, COST_INDEX)).toBe(25 + 25 + 3 + 4);
+		const rows = resolveArmyEntries(entries, UNITS, MOUNTS, COST_INDEX, UPGRADE_ITEMS);
+		expect(rows[1].points).toBe(25 + 4);
 	});
 });

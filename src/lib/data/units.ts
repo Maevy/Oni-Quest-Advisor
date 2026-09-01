@@ -5,7 +5,8 @@ import type {
 	ArmySpellSpec,
 	ArmyStratagemSpec,
 	ArmyUnitContent,
-	ArmyUnitSpec
+	ArmyUnitSpec,
+	ArmyUpgradeSpec
 } from '$lib/domain';
 
 const unitModules = import.meta.glob('./content/units/*.json', { eager: true }) as Record<
@@ -32,6 +33,16 @@ const itemModules = import.meta.glob('./content/units/items.json', { eager: true
 	string,
 	{ default: ArmyItemSpec[] }
 >;
+
+const upgradeModules = import.meta.glob('./content/units/upgrades.json', { eager: true }) as Record<
+	string,
+	{ default: ArmyUpgradeSpec[] }
+>;
+
+const upgradeIconModules = import.meta.glob('../assets/upgrades/*/*.jpg', {
+	eager: true,
+	import: 'default'
+}) as Record<string, string>;
 
 const iconModules = import.meta.glob('../assets/uniticons/*/*.jpg', {
 	eager: true,
@@ -81,7 +92,8 @@ export function loadArmyUnits(): ArmyUnitContent {
 			key === 'spellcrafts' ||
 			key === 'spells' ||
 			key === 'stratagems' ||
-			key === 'items'
+			key === 'items' ||
+			key === 'upgrades'
 		) {
 			continue;
 		}
@@ -141,4 +153,46 @@ export function loadArmyStratagems(): ArmyStratagemSpec[] {
 /** Loads the item catalog referenced by unit inventory slots. */
 export function loadArmyItems(): ArmyItemSpec[] {
 	return Object.values(itemModules)[0]?.default ?? [];
+}
+
+/** Upgrade icons keyed by normalized file name (lowercase, alphanumeric only). */
+const upgradeIconsByName: Record<string, string> = Object.fromEntries(
+	Object.entries(upgradeIconModules).map(([path, url]) => [
+		(path.split('/').pop() ?? '')
+			.replace(/\.jpg$/, '')
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, ''),
+		url
+	])
+);
+
+/**
+ * Upgrades whose image file does not match the upgrade name (typo'd file
+ * names, and the second Seasoned Combatant which shares the first's name).
+ */
+const UPGRADE_ICON_ALIASES: Record<string, string> = {
+	'arcane-tome-sand-kingdoms': 'arcancetome',
+	'conjured-retinue-sand-kingdoms': 'conjuredretniue',
+	'expeditionary-tactics-surge-order-helian-league': 'expedtionarytacticssurgeorder',
+	'gift-of-longevity-helian-league': 'giftlongevity',
+	'glyphscribe-reduce-weight-helian-league': 'gpyhscribereduceweight',
+	'imported-crossbow': 'importedcrossbox',
+	'journeyman-adventurer': 'journeymandadventurer',
+	'king-of-the-battlefield': 'kingofthebattlefiedl',
+	'seasoned-combatant-helian-league': 'seasonedcombatanthelian'
+};
+
+function upgradeIconFor(upgrade: ArmyUpgradeSpec): string | undefined {
+	const key =
+		UPGRADE_ICON_ALIASES[upgrade.id] ?? upgrade.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+	return upgradeIconsByName[key];
+}
+
+/** Loads the upgrade catalog picked onto units (standard) or into the roster. */
+export function loadArmyUpgrades(): ArmyUpgradeSpec[] {
+	const upgrades = Object.values(upgradeModules)[0]?.default ?? [];
+	return upgrades.map((upgrade) => {
+		const icon = upgradeIconFor(upgrade);
+		return icon ? { ...upgrade, icon } : upgrade;
+	});
 }

@@ -148,6 +148,55 @@ export type ArmyItemSpec = {
 /** A unit's inventory slot: how many copies of one item it carries. */
 export type ArmyInventorySlot = { id: string; qty: number };
 
+/**
+ * One mechanical upgrade effect the app applies automatically. Free choices
+ * stay in the description text for the player; trait/class conditions are
+ * resolved against the unit.
+ */
+export type ArmyUpgradeEffect =
+	| {
+			kind: 'stat';
+			changes: Partial<Record<ArmyStatKey, number>>;
+			/** Applied instead of `changes` when the unit has this trait. */
+			insteadIfTrait?: { traitId: string; changes: Partial<Record<ArmyStatKey, number>> };
+			/** Applied on top when the unit has any of these classes. */
+			extraIfClasses?: { classIds: string[]; changes: Partial<Record<ArmyStatKey, number>> };
+	  }
+	| { kind: 'class'; classId: string }
+	| { kind: 'trait'; traitId: string; level: number; dynamicValue?: string }
+	| { kind: 'skill'; skillId: string; level: number }
+	| { kind: 'combatArt'; artId: string; level: number }
+	| { kind: 'item'; itemId: string }
+	| { kind: 'replacePrimaryWeapon'; itemId: string }
+	| { kind: 'pouch' }
+	| { kind: 'spellcraftLevelUp' }
+	| { kind: 'stratagem'; stratagemIds: string[] }
+	| { kind: 'costReduction'; amount: number };
+
+/** Requirements parsed from the upgrade's description. */
+export type ArmyUpgradeRequirement = {
+	/** The unit needs at least one of these classes. */
+	classes?: string[];
+	/** The unit must not have any of these traits. */
+	notTraits?: string[];
+};
+
+/** An upgrade from the producer catalog. */
+export type ArmyUpgradeSpec = {
+	id: string;
+	name: string;
+	/** Points this upgrade adds to the army total. */
+	cost: number;
+	/** Per-army copy cap; absent means unlimited. */
+	limit?: number;
+	/** Faction-exclusive upgrades; neutral upgrades have no faction. */
+	factionId?: ArmyFactionId;
+	description: ArmyTextSegment[];
+	requirement?: ArmyUpgradeRequirement;
+	effects: ArmyUpgradeEffect[];
+	icon?: string;
+};
+
 /** A trait on a unit; dynamic values fill the entry's (X)/(Element) placeholders. */
 export type ArmyTraitRef = {
 	id: string;
@@ -178,6 +227,8 @@ export type ArmyUnitSpec = {
 	inventorySpace?: number;
 	/** Equipped items in the producer's order; ids resolve the item catalog. */
 	inventory?: ArmyInventorySlot[];
+	/** Rulebook exception: this unit can never receive upgrades. */
+	upgradesLocked?: boolean;
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
 	mount?: { unitId: string; points: number };
@@ -217,6 +268,8 @@ export type ArmyEntry = {
 	id: string;
 	unitId: string;
 	mounted?: boolean;
+	/** Upgrade ids picked for this copy (standard format only). */
+	upgrades?: string[];
 };
 
 /** One army copy joined with its unit spec, ready for display. */
@@ -224,13 +277,17 @@ export type ArmyRosterRow = {
 	entryId: string;
 	unitId: string;
 	name: string;
-	/** Cost of this copy, including the mount when mounted. */
+	/** Cost of this copy, including the mount when mounted and all upgrades. */
 	points: number;
 	icon?: string;
 	mounted: boolean;
 	mount?: ArmyUnitSpec;
-	/** The rider's stats with mount overrides and changes applied when mounted. */
+	/** The rider's stats with upgrade and mount effects applied. */
 	effectiveStats: ArmyStats;
+	/** The unit with all picked upgrade effects applied. */
+	upgradedUnit: ArmyUnitSpec;
+	/** The picked upgrades, resolved. */
+	upgrades: ArmyUpgradeSpec[];
 };
 
 /** Adds one copy of a unit as its own entry; stops at the unit limit. */
@@ -262,22 +319,74 @@ export function removeArmyCopy(entries: ArmyEntry[], unitId: string): ArmyEntry[
 	return entries;
 }
 
+/**
+ * Total reduction other upgrades receive while any costReduction upgrade
+ * (e.g. Devotion: Paimon) is picked somewhere in the army.
+ */
+export function armyUpgradeCostReduction(
+	entries: ArmyEntry[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec>
+): number {
+	return entries.reduce(
+		(total, entry) =>
+			total +
+			(entry.upgrades ?? []).reduce((sum, id) => {
+				const effect = upgradeIndex[id]?.effects.find(
+					(candidate): candidate is Extract<ArmyUpgradeEffect, { kind: 'costReduction' }> =>
+						candidate.kind === 'costReduction'
+				);
+				return sum + (effect?.amount ?? 0);
+			}, 0),
+		0
+	);
+}
+
+/** One upgrade's cost after the army-wide reduction; providers keep their cost. */
+function discountedUpgradeCost(upgrade: ArmyUpgradeSpec, reduction: number): number {
+	if (upgrade.effects.some((effect) => effect.kind === 'costReduction')) return upgrade.cost;
+	return Math.max(1, upgrade.cost - reduction);
+}
+
+/**
+ * The effective cost of one upgrade inside the army: reduced by every
+ * costReduction upgrade picked (minimum 1). An upgrade providing the
+ * reduction itself keeps its normal cost.
+ */
+export function upgradeCostInArmy(
+	upgrade: ArmyUpgradeSpec,
+	entries: ArmyEntry[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec>
+): number {
+	return discountedUpgradeCost(upgrade, armyUpgradeCostReduction(entries, upgradeIndex));
+}
+
 /** Joins the army entries with their unit specs for display - one row per copy. */
 export function resolveArmyEntries(
 	entries: ArmyEntry[],
 	units: ArmyUnitSpec[],
-	mounts: ArmyUnitSpec[]
+	mounts: ArmyUnitSpec[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec> = {},
+	itemIndex: Record<string, ArmyItemSpec> = {}
 ): ArmyRosterRow[] {
+	const costReduction = armyUpgradeCostReduction(entries, upgradeIndex);
 	return entries.flatMap((entry) => {
 		const unit = units.find((candidate) => candidate.id === entry.unitId);
 		if (!unit) return [];
+		const upgrades = (entry.upgrades ?? [])
+			.map((id) => upgradeIndex[id])
+			.filter((upgrade): upgrade is ArmyUpgradeSpec => upgrade !== undefined);
+		const upgradedUnit = upgradedArmyUnit(unit, upgrades, itemIndex);
 		const mounted = entry.mounted === true && unit.mount !== undefined;
 		const mountSpec = unit.mount;
 		const mount = mountSpec
 			? mounts.find((candidate) => candidate.id === mountSpec.unitId)
 			: undefined;
-		const points = unit.points + (mounted && mountSpec ? mountSpec.points : 0);
-		const effectiveStats = mounted && mount ? effectiveMountedStats(unit, mount) : unit.stats;
+		const points =
+			unit.points +
+			(mounted && mountSpec ? mountSpec.points : 0) +
+			upgrades.reduce((sum, upgrade) => sum + discountedUpgradeCost(upgrade, costReduction), 0);
+		const effectiveStats =
+			mounted && mount ? effectiveMountedStats(upgradedUnit, mount) : upgradedUnit.stats;
 		return [
 			{
 				entryId: entry.id,
@@ -287,17 +396,30 @@ export function resolveArmyEntries(
 				icon: unit.icon,
 				mounted,
 				mount,
-				effectiveStats
+				effectiveStats,
+				upgradedUnit,
+				upgrades
 			}
 		];
 	});
 }
 
-export function armyPoints(entries: ArmyEntry[], units: ArmyUnitSpec[]): number {
+export function armyPoints(
+	entries: ArmyEntry[],
+	units: ArmyUnitSpec[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec> = {}
+): number {
+	const costReduction = armyUpgradeCostReduction(entries, upgradeIndex);
 	return entries.reduce((total, entry) => {
 		const unit = units.find((candidate) => candidate.id === entry.unitId);
 		if (!unit) return total;
-		return total + unit.points + (entry.mounted && unit.mount ? unit.mount.points : 0);
+		const upgradeCosts = (entry.upgrades ?? []).reduce((sum, id) => {
+			const upgrade = upgradeIndex[id];
+			return sum + (upgrade ? discountedUpgradeCost(upgrade, costReduction) : 0);
+		}, 0);
+		return (
+			total + unit.points + (entry.mounted && unit.mount ? unit.mount.points : 0) + upgradeCosts
+		);
 	}, 0);
 }
 
@@ -312,6 +434,277 @@ export function armyCopyCounts(entries: ArmyEntry[]): Record<string, number> {
 /** Rules entries keyed by id, for resolving a unit's class/skill/trait/stratagem references. */
 export function indexArmyRules<T extends { id: string }>(entries: T[]): Record<string, T> {
 	return Object.fromEntries(entries.map((entry) => [entry.id, entry]));
+}
+
+/** The four main factions carry their own upgrades; the rest use the neutral pool only. */
+const UPGRADE_FACTION_IDS: ArmyFactionId[] = [
+	'helian-league',
+	'empire-of-soga',
+	'coalition-of-thenion',
+	'sand-kingdoms'
+];
+
+/** Upgrades available to a faction: the neutral pool plus its own exclusives. */
+export function upgradesForFaction(
+	factionId: ArmyFactionId,
+	upgrades: ArmyUpgradeSpec[]
+): ArmyUpgradeSpec[] {
+	const own = UPGRADE_FACTION_IDS.includes(factionId) ? factionId : undefined;
+	return upgrades.filter((upgrade) => upgrade.factionId === undefined || upgrade.factionId === own);
+}
+
+/** The trait that grants additional upgrade slots, one per level. */
+const RESOURCEFUL_TRAIT_ID = 'resourceful';
+
+/**
+ * How many upgrades a unit may carry: one base slot, one per Resourceful
+ * level (including Resourceful granted by upgrades) and one per Pouch.
+ * Units on the rulebook exception list have no slots at all.
+ */
+export function upgradeSlotsFor(unit: ArmyUnitSpec, picked: ArmyUpgradeSpec[]): number {
+	if (unit.upgradesLocked) return 0;
+	const resourceful = unit.traits?.find((ref) => ref.id === RESOURCEFUL_TRAIT_ID);
+	const pouches = picked.filter((upgrade) =>
+		upgrade.effects.some((effect) => effect.kind === 'pouch')
+	).length;
+	return 1 + (resourceful?.level ?? 0) + pouches;
+}
+
+/** Highest level of a leveled rules entry; 1 for entries without levels. */
+function armyRulesMaxLevel(entry: ArmyRulesSpec | undefined): number {
+	if (!entry?.levels) return 1;
+	return Math.max(...Object.keys(entry.levels).map(Number));
+}
+
+/** Adds a leveled reference, bumping an existing one to the next level. */
+function bumpLeveledRef<T extends { id: string; level: number }>(
+	refs: T[] | undefined,
+	ref: T
+): T[] {
+	const existing = refs?.find((candidate) => candidate.id === ref.id);
+	if (!existing) return [...(refs ?? []), ref];
+	return (refs ?? []).map((candidate) =>
+		candidate.id === ref.id ? { ...candidate, level: candidate.level + 1 } : candidate
+	);
+}
+
+/**
+ * The unit with all picked upgrade effects applied: stat boosts, granted
+ * classes/traits/skills/combat arts, items, primary weapon replacement
+ * (the first weapon in the inventory), pouch space and stratagems.
+ * 'spellcraftLevelUp' is a table-side choice and applies nothing here.
+ */
+export function upgradedArmyUnit(
+	unit: ArmyUnitSpec,
+	upgrades: ArmyUpgradeSpec[],
+	itemIndex: Record<string, ArmyItemSpec>
+): ArmyUnitSpec {
+	if (upgrades.length === 0) return unit;
+	let stats = unit.stats;
+	let classes = unit.classes;
+	let traits = unit.traits ?? [];
+	let skills = unit.skills;
+	let combatArts = unit.combatArts;
+	let stratagems = unit.stratagems;
+	let inventory = unit.inventory;
+	let inventorySpace = unit.inventorySpace;
+	for (const upgrade of upgrades) {
+		for (const effect of upgrade.effects) {
+			switch (effect.kind) {
+				case 'stat': {
+					let applied = effect.changes;
+					const instead = effect.insteadIfTrait;
+					if (instead && traits.some((ref) => ref.id === instead.traitId)) {
+						applied = instead.changes;
+					}
+					const extra = effect.extraIfClasses;
+					if (extra && extra.classIds.some((classId) => classes.includes(classId))) {
+						const merged = { ...applied };
+						for (const key of Object.keys(extra.changes) as ArmyStatKey[]) {
+							merged[key] = (merged[key] ?? 0) + (extra.changes[key] ?? 0);
+						}
+						applied = merged;
+					}
+					const next = { ...stats };
+					for (const key of Object.keys(applied) as ArmyStatKey[]) {
+						const value = next[key];
+						if (value !== null) next[key] = value + (applied[key] ?? 0);
+					}
+					stats = next;
+					break;
+				}
+				case 'class':
+					if (!classes.includes(effect.classId)) {
+						classes = [...classes, effect.classId];
+					}
+					break;
+				case 'trait':
+					traits = bumpLeveledRef(traits, {
+						id: effect.traitId,
+						level: effect.level,
+						dynamicValue: effect.dynamicValue
+					});
+					break;
+				case 'skill':
+					skills = bumpLeveledRef(skills, { id: effect.skillId, level: effect.level });
+					break;
+				case 'combatArt':
+					combatArts = bumpLeveledRef(combatArts, { id: effect.artId, level: effect.level });
+					break;
+				case 'item':
+					inventory = [...(inventory ?? []), { id: effect.itemId, qty: 1 }];
+					break;
+				case 'replacePrimaryWeapon': {
+					const slots = inventory ?? [];
+					const primaryIndex = slots.findIndex((slot) => itemIndex[slot.id]?.category === 'weapon');
+					const replacement = { id: effect.itemId, qty: 1 };
+					inventory =
+						primaryIndex === -1
+							? [...slots, replacement]
+							: slots.map((slot, index) => (index === primaryIndex ? replacement : slot));
+					break;
+				}
+				case 'pouch':
+					inventorySpace = (inventorySpace ?? 0) + 2;
+					break;
+				case 'stratagem': {
+					const current = stratagems ?? [];
+					const missing = effect.stratagemIds.filter((id) => !current.includes(id));
+					if (missing.length > 0) stratagems = [...current, ...missing];
+					break;
+				}
+				case 'spellcraftLevelUp':
+					break;
+			}
+		}
+	}
+	return {
+		...unit,
+		stats,
+		classes,
+		traits,
+		skills,
+		combatArts,
+		stratagems,
+		inventory,
+		inventorySpace
+	};
+}
+
+/** Why an upgrade cannot be picked for an entry right now, when it cannot. */
+export type ArmyUpgradeBlock = 'locked' | 'owned' | 'slots' | 'limit' | 'requirement' | 'max-level';
+
+/**
+ * Block reason for picking an upgrade for an entry: already owned by this
+ * copy, no free slot, the per-army limit is reached, the unit misses the
+ * class requirement, or every level-up effect already sits at max level.
+ */
+export function entryUpgradeBlock(
+	entries: ArmyEntry[],
+	entryId: string,
+	upgrade: ArmyUpgradeSpec,
+	units: ArmyUnitSpec[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec>,
+	rules: ArmyRulesIndexes
+): ArmyUpgradeBlock | null {
+	const entry = entries.find((candidate) => candidate.id === entryId);
+	const unit = units.find((candidate) => candidate.id === entry?.unitId);
+	if (!entry || !unit) return 'slots';
+	if (unit.upgradesLocked) return 'locked';
+	const picked = (entry.upgrades ?? [])
+		.map((id) => upgradeIndex[id])
+		.filter((pickedUpgrade): pickedUpgrade is ArmyUpgradeSpec => pickedUpgrade !== undefined);
+	if (picked.some((pickedUpgrade) => pickedUpgrade.id === upgrade.id)) return 'owned';
+	if (picked.length >= upgradeSlotsFor(upgradedArmyUnit(unit, picked, {}), picked)) {
+		return 'slots';
+	}
+	if (upgrade.limit !== undefined) {
+		const total = entries.reduce(
+			(sum, candidate) => sum + (candidate.upgrades ?? []).filter((id) => id === upgrade.id).length,
+			0
+		);
+		if (total >= upgrade.limit) return 'limit';
+	}
+	if (upgrade.requirement) {
+		const { classes: required, notTraits } = upgrade.requirement;
+		if (required && !required.some((classId) => unit.classes.includes(classId))) {
+			return 'requirement';
+		}
+		if (notTraits && notTraits.some((traitId) => unit.traits?.some((ref) => ref.id === traitId))) {
+			return 'requirement';
+		}
+	}
+	const upgraded = upgradedArmyUnit(unit, picked, {});
+	const levelEffects = upgrade.effects.filter(
+		(effect) =>
+			effect.kind === 'trait' ||
+			effect.kind === 'skill' ||
+			effect.kind === 'combatArt' ||
+			effect.kind === 'spellcraftLevelUp'
+	);
+	if (levelEffects.length > 0) {
+		const maxed = levelEffects.every((effect) => {
+			if (effect.kind === 'spellcraftLevelUp') {
+				// No spellcraft to advance counts as maxed - nothing to pick.
+				return (upgraded.spellcrafts ?? []).every(
+					(ref) => ref.level >= armyRulesMaxLevel(rules.spellcrafts[ref.id])
+				);
+			}
+			const refs =
+				effect.kind === 'trait'
+					? (upgraded.traits ?? [])
+					: effect.kind === 'skill'
+						? (upgraded.skills ?? [])
+						: (upgraded.combatArts ?? []);
+			const index =
+				effect.kind === 'trait'
+					? rules.traits
+					: effect.kind === 'skill'
+						? rules.skills
+						: rules.combatArts;
+			const id =
+				effect.kind === 'trait'
+					? effect.traitId
+					: effect.kind === 'skill'
+						? effect.skillId
+						: effect.artId;
+			const ref = refs.find((candidate) => candidate.id === id);
+			if (!ref) return false;
+			return ref.level >= armyRulesMaxLevel(index[id]);
+		});
+		if (maxed) return 'max-level';
+	}
+	return null;
+}
+
+/** Adds an upgrade to an entry unless blocked (see entryUpgradeBlock). */
+export function addEntryUpgrade(
+	entries: ArmyEntry[],
+	entryId: string,
+	upgrade: ArmyUpgradeSpec,
+	units: ArmyUnitSpec[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec>,
+	rules: ArmyRulesIndexes
+): ArmyEntry[] {
+	if (entryUpgradeBlock(entries, entryId, upgrade, units, upgradeIndex, rules) !== null) {
+		return entries;
+	}
+	return entries.map((entry) =>
+		entry.id === entryId ? { ...entry, upgrades: [...(entry.upgrades ?? []), upgrade.id] } : entry
+	);
+}
+
+/** Removes one upgrade from an entry. */
+export function removeEntryUpgrade(
+	entries: ArmyEntry[],
+	entryId: string,
+	upgradeId: string
+): ArmyEntry[] {
+	return entries.map((entry) =>
+		entry.id === entryId && entry.upgrades?.includes(upgradeId)
+			? { ...entry, upgrades: entry.upgrades.filter((id) => id !== upgradeId) }
+			: entry
+	);
 }
 
 const ROMAN_VALUES: [number, string][] = [
@@ -436,6 +829,7 @@ export type ArmyRulesIndexes = {
 	skills: Record<string, ArmyRulesSpec>;
 	traits: Record<string, ArmyRulesSpec>;
 	combatArts: Record<string, ArmyRulesSpec>;
+	spellcrafts: Record<string, ArmyRulesSpec>;
 };
 
 /** Resolves a rules link to a popup; null when the target is not in the imported content. */

@@ -45,7 +45,8 @@
 				"level": 3
 			}
 		],
-		"stratagems": ["active-support", "talented-command", "weavers-aura"]
+		"stratagems": ["active-support", "talented-command", "weavers-aura"],
+		"upgradesLocked": true
 	},
 	{
 		"id": "citadel-guard",

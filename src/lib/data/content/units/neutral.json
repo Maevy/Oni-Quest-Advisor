@@ -347,7 +347,8 @@
 				"id": "tengu-screech",
 				"qty": 1
 			}
-		]
+		],
+		"upgradesLocked": true
 	},
 	{
 		"id": "musha-blademaster",
@@ -823,6 +824,7 @@
 				"id": "everlasting-rain-invocations",
 				"level": 3
 			}
-		]
+		],
+		"upgradesLocked": true
 	}
 ]

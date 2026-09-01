@@ -237,7 +237,8 @@
 				"id": "deathweaving-fan",
 				"qty": 1
 			}
-		]
+		],
+		"upgradesLocked": true
 	},
 	{
 		"id": "forgotten-hero",

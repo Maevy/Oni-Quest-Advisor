@@ -58,7 +58,8 @@
 				"id": "staff-of-chaos",
 				"qty": 1
 			}
-		]
+		],
+		"upgradesLocked": true
 	},
 	{
 		"id": "goblin-brawlers",

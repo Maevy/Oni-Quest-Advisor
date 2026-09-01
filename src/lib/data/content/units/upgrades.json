@@ -1,0 +1,1300 @@
+[
+	{
+		"id": "additional-protection",
+		"name": "Additional Protection",
+		"cost": 2,
+		"limit": 3,
+		"description": [
+			{
+				"text": "The model receives +2 ARM, -2 AG."
+			}
+		],
+		"effects": [
+			{
+				"kind": "stat",
+				"changes": {
+					"ARM": 2,
+					"AG": -2
+				}
+			}
+		]
+	},
+	{
+		"id": "adept-shaper-helian-league",
+		"name": "Adept Shaper",
+		"cost": 3,
+		"factionId": "helian-league",
+		"limit": 2,
+		"description": [
+			{
+				"text": "The model gains access to the next level of one of its selected Spellcrafts."
+			}
+		],
+		"effects": [
+			{
+				"kind": "spellcraftLevelUp"
+			}
+		]
+	},
+	{
+		"id": "arcane-tome-sand-kingdoms",
+		"name": "Arcane Tome",
+		"cost": 4,
+		"factionId": "sand-kingdoms",
+		"limit": 3,
+		"description": [
+			{
+				"text": "The model gains access to the next level of one of its selected Spellcrafts."
+			}
+		],
+		"effects": [
+			{
+				"kind": "spellcraftLevelUp"
+			}
+		]
+	},
+	{
+		"id": "bujutsu-expertise-empire-of-soga",
+		"name": "Bujutsu Expertise",
+		"cost": 3,
+		"factionId": "empire-of-soga",
+		"limit": 2,
+		"description": [
+			{
+				"text": "The model gains "
+			},
+			{
+				"text": "Armsmaster",
+				"link": {
+					"type": "class",
+					"id": "armsmaster"
+				}
+			},
+			{
+				"text": " class and the "
+			},
+			{
+				"text": "Fencing I",
+				"link": {
+					"type": "combat-art",
+					"id": "fencing"
+				}
+			},
+			{
+				"text": " Combat Art. If the model already has the Fencing Combat Art, it gains access to the next rank of the art."
+			}
+		],
+		"effects": [
+			{
+				"kind": "class",
+				"classId": "armsmaster"
+			},
+			{
+				"kind": "combatArt",
+				"artId": "fencing",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "camaraderie",
+		"name": "Camaraderie",
+		"cost": 5,
+		"limit": 3,
+		"description": [
+			{
+				"text": "A neutral or semi-neutral model with this Upgrade can benefit from Authority Stratagems of its Party Leader."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "casting-amplifier-sand-kingdoms",
+		"name": "Casting Amplifier",
+		"cost": 2,
+		"factionId": "sand-kingdoms",
+		"limit": 3,
+		"description": [
+			{
+				"text": "The model receives a "
+			},
+			{
+				"text": "Casting Amplifier",
+				"link": {
+					"type": "item",
+					"id": "casting-amplifier"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "casting-amplifier"
+			}
+		]
+	},
+	{
+		"id": "climbing-expertise-coalition-of-thenion",
+		"name": "Climbing Expertise",
+		"cost": 2,
+		"factionId": "coalition-of-thenion",
+		"description": [
+			{
+				"text": "The model receives the "
+			},
+			{
+				"text": "Climbing",
+				"link": {
+					"type": "skill",
+					"id": "climbing"
+				}
+			},
+			{
+				"text": " skill."
+			}
+		],
+		"effects": [
+			{
+				"kind": "skill",
+				"skillId": "climbing",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "companion-of-hairon-helian-league",
+		"name": "Companion of Hairon",
+		"cost": 2,
+		"factionId": "helian-league",
+		"limit": 2,
+		"requirement": {
+			"classes": ["soldier"]
+		},
+		"description": [
+			{
+				"text": "Only a model of the "
+			},
+			{
+				"text": "Soldier",
+				"link": {
+					"type": "class",
+					"id": "soldier"
+				}
+			},
+			{
+				"text": " Class may benefit from this Upgrade. When using the "
+			},
+			{
+				"text": "Soldier",
+				"link": {
+					"type": "class",
+					"id": "soldier"
+				}
+			},
+			{
+				"text": " Class ability, the model also counts itself towards receiving +1 OFF, DEF, ACC, INT, M bonus."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "concealed-approach-coalition-of-thenion",
+		"name": "Concealed Approach",
+		"cost": 3,
+		"factionId": "coalition-of-thenion",
+		"limit": 3,
+		"description": [
+			{
+				"text": "The model can begin the game Shrouded."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "conjured-retinue-sand-kingdoms",
+		"name": "Conjured Retinue",
+		"cost": 3,
+		"factionId": "sand-kingdoms",
+		"limit": 1,
+		"description": [
+			{
+				"text": "Tier I and II creatures, summoned by the upgraded model, receive the "
+			},
+			{
+				"text": "Soldier",
+				"link": {
+					"type": "class",
+					"id": "soldier"
+				}
+			},
+			{
+				"text": " Class."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "devotion-anras-coalition-of-thenion",
+		"name": "Devotion: Anras",
+		"cost": 1,
+		"factionId": "coalition-of-thenion",
+		"requirement": {
+			"notTraits": ["demon"]
+		},
+		"description": [
+			{
+				"text": "The model receives +1 DEF. If the model has the "
+			},
+			{
+				"text": "Duelist",
+				"link": {
+					"type": "trait",
+					"id": "duelist"
+				}
+			},
+			{
+				"text": " Trait, it instead has +2DEF. Cannot be assigned to a model with the "
+			},
+			{
+				"text": "Demon",
+				"link": {
+					"type": "trait",
+					"id": "demon"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "stat",
+				"changes": {
+					"DEF": 1
+				},
+				"insteadIfTrait": {
+					"traitId": "duelist",
+					"changes": {
+						"DEF": 2
+					}
+				}
+			}
+		]
+	},
+	{
+		"id": "devotion-paimon-coalition-of-thenion",
+		"name": "Devotion: Paimon",
+		"cost": 2,
+		"factionId": "coalition-of-thenion",
+		"requirement": {
+			"notTraits": ["demon"]
+		},
+		"description": [
+			{
+				"text": "The model receives +1INT. When purchased; reduce cost of all other Upgrades by 1 (to a minimum of 1). Cannot be assigned to a model with the "
+			},
+			{
+				"text": "Demon",
+				"link": {
+					"type": "trait",
+					"id": "demon"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "stat",
+				"changes": {
+					"INT": 1
+				}
+			},
+			{
+				"kind": "costReduction",
+				"amount": 1
+			}
+		]
+	},
+	{
+		"id": "devotion-tiamat-coalition-of-thenion",
+		"name": "Devotion: Tiamat",
+		"cost": 1,
+		"factionId": "coalition-of-thenion",
+		"requirement": {
+			"notTraits": ["demon"]
+		},
+		"description": [
+			{
+				"text": "The model receives +1T. If the model is a "
+			},
+			{
+				"text": "Warrior",
+				"link": {
+					"type": "class",
+					"id": "warrior"
+				}
+			},
+			{
+				"text": " or a "
+			},
+			{
+				"text": "Rogue",
+				"link": {
+					"type": "class",
+					"id": "rogue"
+				}
+			},
+			{
+				"text": ", it also receives +1OFF. Cannot be assigned to a model with the "
+			},
+			{
+				"text": "Demon",
+				"link": {
+					"type": "trait",
+					"id": "demon"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "stat",
+				"changes": {
+					"T": 1
+				},
+				"extraIfClasses": {
+					"classIds": ["warrior", "rogue"],
+					"changes": {
+						"OFF": 1
+					}
+				}
+			}
+		]
+	},
+	{
+		"id": "elemental-lineage-sand-kingdoms",
+		"name": "Elemental Lineage",
+		"cost": 4,
+		"factionId": "sand-kingdoms",
+		"limit": 2,
+		"description": [
+			{
+				"text": "The model receives 1 of the following Traits: "
+			},
+			{
+				"text": "Affinity",
+				"link": {
+					"type": "trait",
+					"id": "affinity--element"
+				}
+			},
+			{
+				"text": " (Fire), "
+			},
+			{
+				"text": "Affinity",
+				"link": {
+					"type": "trait",
+					"id": "affinity--element"
+				}
+			},
+			{
+				"text": " (Water), "
+			},
+			{
+				"text": "Affinity",
+				"link": {
+					"type": "trait",
+					"id": "affinity--element"
+				}
+			},
+			{
+				"text": " (Earth), "
+			},
+			{
+				"text": "Affinity",
+				"link": {
+					"type": "trait",
+					"id": "affinity--element"
+				}
+			},
+			{
+				"text": " (Air)."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "expedition-leader",
+		"name": "Expedition Leader",
+		"cost": 5,
+		"description": [
+			{
+				"text": "This model has the following Stratagems: • Advance! (Authority): All models gain +1 SPD. • Back to Back (Authority): All models gain "
+			},
+			{
+				"text": "Vigilance",
+				"link": {
+					"type": "trait",
+					"id": "vigilance"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"effects": [
+			{
+				"kind": "stratagem",
+				"stratagemIds": ["advance", "back-to-back"]
+			}
+		]
+	},
+	{
+		"id": "expeditionary-tactics-double-time-helian-league",
+		"name": "Expeditionary Tactics: Double Time",
+		"cost": 3,
+		"factionId": "helian-league",
+		"limit": 1,
+		"description": [
+			{
+				"text": "Remove this upgrade during the Initiative Check; if you do, add +6 to your Initiative check result."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "expeditionary-tactics-surge-order-helian-league",
+		"name": "Expeditionary Tactics: Surge Order",
+		"cost": 3,
+		"factionId": "helian-league",
+		"limit": 1,
+		"description": [
+			{
+				"text": "Remove this upgrade during the Strategic phase; if you do, up to 3 of your party members with the Affiliation: Helian League, may each perform one of the following Movements: Walk, Climb, Jump. This is performed during the Strategic phase, therefore it does not provoke Reaction."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "fangs-of-tiamat-coalition-of-thenion",
+		"name": "Fangs of Tiamat",
+		"cost": 2,
+		"factionId": "coalition-of-thenion",
+		"limit": 3,
+		"description": [
+			{
+				"text": "The model receives "
+			},
+			{
+				"text": "War Darts",
+				"link": {
+					"type": "item",
+					"id": "war-darts"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "war-darts"
+			}
+		]
+	},
+	{
+		"id": "first-aid",
+		"name": "First Aid",
+		"cost": 2,
+		"limit": 2,
+		"description": [
+			{
+				"text": "When a model (including this model) would perform a Recovery Check while within Awareness of the First Aid owner, you may discard this Upgrade. If you do, that model automatically succeeds the T roll. Alternatively, you may discard this Upgrade during the Strategic Phase to remove all States except Engaged, Crouched, Flying or Shrouded from an Alive model within Awareness."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "flying-carpet-sand-kingdoms",
+		"name": "Flying Carpet",
+		"cost": 4,
+		"factionId": "sand-kingdoms",
+		"limit": 1,
+		"description": [
+			{
+				"text": "The model receives a "
+			},
+			{
+				"text": "Flying Carpet",
+				"link": {
+					"type": "item",
+					"id": "flying-carpet"
+				}
+			},
+			{
+				"text": ". This Upgrade may be equipped by a model of Size Medium or smaller."
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "flying-carpet"
+			}
+		]
+	},
+	{
+		"id": "gift-of-longevity-helian-league",
+		"name": "Gift of Longevity",
+		"cost": 1,
+		"factionId": "helian-league",
+		"limit": 2,
+		"description": [
+			{
+				"text": "The model receives +1 INT."
+			}
+		],
+		"effects": [
+			{
+				"kind": "stat",
+				"changes": {
+					"INT": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "glyphscribe-hyperias-providence-helian-league",
+		"name": "Glyphscribe: Hyperia’s Providence",
+		"cost": 3,
+		"factionId": "helian-league",
+		"limit": 3,
+		"description": [
+			{
+				"text": "If the upgraded model is a target of a Melee Attack, the attacker must make an AG roll. If failed, the attacker suffers -1 STK (to a minimum of 1). If the upgraded model has a Shield equipped, it additionally imposes a -3 Attack modifier to Ranged Attacks to its front."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "glyphscribe-reduce-weight-helian-league",
+		"name": "Glyphscribe: Reduce Weight",
+		"cost": 3,
+		"factionId": "helian-league",
+		"limit": 3,
+		"description": [
+			{
+				"text": "Choose one: (1): Inscribed Item: Select a Weapon or a Shield in the model’s Inventory; its Wgt is reduced by 1 and Strike increased by 1. (2): Inscribed Armor: The model receives +1 AG, +1 SPD and its Inventory is increased by 1."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "imported-casting-amplifier",
+		"name": "Imported Casting Amplifier",
+		"cost": 4,
+		"limit": 1,
+		"description": [
+			{
+				"text": "The upgraded model's Spells have +4 RCH."
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "imported-casting-amplifier"
+			}
+		]
+	},
+	{
+		"id": "imported-crossbow",
+		"name": "Imported Crossbow",
+		"cost": 5,
+		"limit": 1,
+		"description": [
+			{
+				"text": "The model receives a "
+			},
+			{
+				"text": "Crossbow",
+				"link": {
+					"type": "item",
+					"id": "crossbow"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "crossbow"
+			}
+		]
+	},
+	{
+		"id": "journeyman-adventurer",
+		"name": "Journeyman Adventurer",
+		"cost": 3,
+		"description": [
+			{
+				"text": "This model gains the "
+			},
+			{
+				"text": "Resorceful II",
+				"link": {
+					"type": "trait",
+					"id": "resourceful"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Survival Difficult",
+				"link": {
+					"type": "trait",
+					"id": "survival--x-environment"
+				}
+			},
+			{
+				"text": " Traits."
+			}
+		],
+		"effects": [
+			{
+				"kind": "trait",
+				"traitId": "resourceful",
+				"level": 2
+			},
+			{
+				"kind": "trait",
+				"traitId": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Difficult"
+			}
+		]
+	},
+	{
+		"id": "kassen-buki-daikyuu-tsukai-empire-of-soga",
+		"name": "Kassen Buki: Daikyuu-tsukai",
+		"cost": 3,
+		"factionId": "empire-of-soga",
+		"limit": 3,
+		"requirement": {
+			"classes": ["warrior"]
+		},
+		"description": [
+			{
+				"text": "Only a "
+			},
+			{
+				"text": "Warrior",
+				"link": {
+					"type": "class",
+					"id": "warrior"
+				}
+			},
+			{
+				"text": " can receive this Upgrade. Replace the Primary Weapon in the model’s Inventory with a "
+			},
+			{
+				"text": "War Bow",
+				"link": {
+					"type": "item",
+					"id": "war-bow"
+				}
+			},
+			{
+				"text": ". If the model’s primary weapon is "
+			},
+			{
+				"text": "Short Bow",
+				"link": {
+					"type": "item",
+					"id": "short-bow"
+				}
+			},
+			{
+				"text": ", this Upgrade costs only 2pts."
+			}
+		],
+		"effects": [
+			{
+				"kind": "replacePrimaryWeapon",
+				"itemId": "war-bow"
+			}
+		]
+	},
+	{
+		"id": "kassen-buki-kanabou-tsukai-empire-of-soga",
+		"name": "Kassen Buki: Kanabou-tsukai",
+		"cost": 3,
+		"factionId": "empire-of-soga",
+		"limit": 3,
+		"requirement": {
+			"classes": ["warrior"]
+		},
+		"description": [
+			{
+				"text": "Only a "
+			},
+			{
+				"text": "Warrior",
+				"link": {
+					"type": "class",
+					"id": "warrior"
+				}
+			},
+			{
+				"text": " can receive this Upgrade. Replace the Primary Weapon in the model’s Inventory with a "
+			},
+			{
+				"text": "Heavy Bludgeon",
+				"link": {
+					"type": "item",
+					"id": "heavy-bludgeon"
+				}
+			},
+			{
+				"text": ":"
+			}
+		],
+		"effects": [
+			{
+				"kind": "replacePrimaryWeapon",
+				"itemId": "heavy-bludgeon"
+			}
+		]
+	},
+	{
+		"id": "kassen-buki-nagamaki-tsukai-empire-of-soga",
+		"name": "Kassen Buki: Nagamaki-tsukai",
+		"cost": 2,
+		"factionId": "empire-of-soga",
+		"limit": 3,
+		"requirement": {
+			"classes": ["warrior"]
+		},
+		"description": [
+			{
+				"text": "Only a "
+			},
+			{
+				"text": "Warrior",
+				"link": {
+					"type": "class",
+					"id": "warrior"
+				}
+			},
+			{
+				"text": " can receive this Upgrade. Replace the Primary Weapon in the model’s Inventory with the "
+			},
+			{
+				"text": "Longhilted Sword",
+				"link": {
+					"type": "item",
+					"id": "longhilted-sword"
+				}
+			},
+			{
+				"text": ":"
+			}
+		],
+		"effects": [
+			{
+				"kind": "replacePrimaryWeapon",
+				"itemId": "longhilted-sword"
+			}
+		]
+	},
+	{
+		"id": "kassen-buki-yari-tsukai-empire-of-soga",
+		"name": "Kassen Buki: Yari-tsukai",
+		"cost": 2,
+		"factionId": "empire-of-soga",
+		"requirement": {
+			"classes": ["warrior"]
+		},
+		"description": [
+			{
+				"text": "Only a "
+			},
+			{
+				"text": "Warrior",
+				"link": {
+					"type": "class",
+					"id": "warrior"
+				}
+			},
+			{
+				"text": " can receive this Upgrade. Replace the Primary Weapon in the model’s Inventory with the "
+			},
+			{
+				"text": "Lance",
+				"link": {
+					"type": "item",
+					"id": "lance"
+				}
+			},
+			{
+				"text": ". If the model’s primary weapon is "
+			},
+			{
+				"text": "Spear",
+				"link": {
+					"type": "item",
+					"id": "spear"
+				}
+			},
+			{
+				"text": ", this Upgrade costs only 1pts:"
+			}
+		],
+		"effects": [
+			{
+				"kind": "replacePrimaryWeapon",
+				"itemId": "lance"
+			}
+		]
+	},
+	{
+		"id": "king-of-the-battlefield",
+		"name": "King of the Battlefield",
+		"cost": 2,
+		"limit": 3,
+		"description": [
+			{
+				"text": "The model receives a "
+			},
+			{
+				"text": "Spear",
+				"link": {
+					"type": "item",
+					"id": "spear"
+				}
+			},
+			{
+				"text": ":"
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "spear"
+			}
+		]
+	},
+	{
+		"id": "kyujutsu-expertise-empire-of-soga",
+		"name": "Kyujutsu Expertise",
+		"cost": 3,
+		"factionId": "empire-of-soga",
+		"limit": 2,
+		"description": [
+			{
+				"text": "The model gains "
+			},
+			{
+				"text": "Marksman",
+				"link": {
+					"type": "class",
+					"id": "marksman"
+				}
+			},
+			{
+				"text": " class and "
+			},
+			{
+				"text": "Archery I",
+				"link": {
+					"type": "combat-art",
+					"id": "archery"
+				}
+			},
+			{
+				"text": " Combat Art. If the model already has "
+			},
+			{
+				"text": "Archery",
+				"link": {
+					"type": "combat-art",
+					"id": "archery"
+				}
+			},
+			{
+				"text": " Combat Art, it gains access to the next rank of the art."
+			}
+		],
+		"effects": [
+			{
+				"kind": "class",
+				"classId": "marksman"
+			},
+			{
+				"kind": "combatArt",
+				"artId": "archery",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "lucky-charm-empire-of-soga",
+		"name": "Lucky Charm",
+		"cost": 3,
+		"factionId": "empire-of-soga",
+		"limit": 1,
+		"description": [
+			{
+				"text": "During its own Strategic phase, a model with this Upgrade generates a Luck counter (up to the maximum amount of 3). The model may expend a Luck counter to re-roll any one dice in an Activation Sequence or force the enemy model attacking it to re-roll one Damage roll."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "mana-catalyst-sand-kingdoms",
+		"name": "Mana Catalyst",
+		"cost": 1,
+		"factionId": "sand-kingdoms",
+		"description": [
+			{
+				"text": "You may change one of the model’s default "
+			},
+			{
+				"text": "Affinities",
+				"link": {
+					"type": "trait",
+					"id": "affinity--element"
+				}
+			},
+			{
+				"text": " with one of the following ones: Fire, Water, Earth, Air."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "muffled-movement-coalition-of-thenion",
+		"name": "Muffled movement",
+		"cost": 2,
+		"factionId": "coalition-of-thenion",
+		"description": [
+			{
+				"text": "The model receives the "
+			},
+			{
+				"text": "Stealth I",
+				"link": {
+					"type": "skill",
+					"id": "stealth"
+				}
+			},
+			{
+				"text": " skill."
+			}
+		],
+		"effects": [
+			{
+				"kind": "skill",
+				"skillId": "stealth",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "personal-guard-sand-kingdoms",
+		"name": "Personal Guard",
+		"cost": 3,
+		"factionId": "sand-kingdoms",
+		"limit": 3,
+		"description": [
+			{
+				"text": "During the deployment assign this upgrade to a summoned creature; it receives the "
+			},
+			{
+				"text": "Sentinel",
+				"link": {
+					"type": "class",
+					"id": "sentinel"
+				}
+			},
+			{
+				"text": " class but may not fully leave the model’s Awareness. If this summoned creature would be removed from the field, you may return this Upgrade to the model originally assigned with it and re-assign it to another summoned creature."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "poisoned-weapons-coalition-of-thenion",
+		"name": "Poisoned Weapons",
+		"cost": 2,
+		"factionId": "coalition-of-thenion",
+		"description": [
+			{
+				"text": "The model receives the "
+			},
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": " trait. If it already has "
+			},
+			{
+				"text": "Poison",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": " I trait, it gains access to the next level of the Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "trait",
+				"traitId": "poison",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "pouch",
+		"name": "Pouch",
+		"cost": 1,
+		"description": [
+			{
+				"text": "Model’s Inventory is increased by 2. The model may receive another Upgrade."
+			}
+		],
+		"effects": [
+			{
+				"kind": "pouch"
+			}
+		]
+	},
+	{
+		"id": "raid-leader",
+		"name": "Raid Leader",
+		"cost": 4,
+		"description": [
+			{
+				"text": "This model has the following Stratagems: • Formation Spearhead (Authority): Target model gains "
+			},
+			{
+				"text": "Dash",
+				"link": {
+					"type": "skill",
+					"id": "dash"
+				}
+			},
+			{
+				"text": ". • Rallying Command (Authority): All models gain "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"effects": []
+	},
+	{
+		"id": "seasoned-combatant-empire-of-soga",
+		"name": "Seasoned Combatant",
+		"cost": 2,
+		"factionId": "empire-of-soga",
+		"description": [
+			{
+				"text": "The model receives the "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "trait",
+				"traitId": "fearless",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "seasoned-combatant-helian-league",
+		"name": "Seasoned Combatant",
+		"cost": 2,
+		"factionId": "helian-league",
+		"description": [
+			{
+				"text": "The model receives the "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "trait",
+				"traitId": "fearless",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "smokescreen",
+		"name": "Smokescreen",
+		"cost": 2,
+		"limit": 2,
+		"description": [
+			{
+				"text": "Model receives "
+			},
+			{
+				"text": "Haze Bomb",
+				"link": {
+					"type": "item",
+					"id": "haze-bomb"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "haze-bomb"
+			}
+		]
+	},
+	{
+		"id": "tactical-expertise-helian-league",
+		"name": "Tactical Expertise",
+		"cost": 3,
+		"factionId": "helian-league",
+		"limit": 1,
+		"description": [
+			{
+				"text": "The model receives the "
+			},
+			{
+				"text": "Tactician",
+				"link": {
+					"type": "trait",
+					"id": "tactician"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "trait",
+				"traitId": "tactician",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "traveling-duelist-empire-of-soga",
+		"name": "Traveling Duelist",
+		"cost": 3,
+		"factionId": "empire-of-soga",
+		"limit": 2,
+		"requirement": {
+			"classes": ["warrior"]
+		},
+		"description": [
+			{
+				"text": "Only a model of the "
+			},
+			{
+				"text": "Warrior",
+				"link": {
+					"type": "class",
+					"id": "warrior"
+				}
+			},
+			{
+				"text": " class may benefit from this upgrade. The model receives the "
+			},
+			{
+				"text": "Duelist",
+				"link": {
+					"type": "trait",
+					"id": "duelist"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"effects": [
+			{
+				"kind": "trait",
+				"traitId": "duelist",
+				"level": 1
+			}
+		]
+	},
+	{
+		"id": "utility-tool",
+		"name": "Utility Tool",
+		"cost": 1,
+		"description": [
+			{
+				"text": "The model receives a "
+			},
+			{
+				"text": "Dagger",
+				"link": {
+					"type": "item",
+					"id": "dagger"
+				}
+			},
+			{
+				"text": ":"
+			}
+		],
+		"effects": [
+			{
+				"kind": "item",
+				"itemId": "dagger"
+			}
+		]
+	}
+]

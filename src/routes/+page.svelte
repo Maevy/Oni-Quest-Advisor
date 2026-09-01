@@ -130,7 +130,13 @@
 			: null
 	);
 	let armyRows = $derived(
-		resolveArmyEntries(armyBuilderStore.entries, armyBuilderStore.units, armyBuilderStore.mounts)
+		resolveArmyEntries(
+			armyBuilderStore.entries,
+			armyBuilderStore.units,
+			armyBuilderStore.mounts,
+			armyBuilderStore.upgradeIndex,
+			armyBuilderStore.itemIndex
+		)
 	);
 	let armyCounts = $derived(armyCopyCounts(armyBuilderStore.entries));
 	let armyClassIndex = $derived(indexArmyRules(contentStore.armyClasses));
@@ -174,6 +180,10 @@
 		spells={contentStore.armySpells}
 		stratagemIndex={armyStratagemIndex}
 		itemIndex={armyItemIndex}
+		entries={armyBuilderStore.entries}
+		upgrades={armyBuilderStore.upgrades}
+		upgradeIndex={armyBuilderStore.upgradeIndex}
+		rulesIndexes={armyBuilderStore.rulesIndexes}
 		{armyRows}
 		counts={armyCounts}
 		format={armyBuilderStore.format}
@@ -186,6 +196,8 @@
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}
 		onToggleMount={(entryId) => armyBuilderStore.toggleMount(entryId)}
+		onAddUpgrade={(entryId, upgradeId) => armyBuilderStore.addUpgrade(entryId, upgradeId)}
+		onRemoveUpgrade={(entryId, upgradeId) => armyBuilderStore.removeUpgrade(entryId, upgradeId)}
 	/>
 {:else if navigationStore.screen === 'online-create'}
 	<OnlineCreate

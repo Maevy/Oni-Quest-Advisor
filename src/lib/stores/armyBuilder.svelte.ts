@@ -1,16 +1,23 @@
 import {
 	ARMY_FORMAT_POINTS,
 	addArmyUnit,
+	addEntryUpgrade,
 	armyPoints,
+	indexArmyRules,
 	isOverArmyLimit,
 	removeArmyCopy,
 	removeArmyEntry,
+	removeEntryUpgrade,
 	toggleArmyMount,
 	unitsForFaction,
+	upgradesForFaction,
 	type ArmyEntry,
 	type ArmyFactionId,
 	type ArmyFormat,
-	type ArmyUnitSpec
+	type ArmyItemSpec,
+	type ArmyRulesIndexes,
+	type ArmyUnitSpec,
+	type ArmyUpgradeSpec
 } from '$lib/domain';
 import { contentStore } from './content.svelte';
 
@@ -23,7 +30,7 @@ class ArmyBuilderStore {
 	format = $state<ArmyFormat>('standard');
 	entries = $state<ArmyEntry[]>([]);
 
-	points = $derived(armyPoints(this.entries, this.units));
+	points = $derived(armyPoints(this.entries, this.units, this.upgradeIndex));
 	limit = $derived(ARMY_FORMAT_POINTS[this.format]);
 	isOverLimit = $derived(isOverArmyLimit(this.points, this.format));
 
@@ -35,6 +42,30 @@ class ArmyBuilderStore {
 	/** Mount options (never recruitable standalone). */
 	get mounts(): ArmyUnitSpec[] {
 		return contentStore.armyUnits.mounts;
+	}
+
+	/** Upgrades available to the selected faction: neutral pool plus own exclusives. */
+	get upgrades(): ArmyUpgradeSpec[] {
+		return this.factionId ? upgradesForFaction(this.factionId, contentStore.armyUpgrades) : [];
+	}
+
+	get upgradeIndex(): Record<string, ArmyUpgradeSpec> {
+		return indexArmyRules(contentStore.armyUpgrades);
+	}
+
+	get itemIndex(): Record<string, ArmyItemSpec> {
+		return indexArmyRules(contentStore.armyItems);
+	}
+
+	/** Rules catalogs keyed by id, feeding upgrade max-level checks. */
+	get rulesIndexes(): ArmyRulesIndexes {
+		return {
+			classes: indexArmyRules(contentStore.armyClasses),
+			skills: indexArmyRules(contentStore.armySkills),
+			traits: indexArmyRules(contentStore.armyTraits),
+			combatArts: indexArmyRules(contentStore.armyCombatArts),
+			spellcrafts: indexArmyRules(contentStore.armySpellcrafts)
+		};
 	}
 
 	selectFaction(factionId: ArmyFactionId): void {
@@ -62,6 +93,24 @@ class ArmyBuilderStore {
 
 	toggleMount(entryId: string): void {
 		this.entries = toggleArmyMount(this.entries, entryId, this.units);
+	}
+
+	/** Picks an upgrade for one copy unless the domain rules block it. */
+	addUpgrade(entryId: string, upgradeId: string): void {
+		const upgrade = this.upgradeIndex[upgradeId];
+		if (!upgrade) return;
+		this.entries = addEntryUpgrade(
+			this.entries,
+			entryId,
+			upgrade,
+			this.units,
+			this.upgradeIndex,
+			this.rulesIndexes
+		);
+	}
+
+	removeUpgrade(entryId: string, upgradeId: string): void {
+		this.entries = removeEntryUpgrade(this.entries, entryId, upgradeId);
 	}
 
 	/** Resets the builder when returning to the main menu. */

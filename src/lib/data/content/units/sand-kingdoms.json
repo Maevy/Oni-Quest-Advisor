@@ -247,7 +247,8 @@
 				"id": "chimera-claws",
 				"qty": 1
 			}
-		]
+		],
+		"upgradesLocked": true
 	},
 	{
 		"id": "spelldancer-aeroturge",

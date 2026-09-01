@@ -177,7 +177,8 @@
 		classes: classIndex,
 		skills: skillIndex,
 		traits: traitIndex,
-		combatArts: combatArtIndex
+		combatArts: combatArtIndex,
+		spellcrafts: spellcraftIndex
 	});
 	let classTags = $derived(
 		unit.classes.flatMap((id) => {

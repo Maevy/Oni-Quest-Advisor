@@ -328,6 +328,7 @@
 				"id": "sealing-javelin",
 				"qty": 2
 			}
-		]
+		],
+		"upgradesLocked": true
 	}
 ]

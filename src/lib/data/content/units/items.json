@@ -1345,6 +1345,18 @@
 		]
 	},
 	{
+		"id": "imported-casting-amplifier",
+		"name": "Imported Casting Amplifier",
+		"category": "accessory",
+		"mode": "melee",
+		"effect": [
+			{
+				"text": "The upgraded model's Spells have +4 RCH."
+			}
+		],
+		"weight": 0
+	},
+	{
 		"id": "javelin",
 		"name": "Javelin",
 		"category": "consumable",

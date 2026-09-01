@@ -1,15 +1,22 @@
 <script lang="ts">
-	import type {
-		ArmyFactionConfig,
-		ArmyFormat,
-		ArmyItemSpec,
-		ArmyRosterRow,
-		ArmyRulesSpec,
-		ArmySpellSpec,
-		ArmyStats,
-		ArmyStratagemSpec,
-		ArmyUnitSpec
+	import {
+		upgradeCostInArmy,
+		upgradeSlotsFor,
+		type ArmyEntry,
+		type ArmyFactionConfig,
+		type ArmyFormat,
+		type ArmyItemSpec,
+		type ArmyRosterRow,
+		type ArmyRulesIndexes,
+		type ArmyRulesSpec,
+		type ArmySpellSpec,
+		type ArmyStats,
+		type ArmyStratagemSpec,
+		type ArmyUnitSpec,
+		type ArmyUpgradeSpec
 	} from '$lib/domain';
+	import ArmyUpgradeDetail from './ArmyUpgradeDetail.svelte';
+	import ArmyUpgradePicker from './ArmyUpgradePicker.svelte';
 	import UnitCard from './UnitCard.svelte';
 
 	type Props = {
@@ -23,6 +30,10 @@
 		spells: ArmySpellSpec[];
 		stratagemIndex: Record<string, ArmyStratagemSpec>;
 		itemIndex: Record<string, ArmyItemSpec>;
+		entries: ArmyEntry[];
+		upgrades: ArmyUpgradeSpec[];
+		upgradeIndex: Record<string, ArmyUpgradeSpec>;
+		rulesIndexes: ArmyRulesIndexes;
 		armyRows: ArmyRosterRow[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -35,6 +46,8 @@
 		onRemoveUnit: (unitId: string) => void;
 		onRemoveEntry: (entryId: string) => void;
 		onToggleMount: (entryId: string) => void;
+		onAddUpgrade: (entryId: string, upgradeId: string) => void;
+		onRemoveUpgrade: (entryId: string, upgradeId: string) => void;
 	};
 
 	let {
@@ -48,6 +61,10 @@
 		spells,
 		stratagemIndex,
 		itemIndex,
+		entries,
+		upgrades,
+		upgradeIndex,
+		rulesIndexes,
 		armyRows,
 		counts,
 		format,
@@ -59,7 +76,9 @@
 		onAddUnit,
 		onRemoveUnit,
 		onRemoveEntry,
-		onToggleMount
+		onToggleMount,
+		onAddUpgrade,
+		onRemoveUpgrade
 	}: Props = $props();
 
 	let showArmy = $state(false);
@@ -69,6 +88,19 @@
 		mounted: boolean;
 		mountName?: string;
 	} | null>(null);
+	/** The roster row currently choosing an upgrade, while the picker is open. */
+	let pickerRow = $state<ArmyRosterRow | null>(null);
+	/** The upgrade shown in the detail window, while it is open. */
+	let detailUpgrade = $state<ArmyUpgradeSpec | null>(null);
+
+	function freeUpgradeSlots(row: ArmyRosterRow): number {
+		return Math.max(0, upgradeSlotsFor(row.upgradedUnit, row.upgrades) - row.upgrades.length);
+	}
+
+	/** One entry per free upgrade slot, keyed by slot index for the each block. */
+	function upgradeSlotIndexes(row: ArmyRosterRow): number[] {
+		return Array.from({ length: freeUpgradeSlots(row) }, (value, index) => index);
+	}
 
 	// Swipe detection: a mostly-horizontal pointer gesture flips the panels.
 	const SWIPE_MIN_PX = 50;
@@ -162,15 +194,19 @@
 									</button>
 								{/if}
 								<div>
-									<div class="flex flex-wrap items-center gap-1.5">
-										<p class="font-medium text-slate-100">{unit.name}</p>
+									<p class="font-medium text-slate-100">{unit.name}</p>
+									<div class="mt-1 flex items-center justify-center gap-1.5">
 										<span
 											class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
 										>
 											Limit {unit.limit}
 										</span>
+										<span
+											class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
+										>
+											{unit.points} pts
+										</span>
 									</div>
-									<p class="text-xs text-slate-400">{unit.points} points</p>
 								</div>
 								<div class="flex shrink-0 items-center gap-1.5">
 									<button
@@ -214,67 +250,122 @@
 					{:else}
 						<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
 							{#each armyRows as row (row.entryId)}
-								<div
-									class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
-								>
-									{#if row.icon}
-										<button
-											type="button"
-											aria-label={'Show unit details for ' + row.name}
-											class="h-[70px] w-[70px] shrink-0 overflow-hidden rounded-lg border-2 bg-slate-900/60 transition hover:bg-slate-800/60 active:bg-slate-800/80"
-											style="border-color: {faction.color}"
-											onclick={() => {
-												const found = units.find((candidate) => candidate.id === row.unitId);
-												if (found)
+								<div class="rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5">
+									<div class="flex items-center justify-between gap-2">
+										{#if row.icon}
+											<button
+												type="button"
+												aria-label={'Show unit details for ' + row.name}
+												class="h-[70px] w-[70px] shrink-0 overflow-hidden rounded-lg border-2 bg-slate-900/60 transition hover:bg-slate-800/60 active:bg-slate-800/80"
+												style="border-color: {faction.color}"
+												onclick={() => {
 													selectedCard = {
-														unit: found,
+														unit: row.upgradedUnit,
 														stats: row.effectiveStats,
 														mounted: row.mounted,
 														mountName: row.mount?.name
 													};
-											}}
-										>
-											<img src={row.icon} alt="" class="h-full w-full object-contain" />
-										</button>
-									{/if}
-									<div>
-										<p class="font-medium text-slate-100">
-											{row.name}
-										</p>
-										<p class="text-xs text-slate-400">{row.points} points</p>
-									</div>
-									{#if row.mount}
+												}}
+											>
+												<img src={row.icon} alt="" class="h-full w-full object-contain" />
+											</button>
+										{/if}
+										{#if format === 'standard'}
+											<div class="flex shrink-0 flex-col gap-1">
+												{#each upgradeSlotIndexes(row) as slotIndex (slotIndex)}
+													<button
+														type="button"
+														aria-label={'Add an upgrade to ' + row.name}
+														class="flex h-7 w-7 items-center justify-center rounded-md border-2 border-orange-400/50 bg-slate-900/60 text-base font-bold text-orange-300 transition hover:bg-orange-400/10 active:bg-orange-400/20"
+														onclick={() => (pickerRow = row)}
+													>
+														+
+													</button>
+												{/each}
+											</div>
+										{/if}
+										<div class="min-w-0 flex-1">
+											<p class="font-medium text-slate-100">
+												{row.name}
+											</p>
+											<span
+												class="mt-1 inline-block rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
+											>
+												{row.points} pts
+											</span>
+										</div>
+										{#if row.mount}
+											<button
+												type="button"
+												aria-label={(row.mounted ? 'Remove ' : 'Add ') +
+													row.mount.name +
+													' mount for ' +
+													row.name}
+												class={'relative shrink-0 rounded-lg border-2 p-0.5 transition ' +
+													(row.mounted ? 'border-emerald-500/60' : 'border-slate-600/60')}
+												onclick={() => onToggleMount(row.entryId)}
+											>
+												{#if row.mount.icon}
+													<img src={row.mount.icon} alt="" class="h-9 w-9 rounded object-contain" />
+												{/if}
+												<span
+													class={'absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ' +
+														(row.mounted
+															? 'bg-emerald-500 text-slate-950'
+															: 'bg-red-500/80 text-slate-100')}
+												>
+													{row.mounted ? '✓' : '✕'}
+												</span>
+											</button>
+										{/if}
 										<button
 											type="button"
-											aria-label={(row.mounted ? 'Remove ' : 'Add ') +
-												row.mount.name +
-												' mount for ' +
-												row.name}
-											class={'relative shrink-0 rounded-lg border-2 p-0.5 transition ' +
-												(row.mounted ? 'border-emerald-500/60' : 'border-slate-600/60')}
-											onclick={() => onToggleMount(row.entryId)}
+											aria-label={'Remove ' + row.name}
+											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+											onclick={() => onRemoveEntry(row.entryId)}
 										>
-											{#if row.mount.icon}
-												<img src={row.mount.icon} alt="" class="h-9 w-9 rounded object-contain" />
-											{/if}
-											<span
-												class={'absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ' +
-													(row.mounted
-														? 'bg-emerald-500 text-slate-950'
-														: 'bg-red-500/80 text-slate-100')}
-											>
-												{row.mounted ? '✓' : '✕'}
-											</span>
+											−
 										</button>
+									</div>
+									{#if format === 'standard' && row.upgrades.length > 0}
+										<div class="mt-1.5 space-y-1 pl-8">
+											{#each row.upgrades as upgrade (upgrade.id)}
+												<div class="flex items-center justify-between gap-2">
+													<div class="flex min-w-0 items-center gap-1.5">
+														<span class="text-slate-500">└</span>
+														<button
+															type="button"
+															aria-label={'Show details for ' + upgrade.name}
+															class="flex min-w-0 items-center gap-1.5 rounded-full bg-orange-400 py-0.5 pr-2.5 pl-0.5 text-[11px] font-semibold text-slate-950 transition hover:bg-orange-300 active:bg-orange-300"
+															onclick={() => (detailUpgrade = upgrade)}
+														>
+															{#if upgrade.icon}
+																<img
+																	src={upgrade.icon}
+																	alt=""
+																	class="h-5 w-5 shrink-0 rounded-full border border-slate-950/30 object-cover"
+																/>
+															{/if}
+															<span class="truncate">{upgrade.name}</span>
+														</button>
+														<span
+															class="shrink-0 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
+														>
+															{upgradeCostInArmy(upgrade, entries, upgradeIndex)} pts
+														</span>
+													</div>
+													<button
+														type="button"
+														aria-label={'Remove ' + upgrade.name + ' from ' + row.name}
+														class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-red-500/50 bg-slate-900/60 text-xs font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+														onclick={() => onRemoveUpgrade(row.entryId, upgrade.id)}
+													>
+														✕
+													</button>
+												</div>
+											{/each}
+										</div>
 									{/if}
-									<button
-										type="button"
-										aria-label={'Remove ' + row.name}
-										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
-										onclick={() => onRemoveEntry(row.entryId)}
-									>
-										−
-									</button>
 								</div>
 							{/each}
 						</div>
@@ -320,6 +411,37 @@
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}
 			onClose={() => (selectedCard = null)}
+		/>
+	{/if}
+
+	{#if pickerRow}
+		{@const row = pickerRow}
+		{@const pickerEntry = entries.find((candidate) => candidate.id === row.entryId)}
+		{#if pickerEntry}
+			<ArmyUpgradePicker
+				entry={pickerEntry}
+				unitName={row.name}
+				{upgrades}
+				{entries}
+				{units}
+				{upgradeIndex}
+				{rulesIndexes}
+				factionColor={faction.color}
+				onSelect={(upgradeId) => {
+					onAddUpgrade(row.entryId, upgradeId);
+					pickerRow = null;
+				}}
+				onClose={() => (pickerRow = null)}
+			/>
+		{/if}
+	{/if}
+
+	{#if detailUpgrade}
+		<ArmyUpgradeDetail
+			upgrade={detailUpgrade}
+			cost={upgradeCostInArmy(detailUpgrade, entries, upgradeIndex)}
+			factionColor={faction.color}
+			onClose={() => (detailUpgrade = null)}
 		/>
 	{/if}
 </div>

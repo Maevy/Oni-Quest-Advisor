@@ -37,7 +37,14 @@
  *   oddities like the Sealing Javelins' reach), STK mirrors the spell column,
  *   effect keeps its rich links. Characters carry inventorySpace plus
  *   inventory slots ({ id, qty }); the QTY lives on the slot, everything
- *   else on the item.
+ *   else on the item. The Imported Casting Amplifier upgrade grants an item
+ *   that is missing from the producer catalog, so a synthetic copy is added.
+ * - upgrades <- upgradeList, written to upgrades.json: cost, per-army limit,
+ *   faction (neutral when absent), rich-text description, a class requirement
+ *   parsed from 'Only a ...' descriptions and curated mechanical effects
+ *   (UPGRADE_EFFECTS) - choices and conditional rules stay in the text.
+ *   Ids are kebab(code), suffixed with the faction id because
+ *   Seasoned Combatant exists twice (Helian and Soga).
  * Skill/trait/combat-art entries carry the catalog's rule text per level in a
  * `levels` map (groups without per-level entries fall back to `description`).
  * Rules texts (class/skill/trait) are stored as segments; cross-references like
@@ -80,6 +87,123 @@ const MOUNT_CODES = new Set(['LUPUS_REX']);
 
 /** Rider code -> mount code; mount cost is the mount's own recruitment_cost. */
 const MOUNT_ASSIGNMENTS = { SLAYER_DRAGON: 'LUPUS_REX' };
+
+/** Units that can never receive upgrades (rulebook exception list). */
+const UPGRADE_LOCKED_CODES = new Set([
+	'TOMOE',
+	'KOGETSU',
+	'SEIGEN',
+	'THAROS',
+	'ANARI',
+	'NARA',
+	'CHIYOHIME',
+	'CHANRE'
+]);
+
+/**
+ * The mechanical effects an upgrade applies, curated per upgrade code. Only
+ * well-defined effects are automated (stat boosts, trait/skill/class/combat
+ * art grants, item grants, primary weapon replacement, pouch, stratagems);
+ * choices and conditional rules stay in the description for the player.
+ * 'spellcraftLevelUp' carries no automatic change - the player picks which
+ * spellcraft advances - but it feeds the max-level warning in the picker.
+ */
+const UPGRADE_EFFECTS = {
+	// Helian League
+	ADEPT_SHAPER: [{ kind: 'spellcraftLevelUp' }],
+	GLYPHSCRIBE_REDUCE_WEIGHT: [],
+	SEASONED_COMBATANT: [{ kind: 'trait', traitId: 'fearless', level: 1 }],
+	COMPANION_OF_HAIRON: [],
+	TACTICAL_EXPERTISE: [{ kind: 'trait', traitId: 'tactician', level: 1 }],
+	GIFT_OF_LONGEVITY: [{ kind: 'stat', changes: { INT: 1 } }],
+	EXPEDITIONARY_TACTICS_DOUBLE_TIME: [],
+	GLYPHSCRIBE_HYPERIAS_PROVIDENCE: [],
+	EXPEDITIONARY_TACTICS_SURGE_ORDER: [],
+	// Empire of Soga
+	BUJUTSU_EXPERTISE: [
+		{ kind: 'class', classId: 'armsmaster' },
+		{ kind: 'combatArt', artId: 'fencing', level: 1 }
+	],
+	KASSEN_BUKI_KANABOU_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'heavy-bludgeon' }],
+	KASSEN_BUKI_DAIKYUU_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'war-bow' }],
+	KASSEN_BUKI_YARI_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'lance' }],
+	LUCKY_CHARM: [],
+	TRAVELING_DUELIST: [{ kind: 'trait', traitId: 'duelist', level: 1 }],
+	KYUJUTSU_EXPERTISE: [
+		{ kind: 'class', classId: 'marksman' },
+		{ kind: 'combatArt', artId: 'archery', level: 1 }
+	],
+	KASSEN_BUKI_NAGAMAKI_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'longhilted-sword' }],
+	// Coalition of Thenion
+	DEVOTION_ANRAS: [
+		{
+			kind: 'stat',
+			changes: { DEF: 1 },
+			insteadIfTrait: { traitId: 'duelist', changes: { DEF: 2 } }
+		}
+	],
+	CLIMBING_EXPERTISE: [{ kind: 'skill', skillId: 'climbing', level: 1 }],
+	MUFFLED_MOVEMENT: [{ kind: 'skill', skillId: 'stealth', level: 1 }],
+	CONCEALED_APPROACH: [],
+	FANGS_OF_TIAMAT: [{ kind: 'item', itemId: 'war-darts' }],
+	DEVOTION_TIAMAT: [
+		{
+			kind: 'stat',
+			changes: { T: 1 },
+			extraIfClasses: { classIds: ['warrior', 'rogue'], changes: { OFF: 1 } }
+		}
+	],
+	POISONED_WEAPONS: [{ kind: 'trait', traitId: 'poison', level: 1 }],
+	DEVOTION_PAIMON: [
+		{ kind: 'stat', changes: { INT: 1 } },
+		{ kind: 'costReduction', amount: 1 }
+	],
+	// Sand Kingdoms
+	MANA_CATALYST: [],
+	ELEMENTAL_LINEAGE: [],
+	FLYING_CARPET: [{ kind: 'item', itemId: 'flying-carpet' }],
+	PERSONAL_GUARD: [],
+	ARCANE_TOME: [{ kind: 'spellcraftLevelUp' }],
+	CASTING_AMPLIFIER: [{ kind: 'item', itemId: 'casting-amplifier' }],
+	CONJURED_RETINUE: [],
+	// Neutral
+	ADDITIONAL_PROTECTION: [{ kind: 'stat', changes: { ARM: 2, AG: -2 } }],
+	POUCH: [{ kind: 'pouch' }],
+	IMPORTED_CROSSBOW: [{ kind: 'item', itemId: 'crossbow' }],
+	UTILITY_TOOL: [{ kind: 'item', itemId: 'dagger' }],
+	IMPORTED_CASTING_AMPLIFIER: [{ kind: 'item', itemId: 'imported-casting-amplifier' }],
+	KING_OF_THE_BATTLEFIELD: [{ kind: 'item', itemId: 'spear' }],
+	CAMARADERIE: [],
+	SMOKESCREEN: [{ kind: 'item', itemId: 'haze-bomb' }],
+	FIRST_AID: [],
+	JOURNEYMAN_ADVENTURER: [
+		{ kind: 'trait', traitId: 'resourceful', level: 2 },
+		{ kind: 'trait', traitId: 'survival--x-environment', level: 1, dynamicValue: 'Difficult' }
+	],
+	EXPEDITION_LEADER: [{ kind: 'stratagem', stratagemIds: ['advance', 'back-to-back'] }],
+	// Raid Leader's stratagems are not in the producer catalog - text only.
+	RAID_LEADER: []
+};
+
+/**
+ * Requirements live in the description: 'Only a (Warrior)[class.WARRIOR] can
+ * receive ...' (needs the class) and 'Cannot be assigned to a model with the
+ * (Demon)[trait.DEMON] Trait' (forbidden trait). Parses both patterns.
+ */
+function parseUpgradeRequirement(description) {
+	const classMatch = description.match(/^Only a (?:model of the )?\([^)]*\)\[class\.([A-Z_]+)\]/i);
+	const forbiddenMatches = [
+		...description.matchAll(
+			/\bCannot be assigned to a model with the \([^)]*\)\[trait\.([A-Z_]+)/gi
+		)
+	];
+	const requirement = {};
+	if (classMatch) requirement.classes = [kebab(classMatch[1])];
+	if (forbiddenMatches.length > 0) {
+		requirement.notTraits = [...new Set(forbiddenMatches.map((match) => kebab(match[1])))];
+	}
+	return Object.keys(requirement).length > 0 ? requirement : undefined;
+}
 
 function kebab(code) {
 	return code.toLowerCase().replace(/_/g, '-');
@@ -322,6 +446,9 @@ for (const character of characters) {
 			qty: row.QTY ?? 1
 		}));
 	}
+	if (UPGRADE_LOCKED_CODES.has(attributes.code)) {
+		unit.upgradesLocked = true;
+	}
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -416,31 +543,67 @@ const stratagems = pageProps.strategmList.data
 	.sort((a, b) => a.name.localeCompare(b.name));
 writeFileSync(join(outDir, 'stratagems.json'), JSON.stringify(stratagems, null, '\t') + '\n');
 console.log('stratagems: ' + stratagems.length + ' stratagems');
-const items = pageProps.itemList.data
+const items = pageProps.itemList.data.map((wrapper) => {
+	const item = wrapper.attributes;
+	const entry = {
+		id: kebab(item.code),
+		name: normalize(item.name),
+		category: item.category.toLowerCase()
+	};
+	if (item.attack_mode?.mode) entry.mode = kebab(item.attack_mode.mode);
+	const toughness = parseCost(item.PW);
+	if (toughness && toughness.fixed !== '-') entry.toughness = toughness;
+	const reach = parseReach(item.RCH);
+	if (reach) entry.reach = reach;
+	const stk = parseCost(item.STK);
+	if (stk && stk.fixed !== '-') entry.stk = stk;
+	entry.effect =
+		item.effect && item.effect.trim() !== '' && item.effect.trim() !== '/'
+			? richText(item.effect)
+			: [];
+	if (item.WGT !== null && item.WGT !== undefined) entry.weight = item.WGT;
+	return entry;
+});
+// The Imported Casting Amplifier upgrade hands out an item that is not part of
+// the producer catalog; it mirrors the catalog's Casting Amplifier shape.
+items.push({
+	id: 'imported-casting-amplifier',
+	name: 'Imported Casting Amplifier',
+	category: 'accessory',
+	mode: 'melee',
+	effect: richText("The upgraded model's Spells have +4 RCH."),
+	weight: 0
+});
+items.sort((a, b) => a.name.localeCompare(b.name));
+writeFileSync(join(outDir, 'items.json'), JSON.stringify(items, null, '\t') + '\n');
+console.log('items: ' + items.length + ' items');
+const upgrades = pageProps.upgradeList.data
 	.map((wrapper) => {
-		const item = wrapper.attributes;
+		const upgrade = wrapper.attributes;
+		const factionCode = upgrade.faction?.data?.attributes?.code;
+		const factionId = factionCode ? FACTIONS[factionCode] : undefined;
 		const entry = {
-			id: kebab(item.code),
-			name: normalize(item.name),
-			category: item.category.toLowerCase()
+			id: kebab(upgrade.code) + (factionId ? '-' + factionId : ''),
+			name: normalize(upgrade.name),
+			cost: upgrade.cost,
+			factionId
 		};
-		if (item.attack_mode?.mode) entry.mode = kebab(item.attack_mode.mode);
-		const toughness = parseCost(item.PW);
-		if (toughness && toughness.fixed !== '-') entry.toughness = toughness;
-		const reach = parseReach(item.RCH);
-		if (reach) entry.reach = reach;
-		const stk = parseCost(item.STK);
-		if (stk && stk.fixed !== '-') entry.stk = stk;
-		entry.effect =
-			item.effect && item.effect.trim() !== '' && item.effect.trim() !== '/'
-				? richText(item.effect)
-				: [];
-		if (item.WGT !== null && item.WGT !== undefined) entry.weight = item.WGT;
+		if (upgrade.limit !== null && upgrade.limit !== undefined) entry.limit = upgrade.limit;
+		const requirement = parseUpgradeRequirement(upgrade.description);
+		if (requirement) entry.requirement = requirement;
+		entry.description = richText(upgrade.description);
+		entry.effects = UPGRADE_EFFECTS[upgrade.code] ?? [];
 		return entry;
 	})
 	.sort((a, b) => a.name.localeCompare(b.name));
-writeFileSync(join(outDir, 'items.json'), JSON.stringify(items, null, '\t') + '\n');
-console.log('items: ' + items.length + ' items');
+writeFileSync(join(outDir, 'upgrades.json'), JSON.stringify(upgrades, null, '\t') + '\n');
+console.log('upgrades: ' + upgrades.length + ' upgrades');
+const unmapped = pageProps.upgradeList.data
+	.map((wrapper) => wrapper.attributes.code)
+	.filter((code) => !(code in UPGRADE_EFFECTS));
+if (unmapped.length > 0) {
+	console.log('WARNING: upgrades without curated effects: ' + unmapped.join(', '));
+}
 if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
 	for (const entry of skipped) console.log(' - ' + entry);
