@@ -26,11 +26,45 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - Army builder feature is on `develop` (unreleased): faction select, producer unit
   import (`scripts/importUnits.mjs`), unit cards with classes, skills, traits,
   combat arts, spellcrafts, inventories and stratagems (inline cards), mounts,
-  and standard-mode upgrades (per-copy picks with slots, gating and choice
-  dialogs). Tournament-mode roster upgrades + the mode-switch warning are the
+  standard-mode upgrades (per-copy picks with slots, gating and choice dialogs)
+  and army codes (clipboard export + import on the faction select).
+  Tournament-mode roster upgrades + the mode-switch warning are the
   pending follow-up.
 
-## What was done in the last session (Sand Kingdoms selection upgrades)
+## What was done in the last session (army codes: export/import)
+
+Today's `develop` commit: `1f82129`.
+
+1. **Army codes** (`domain/armyCode.ts`): the whole list — faction, format,
+   every copy, mounts, upgrades with their spellcraft/option/item/element
+   selections — serializes to a short share code (tens of characters, far
+   below JWT length): base36 indexes into the sorted content catalogs with
+   `_`/`-`/`=`/`,` separators, prefixed by a version char `a` and a 3-char
+   FNV-1a roster fingerprint derived from the catalogs themselves (units
+   incl. mount pairings, upgrade ids + option order, spellcrafts, items,
+   faction order).
+2. **Roster safety**: indexes shift when the roster changes, so the decoder
+   compares fingerprints first — codes built on a different roster version
+   are rejected ("created with a different roster version") instead of
+   silently decoding into wrong units. Decoding is strict on every range and
+   structure, tolerant of case and whitespace on input.
+3. **Guaranteed-valid imports**: `armyBuilderStore.importArmy` replays every
+   pick through the existing domain guards (`addArmyUnit` copy limits,
+   `toggleArmyMount`, `addEntryUpgrade` gating incl. selections) after a
+   faction-membership check, so an import can never yield an invalid army.
+   Success sets faction/format/entries and flags `startOnArmyPanel` — the
+   builder opens directly on the Your-Army panel.
+4. **Export UI**: "Copy Army Code to Clipboard" button beside the
+   Standard/Tournament toggle (wraps below it on narrow screens, disabled
+   while the army is empty, 2 s "Copied ✓" state; `window.prompt` fallback
+   when clipboard access is denied).
+5. **Import UI**: a centered input + "Import Army" button below the faction
+   grid on the faction select screen, with inline error messages.
+6. Tests 248 → 260; check/lint/build clean. (Note: the eagerly loaded
+   content chunk crossed 500 kB and tripped Vite's size warning for the
+   first time — a future lazy-loading candidate.)
+
+## What was done in earlier sessions (Sand Kingdoms selection upgrades)
 
 The pass over the upgrades that carry a selection inside them (the Helian
 League ones shipped in the session before) reached its last faction — the

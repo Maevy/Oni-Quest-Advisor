@@ -95,7 +95,16 @@ native/platform-specific one. Used on a phone screen during a game session.
   NEUTRAL-tagged units are available to every faction except the monster ones
   (`NON_NEUTRAL_FACTION_IDS`); mounts are never recruitable standalone — a
   rider's `mount` adds the mount's cost when toggled, mount `stats` override
-  the rider's (non-null only) and `statChanges` add on top.
+  the rider's (non-null only) and `statChanges` add on top. **Army codes**
+  (`domain/armyCode.ts`): a whole list (faction, format, copies, mounts,
+  upgrades incl. all selections) serializes to a short share code — base36
+  indexes into the sorted content catalogs behind a version char + FNV-1a
+  roster fingerprint, so codes from a different roster are rejected loudly
+  instead of decoding wrong units. `armyBuilderStore.importArmy` replays
+  every pick through the domain guards (an import can never be invalid) and
+  opens the builder on the Your-Army panel; export is the "Copy Army Code
+  to Clipboard" button in the builder header (clipboard API, prompt
+  fallback).
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
   is a hot-seat mode where both players share one device. The third
