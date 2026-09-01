@@ -34,6 +34,16 @@
 				"id": "strategist",
 				"level": 1
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-enchanting",
+				"level": 3
+			},
+			{
+				"id": "cryomancy",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -114,6 +124,12 @@
 				"level": 1,
 				"dynamicElements": ["Divine"]
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "hieromancy",
+				"level": 4
+			}
 		]
 	},
 	{
@@ -146,6 +162,12 @@
 				"id": "affinity--element",
 				"level": 1,
 				"dynamicElements": ["Fire"]
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-sorcery",
+				"level": 2
 			}
 		]
 	},
@@ -188,6 +210,16 @@
 				"id": "fencing",
 				"level": 1
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-enchanting",
+				"level": 3
+			},
+			{
+				"id": "art-of-sorcery",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -214,6 +246,16 @@
 				"id": "affinity--element",
 				"level": 1,
 				"dynamicElements": ["Fire"]
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-enchanting",
+				"level": 3
+			},
+			{
+				"id": "art-of-sorcery",
+				"level": 3
 			}
 		]
 	},
@@ -252,6 +294,12 @@
 			{
 				"id": "fencing",
 				"level": 2
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "hieromancy",
+				"level": 1
 			}
 		]
 	}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	addArmyUnit,
+	affinityElements,
 	armyCopyCounts,
 	armyPoints,
 	armyRulesTitle,
@@ -15,6 +16,8 @@ import {
 	romanNumeral,
 	rulesLinkPopup,
 	skillPopupFor,
+	spellCostDisplay,
+	spellcraftPopupFor,
 	substituteArmyTemplate,
 	toggleArmyMount,
 	traitPopupFor,
@@ -22,6 +25,7 @@ import {
 	type ArmyEntry,
 	type ArmyRulesIndexes,
 	type ArmyRulesSpec,
+	type ArmySpellSpec,
 	type ArmyStats,
 	type ArmyUnitContent,
 	type ArmyUnitSpec
@@ -645,6 +649,183 @@ describe('rulesLinkPopup', () => {
 	it('is null for unknown targets', () => {
 		expect(rulesLinkPopup(INDEXES, { type: 'trait', id: 'ghost' })).toBeNull();
 		expect(rulesLinkPopup(INDEXES, { type: 'spellcraft', id: 'armamancy' })).toBeNull();
+	});
+});
+
+const ART_OF_SORCERY: ArmyRulesSpec = { id: 'art-of-sorcery', name: 'Art of Sorcery' };
+
+const SPELLS: ArmySpellSpec[] = [
+	{
+		id: 'flare',
+		name: 'Flare',
+		group: 'art-of-sorcery',
+		element: 'fire',
+		level: 2,
+		effect: [{ text: 'The target suffers a burning Hit.' }],
+		pw: { stat: 'INT', modifier: -3 },
+		type: 'Spell, Sorcery | Ranged',
+		rch: '16',
+		stk: { stat: 'STA' }
+	},
+	{
+		id: 'ignite',
+		name: 'Ignite',
+		group: 'art-of-sorcery',
+		element: 'fire',
+		level: 1,
+		effect: [{ text: 'The target catches fire.' }],
+		pw: { fixed: '8' },
+		type: 'Spell, Sorcery | Ranged',
+		rch: '10',
+		stk: { fixed: '1' }
+	},
+	{
+		id: 'arcane-bolt',
+		name: 'Arcane Bolt',
+		group: 'art-of-sorcery',
+		element: 'elder',
+		level: 1,
+		effect: [
+			{ text: 'Critical: ' },
+			{ text: 'Knockdown', link: { type: 'trait', id: 'knockdown' } }
+		]
+	},
+	{
+		id: 'magic-missile',
+		name: 'Magic Missile',
+		group: 'wizardry',
+		element: 'elder',
+		level: 1,
+		effect: [{ text: 'A bolt of force.' }]
+	}
+];
+
+const FLAMESHAPER: ArmyUnitSpec = {
+	id: 'flameshaper',
+	name: 'Flameshaper',
+	points: 20,
+	limit: 1,
+	stats: { ...STATS, STA: 2, INT: 12 },
+	classes: ['sorcerer'],
+	traits: [
+		{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] },
+		{ id: 'demon', level: 1 }
+	]
+};
+
+describe('affinityElements', () => {
+	it('collects the elements of the affinity trait refs, lowercased', () => {
+		expect(affinityElements(FLAMESHAPER)).toEqual(['fire']);
+	});
+
+	it('merges several affinity refs and dynamic values, skipping any', () => {
+		const unit: ArmyUnitSpec = {
+			...FLAMESHAPER,
+			traits: [
+				{ id: 'affinity--element', level: 1, dynamicElements: ['Elder', 'Fire'] },
+				{ id: 'affinity--element', level: 1, dynamicValue: 'Divine' },
+				{ id: 'affinity--element', level: 1, dynamicValue: 'Any' }
+			]
+		};
+		expect(affinityElements(unit).sort()).toEqual(['divine', 'elder', 'fire']);
+	});
+
+	it('is empty without affinity traits', () => {
+		expect(affinityElements({ ...FLAMESHAPER, traits: [] })).toEqual([]);
+	});
+});
+
+describe('spellCostDisplay', () => {
+	it('returns fixed values as they are', () => {
+		expect(spellCostDisplay({ fixed: '8' }, STATS)).toBe('8');
+		expect(spellCostDisplay({ fixed: '-' }, STATS)).toBe('-');
+	});
+
+	it('resolves a stat against the unit with its value in brackets', () => {
+		expect(spellCostDisplay({ stat: 'STA' }, { ...STATS, STA: 2 })).toBe('STA (2)');
+		expect(spellCostDisplay({ stat: 'INT' }, { ...STATS, INT: 12 })).toBe('INT (12)');
+	});
+
+	it('adds the modifier behind the resolved stat', () => {
+		expect(spellCostDisplay({ stat: 'INT', modifier: -3 }, { ...STATS, INT: 12 })).toBe(
+			'INT (12) -3'
+		);
+		expect(spellCostDisplay({ stat: 'INT', modifier: 2 }, { ...STATS, INT: 12 })).toBe(
+			'INT (12) +2'
+		);
+	});
+
+	it('shows the bare stat when the unit has no value for it', () => {
+		expect(spellCostDisplay({ stat: 'M' }, { ...STATS, M: null })).toBe('M');
+	});
+
+	it('is undefined without a cost', () => {
+		expect(spellCostDisplay(undefined, STATS)).toBeUndefined();
+	});
+});
+
+describe('spellcraftPopupFor', () => {
+	it('lists the spells of the group up to the spellcraft level in the affinity elements', () => {
+		const popup = spellcraftPopupFor(
+			ART_OF_SORCERY,
+			{ id: 'art-of-sorcery', level: 2 },
+			FLAMESHAPER,
+			FLAMESHAPER.stats,
+			SPELLS
+		);
+		expect(popup?.title).toBe('Art of Sorcery II');
+		expect(popup?.sections).toEqual([]);
+		expect(popup?.spells?.map((row) => row.name)).toEqual(['Ignite', 'Flare']);
+	});
+
+	it('hides spells above the spellcraft level and outside the affinity', () => {
+		const popup = spellcraftPopupFor(
+			ART_OF_SORCERY,
+			{ id: 'art-of-sorcery', level: 1 },
+			FLAMESHAPER,
+			FLAMESHAPER.stats,
+			SPELLS
+		);
+		expect(popup?.spells?.map((row) => row.name)).toEqual(['Ignite']);
+	});
+
+	it('sorts Elder before the other elements, then level, then name', () => {
+		const elderMage: ArmyUnitSpec = {
+			...FLAMESHAPER,
+			traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Elder', 'Fire'] }]
+		};
+		const popup = spellcraftPopupFor(
+			ART_OF_SORCERY,
+			{ id: 'art-of-sorcery', level: 2 },
+			elderMage,
+			FLAMESHAPER.stats,
+			SPELLS
+		);
+		expect(popup?.spells?.map((row) => row.name)).toEqual(['Arcane Bolt', 'Ignite', 'Flare']);
+		expect(popup?.spells?.map((row) => row.elementName)).toEqual(['Elder', 'Fire', 'Fire']);
+	});
+
+	it('resolves pw and stk against the unit stats in the rows', () => {
+		const popup = spellcraftPopupFor(
+			ART_OF_SORCERY,
+			{ id: 'art-of-sorcery', level: 2 },
+			FLAMESHAPER,
+			FLAMESHAPER.stats,
+			SPELLS
+		);
+		const flare = popup?.spells?.find((row) => row.name === 'Flare');
+		expect(flare).toMatchObject({
+			pw: 'INT (12) -3',
+			stk: 'STA (2)',
+			type: 'Spell, Sorcery | Ranged',
+			rch: '16'
+		});
+	});
+
+	it('is null for a missing entry', () => {
+		expect(
+			spellcraftPopupFor(undefined, { id: 'ghost', level: 1 }, FLAMESHAPER, STATS, SPELLS)
+		).toBeNull();
 	});
 });
 

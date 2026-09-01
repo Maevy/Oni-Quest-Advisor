@@ -23,6 +23,10 @@
  *   placeholders at display time.
  * - combatArts <- combatArtGroupList, written to combat-arts.json; units keep
  *   { id, level }, the level being the highest one the unit has access to.
+ * - spellcrafts <- spellGroupList, written to spellcrafts.json (group id +
+ *   name); the groups' spells go to spells.json with element/level/effect and
+ *   the parsed PW/type/RCH/STK columns. Units keep { id, level } refs; access
+ *   at display time is group + level + the unit's Affinity elements.
  * Skill/trait/combat-art entries carry the catalog's rule text per level in a
  * `levels` map (groups without per-level entries fall back to `description`).
  * Rules texts (class/skill/trait) are stored as segments; cross-references like
@@ -68,6 +72,14 @@ const MOUNT_ASSIGNMENTS = { SLAYER_DRAGON: 'LUPUS_REX' };
 
 function kebab(code) {
 	return code.toLowerCase().replace(/_/g, '-');
+}
+
+/** Id from a display name (spells have no code): lowercase, words to dashes. */
+function slug(name) {
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
 }
 
 function normalize(text) {
@@ -130,7 +142,42 @@ function buildCatalogEntries(list, levelKey) {
 }
 
 function titleCase(code) {
-	return code.charAt(0) + code.slice(1).toLowerCase();
+	return code.charAt(0).toUpperCase() + code.slice(1).toLowerCase();
+}
+
+/**
+ * Parses a PW/STK cell: fixed text ('8', '-', 'x', '5 in Active, ...') or a
+ * character stat with an optional modifier ('Int', 'Int -3', 'Int+2', 'STA').
+ */
+function parseCost(raw) {
+	if (raw === null || raw === undefined) return undefined;
+	const trimmed = String(raw).trim();
+	if (trimmed === '') return undefined;
+	if (/^\d+$/.test(trimmed)) return { fixed: trimmed };
+	const statMatch = trimmed.match(/^([A-Za-z]+)\s*(?:([+-])\s*(\d+))?$/);
+	if (statMatch && STAT_KEYS.includes(statMatch[1].toUpperCase())) {
+		const cost = { stat: statMatch[1].toUpperCase() };
+		if (statMatch[2]) cost.modifier = (statMatch[2] === '-' ? -1 : 1) * Number(statMatch[3]);
+		return cost;
+	}
+	return { fixed: trimmed };
+}
+
+/** Display type of a spell: categories comma-separated, pipe, attack mode. */
+function spellType(spell) {
+	const categories = (spell.category_info ?? []).map((info) => titleCase(info.category));
+	categories.sort((a, b) => (a === 'Spell' ? -1 : b === 'Spell' ? 1 : a.localeCompare(b)));
+	const mode = spell.attack_mode?.mode;
+	const modeText =
+		mode === 'MELEE_AND_RANGED'
+			? 'Melee & Ranged'
+			: mode
+				? titleCase(mode.toLowerCase())
+				: undefined;
+	const parts = [];
+	if (categories.length > 0) parts.push(categories.join(', '));
+	if (modeText) parts.push(modeText);
+	return parts.length > 0 ? parts.join(' | ') : undefined;
 }
 
 for (const character of characters) {
@@ -166,6 +213,13 @@ for (const character of characters) {
 			level: artAttributes.level
 		}))
 		.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
+	const spellcraftRefs = (attributes.spellcrafts ?? [])
+		.filter((craft) => craft.spell_group?.data?.attributes)
+		.map((craft) => ({
+			id: kebab(craft.spell_group.data.attributes.code),
+			level: craft.level
+		}))
+		.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
 	const traitRefs = [];
 	for (const traitEntry of attributes.traits ?? []) {
 		const traitAttributes = traitEntry.trait?.data?.attributes;
@@ -193,6 +247,7 @@ for (const character of characters) {
 	if (skillRefs.length > 0) unit.skills = skillRefs;
 	if (traitRefs.length > 0) unit.traits = traitRefs;
 	if (combatArtRefs.length > 0) unit.combatArts = combatArtRefs;
+	if (spellcraftRefs.length > 0) unit.spellcrafts = spellcraftRefs;
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -236,6 +291,44 @@ console.log('traits: ' + traits.length + ' traits');
 const combatArts = buildCatalogEntries(pageProps.combatArtGroupList.data, 'combat_arts');
 writeFileSync(join(outDir, 'combat-arts.json'), JSON.stringify(combatArts, null, '\t') + '\n');
 console.log('combat arts: ' + combatArts.length + ' combat arts');
+const spellcrafts = pageProps.spellGroupList.data
+	.map((wrapper) => ({ id: kebab(wrapper.attributes.code), name: wrapper.attributes.name }))
+	.sort((a, b) => a.name.localeCompare(b.name));
+writeFileSync(join(outDir, 'spellcrafts.json'), JSON.stringify(spellcrafts, null, '\t') + '\n');
+console.log('spellcrafts: ' + spellcrafts.length + ' spellcrafts');
+const spells = [];
+for (const group of pageProps.spellGroupList.data) {
+	for (const wrapper of group.attributes.spells?.data ?? []) {
+		const spell = wrapper.attributes;
+		const entry = {
+			id: slug(spell.name),
+			name: spell.name,
+			group: kebab(group.attributes.code),
+			element: (spell.element?.data?.attributes?.code ?? '').toLowerCase(),
+			level: spell.level,
+			effect: richText(spell.effect)
+		};
+		const pw = parseCost(spell.PW);
+		if (pw) entry.pw = pw;
+		const type = spellType(spell);
+		if (type) entry.type = type;
+		const rch = normalize(spell.RCH);
+		if (rch) entry.rch = rch;
+		const stk = parseCost(spell.STK);
+		if (stk) entry.stk = stk;
+		spells.push(entry);
+	}
+}
+// The same spell name can sit in two groups (Flare, Inferno, ...): keep ids
+// unique by appending the group where the name alone collides.
+const idCounts = new Map();
+for (const spell of spells) idCounts.set(spell.id, (idCounts.get(spell.id) ?? 0) + 1);
+for (const spell of spells) {
+	if (idCounts.get(spell.id) > 1) spell.id = spell.id + '-' + spell.group;
+}
+spells.sort((a, b) => a.name.localeCompare(b.name));
+writeFileSync(join(outDir, 'spells.json'), JSON.stringify(spells, null, '\t') + '\n');
+console.log('spells: ' + spells.length + ' spells');
 if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
 	for (const entry of skipped) console.log(' - ' + entry);

@@ -1,14 +1,26 @@
-import type { ArmyFactionId, ArmyRulesSpec, ArmyUnitContent, ArmyUnitSpec } from '$lib/domain';
+import type {
+	ArmyFactionId,
+	ArmyRulesSpec,
+	ArmySpellSpec,
+	ArmyUnitContent,
+	ArmyUnitSpec
+} from '$lib/domain';
 
 const unitModules = import.meta.glob('./content/units/*.json', { eager: true }) as Record<
 	string,
 	{ default: ArmyUnitSpec[] }
 >;
 
-/** Centralized rules entries (classes/skills/traits/combat arts) referenced by the units. */
-const rulesModules = import.meta.glob('./content/units/{classes,skills,traits,combat-arts}.json', {
-	eager: true
-}) as Record<string, { default: ArmyRulesSpec[] }>;
+/** Centralized rules entries (classes/skills/traits/combat arts/spellcrafts). */
+const rulesModules = import.meta.glob(
+	'./content/units/{classes,skills,traits,combat-arts,spellcrafts}.json',
+	{ eager: true }
+) as Record<string, { default: ArmyRulesSpec[] }>;
+
+const spellModules = import.meta.glob('./content/units/spells.json', { eager: true }) as Record<
+	string,
+	{ default: ArmySpellSpec[] }
+>;
 
 const iconModules = import.meta.glob('../assets/uniticons/*/*.jpg', {
 	eager: true,
@@ -50,7 +62,14 @@ export function loadArmyUnits(): ArmyUnitContent {
 	let mounts: ArmyUnitSpec[] = [];
 	for (const [path, module] of Object.entries(unitModules)) {
 		const key = path.split('/').pop()?.replace('.json', '') ?? '';
-		if (key === 'classes' || key === 'skills' || key === 'traits' || key === 'combat-arts') {
+		if (
+			key === 'classes' ||
+			key === 'skills' ||
+			key === 'traits' ||
+			key === 'combat-arts' ||
+			key === 'spellcrafts' ||
+			key === 'spells'
+		) {
 			continue;
 		}
 		if (key === 'neutral') {
@@ -89,4 +108,14 @@ export function loadArmyTraits(): ArmyRulesSpec[] {
 /** Loads the centralized combat-art list referenced by unit `combatArts` refs. */
 export function loadArmyCombatArts(): ArmyRulesSpec[] {
 	return rulesFile('combat-arts');
+}
+
+/** Loads the centralized spellcraft list referenced by unit `spellcrafts` refs. */
+export function loadArmySpellcrafts(): ArmyRulesSpec[] {
+	return rulesFile('spellcrafts');
+}
+
+/** Loads the spell catalog the spellcraft popups filter from. */
+export function loadArmySpells(): ArmySpellSpec[] {
+	return Object.values(spellModules)[0]?.default ?? [];
 }

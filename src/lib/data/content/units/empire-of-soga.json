@@ -142,6 +142,16 @@
 				"id": "vigilance",
 				"level": 1
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "kitsune-no-mai",
+				"level": 1
+			},
+			{
+				"id": "purification-rites",
+				"level": 1
+			}
 		]
 	},
 	{

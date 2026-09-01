@@ -44,6 +44,12 @@
 				"level": 1,
 				"dynamicValue": "Difficult"
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "shamanism",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -127,6 +133,12 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Difficult"
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "shamanism",
+				"level": 2
 			}
 		]
 	},

@@ -4,6 +4,7 @@
 		ArmyFormat,
 		ArmyRosterRow,
 		ArmyRulesSpec,
+		ArmySpellSpec,
 		ArmyStats,
 		ArmyUnitSpec
 	} from '$lib/domain';
@@ -16,6 +17,8 @@
 		skillIndex: Record<string, ArmyRulesSpec>;
 		traitIndex: Record<string, ArmyRulesSpec>;
 		combatArtIndex: Record<string, ArmyRulesSpec>;
+		spellcraftIndex: Record<string, ArmyRulesSpec>;
+		spells: ArmySpellSpec[];
 		armyRows: ArmyRosterRow[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -37,6 +40,8 @@
 		skillIndex,
 		traitIndex,
 		combatArtIndex,
+		spellcraftIndex,
+		spells,
 		armyRows,
 		counts,
 		format,
@@ -301,6 +306,8 @@
 			{skillIndex}
 			{traitIndex}
 			{combatArtIndex}
+			{spellcraftIndex}
+			{spells}
 			stats={selectedCard.stats}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}

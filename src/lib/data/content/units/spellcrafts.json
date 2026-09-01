@@ -1,0 +1,74 @@
+[
+	{
+		"id": "armamancy",
+		"name": "Armamancy"
+	},
+	{
+		"id": "art-of-conjuration",
+		"name": "Art of Conjuration"
+	},
+	{
+		"id": "art-of-enchanting",
+		"name": "Art of Enchanting"
+	},
+	{
+		"id": "art-of-sorcery",
+		"name": "Art of Sorcery"
+	},
+	{
+		"id": "cryomancy",
+		"name": "Cryomancy"
+	},
+	{
+		"id": "electromancy",
+		"name": "Electromancy"
+	},
+	{
+		"id": "everlasting-rain-invocations",
+		"name": "Everlasting Rain Invocations"
+	},
+	{
+		"id": "hieromancy",
+		"name": "Hieromancy"
+	},
+	{
+		"id": "invocation",
+		"name": "Invocation"
+	},
+	{
+		"id": "kitsune-no-mai",
+		"name": "Kitsune no Mai"
+	},
+	{
+		"id": "necromancy",
+		"name": "Necromancy"
+	},
+	{
+		"id": "other-spells",
+		"name": "Other Spells"
+	},
+	{
+		"id": "purification-rites",
+		"name": "Purification Rites"
+	},
+	{
+		"id": "rooting-embrace",
+		"name": "Rooting Embrace"
+	},
+	{
+		"id": "shamanism",
+		"name": "Shamanism"
+	},
+	{
+		"id": "succubi-magic",
+		"name": "Succubi Magic"
+	},
+	{
+		"id": "wellspring",
+		"name": "Wellspring"
+	},
+	{
+		"id": "wizardry",
+		"name": "Wizardry"
+	}
+]

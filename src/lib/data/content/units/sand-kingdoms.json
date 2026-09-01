@@ -29,6 +29,12 @@
 				"level": 1,
 				"dynamicValue": "Scorching"
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-sorcery",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -77,6 +83,16 @@
 				"id": "metamagic",
 				"level": 3
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-enchanting",
+				"level": 1
+			},
+			{
+				"id": "art-of-sorcery",
+				"level": 4
+			}
 		]
 	},
 	{
@@ -122,6 +138,12 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Scorching"
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-enchanting",
+				"level": 3
 			}
 		]
 	},
@@ -181,6 +203,12 @@
 				"level": 1,
 				"dynamicValue": "Scorching, Dark"
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "necromancy",
+				"level": 3
+			}
 		]
 	},
 	{
@@ -218,6 +246,16 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Scorching"
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-enchanting",
+				"level": 3
+			},
+			{
+				"id": "electromancy",
+				"level": 1
 			}
 		]
 	},
@@ -257,6 +295,16 @@
 				"level": 1,
 				"dynamicValue": "Scorching"
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "armamancy",
+				"level": 3
+			},
+			{
+				"id": "art-of-enchanting",
+				"level": 1
+			}
 		]
 	},
 	{
@@ -287,6 +335,16 @@
 			{
 				"id": "resourceful",
 				"level": 2
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "art-of-conjuration",
+				"level": 4
+			},
+			{
+				"id": "wizardry",
+				"level": 1
 			}
 		]
 	}

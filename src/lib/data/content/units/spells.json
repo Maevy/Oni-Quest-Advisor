@@ -1,0 +1,3305 @@
+[
+	{
+		"id": "summon-water-elemental",
+		"name": " Summon Water Elemental",
+		"group": "art-of-conjuration",
+		"element": "water",
+		"level": 3,
+		"effect": [
+			{
+				"text": "[Mana Cost: 3], Summon Water Elemental to the field."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "0"
+	},
+	{
+		"id": "a-second-chance",
+		"name": "A Second Chance",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 3,
+		"effect": [
+			{
+				"text": "The target model regains 1 HP. If the target model was Incapacitated, it also regains 1 AP."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "agony",
+		"name": "Agony",
+		"group": "succubi-magic",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "The enchanted model must perform an INT roll at the beginning of each Activation or Reaction. On a failed roll, it loses 1 HP, and its Activation or Reaction ends. If a friendly model comes in Base Contact with the Enchanted model, this Enchantment ends."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "Casting Aura",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "anointment",
+		"name": "Anointment",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 4,
+		"effect": [
+			{
+				"text": "The enchanted model cannot be targeted by enemy Enchantments."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "arcane-bolt",
+		"name": "Arcane Bolt",
+		"group": "art-of-sorcery",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Critical: "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "arcane-shield",
+		"name": "Arcane Shield",
+		"group": "art-of-enchanting",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Enchanted model gains +4 to its ARM value. This bonus cannot increase a model’s ARM value above 6. In addition, Critical Hits scored against this model do not ignore ARM."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "blessed-rain",
+		"name": "Blessed Rain",
+		"group": "everlasting-rain-invocations",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Until your next Strategic Phase, the affected area becomes a Shallow Aquatic Environment for enemies and Light Cover for allies."
+			}
+		],
+		"type": "Spell, Transmutation | Melee & Ranged",
+		"rch": "0, AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "blinding-light",
+		"name": "Blinding Light",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": ", Models within the AOE become "
+			},
+			{
+				"text": "Blinded",
+				"link": {
+					"type": "trait",
+					"id": "blinded"
+				}
+			},
+			{
+				"text": " (state) on Hit until the end of the turn."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16, AOE: Circular S",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "burning-resolve",
+		"name": "Burning Resolve",
+		"group": "kitsune-no-mai",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Target model with 0 Activation Points regains 1 Activation Point."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Healing | Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "burning-touch",
+		"name": "Burning Touch",
+		"group": "art-of-enchanting",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Target gains: "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 1",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": ". This enchanted model may declare Assist Action and remove "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": " State from an allied model in Base Contact."
+			}
+		],
+		"pw": {
+			"fixed": "✯"
+		},
+		"type": "Spell, Enchantment | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "chain-lightning",
+		"name": "Chain Lightning",
+		"group": "everlasting-rain-invocations",
+		"element": "air",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Ricochet IV",
+				"link": {
+					"type": "trait",
+					"id": "ricochet--x"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "claws-of-earth",
+		"name": "Claws of Earth",
+		"group": "other-spells",
+		"element": "earth",
+		"level": 1,
+		"effect": [
+			{
+				"text": "[Mana Cost (1)]; "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": "; Each model within the AOE suffers 3 Hits."
+			}
+		],
+		"pw": {
+			"fixed": "14"
+		},
+		"type": "Ranged",
+		"rch": "Casting Aura; AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "command-the-undead",
+		"name": "Command the Undead",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Continuous. This Spell cannot be negated by "
+			},
+			{
+				"text": "Elemental Essence",
+				"link": {
+					"type": "trait",
+					"id": "elemental-essence"
+				}
+			},
+			{
+				"text": " and does not cause Confrontation. To succeed, the caster must perform a number of INT rolls equal to the target’s Tier. The caster may spend any amount of Mana, with each one guaranteeing a successful INT roll. Spending at least 1 Mana allows control of a Level II "
+			},
+			{
+				"text": "Undead",
+				"link": {
+					"type": "trait",
+					"id": "undead-1"
+				}
+			},
+			{
+				"text": ". If successful, the target’s Attack rolls are negated, and a target with "
+			},
+			{
+				"text": "Undead I",
+				"link": {
+					"type": "trait",
+					"id": "undead-1"
+				}
+			},
+			{
+				"text": " becomes allied to the caster. The converted Hostile retains its remaining AP."
+			}
+		],
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura",
+		"stk": {
+			"fixed": "x"
+		}
+	},
+	{
+		"id": "confuse-target",
+		"name": "Confuse Target",
+		"group": "wizardry",
+		"element": "elder",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Mindgame",
+				"link": {
+					"type": "trait",
+					"id": "mindgame"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ricochet I",
+				"link": {
+					"type": "trait",
+					"id": "ricochet--x"
+				}
+			},
+			{
+				"text": ". The target model becomes "
+			},
+			{
+				"text": "Confused",
+				"link": {
+					"type": "trait",
+					"id": "confused"
+				}
+			},
+			{
+				"text": " (State) until the start of caster's next Strategic phase. When casting this spell, the caster may spend 1 Mana to gain +2 STK."
+			}
+		],
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "corroding-embrace-other-spells",
+		"name": "Corroding Embrace",
+		"group": "other-spells",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "corroding-embrace-necromancy",
+		"name": "Corroding Embrace",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 4,
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep II",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		],
+		"pw": {
+			"fixed": "14"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "3",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "curative-miracle",
+		"name": "Curative Miracle",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 4,
+		"effect": [
+			{
+				"text": "The target model regains all HP. In addition, the "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", v and "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": " States are removed from the model."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Healing | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "curative-touch",
+		"name": "Curative Touch",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 1,
+		"effect": [
+			{
+				"text": "The target model regains all HP. In addition, the "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Crippled",
+				"link": {
+					"type": "trait",
+					"id": "crippled"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": " States are removed from the model."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Healing | Melee",
+		"rch": "0",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "cure",
+		"name": "Cure",
+		"group": "cryomancy",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Removes "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Crippled",
+				"link": {
+					"type": "trait",
+					"id": "crippled"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", and "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " States from the target."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "curse-of-decay",
+		"name": "Curse of Decay",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Continuous. The target becomes "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": " State."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "cutting-chill",
+		"name": "Cutting Chill",
+		"group": "art-of-enchanting",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Enchanted model’s Melee Attacks gain +2 PW. When the enchanted model hits a target with a Melee Attack, the target becomes "
+			},
+			{
+				"text": "Immobilized",
+				"link": {
+					"type": "trait",
+					"id": "immobilized"
+				}
+			},
+			{
+				"text": " State."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "deep-freeze",
+		"name": "Deep Freeze",
+		"group": "cryomancy",
+		"element": "water",
+		"level": 3,
+		"effect": [
+			{
+				"text": "[Mana Cost: 1] While enchanted, the model suffers -3 ARM mod, and cannot declare Movements or Actions other than Idle and Nothing. Attacks against the model have Advantage. At the beginning of the next Strategic Phase (any), the enchanted model may perform a T roll. On a successful roll, the Enchantment is removed. During its Active Role, the enchanted model may declare Assist targeting itself and perform a T roll. On a successful roll, the Enchantment is removed."
+			}
+		],
+		"type": "Spell, Enchantment | Melee & Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "dispel-magic",
+		"name": "Dispel Magic",
+		"group": "wizardry",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": ". Choose one of the following: (1): Remove target Sorcery, Enchantment, Transmutation spell from the field. (2): Remove target summoned creature from the field. (3): Cancel "
+			},
+			{
+				"text": "Shrouded",
+				"link": {
+					"type": "trait",
+					"id": "shrouded"
+				}
+			},
+			{
+				"text": " State."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16, AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "downpour",
+		"name": "Downpour",
+		"group": "everlasting-rain-invocations",
+		"element": "water",
+		"level": 3,
+		"effect": [
+			{
+				"text": "[Mana Cost: 1] The affected area becomes a Shallow Aquatic Environment."
+			}
+		],
+		"type": "Spell, Transmutation | Ranged",
+		"rch": "16, AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "draining-impulse",
+		"name": "Draining Impulse",
+		"group": "succubi-magic",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "[Mana Cost (2)]; The enchanted model receives additional 2 Activation Points in the Active and Reactive role. After this Enchantment is removed, the model becomes "
+			},
+			{
+				"text": "Fatigued",
+				"link": {
+					"type": "trait",
+					"id": "fatigued"
+				}
+			},
+			{
+				"text": " (State)."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "drown",
+		"name": "Drown",
+		"group": "art-of-sorcery",
+		"element": "water",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Enemy models within the AOE become "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " on Hit until the end of the turn."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16, AoE Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "electrification-electromancy",
+		"name": "Electrification",
+		"group": "electromancy",
+		"element": "air",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Ricochet IV",
+				"link": {
+					"type": "trait",
+					"id": "ricochet--x"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "0",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "electrification-everlasting-rain-invocations",
+		"name": "Electrification",
+		"group": "everlasting-rain-invocations",
+		"element": "air",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Ricochet IV",
+				"link": {
+					"type": "trait",
+					"id": "ricochet--x"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "0",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "ethereal-blades",
+		"name": "Ethereal Blades",
+		"group": "armamancy",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "An attack with this Spell receives a different Effect, depending on the number of successful Attack rolls (regardless of the Confrontation rule). The higher combo result also includes the Effects of lower results: [2 Hits]: PW+6;  [3 Hits]: "
+			},
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": "; [4 Hits]: "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": "; [5 Hits]: If the target becomes "
+			},
+			{
+				"text": "Incapacitated",
+				"link": {
+					"type": "trait",
+					"id": "incapacitated"
+				}
+			},
+			{
+				"text": ", you can automatically render it "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT",
+			"modifier": -3
+		},
+		"type": "Spell, Sorcery | Melee",
+		"rch": "0",
+		"stk": {
+			"fixed": "5 in Active, 3 in Reactive Role"
+		}
+	},
+	{
+		"id": "featherlight",
+		"name": "Featherlight",
+		"group": "art-of-enchanting",
+		"element": "air",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Target gains +2 SPD."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "fiery-fervor",
+		"name": "Fiery Fervor",
+		"group": "succubi-magic",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Remove "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Confused",
+				"link": {
+					"type": "trait",
+					"id": "confused"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Crippled",
+				"link": {
+					"type": "trait",
+					"id": "crippled"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Blinded",
+				"link": {
+					"type": "trait",
+					"id": "blinded"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Immobilized",
+				"link": {
+					"type": "trait",
+					"id": "immobilized"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": ", Petrified, "
+			},
+			{
+				"text": "Fatigued",
+				"link": {
+					"type": "trait",
+					"id": "fatigued"
+				}
+			},
+			{
+				"text": " (States) from the model. It also gains +2 OFF, DEF."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "fire-breath",
+		"name": "Fire Breath",
+		"group": "shamanism",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Burn 1",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			}
+		],
+		"pw": {
+			"fixed": "12"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "AOE: Spray S",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "fireball",
+		"name": "Fireball",
+		"group": "art-of-sorcery",
+		"element": "fire",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 1",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "flameskin",
+		"name": "Flameskin",
+		"group": "art-of-enchanting",
+		"element": "fire",
+		"level": 3,
+		"effect": [
+			{
+				"text": "A model that attacks the enchanted model and is within 1” suffers a hit with Power (PW) 10 and the Burn (1) trait. If this hit wounds the attacker, this Enchantment is removed."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "flare-kitsune-no-mai",
+		"name": "Flare",
+		"group": "kitsune-no-mai",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Sweep II",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Burn 2",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "3",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "flare-art-of-sorcery",
+		"name": "Flare",
+		"group": "art-of-sorcery",
+		"element": "fire",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Sweep II",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 2",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "3",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "flash-flood",
+		"name": "Flash Flood",
+		"group": "everlasting-rain-invocations",
+		"element": "water",
+		"level": 4,
+		"effect": [
+			{
+				"text": "Knockback 1",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			}
+		],
+		"pw": {
+			"fixed": "10"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "AOE: Spray L",
+		"stk": {
+			"fixed": "3"
+		}
+	},
+	{
+		"id": "formless-edge",
+		"name": "Formless Edge",
+		"group": "art-of-enchanting",
+		"element": "air",
+		"level": 1,
+		"effect": [
+			{
+				"text": "The enchanted model’s Melee Attacks gains + 2 RCH and "
+			},
+			{
+				"text": "Knockback 2",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "fortified-recovery",
+		"name": "Fortified Recovery",
+		"group": "shamanism",
+		"element": "earth",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Choose one: •Remove 1 State except "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Flying",
+				"link": {
+					"type": "trait",
+					"id": "flying"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Shrouded",
+				"link": {
+					"type": "trait",
+					"id": "shrouded"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Incapacitated",
+				"link": {
+					"type": "trait",
+					"id": "incapacitated"
+				}
+			},
+			{
+				"text": ", or "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": ". •Regain 1 HP. •Another model may regain 1 AP."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "frost",
+		"name": "Frost",
+		"group": "cryomancy",
+		"element": "water",
+		"level": 2,
+		"effect": [
+			{
+				"text": "The target becomes "
+			},
+			{
+				"text": "Immobilized",
+				"link": {
+					"type": "trait",
+					"id": "immobilized"
+				}
+			},
+			{
+				"text": " on Hit until the caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"fixed": "11"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "AOE: Spray S",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "glacial-circle",
+		"name": "Glacial Circle",
+		"group": "art-of-sorcery",
+		"element": "water",
+		"level": 4,
+		"effect": [
+			{
+				"text": "Frostbite",
+				"link": {
+					"type": "trait",
+					"id": "frostbite"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": " By spending 1 Mana, the caster may increase the STK of this Spell by 1. Enemy models within the AoE become Slowed on Hit. Areas within the AoE become Difficult and Dangerous Environments until the caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"fixed": "13"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "glacier-circle-other-spells",
+		"name": "Glacier Circle",
+		"group": "other-spells",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Frostbite",
+				"link": {
+					"type": "trait",
+					"id": "frostbite"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": " By spending 1 Mana, the caster may increase the STK of this Spell by 1. Enemy models within the AoE become Slowed on Hit. Areas within the AoE become Difficult and Dangerous Environments until the caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"fixed": "13"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "glacier-circle-cryomancy",
+		"name": "Glacier Circle",
+		"group": "cryomancy",
+		"element": "water",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Frostbite",
+				"link": {
+					"type": "trait",
+					"id": "frostbite"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": " By spending 1 Mana, the caster may increase the STK of this Spell by 1. Enemy models within the AoE become Slowed on Hit. Areas within the AoE become Difficult and Dangerous Environments until the caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"fixed": "13"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "greater-cure",
+		"name": "Greater Cure",
+		"group": "invocation",
+		"element": "earth",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Removes "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Blinded",
+				"link": {
+					"type": "trait",
+					"id": "blinded"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Confused",
+				"link": {
+					"type": "trait",
+					"id": "confused"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Crippled",
+				"link": {
+					"type": "trait",
+					"id": "crippled"
+				}
+			},
+			{
+				"text": ", Petrified, "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Slowed",
+				"link": {
+					"type": "trait",
+					"id": "slowed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ", States from allied models within the AoE."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16, Circular L",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "hasten",
+		"name": "Hasten",
+		"group": "art-of-enchanting",
+		"element": "elder",
+		"level": 3,
+		"effect": [
+			{
+				"text": "During the Strategic phase, the enchanted model may perform a Normal Movement and then remove the enchantment."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "hastened-recovery",
+		"name": "Hastened Recovery",
+		"group": "wizardry",
+		"element": "elder",
+		"level": 3,
+		"effect": [
+			{
+				"text": "You may do one of the following: (1): Remove "
+			},
+			{
+				"text": "Crippled",
+				"link": {
+					"type": "trait",
+					"id": "crippled"
+				}
+			},
+			{
+				"text": " (State); (2): Remove "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleeding"
+				}
+			},
+			{
+				"text": " (state); (3) Remove "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " (State); (4) Remove "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": " (State); (5): The target regains 1 HP."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "ice-shield",
+		"name": "Ice Shield",
+		"group": "art-of-enchanting",
+		"element": "water",
+		"level": 3,
+		"effect": [
+			{
+				"text": "When performing a DMG roll against the enchanted model, the attacker must first perform a DMG roll against ARM 5. If successful, the attacker must then make another roll against the enchanted model’s default ARM, but with PW-3."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "ice-spikes",
+		"name": "Ice Spikes",
+		"group": "cryomancy",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Target becomes "
+			},
+			{
+				"text": "Slowed",
+				"link": {
+					"type": "trait",
+					"id": "slowed"
+				}
+			},
+			{
+				"text": " State on Hit, until the caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"fixed": "11"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "3"
+		}
+	},
+	{
+		"id": "ignite",
+		"name": "Ignite",
+		"group": "art-of-sorcery",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Burn 1",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "inferno-art-of-sorcery",
+		"name": "Inferno",
+		"group": "art-of-sorcery",
+		"element": "fire",
+		"level": 4,
+		"effect": [
+			{
+				"text": "[Mana Cost (1)]; "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 3",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "inferno-other-spells",
+		"name": "Inferno",
+		"group": "other-spells",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "[Mana Cost (1)]; "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 3",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "leeching-bolt",
+		"name": "Leeching Bolt",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 4,
+		"effect": [
+			{
+				"text": "The caster regains 1 HP for each Wound dealt to an enemy model without the "
+			},
+			{
+				"text": "Undead",
+				"link": {
+					"type": "trait",
+					"id": "undead-1"
+				}
+			},
+			{
+				"text": " or "
+			},
+			{
+				"text": "Construct",
+				"link": {
+					"type": "trait",
+					"id": "construct"
+				}
+			},
+			{
+				"text": " Trait."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "life-leech-other-spells",
+		"name": "Life Leech",
+		"group": "other-spells",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "The enchanted model regains 1 HP for every Wound it deals to an enemy model without the Undead or "
+			},
+			{
+				"text": "Construct",
+				"link": {
+					"type": "trait",
+					"id": "construct"
+				}
+			},
+			{
+				"text": " trait (to the max of double its default HP)."
+			}
+		],
+		"pw": {
+			"fixed": "✯"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "life-leech-necromancy",
+		"name": "Life Leech",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 3,
+		"effect": [
+			{
+				"text": "The enchanted model gains 1 HP for each Wound dealt to an enemy model without the "
+			},
+			{
+				"text": "Undead",
+				"link": {
+					"type": "trait",
+					"id": "undead-1"
+				}
+			},
+			{
+				"text": " or "
+			},
+			{
+				"text": "Construct",
+				"link": {
+					"type": "trait",
+					"id": "construct"
+				}
+			},
+			{
+				"text": " Trait (up to double its default HP)."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Melee & Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "lightning-bolt",
+		"name": "Lightning Bolt",
+		"group": "everlasting-rain-invocations",
+		"element": "air",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "mana-burst",
+		"name": "Mana Burst",
+		"group": "wizardry",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "mass-mindbreak-art-of-sorcery",
+		"name": "Mass Mindbreak",
+		"group": "art-of-sorcery",
+		"element": "elder",
+		"level": 4,
+		"effect": [
+			{
+				"text": "Mindgame",
+				"link": {
+					"type": "trait",
+					"id": "mindgame"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": "; Affects only selected enemy models within the AoE. If wounded, the target also becomes "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " (State) until caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "mass-mindbreak-other-spells",
+		"name": "Mass Mindbreak",
+		"group": "other-spells",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Mindgame",
+				"link": {
+					"type": "trait",
+					"id": "mindgame"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": "; Affects only selected enemy models within the AoE. If wounded, the target also becomes "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " (State) until caster’s next Strategic Phase."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "melting-touch",
+		"name": "Melting Touch",
+		"group": "art-of-enchanting",
+		"element": "fire",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Target gains: "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 1",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "mirror-bubble",
+		"name": "Mirror Bubble",
+		"group": "art-of-enchanting",
+		"element": "water",
+		"level": 2,
+		"effect": [
+			{
+				"text": "When the enchanted model suffers a Hit from a Melee Attack, the attacker must perform an AG roll. If it fails, the attacker suffers a STK 1 Hit with PW equal to its own Attack. Afterwards, this Enchantment is removed."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "misfortune",
+		"name": "Misfortune",
+		"group": "shamanism",
+		"element": "divine",
+		"level": 2,
+		"effect": [
+			{
+				"text": "The enchanted model must reroll any successful roll once."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "natural-fortitude",
+		"name": "Natural Fortitude",
+		"group": "invocation",
+		"element": "earth",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Target gains "
+			},
+			{
+				"text": "Resistance I Spells",
+				"link": {
+					"type": "trait",
+					"id": "resistance--x"
+				}
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "necrotic-wound",
+		"name": "Necrotic Wound",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Target gains "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "overgrowth",
+		"name": "Overgrowth",
+		"group": "invocation",
+		"element": "earth",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Target gains +3 T."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "piercing-stream",
+		"name": "Piercing Stream",
+		"group": "art-of-sorcery",
+		"element": "water",
+		"level": 2,
+		"effect": [
+			{
+				"text": "(Armor-Piercing([trait.ARMOR_PIERCING]"
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "primal-claw",
+		"name": "Primal Claw",
+		"group": "shamanism",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "May choose any Element."
+			}
+		],
+		"pw": {
+			"fixed": "13"
+		},
+		"type": "Spell, Sorcery | Melee",
+		"rch": "1",
+		"stk": {
+			"fixed": "3"
+		}
+	},
+	{
+		"id": "primordial-word",
+		"name": "Primordial Word",
+		"group": "invocation",
+		"element": "earth",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": ". During the Resolution Step (after all movements are performed) Summoned, "
+			},
+			{
+				"text": "Undead",
+				"link": {
+					"type": "trait",
+					"id": "undead"
+				}
+			},
+			{
+				"text": ", and models with the Profane or Divine Element affected by the AoE suffer 1 Wound and must be moved into base contact with the outer edge of the AoE (caster’s choice). When a model with the Profane or Divine Element enters the AoE or spends an AP within it, that model suffers 1 Wound during the resolution Step. "
+			},
+			{
+				"text": "Undead I",
+				"link": {
+					"type": "trait",
+					"id": "undead"
+				}
+			},
+			{
+				"text": " and Summoned models cannot enter the AoE. Only one Primordial Word AoE may be on the field per caster. If the caster moves outside the AoE, this spell is removed from the field."
+			}
+		],
+		"type": "Spell, Transmutation | Melee",
+		"rch": "0, Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "protective-barrier",
+		"name": "Protective Barrier",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 2,
+		"effect": [
+			{
+				"text": "If the enchanted model is hit, negate 1 Hit (if there are multiple hits, the player may choose) and remove this Enchantment from the model."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "protective-bubble",
+		"name": "Protective Bubble",
+		"group": "everlasting-rain-invocations",
+		"element": "water",
+		"level": 2,
+		"effect": [
+			{
+				"text": "If the enchanted model is hit, negate 1 Hit (the player may choose which Hit if there are multiple) and remove this Enchantment from the model. When removed, the 2” area surrounding the model becomes Shallow Aquatic Environment until the end of the Turn."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "protective-currents",
+		"name": "Protective Currents",
+		"group": "art-of-enchanting",
+		"element": "air",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Attacks at the enchanted model suffer -4 attacking modifier. If the enchanted model is Hit, this Enchantment is removed, but all enemy models within 3'' of the enchanted model suffer a Hit with "
+			},
+			{
+				"text": "Knockback 3",
+				"link": {
+					"type": "trait",
+					"id": "knockback-x"
+				}
+			},
+			{
+				"text": ", but no damage."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "purgation",
+		"name": "Purgation",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 1,
+		"effect": [
+			{
+				"text": "- Removes the"
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": " states from the target. - Removes any number of Enchantments from the target. - If the target of this spell has the Undead, Affinity (Profane), or Elemental Essence (Profane) trait, it automatically suffers a Wound when hit."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Healing | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "purification",
+		"name": "Purification",
+		"group": "purification-rites",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Removes any number of Enchantments from the target. Removes "
+			},
+			{
+				"text": "Poisoned",
+				"link": {
+					"type": "trait",
+					"id": "poisoned"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": ", Petrified, "
+			},
+			{
+				"text": "Confused",
+				"link": {
+					"type": "trait",
+					"id": "confused"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Blinded",
+				"link": {
+					"type": "trait",
+					"id": "blinded"
+				}
+			},
+			{
+				"text": " States. The target of this Spell cannot be affected by enemy Enchantments until the End phase. If the target has the "
+			},
+			{
+				"text": "Undead",
+				"link": {
+					"type": "trait",
+					"id": "undead"
+				}
+			},
+			{
+				"text": " Trait, it automatically suffers a Wound when hit by this Spell."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "raise-the-undead",
+		"name": "Raise the Undead",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 5,
+		"effect": [
+			{
+				"text": "[Mana Cost: 2] Select a Dead model within Awareness. Summon up to 2 Tier I Undead or 1 Tier II Undead in Base Contact with the Dead model, then remove the Dead model."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "Casting Aura",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "reanimation",
+		"name": "Reanimation",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 5,
+		"effect": [
+			{
+				"text": "[Mana Cost: 1] Each "
+			},
+			{
+				"text": "Undead",
+				"link": {
+					"type": "trait",
+					"id": "undead"
+				}
+			},
+			{
+				"text": " model within RCH regains full HP and may cancel Dead State."
+			}
+		],
+		"type": "Spell, Healing | Ranged",
+		"rch": "Casting Aura",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "redirect-damage",
+		"name": "Redirect Damage",
+		"group": "wizardry",
+		"element": "elder",
+		"level": 3,
+		"effect": [
+			{
+				"text": "On hit, the Target’s successful non-Critical Hits are negated. In addition, the Target model receives a number of non-Critical Hits equal to the number of successful Attack Rolls (apart from Critical Hits) it made during its Attack, using the same Item, Spell and Abilities it used during its Attack. This Spell is not affected by “Ranged (Friendly Fire)”"
+			}
+		],
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "regrowth",
+		"name": "Regrowth",
+		"group": "invocation",
+		"element": "earth",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Target gains "
+			},
+			{
+				"text": "Regeneration I",
+				"link": {
+					"type": "skill",
+					"id": "regeneration"
+				}
+			},
+			{
+				"text": ". Whenever a model regains 1 HP with this spell, the spell ends."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "10",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "rooting-embrace",
+		"name": "Rooting Embrace",
+		"group": "rooting-embrace",
+		"element": "earth",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Focus",
+				"link": {
+					"type": "trait",
+					"id": "focus"
+				}
+			},
+			{
+				"text": "; Affects all enemy models within the Casting Aura. On hit, the model becomes "
+			},
+			{
+				"text": "Immobilized",
+				"link": {
+					"type": "trait",
+					"id": "immobilized"
+				}
+			},
+			{
+				"text": " State."
+			}
+		],
+		"type": "Ranged",
+		"rch": "Casting Aura",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "searing-blood",
+		"name": "Searing Blood",
+		"group": "shamanism",
+		"element": "fire",
+		"level": 3,
+		"effect": [
+			{
+				"text": "The Enchanted model must perform an M roll when activated. On a failure, it loses 1 HP and 1 AP; remove the Enchantment."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "smite",
+		"name": "Smite",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Burn 1",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "M"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AOE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "soul-crush",
+		"name": "Soul Crush",
+		"group": "art-of-sorcery",
+		"element": "elder",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": ". If wounded, the target becomes "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": " State until caster’s next End phase."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "soul-leech",
+		"name": "Soul Leech",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 2,
+		"effect": [
+			{
+				"text": "The caster gains 1 Mana Counter whenever the enchanted model successfully deals a Wound."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "spectral-blade",
+		"name": "Spectral Blade",
+		"group": "art-of-enchanting",
+		"element": "elder",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Target gains: "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "spectral-greatsword",
+		"name": "Spectral Greatsword",
+		"group": "armamancy",
+		"element": "elder",
+		"level": 3,
+		"effect": [
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT",
+			"modifier": 2
+		},
+		"type": "Spell, Sorcery | Melee",
+		"rch": "2",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "spectral-sight",
+		"name": "Spectral Sight",
+		"group": "necromancy",
+		"element": "profane",
+		"level": 1,
+		"effect": [
+			{
+				"text": "The enchanted model gains "
+			},
+			{
+				"text": "Advantage Undead",
+				"link": {
+					"type": "trait",
+					"id": "advantage--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"type": "Spell, Enchantment | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "stone-skin",
+		"name": "Stone Skin",
+		"group": "invocation",
+		"element": "earth",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Target gains +3 ARM."
+			}
+		],
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "summon-colossus",
+		"name": "Summon Colossus",
+		"group": "art-of-conjuration",
+		"element": "earth",
+		"level": 4,
+		"effect": [
+			{
+				"text": "[Mana Cost (4)], Summon Colossus to the field."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "0"
+	},
+	{
+		"id": "summon-earth-elemental",
+		"name": "Summon Earth Elemental",
+		"group": "art-of-conjuration",
+		"element": "earth",
+		"level": 3,
+		"effect": [
+			{
+				"text": "[Mana Cost (3)], Summon Earth Elemental to the field."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "0"
+	},
+	{
+		"id": "summon-gargoyle",
+		"name": "Summon Gargoyle",
+		"group": "art-of-conjuration",
+		"element": "earth",
+		"level": 1,
+		"effect": [
+			{
+				"text": "[Mana Cost (1)], Summon Gargoyle to the field."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "0"
+	},
+	{
+		"id": "summon-golem",
+		"name": "Summon Golem",
+		"group": "art-of-conjuration",
+		"element": "earth",
+		"level": 2,
+		"effect": [
+			{
+				"text": "[Mana Cost (2)], Summon Golem to the field."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "0"
+	},
+	{
+		"id": "summon-imp",
+		"name": "Summon Imp",
+		"group": "art-of-conjuration",
+		"element": "elder",
+		"level": 1,
+		"effect": [
+			{
+				"text": "[Mana Cost (1)]; Summon Imp to the field."
+			}
+		],
+		"type": "Spell, Conjuration | Ranged",
+		"rch": "0"
+	},
+	{
+		"id": "telekinetic-blast",
+		"name": "Telekinetic Blast",
+		"group": "art-of-sorcery",
+		"element": "elder",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Knockback 3",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT",
+			"modifier": -3
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "AOE: Spray L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "thunderstorm-other-spells",
+		"name": "Thunderstorm",
+		"group": "other-spells",
+		"element": "air",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Mana Cost (1), "
+			},
+			{
+				"text": "Focus",
+				"link": {
+					"type": "trait",
+					"id": "focus"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Ranged",
+		"rch": "Casting Aura, AoE: Circular L",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "thunderstorm-everlasting-rain-invocations",
+		"name": "Thunderstorm",
+		"group": "everlasting-rain-invocations",
+		"element": "air",
+		"level": 4,
+		"effect": [
+			{
+				"text": "[Mana Cost: 2] "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			}
+		],
+		"pw": {
+			"stat": "INT"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "16 AOE: Circular L",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "unrelenting-zeal",
+		"name": "Unrelenting Zeal",
+		"group": "succubi-magic",
+		"element": "fire",
+		"level": 1,
+		"effect": [
+			{
+				"text": "When the enchanted model suffers a Wound, it may perform a M roll. If successful, that Wound is prevented and this Spell ends."
+			}
+		],
+		"pw": {
+			"fixed": "-"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "2"
+		}
+	},
+	{
+		"id": "void-lance",
+		"name": "Void Lance",
+		"group": "armamancy",
+		"element": "elder",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": "; Can target any model within RCH. On hit, all models in a straight line from the caster to the target get hit."
+			}
+		],
+		"pw": {
+			"stat": "INT",
+			"modifier": 2
+		},
+		"type": "Spell, Sorcery | Melee",
+		"rch": "6",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "ward",
+		"name": "Ward",
+		"group": "wizardry",
+		"element": "elder",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Non-Critical Damage and related effects of any incoming Attack targeting the target of this Spell are ignored. When the caster is Engaged, this spell can target only the caster."
+			}
+		],
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "warding-barrier",
+		"name": "Warding Barrier",
+		"group": "hieromancy",
+		"element": "divine",
+		"level": 3,
+		"effect": [
+			{
+				"text": "- To cast this Spell the caster needs to perform the Ritual Action. - "
+			},
+			{
+				"text": "Focus",
+				"link": {
+					"type": "trait",
+					"id": "focus"
+				}
+			},
+			{
+				"text": " - Ranged Attacks with Spell type, targeting models within the Casting Aura, are negated. - Models with Incorporeal Trait within the Casting Aura suffer magical damage of PW equal to the caster’s Morale, and must be moved directly away from the caster to the outside edge of its Casting Aura."
+			}
+		],
+		"pw": {
+			"fixed": "*"
+		},
+		"type": "Spell, Enchantment | Ranged",
+		"rch": "Casting Aura",
+		"stk": {
+			"fixed": "1"
+		}
+	},
+	{
+		"id": "water-lash-art-of-sorcery",
+		"name": "Water Lash",
+		"group": "art-of-sorcery",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Knocbkack 2",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": " (All sizes except Colossal and Epic)"
+			}
+		],
+		"pw": {
+			"fixed": "8"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "water-lash-cryomancy",
+		"name": "Water Lash",
+		"group": "cryomancy",
+		"element": "water",
+		"level": 2,
+		"effect": [
+			{
+				"text": "Knockback 2",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": " (applied to all sizes except Colossal and Epic)."
+			}
+		],
+		"pw": {
+			"fixed": "8"
+		},
+		"type": "Spell, Sorcery | Melee & Ranged",
+		"rch": "16",
+		"stk": {
+			"stat": "STA"
+		}
+	},
+	{
+		"id": "wellspring",
+		"name": "Wellspring",
+		"group": "wellspring",
+		"element": "water",
+		"level": 1,
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": ". The casting can automatically succeed if the caster voluntarily suffers 1 Wound. The AoE area becomes a Shallow Aquatic environment. When casting a Water Conjuration Spell, a creature can be summoned in this area."
+			}
+		],
+		"type": "Ranged",
+		"rch": "16, AOE: Circular S",
+		"stk": {
+			"fixed": "1"
+		}
+	}
+]

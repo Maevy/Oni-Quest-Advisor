@@ -77,6 +77,36 @@ export type ArmyCombatArtRef = {
 	level: number;
 };
 
+/** A spellcraft on a unit; the level is the highest spell level it grants. */
+export type ArmySpellcraftRef = {
+	id: string;
+	level: number;
+};
+
+/** A cost-like spell value: fixed text, or a character stat with optional modifier. */
+export type ArmySpellCost = {
+	fixed?: string;
+	stat?: ArmyStatKey;
+	modifier?: number;
+};
+
+/** A spell from the producer's spell catalogs. */
+export type ArmySpellSpec = {
+	id: string;
+	name: string;
+	/** Spellcraft group id the spell belongs to. */
+	group: string;
+	/** Element id (elder, fire, ...). */
+	element: string;
+	level: number;
+	effect: ArmyTextSegment[];
+	pw?: ArmySpellCost;
+	/** Display value, e.g. 'Spell, Sorcery | Ranged'. */
+	type?: string;
+	rch?: string;
+	stk?: ArmySpellCost;
+};
+
 /** A trait on a unit; dynamic values fill the entry's (X)/(Element) placeholders. */
 export type ArmyTraitRef = {
 	id: string;
@@ -99,6 +129,8 @@ export type ArmyUnitSpec = {
 	traits?: ArmyTraitRef[];
 	/** Combat-art references; most units have none. */
 	combatArts?: ArmyCombatArtRef[];
+	/** Spellcraft references; casters only. */
+	spellcrafts?: ArmySpellcraftRef[];
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
 	mount?: { unitId: string; points: number };
@@ -113,10 +145,24 @@ export type ArmyRulesSection = {
 	text: ArmyTextSegment[];
 };
 
-/** A resolved rules popup: heading plus its level sections. */
+/** One spell row in a spellcraft popup, values resolved against the unit. */
+export type ArmySpellRow = {
+	element: string;
+	elementName: string;
+	level: number;
+	name: string;
+	effect: ArmyTextSegment[];
+	pw?: string;
+	type?: string;
+	rch?: string;
+	stk?: string;
+};
+
+/** A resolved rules popup: heading plus level sections or a spell table. */
 export type ArmyRulesPopup = {
 	title: string;
 	sections: ArmyRulesSection[];
+	spells?: ArmySpellRow[];
 };
 
 /** One copy of a unit in the current army - every copy is its own entry. */
@@ -371,6 +417,83 @@ export function rulesLinkPopup(
 			? numbers.map((level) => ({ level, available: true, text: levels[level] }))
 			: [{ available: true, text: entry.description ?? [] }];
 	return { title: entry.name, sections };
+}
+
+/** Popup order of the elements: Elder first, then the rulebook order. */
+const ELEMENT_ORDER = ['elder', 'air', 'earth', 'divine', 'fire', 'profane', 'water'];
+
+/** The trait carrying a unit's element affinities. */
+const AFFINITY_TRAIT_ID = 'affinity--element';
+
+/** Element ids a unit can cast, gathered from its Affinity trait references. */
+export function affinityElements(unit: ArmyUnitSpec): string[] {
+	const elements = new Set<string>();
+	for (const ref of unit.traits ?? []) {
+		if (ref.id !== AFFINITY_TRAIT_ID) continue;
+		for (const element of ref.dynamicElements ?? []) elements.add(element.toLowerCase());
+		const value = ref.dynamicValue?.toLowerCase();
+		if (value && value !== 'any') elements.add(value);
+	}
+	return [...elements];
+}
+
+/**
+ * Display of a cost-like spell value against the unit's stats:
+ * 'INT (12) -3', 'STA (2)' or the fixed text ('8', '-', 'x', ...).
+ */
+export function spellCostDisplay(
+	cost: ArmySpellCost | undefined,
+	stats: ArmyStats
+): string | undefined {
+	if (!cost) return undefined;
+	if (cost.fixed !== undefined) return cost.fixed;
+	if (!cost.stat) return undefined;
+	const value = stats[cost.stat];
+	let display = value === null ? cost.stat : cost.stat + ' (' + value + ')';
+	if (cost.modifier !== undefined && cost.modifier !== 0) {
+		display += cost.modifier > 0 ? ' +' + cost.modifier : ' -' + Math.abs(cost.modifier);
+	}
+	return display;
+}
+
+/**
+ * The popup for a unit's spellcraft reference: the spells the unit can
+ * actually cast - its group, at or below its level, in its affinity
+ * elements - as table rows sorted Elder-first, then level, then name.
+ */
+export function spellcraftPopupFor(
+	entry: ArmyRulesSpec | undefined,
+	ref: ArmySpellcraftRef,
+	unit: ArmyUnitSpec,
+	stats: ArmyStats,
+	spells: ArmySpellSpec[]
+): ArmyRulesPopup | null {
+	if (!entry) return null;
+	const elements = new Set(affinityElements(unit));
+	const rank = (element: string): number => {
+		const index = ELEMENT_ORDER.indexOf(element);
+		return index === -1 ? ELEMENT_ORDER.length : index;
+	};
+	const rows = spells
+		.filter(
+			(spell) => spell.group === ref.id && spell.level <= ref.level && elements.has(spell.element)
+		)
+		.sort(
+			(a, b) =>
+				rank(a.element) - rank(b.element) || a.level - b.level || a.name.localeCompare(b.name)
+		)
+		.map((spell) => ({
+			element: spell.element,
+			elementName: spell.element.charAt(0).toUpperCase() + spell.element.slice(1),
+			level: spell.level,
+			name: spell.name,
+			effect: spell.effect,
+			pw: spellCostDisplay(spell.pw, stats),
+			type: spell.type,
+			rch: spell.rch,
+			stk: spellCostDisplay(spell.stk, stats)
+		}));
+	return { title: armyRulesTitle(entry.name, ref.level), sections: [], spells: rows };
 }
 
 /** Rider stats when mounted: non-null mount stats override, statChanges add on top. */

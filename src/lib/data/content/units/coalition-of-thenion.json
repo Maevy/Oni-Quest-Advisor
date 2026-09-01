@@ -104,6 +104,12 @@
 				"id": "inspiring",
 				"level": 1
 			}
+		],
+		"spellcrafts": [
+			{
+				"id": "succubi-magic",
+				"level": 1
+			}
 		]
 	},
 	{
