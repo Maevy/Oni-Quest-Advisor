@@ -429,7 +429,45 @@
 				"text": " (Air)."
 			}
 		],
-		"effects": []
+		"effects": [
+			{
+				"kind": "choice",
+				"options": [
+					{
+						"id": "affinity-fire",
+						"label": "Affinity (Fire)",
+						"grantTrait": {
+							"traitId": "affinity--element",
+							"dynamicElements": ["Fire"]
+						}
+					},
+					{
+						"id": "affinity-water",
+						"label": "Affinity (Water)",
+						"grantTrait": {
+							"traitId": "affinity--element",
+							"dynamicElements": ["Water"]
+						}
+					},
+					{
+						"id": "affinity-earth",
+						"label": "Affinity (Earth)",
+						"grantTrait": {
+							"traitId": "affinity--element",
+							"dynamicElements": ["Earth"]
+						}
+					},
+					{
+						"id": "affinity-air",
+						"label": "Affinity (Air)",
+						"grantTrait": {
+							"traitId": "affinity--element",
+							"dynamicElements": ["Air"]
+						}
+					}
+				]
+			}
+		]
 	},
 	{
 		"id": "expedition-leader",
@@ -1002,7 +1040,41 @@
 				"text": " with one of the following ones: Fire, Water, Earth, Air."
 			}
 		],
-		"effects": []
+		"effects": [
+			{
+				"kind": "choice",
+				"options": [
+					{
+						"id": "fire",
+						"label": "Fire",
+						"replaceAffinity": {
+							"element": "Fire"
+						}
+					},
+					{
+						"id": "water",
+						"label": "Water",
+						"replaceAffinity": {
+							"element": "Water"
+						}
+					},
+					{
+						"id": "earth",
+						"label": "Earth",
+						"replaceAffinity": {
+							"element": "Earth"
+						}
+					},
+					{
+						"id": "air",
+						"label": "Air",
+						"replaceAffinity": {
+							"element": "Air"
+						}
+					}
+				]
+			}
+		]
 	},
 	{
 		"id": "muffled-movement-coalition-of-thenion",

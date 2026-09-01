@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		affinityElements,
 		entryUpgradeBlock,
 		inscribableItems,
 		upgradeCostInArmy,
@@ -11,6 +12,7 @@
 		type ArmySpellcraftOption,
 		type ArmyUnitSpec,
 		type ArmyUpgradeBlock,
+		type ArmyUpgradeOption,
 		type ArmyUpgradeSpec
 	} from '$lib/domain';
 
@@ -30,7 +32,11 @@
 		factionColor: string;
 		onSelect: (upgradeId: string) => void;
 		onSelectSpellcraft: (upgradeId: string, spellcraftId: string) => void;
-		onSelectChoice: (upgradeId: string, optionId: string, itemId?: string) => void;
+		onSelectChoice: (
+			upgradeId: string,
+			optionId: string,
+			selection: { itemId?: string; removedElement?: string }
+		) => void;
 		onClose: () => void;
 	};
 
@@ -110,6 +116,31 @@
 		if (!option?.inscribeItem) return [];
 		return inscribableItems(unit, itemIndex, option.inscribeItem.except);
 	}
+
+	/** Whether picking this option still needs the replaced-Affinity step. */
+	function needsRemovedElement(option: ArmyUpgradeOption): boolean {
+		return option.replaceAffinity !== undefined && affinityElements(unit).length > 1;
+	}
+
+	/** The unit's current Affinity elements, capitalized for display. */
+	function removedElementOptions(): string[] {
+		return affinityElements(unit).map(
+			(element) => element.charAt(0).toUpperCase() + element.slice(1)
+		);
+	}
+
+	/** Why a choice option is disabled, when it is. */
+	function optionBlockReason(option: ArmyUpgradeOption): string | null {
+		if (upgradeOptionUsable(option, unit, itemIndex)) return null;
+		if (option.inscribeItem) return 'No item to inscribe';
+		if (option.grantTrait) return 'Model already has this Affinity';
+		if (option.replaceAffinity) {
+			return affinityElements(unit).length === 0
+				? 'Model has no Affinity'
+				: 'Model already has this Affinity';
+		}
+		return null;
+	}
 </script>
 
 <div
@@ -133,38 +164,80 @@
 		}}
 	>
 		{#if pendingUpgrade && choiceEffectOf(pendingUpgrade) && pendingOptionId !== null}
-			<div class="flex items-center justify-between gap-2">
-				<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Choose an Item</h2>
-				<button
-					type="button"
-					aria-label="Back to the options"
-					class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
-					onclick={back}
-				>
-					Back
-				</button>
-			</div>
-			<p class="mt-2 text-xs text-slate-400">
-				{pendingUpgrade.name}: choose the item to inscribe. Its weight drops by 1 and its Strike
-				rises by 1.
-			</p>
-			<div class="mt-3 space-y-2">
-				{#each inscribableFor(pendingOptionId) as item (item.id)}
+			{@const pendingOption = choiceEffectOf(pendingUpgrade)?.options.find(
+				(candidate) => candidate.id === pendingOptionId
+			)}
+			{#if pendingOption?.replaceAffinity}
+				<div class="flex items-center justify-between gap-2">
+					<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">
+						Replace an Affinity
+					</h2>
 					<button
 						type="button"
-						class="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5 text-left transition hover:border-orange-400/50 hover:bg-slate-800/70 active:bg-slate-800/70"
-						onclick={() =>
-							pendingUpgrade &&
-							pendingOptionId !== null &&
-							onSelectChoice(pendingUpgrade.id, pendingOptionId, item.id)}
+						aria-label="Back to the options"
+						class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+						onclick={back}
 					>
-						<p class="text-sm font-medium text-slate-100">{item.name}</p>
-						<p class="text-[10px] whitespace-nowrap text-slate-400 uppercase">
-							WGT {item.weight}
-						</p>
+						Back
 					</button>
-				{/each}
-			</div>
+				</div>
+				<p class="mt-2 text-xs text-slate-400">
+					{pendingUpgrade.name}: choose the current Affinity that
+					{pendingOption.label} replaces.
+				</p>
+				<div class="mt-3 space-y-2">
+					{#each removedElementOptions() as element (element)}
+						<button
+							type="button"
+							class="w-full rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5 text-left transition hover:border-orange-400/50 hover:bg-slate-800/70 active:bg-slate-800/70"
+							onclick={() =>
+								pendingUpgrade &&
+								pendingOptionId !== null &&
+								onSelectChoice(pendingUpgrade.id, pendingOptionId, {
+									removedElement: element.toLowerCase()
+								})}
+						>
+							<p class="text-sm font-medium text-slate-100">{element}</p>
+							<p class="mt-0.5 text-xs text-slate-300">
+								This Affinity is replaced by {pendingOption.label}.
+							</p>
+						</button>
+					{/each}
+				</div>
+			{:else}
+				<div class="flex items-center justify-between gap-2">
+					<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Choose an Item</h2>
+					<button
+						type="button"
+						aria-label="Back to the options"
+						class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+						onclick={back}
+					>
+						Back
+					</button>
+				</div>
+				<p class="mt-2 text-xs text-slate-400">
+					{pendingUpgrade.name}: choose the item to inscribe. Its weight drops by 1 and its Strike
+					rises by 1.
+				</p>
+				<div class="mt-3 space-y-2">
+					{#each inscribableFor(pendingOptionId) as item (item.id)}
+						<button
+							type="button"
+							class="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5 text-left transition hover:border-orange-400/50 hover:bg-slate-800/70 active:bg-slate-800/70"
+							onclick={() =>
+								pendingUpgrade &&
+								pendingOptionId !== null &&
+								onSelectChoice(pendingUpgrade.id, pendingOptionId, { itemId: item.id })}
+						>
+							<p class="text-sm font-medium text-slate-100">{item.name}</p>
+							<p class="text-[10px] whitespace-nowrap text-slate-400 uppercase">
+								WGT {item.weight}
+							</p>
+						</button>
+					{/each}
+				</div>
+			{/if}
 		{:else if pendingUpgrade && choiceEffectOf(pendingUpgrade)}
 			<div class="flex items-center justify-between gap-2">
 				<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Choose an Option</h2>
@@ -180,23 +253,26 @@
 			<p class="mt-2 text-xs text-slate-400">{pendingUpgrade.name}: choose one option.</p>
 			<div class="mt-3 space-y-2">
 				{#each choiceEffectOf(pendingUpgrade)?.options ?? [] as option (option.id)}
-					{@const usable = upgradeOptionUsable(option, unit, itemIndex)}
+					{@const reason = optionBlockReason(option)}
 					<button
 						type="button"
-						disabled={!usable}
+						disabled={reason !== null}
 						class={'w-full rounded-xl border p-2.5 text-left transition ' +
-							(usable
+							(reason === null
 								? 'border-slate-700/50 bg-slate-800/40 hover:border-orange-400/50 hover:bg-slate-800/70 active:bg-slate-800/70'
 								: 'cursor-not-allowed border-slate-700/40 bg-slate-900/40 opacity-50')}
 						onclick={() => {
 							if (!pendingUpgrade) return;
-							if (option.inscribeItem) pendingOptionId = option.id;
-							else onSelectChoice(pendingUpgrade.id, option.id);
+							if (option.inscribeItem || needsRemovedElement(option)) {
+								pendingOptionId = option.id;
+							} else {
+								onSelectChoice(pendingUpgrade.id, option.id, {});
+							}
 						}}
 					>
 						<p class="text-sm font-medium text-slate-100">{option.label}</p>
-						{#if !usable}
-							<p class="mt-0.5 text-xs font-semibold text-red-400">No item to inscribe</p>
+						{#if reason}
+							<p class="mt-0.5 text-xs font-semibold text-red-400">{reason}</p>
 						{/if}
 					</button>
 				{/each}

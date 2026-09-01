@@ -457,8 +457,8 @@
 					onAddUpgrade(row.entryId, upgradeId, { spellcraftId });
 					pickerRow = null;
 				}}
-				onSelectChoice={(upgradeId, optionId, itemId) => {
-					onAddUpgrade(row.entryId, upgradeId, { optionId, itemId });
+				onSelectChoice={(upgradeId, optionId, selection) => {
+					onAddUpgrade(row.entryId, upgradeId, { optionId, ...selection });
 					pickerRow = null;
 				}}
 				onClose={() => (pickerRow = null)}

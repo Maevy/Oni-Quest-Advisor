@@ -103,8 +103,9 @@ const UPGRADE_LOCKED_CODES = new Set([
 /**
  * The mechanical effects an upgrade applies, curated per upgrade code. Only
  * well-defined effects are automated (stat boosts, trait/skill/class/combat
- * art grants, item grants, primary weapon replacement, pouch, stratagems);
- * choices and conditional rules stay in the description for the player.
+ * art grants, item grants, primary weapon replacement, pouch, stratagems,
+ * spellcraft level-ups and pick-a-side choice options); free-form and
+ * conditional rules stay in the description for the player.
  * 'spellcraftLevelUp' carries no automatic change - the player picks which
  * spellcraft advances - but it feeds the max-level warning in the picker.
  */
@@ -176,8 +177,44 @@ const UPGRADE_EFFECTS = {
 		{ kind: 'costReduction', amount: 1 }
 	],
 	// Sand Kingdoms
-	MANA_CATALYST: [],
-	ELEMENTAL_LINEAGE: [],
+	MANA_CATALYST: [
+		{
+			kind: 'choice',
+			options: [
+				{ id: 'fire', label: 'Fire', replaceAffinity: { element: 'Fire' } },
+				{ id: 'water', label: 'Water', replaceAffinity: { element: 'Water' } },
+				{ id: 'earth', label: 'Earth', replaceAffinity: { element: 'Earth' } },
+				{ id: 'air', label: 'Air', replaceAffinity: { element: 'Air' } }
+			]
+		}
+	],
+	ELEMENTAL_LINEAGE: [
+		{
+			kind: 'choice',
+			options: [
+				{
+					id: 'affinity-fire',
+					label: 'Affinity (Fire)',
+					grantTrait: { traitId: 'affinity--element', dynamicElements: ['Fire'] }
+				},
+				{
+					id: 'affinity-water',
+					label: 'Affinity (Water)',
+					grantTrait: { traitId: 'affinity--element', dynamicElements: ['Water'] }
+				},
+				{
+					id: 'affinity-earth',
+					label: 'Affinity (Earth)',
+					grantTrait: { traitId: 'affinity--element', dynamicElements: ['Earth'] }
+				},
+				{
+					id: 'affinity-air',
+					label: 'Affinity (Air)',
+					grantTrait: { traitId: 'affinity--element', dynamicElements: ['Air'] }
+				}
+			]
+		}
+	],
 	FLYING_CARPET: [{ kind: 'item', itemId: 'flying-carpet' }],
 	PERSONAL_GUARD: [],
 	ARCANE_TOME: [{ kind: 'spellcraftLevelUp' }],

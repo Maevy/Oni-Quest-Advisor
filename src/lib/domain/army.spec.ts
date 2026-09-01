@@ -1785,6 +1785,319 @@ describe('choice upgrades (Glyphscribe: Reduce Weight)', () => {
 	});
 });
 
+const LINEAGE: ArmyUpgradeSpec = {
+	id: 'elemental-lineage-sand-kingdoms',
+	name: 'Elemental Lineage',
+	cost: 4,
+	factionId: 'sand-kingdoms',
+	limit: 2,
+	description: [],
+	effects: [
+		{
+			kind: 'choice',
+			options: [
+				{
+					id: 'affinity-fire',
+					label: 'Affinity (Fire)',
+					grantTrait: { traitId: 'affinity--element', dynamicElements: ['Fire'] }
+				},
+				{
+					id: 'affinity-earth',
+					label: 'Affinity (Earth)',
+					grantTrait: { traitId: 'affinity--element', dynamicElements: ['Earth'] }
+				}
+			]
+		}
+	]
+};
+
+const CATALYST: ArmyUpgradeSpec = {
+	id: 'mana-catalyst-sand-kingdoms',
+	name: 'Mana Catalyst',
+	cost: 1,
+	factionId: 'sand-kingdoms',
+	description: [],
+	effects: [
+		{
+			kind: 'choice',
+			options: [{ id: 'fire', label: 'Fire', replaceAffinity: { element: 'Fire' } }]
+		}
+	]
+};
+
+const AFFINITY_INDEX = indexArmyRules([LINEAGE, CATALYST]);
+
+const ELDER_CASTER: ArmyUnitSpec = {
+	...UNITS[1],
+	traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Elder'] }],
+	spellcrafts: [{ id: 'art-of-sorcery', level: 1 }]
+};
+
+const DUAL_CASTER: ArmyUnitSpec = {
+	...ELDER_CASTER,
+	traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Elder', 'Water'] }]
+};
+
+function choiceOptions(upgrade: ArmyUpgradeSpec) {
+	const effect = upgrade.effects[0];
+	if (effect.kind !== 'choice') throw new Error('expected a choice effect');
+	return effect.options;
+}
+
+describe('choice upgrades (Elemental Lineage)', () => {
+	it('merges the chosen element into the existing Affinity trait', () => {
+		const upgraded = upgradedArmyUnit(
+			ELDER_CASTER,
+			[LINEAGE],
+			{},
+			{},
+			{
+				[LINEAGE.id]: { option: 'affinity-fire' }
+			}
+		);
+		expect(upgraded.traits).toEqual([
+			{ id: 'affinity--element', level: 1, dynamicElements: ['Elder', 'Fire'] }
+		]);
+	});
+
+	it('adds the Affinity trait when the unit carries none', () => {
+		const upgraded = upgradedArmyUnit(
+			UNITS[1],
+			[LINEAGE],
+			{},
+			{},
+			{
+				[LINEAGE.id]: { option: 'affinity-fire' }
+			}
+		);
+		expect(upgraded.traits).toEqual([
+			{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] }
+		]);
+	});
+
+	it('marks options for already-held elements unusable', () => {
+		const fireCaster: ArmyUnitSpec = {
+			...ELDER_CASTER,
+			traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] }]
+		};
+		expect(upgradeOptionUsable(choiceOptions(LINEAGE)[0], ELDER_CASTER, {})).toBe(true);
+		expect(upgradeOptionUsable(choiceOptions(LINEAGE)[0], fireCaster, {})).toBe(false);
+	});
+
+	it('requires a valid option when adding', () => {
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		const units: ArmyUnitSpec[] = [ELDER_CASTER];
+		expect(addEntryUpgrade(entries, 'm1', LINEAGE, units, AFFINITY_INDEX, BLOCK_RULES)).toBe(
+			entries
+		);
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				LINEAGE,
+				units,
+				AFFINITY_INDEX,
+				BLOCK_RULES,
+				[],
+				{},
+				{
+					optionId: 'ghost'
+				}
+			)
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				LINEAGE,
+				units,
+				AFFINITY_INDEX,
+				BLOCK_RULES,
+				[],
+				{},
+				{
+					optionId: 'affinity-fire'
+				}
+			)
+		).toEqual([
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [LINEAGE.id],
+				upgradeChoices: { [LINEAGE.id]: { option: 'affinity-fire' } }
+			}
+		]);
+	});
+
+	it('shows the granted Affinity in the roster row and drops the choice on removal', () => {
+		const entries: ArmyEntry[] = [
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [LINEAGE.id],
+				upgradeChoices: { [LINEAGE.id]: { option: 'affinity-fire' } }
+			}
+		];
+		const rows = resolveArmyEntries(entries, [ELDER_CASTER], MOUNTS, AFFINITY_INDEX);
+		expect(rows[0].upgradedUnit.traits).toEqual([
+			{ id: 'affinity--element', level: 1, dynamicElements: ['Elder', 'Fire'] }
+		]);
+		expect(removeEntryUpgrade(entries, 'm1', LINEAGE.id)).toEqual([
+			{ id: 'm1', unitId: 'mage', upgrades: [] }
+		]);
+	});
+});
+
+describe('choice upgrades (Mana Catalyst)', () => {
+	it('replaces the only Affinity element automatically', () => {
+		expect(
+			addEntryUpgrade(
+				[{ id: 'm1', unitId: 'mage' }],
+				'm1',
+				CATALYST,
+				[ELDER_CASTER],
+				AFFINITY_INDEX,
+				BLOCK_RULES,
+				[],
+				{},
+				{ optionId: 'fire' }
+			)
+		).toEqual([
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [CATALYST.id],
+				upgradeChoices: { [CATALYST.id]: { option: 'fire', removedElement: 'elder' } }
+			}
+		]);
+	});
+
+	it('requires the replaced element when the unit has several', () => {
+		const entries: ArmyEntry[] = [{ id: 'm1', unitId: 'mage' }];
+		const units: ArmyUnitSpec[] = [DUAL_CASTER];
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				CATALYST,
+				units,
+				AFFINITY_INDEX,
+				BLOCK_RULES,
+				[],
+				{},
+				{
+					optionId: 'fire'
+				}
+			)
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				CATALYST,
+				units,
+				AFFINITY_INDEX,
+				BLOCK_RULES,
+				[],
+				{},
+				{
+					optionId: 'fire',
+					removedElement: 'ghost'
+				}
+			)
+		).toBe(entries);
+		expect(
+			addEntryUpgrade(
+				entries,
+				'm1',
+				CATALYST,
+				units,
+				AFFINITY_INDEX,
+				BLOCK_RULES,
+				[],
+				{},
+				{
+					optionId: 'fire',
+					removedElement: 'Elder'
+				}
+			)
+		).toEqual([
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [CATALYST.id],
+				upgradeChoices: { [CATALYST.id]: { option: 'fire', removedElement: 'elder' } }
+			}
+		]);
+	});
+
+	it('swaps the element on the upgraded unit', () => {
+		const upgraded = upgradedArmyUnit(
+			DUAL_CASTER,
+			[CATALYST],
+			{},
+			{},
+			{
+				[CATALYST.id]: { option: 'fire', removedElement: 'elder' }
+			}
+		);
+		expect(upgraded.traits).toEqual([
+			{ id: 'affinity--element', level: 1, dynamicElements: ['Fire', 'Water'] }
+		]);
+	});
+
+	it('changes the spellcraft level cap with the new element', () => {
+		expect(spellcraftLevelCap('art-of-sorcery', ELDER_CASTER, SPELLS)).toBe(1);
+		const upgraded = upgradedArmyUnit(
+			ELDER_CASTER,
+			[CATALYST],
+			{},
+			{},
+			{
+				[CATALYST.id]: { option: 'fire', removedElement: 'elder' }
+			}
+		);
+		expect(affinityElements(upgraded)).toEqual(['fire']);
+		expect(spellcraftLevelCap('art-of-sorcery', upgraded, SPELLS)).toBe(2);
+	});
+
+	it('blocks the upgrade without an Affinity and disables held-element options', () => {
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'm1', unitId: 'mage' }],
+				'm1',
+				CATALYST,
+				[UNITS[1]],
+				AFFINITY_INDEX,
+				BLOCK_RULES
+			)
+		).toBe('requirement');
+		expect(upgradeOptionUsable(choiceOptions(CATALYST)[0], FLAMESHAPER, {})).toBe(false);
+		expect(upgradeOptionUsable(choiceOptions(CATALYST)[0], ELDER_CASTER, {})).toBe(true);
+	});
+
+	it('sees earlier choice grants when blocking later choices', () => {
+		// Elder + the fire granted by Elemental Lineage leaves nothing the
+		// fire-only Mana Catalyst could still change. Resourceful keeps a
+		// slot free so the block comes from the choice usability check.
+		const caster: ArmyUnitSpec = {
+			...ELDER_CASTER,
+			traits: [...(ELDER_CASTER.traits ?? []), { id: 'resourceful', level: 2 }]
+		};
+		const entries: ArmyEntry[] = [
+			{
+				id: 'm1',
+				unitId: 'mage',
+				upgrades: [LINEAGE.id],
+				upgradeChoices: { [LINEAGE.id]: { option: 'affinity-fire' } }
+			}
+		];
+		expect(entryUpgradeBlock(entries, 'm1', CATALYST, [caster], AFFINITY_INDEX, BLOCK_RULES)).toBe(
+			'requirement'
+		);
+	});
+});
+
 describe('addEntryUpgrade/removeEntryUpgrade', () => {
 	it('adds the upgrade id to the entry when allowed', () => {
 		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];

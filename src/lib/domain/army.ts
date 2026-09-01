@@ -184,10 +184,17 @@ export type ArmyUpgradeOption = {
 	inventorySpace?: number;
 	/** Option inscribes a chosen inventory item: Wgt -1, Strike +1. */
 	inscribeItem?: { except: string[] };
+	/** Grants a trait; elements merge into an existing reference of the trait. */
+	grantTrait?: { traitId: string; dynamicElements: string[] };
+	/** Replaces one of the unit's Affinity elements with this element. */
+	replaceAffinity?: { element: string };
 };
 
-/** The player's pick for a choice upgrade (plus the target item when needed). */
-export type ArmyUpgradeChoice = { option: string; itemId?: string };
+/**
+ * The player's pick for a choice upgrade, plus the target details when the
+ * option needs one (the inscribed item, the replaced Affinity element).
+ */
+export type ArmyUpgradeChoice = { option: string; itemId?: string; removedElement?: string };
 
 /** Requirements parsed from the upgrade's description. */
 export type ArmyUpgradeRequirement = {
@@ -414,6 +421,17 @@ export function upgradeOptionUsable(
 	if (option.inscribeItem) {
 		return inscribableItems(unit, itemIndex, option.inscribeItem.except).length > 0;
 	}
+	const elements = affinityElements(unit);
+	if (option.grantTrait) {
+		// Useless once the unit already holds every element the option grants.
+		return !option.grantTrait.dynamicElements.every((element) =>
+			elements.includes(element.toLowerCase())
+		);
+	}
+	if (option.replaceAffinity) {
+		// Needs an Affinity to change, and the new element must be a change.
+		return elements.length > 0 && !elements.includes(option.replaceAffinity.element.toLowerCase());
+	}
 	return false;
 }
 
@@ -586,12 +604,58 @@ function bumpLeveledRef<T extends { id: string; level: number }>(
 	);
 }
 
+/** Grants a trait; dynamic elements merge into an existing reference of it. */
+function grantTraitRef(
+	traits: ArmyTraitRef[],
+	grant: { traitId: string; dynamicElements: string[] }
+): ArmyTraitRef[] {
+	const existing = traits.find((candidate) => candidate.id === grant.traitId);
+	if (!existing) {
+		return [
+			...traits,
+			{ id: grant.traitId, level: 1, dynamicElements: [...grant.dynamicElements] }
+		];
+	}
+	return traits.map((candidate) => {
+		if (candidate.id !== grant.traitId) return candidate;
+		const merged = [...(candidate.dynamicElements ?? [])];
+		for (const element of grant.dynamicElements) {
+			if (!merged.some((held) => held.toLowerCase() === element.toLowerCase())) {
+				merged.push(element);
+			}
+		}
+		return { ...candidate, dynamicElements: merged };
+	});
+}
+
+/** Swaps one element of the unit's Affinity trait for another. */
+function replaceAffinityElement(
+	traits: ArmyTraitRef[],
+	removed: string,
+	added: string
+): ArmyTraitRef[] {
+	let replaced = false;
+	return traits.map((candidate) => {
+		if (replaced || candidate.id !== AFFINITY_TRAIT_ID) return candidate;
+		const elements = candidate.dynamicElements ?? [];
+		const index = elements.findIndex((element) => element.toLowerCase() === removed.toLowerCase());
+		if (index === -1) return candidate;
+		replaced = true;
+		return {
+			...candidate,
+			dynamicElements: elements.map((element, position) => (position === index ? added : element))
+		};
+	});
+}
+
 /**
  * The unit with all picked upgrade effects applied: stat boosts, granted
  * classes/traits/skills/combat arts, items, primary weapon replacement
  * (the first weapon in the inventory), pouch space and stratagems.
  * 'spellcraftLevelUp' raises the spellcraft the player chose for that
- * upgrade (spellcraftChoices maps upgrade id -> spellcraft group id).
+ * upgrade (spellcraftChoices maps upgrade id -> spellcraft group id);
+ * choice options apply their picked effect, e.g. granting an Affinity
+ * element or replacing one (upgradeChoices maps upgrade id -> choice).
  */
 export function upgradedArmyUnit(
 	unit: ArmyUnitSpec,
@@ -702,6 +766,16 @@ export function upgradedArmyUnit(
 					if (option.inventorySpace) {
 						inventorySpace = (inventorySpace ?? 0) + option.inventorySpace;
 					}
+					if (option.grantTrait) {
+						traits = grantTraitRef(traits, option.grantTrait);
+					}
+					if (option.replaceAffinity && choice?.removedElement !== undefined) {
+						traits = replaceAffinityElement(
+							traits,
+							choice.removedElement,
+							option.replaceAffinity.element
+						);
+					}
 					break;
 				}
 			}
@@ -748,7 +822,11 @@ export function entryUpgradeBlock(
 		.filter((pickedUpgrade): pickedUpgrade is ArmyUpgradeSpec => pickedUpgrade !== undefined);
 	if (picked.some((pickedUpgrade) => pickedUpgrade.id === upgrade.id)) return 'owned';
 	const choices = entry.spellcraftChoices ?? {};
-	if (picked.length >= upgradeSlotsFor(upgradedArmyUnit(unit, picked, {}, choices), picked)) {
+	const upgradeChoices = entry.upgradeChoices ?? {};
+	if (
+		picked.length >=
+		upgradeSlotsFor(upgradedArmyUnit(unit, picked, itemIndex, choices, upgradeChoices), picked)
+	) {
 		return 'slots';
 	}
 	if (upgrade.limit !== undefined) {
@@ -767,7 +845,7 @@ export function entryUpgradeBlock(
 			return 'requirement';
 		}
 	}
-	const upgraded = upgradedArmyUnit(unit, picked, {}, choices);
+	const upgraded = upgradedArmyUnit(unit, picked, itemIndex, choices, upgradeChoices);
 	const levelEffects = upgrade.effects.filter(
 		(effect) =>
 			effect.kind === 'trait' ||
@@ -818,11 +896,15 @@ export function entryUpgradeBlock(
 	return null;
 }
 
-/** Player selections made while adding an upgrade (spellcraft, option, item). */
+/**
+ * Player selections made while adding an upgrade (spellcraft, option, item,
+ * replaced Affinity element).
+ */
 export type ArmyUpgradeSelection = {
 	spellcraftId?: string;
 	optionId?: string;
 	itemId?: string;
+	removedElement?: string;
 };
 
 /**
@@ -831,7 +913,9 @@ export type ArmyUpgradeSelection = {
  * is picked automatically, otherwise selection.spellcraftId must name one of
  * the unit's upgradable spellcrafts. Choice upgrades need selection.optionId
  * (plus selection.itemId for an inscribe option, validated against the
- * unit's inventory).
+ * unit's inventory, and selection.removedElement for an Affinity
+ * replacement when the unit has several elements - a single element is
+ * replaced automatically).
  */
 export function addEntryUpgrade(
 	entries: ArmyEntry[],
@@ -897,6 +981,22 @@ export function addEntryUpgrade(
 				return entries;
 			}
 			upgradeChoice = { option: option.id, itemId: selection.itemId };
+		} else if (option.replaceAffinity) {
+			// The only Affinity is replaced automatically; otherwise the
+			// player must pick which of the unit's elements goes.
+			const candidates = affinityElements(upgraded);
+			let removedElement: string | undefined;
+			if (candidates.length === 1) {
+				removedElement = candidates[0];
+			} else if (
+				selection.removedElement !== undefined &&
+				candidates.includes(selection.removedElement.toLowerCase())
+			) {
+				removedElement = selection.removedElement.toLowerCase();
+			} else {
+				return entries;
+			}
+			upgradeChoice = { option: option.id, removedElement };
 		} else {
 			upgradeChoice = { option: option.id };
 		}
