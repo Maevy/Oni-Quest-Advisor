@@ -24,11 +24,35 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
 - Army builder feature is on `develop` (unreleased): faction select, producer unit
-  import (`scripts/importUnits.mjs`), unit cards with classes, skills, traits and
-  combat arts (centralized rules entries, clickable tags, stacked rules popups
-  with level lists), mounts.
+  import (`scripts/importUnits.mjs`), unit cards with classes, skills, traits,
+  combat arts and spellcrafts (centralized rules entries, clickable tags, stacked
+  rules popups with level lists and a spell table), mounts.
 
-## What was done in the last session (combat arts + level lists)
+## What was done in the last session (spellcrafts + spell tables)
+
+1. **Spellcrafts & spells migrated**: `content/units/spellcrafts.json` ←
+   `spellGroupList` (18 groups, id + name) and `content/units/spells.json` ←
+   the groups' 100 spells — group/element/level/effect (rich links included)
+   plus the parsed stat columns: **PW** (fixed numbers/symbols, or a stat
+   reference with an optional `modifier` — `Int -3` → `{ stat: 'INT',
+modifier: -3 }`), **type** (categories + attack mode → "Spell, Sorcery |
+   Ranged"), **RCH** (whitespace-normalized display text) and **STK** (fixed
+   numbers/text or a stat reference). Spell ids collide across groups nine
+   times (Flare, Inferno, ...) and are disambiguated with a group suffix.
+   Units carry `spellcrafts` refs (`{ id, level }`).
+2. **Access semantics** (`spellcraftPopupFor`, `affinityElements`,
+   `spellCostDisplay` in the domain): the popup lists only the spells the unit
+   can cast — its spellcraft group, level ≤ the ref level, elements from its
+   Affinity trait refs (multiple affinities merge) — sorted Elder-first, then
+   level, then name, with PW/STK resolved against the unit's stats:
+   "INT (12) -3", "STA (2)".
+3. **UI**: Spellcrafts panel after Combat Arts (orange tags, roman level
+   suffix); the popup renders a scrollable spell table (Element | Lv | Spell |
+   Effect | PW | Type | RCH | STK, element as a plain per-row column); effect
+   links stack further popups as before.
+4. Tests 161 → 174; check/lint/build clean.
+
+## What was done in the session before (combat arts + level lists)
 
 1. **Combat arts migrated**: `content/units/combat-arts.json` ←
    `combatArtGroupList` — Archery, Assassination, Berserk, Fencing, Metamagic

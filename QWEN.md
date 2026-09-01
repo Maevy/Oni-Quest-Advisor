@@ -48,17 +48,29 @@ native/platform-specific one. Used on a phone screen during a game session.
   a card moves into `shared.json` as soon as a second deck gets it. Rulebook wording
   "X VP (to a maximum of Y)" with multiple boxes ⇒ `incrementVp` (e.g. `[2, 1]`),
   never a flat `vpPerIncrement` that would overshoot the cap.
-- **Army Builder** \u2192 separate top-level feature (own screens, in-memory only): pick one
+- **Army Builder** → separate top-level feature (own screens, in-memory only): pick one
   of 7 factions (their RAL color as border/text + logo) and build a list under a
-  format cap (Standard 85 / Tournament 125). Unit content is imported from the
-  producer's export: `scripts/importUnits.mjs` reads `data-import/units.json` and
-  writes `content/units/<faction>.json` + `neutral.json` + `mounts.json` \u2014 re-run
-  on every producer update and review the diff. Units carry points, a copy
-  `limit`, an 11-key statline (`STA`\u2026`M`, null when a model has no value) and an
-  optional portrait. NEUTRAL-tagged units are available to every faction except
-  the monster ones (`NON_NEUTRAL_FACTION_IDS`); mounts are never recruitable
-  standalone \u2014 a rider's `mount` adds the mount's cost when toggled, mount
-  `stats` override the rider's (non-null only) and `statChanges` add on top.
+  format cap (Standard 85 / Tournament 125). Every copy of a unit is its own
+  `ArmyEntry` (own id, independently mountable/removable). Unit content is
+  imported from the producer's export: `scripts/importUnits.mjs` reads
+  `data-import/units.json` and writes `content/units/<faction>.json` +
+  `neutral.json` + `mounts.json` plus the centralized rules catalogs
+  `classes.json` / `skills.json` / `traits.json` / `combat-arts.json` /
+  `spellcrafts.json` (`ArmyRulesSpec`, leveled texts in a `levels` map) and
+  `spells.json` — re-run on every producer update and review the diff. Units
+  carry points, a copy `limit`, an 11-key statline (`STA`…`M`, null when a model
+  has no value), an optional portrait and refs into the catalogs (class ids,
+  `{ id, level }` skill/trait/combat-art/spellcraft refs; trait refs add
+  `dynamicValue`/`dynamicElements` that fill `(X)`/`(Element)` templates at
+  display time). The unit card renders them as clickable tags (panels ordered
+  Skills → Traits → Combat Arts → Spellcrafts) opening stacked rules popups —
+  leveled ones list every level white up to the unit's level and greyed beyond
+  (roman suffixes, Fencing III); spellcraft popups show the affinity-filtered
+  spell table (Elder-first) with PW/STK resolved against the unit's stats.
+  NEUTRAL-tagged units are available to every faction except the monster ones
+  (`NON_NEUTRAL_FACTION_IDS`); mounts are never recruitable standalone — a
+  rider's `mount` adds the mount's cost when toggled, mount `stats` override
+  the rider's (non-null only) and `statChanges` add on top.
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
   is a hot-seat mode where both players share one device. The third
