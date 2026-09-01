@@ -54,19 +54,40 @@ native/platform-specific one. Used on a phone screen during a game session.
   `ArmyEntry` (own id, independently mountable/removable). Unit content is
   imported from the producer's export: `scripts/importUnits.mjs` reads
   `data-import/units.json` and writes `content/units/<faction>.json` +
-  `neutral.json` + `mounts.json` plus the centralized rules catalogs
+  `neutral.json` + `mounts.json` plus the centralized catalogs
   `classes.json` / `skills.json` / `traits.json` / `combat-arts.json` /
-  `spellcrafts.json` (`ArmyRulesSpec`, leveled texts in a `levels` map) and
-  `spells.json` — re-run on every producer update and review the diff. Units
-  carry points, a copy `limit`, an 11-key statline (`STA`…`M`, null when a model
-  has no value), an optional portrait and refs into the catalogs (class ids,
+  `spellcrafts.json` (`ArmyRulesSpec`, leveled texts in a `levels` map),
+  `spells.json`, `stratagems.json`, `items.json` (RCH parsed into structured
+  range brackets) and `upgrades.json` (cost, per-army limit, faction, curated
+  effects in the import's `UPGRADE_EFFECTS` table, requirements parsed from
+  the descriptions) — re-run on every producer update and review the diff.
+  Units carry points, a copy `limit`, an 11-key statline (`STA`…`M`, null when
+  a model has no value), an optional portrait, catalog refs (class ids,
   `{ id, level }` skill/trait/combat-art/spellcraft refs; trait refs add
   `dynamicValue`/`dynamicElements` that fill `(X)`/`(Element)` templates at
-  display time). The unit card renders them as clickable tags (panels ordered
-  Skills → Traits → Combat Arts → Spellcrafts) opening stacked rules popups —
+  display time), stratagem ids, `inventorySpace` + inventory `{ id, qty }`
+  slots, and optionally `upgradesLocked` (rulebook exceptions: Tomoe, Kogetsu,
+  Seigen, Tharos, Anari, Na'ra, Chiyohime, Chanra). The unit card renders the
+  rules refs as clickable tags (panels ordered Skills → Traits → Combat Arts,
+  divider, then Spellcrafts, Inventory, Stratagems) opening stacked popups —
   leveled ones list every level white up to the unit's level and greyed beyond
-  (roman suffixes, Fencing III); spellcraft popups show the affinity-filtered
-  spell table (Elder-first) with PW/STK resolved against the unit's stats.
+  (roman suffixes); spellcraft popups show element-grouped spell cards with
+  PW/STK resolved against the unit's stats; inventories and stratagems render
+  inline (stat-box grid / type-grouped cards), upgrade effects applied via
+  `upgradedArmyUnit`. **Upgrades (standard format)**: per-copy picks through a
+  picker overlay with artwork and gating reasons; slots = 1 + Resourceful
+  level + Pouch count; faction access (four main factions own + neutral;
+  oni/goblin/guild neutral-only); effects automate stat boosts (incl.
+  `insteadIfTrait`/`extraIfClasses` conditionals), grants, items, primary
+  weapon replacement, stratagems, `costReduction` (Devotion: Paimon discounts
+  every other upgrade army-wide by 1, min 1), spellcraft level-ups
+  (`spellcraftLevelCap` from the affinity-filtered spell catalog + a choice
+  step when several schools can advance) and `choice` upgrades (e.g.
+  Glyphscribe: Reduce Weight — inscribe an item: STK +1/WGT −1 via per-row
+  item overrides, or +1 AG/SPD/+1 space); selections persist on the entry
+  (`spellcraftChoices`, `upgradeChoices`). Tournament-mode roster upgrades
+  are still pending. Upgrade artwork lives in `assets/upgrades/<Faction>/`,
+  matched by normalized filename + `UPGRADE_ICON_ALIASES`.
   NEUTRAL-tagged units are available to every faction except the monster ones
   (`NON_NEUTRAL_FACTION_IDS`); mounts are never recruitable standalone — a
   rider's `mount` adds the mount's cost when toggled, mount `stats` override

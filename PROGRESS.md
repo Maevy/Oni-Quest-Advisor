@@ -25,10 +25,54 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Open Hostilities, Awaiting Reinforcements.
 - Army builder feature is on `develop` (unreleased): faction select, producer unit
   import (`scripts/importUnits.mjs`), unit cards with classes, skills, traits,
-  combat arts and spellcrafts (centralized rules entries, clickable tags, stacked
-  rules popups with level lists and a spell table), mounts.
+  combat arts, spellcrafts, inventories and stratagems (inline cards), mounts,
+  and standard-mode upgrades (per-copy picks with slots, gating and choice
+  dialogs). Tournament-mode roster upgrades + the mode-switch warning are the
+  pending follow-up.
 
-## What was done in the last session (spellcrafts + spell tables)
+## What was done in the last session (army builder: stratagems, inventories, upgrades)
+
+Today's `develop` commits: `a3b0225`, `16ef7ef`, `8fdb247`, `9c18ba6` plus the
+closing selections work — one continuous army-builder arc:
+
+1. **Unit card restyle**: the spell table became element-grouped spell cards
+   (Elder-first, PW/STK resolved against unit stats); the 11-column stat table
+   became a tinted stat-box grid; a divider separates the unit rules (Skills,
+   Traits, Combat Arts) from Spellcrafts, Inventory and Stratagems, which all
+   render inline — no extra clicks.
+2. **Stratagems**: `stratagems.json` ← `strategmList` (58 entries, slug-name ids
+   — a third have no code); units carry id arrays (20 of 57 units, matched by
+   name), rendered as cards grouped by type chip (Authority/Subterfuge/Tribe).
+3. **Inventories**: `items.json` ← `itemList` (84 entries + one synthetic
+   Imported Casting Amplifier); RCH parsed into structured range brackets
+   (`0-20": 0`, AoE/text fallbacks); units carry `inventorySpace` + `{id, qty}`
+   slots; the header shows `(used/total Space used)`; item cards show PW/RCH/
+   STK/QTY/WGT stat boxes with the stat derivation kept visible (`T (8) +2`).
+4. **Standard-mode upgrades**: `upgrades.json` ← `upgradeList` (45 entries;
+   ids suffixed with the faction — Seasoned Combatant exists twice); faction
+   access (four main factions own + neutral; oni/goblin/guild neutral-only);
+   slots per copy = 1 + Resourceful level + Pouch count; rulebook exceptions
+   carry `upgradesLocked` (Tomoe, Kogetsu, Seigen, Tharos, Anari, Na'ra,
+   Chiyohime, Chanra — the generic Goblin Shaman is NOT locked); picker
+   overlay with artwork and gating reasons; picked upgrades render as icon
+   tree labels with emerald cost boxes and a red remove button; costs flow
+   into the army points, including Devotion: Paimon's army-wide "other
+   upgrades cost 1 less (min 1)".
+5. **Conditional & choice mechanics**: conditional stat boosts
+   (`insteadIfTrait`/`extraIfClasses` — the three Devotions, incl. the parsed
+   "Cannot be assigned to a model with the Demon trait" requirement);
+   spellcraft level-ups (Adept Shaper/Arcane Tome) gate on the affinity-based
+   level cap (`spellcraftLevelCap` — spellcraft catalog specs carry no levels
+   map) and open a choice step when several schools can advance; choice
+   upgrades (`choice` effect with options) — Glyphscribe: Reduce Weight offers
+   *Inscribed Item* (pick a weapon/shield with weight, casting amplifiers
+   excluded → STK +1, WGT −1 via per-row item overrides the unit card merges)
+   or *Inscribed Armor* (+1 AG/SPD, +1 inventory space). Selections persist on
+   the entry (`spellcraftChoices`, `upgradeChoices`) and validate in
+   `addEntryUpgrade`.
+6. Tests 182 → 237; check/lint/build clean.
+
+## What was done in earlier sessions (spellcrafts + spell tables)
 
 1. **Spellcrafts & spells migrated**: `content/units/spellcrafts.json` ←
    `spellGroupList` (18 groups, id + name) and `content/units/spells.json` ←
@@ -52,7 +96,7 @@ modifier: -3 }`), **type** (categories + attack mode → "Spell, Sorcery |
    links stack further popups as before.
 4. Tests 161 → 174; check/lint/build clean.
 
-## What was done in the session before (combat arts + level lists)
+## What was done in earlier sessions (combat arts + level lists)
 
 1. **Combat arts migrated**: `content/units/combat-arts.json` ←
    `combatArtGroupList` — Archery, Assassination, Berserk, Fencing, Metamagic
@@ -70,7 +114,7 @@ modifier: -3 }`), **type** (categories + attack mode → "Spell, Sorcery |
    panels.
 4. Tests 156 → 161; check/lint/build clean.
 
-## What was done in the session before (army builder: per-copy entries + unit rules)
+## What was done in earlier sessions (army builder: per-copy entries + unit rules)
 
 1. **Per-copy army entries**: every copy of a unit is now its own `ArmyEntry`
    (`addArmyUnit` takes an injected id, `removeArmyEntry`/`removeArmyCopy`,
@@ -102,7 +146,7 @@ modifier: -3 }`), **type** (categories + attack mode → "Spell, Sorcery |
    the imported texts resolve against the catalogs — zero dangling.
 5. Tests 134 → 156; check/lint/build clean.
 
-## What was done in the session before (abandoned-game retention + army builder)
+## What was done in earlier sessions (abandoned-game retention + army builder)
 
 1. **Abandoned-game lifecycle** (`cleanup.ts`): retention windows — lobbies idle
    7 days and mid-play games (rounds 1–4) idle 30 days are deleted; stale
