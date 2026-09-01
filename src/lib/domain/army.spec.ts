@@ -681,6 +681,18 @@ describe('rulesLinkPopup', () => {
 		});
 	});
 
+	it('shows a level-suffixed link up to its level and greys out the rest', () => {
+		expect(rulesLinkPopup(INDEXES, { type: 'combat-art', id: 'fencing', level: 2 })).toEqual({
+			title: 'Fencing II',
+			sections: [
+				{ level: 1, available: true, text: FENCING.levels?.[1] },
+				{ level: 2, available: true, text: FENCING.levels?.[2] },
+				{ level: 3, available: false, text: FENCING.levels?.[3] },
+				{ level: 4, available: false, text: FENCING.levels?.[4] }
+			]
+		});
+	});
+
 	it('is null for unknown targets', () => {
 		expect(rulesLinkPopup(INDEXES, { type: 'trait', id: 'ghost' })).toBeNull();
 		expect(rulesLinkPopup(INDEXES, { type: 'spellcraft', id: 'armamancy' })).toBeNull();

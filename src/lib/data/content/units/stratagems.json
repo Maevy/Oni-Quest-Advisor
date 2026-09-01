@@ -329,7 +329,18 @@
 				}
 			},
 			{
-				"text": " (may ignore size requirement). All Undead become Dead at the end of the turn. When an allied Undead becomes Dead, place AOE: Circular S centered in it. All models Withing the AOE suffer a Hit with PW 12 and (Poison II)[trait.POISON.II]. After resolving the AOE, remove the Undead."
+				"text": " (may ignore size requirement). All Undead become Dead at the end of the turn. When an allied Undead becomes Dead, place AOE: Circular S centered in it. All models Withing the AOE suffer a Hit with PW 12 and "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison",
+					"level": 2
+				}
+			},
+			{
+				"text": ". After resolving the AOE, remove the Undead."
 			}
 		]
 	},
@@ -435,7 +446,8 @@
 				"text": "Poison I",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 1
 				}
 			},
 			{
@@ -445,7 +457,8 @@
 				"text": "Poison II",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			},
 			{
@@ -665,7 +678,8 @@
 				"text": "Conjuration Spells",
 				"link": {
 					"type": "spell",
-					"id": "art-of-conjuration"
+					"id": "art-of-conjuration",
+					"level": 4
 				}
 			},
 			{
@@ -825,7 +839,8 @@
 				"text": "Resistance II Poison",
 				"link": {
 					"type": "trait",
-					"id": "resistance--x"
+					"id": "resistance--x",
+					"level": 2
 				}
 			},
 			{
@@ -839,7 +854,29 @@
 				}
 			},
 			{
-				"text": ". Tier I models have (Poison I)[trait.POISON.I]. Tier II and above have (Poison II)[trait.POISON.II]."
+				"text": ". Tier I models have "
+			},
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "poison",
+					"level": 1
+				}
+			},
+			{
+				"text": ". Tier II and above have "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison",
+					"level": 2
+				}
+			},
+			{
+				"text": "."
 			}
 		]
 	},

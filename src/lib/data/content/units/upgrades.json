@@ -77,7 +77,8 @@
 				"text": "Fencing I",
 				"link": {
 					"type": "combat-art",
-					"id": "fencing"
+					"id": "fencing",
+					"level": 4
 				}
 			},
 			{
@@ -149,7 +150,8 @@
 				"text": "Climbing",
 				"link": {
 					"type": "skill",
-					"id": "climbing"
+					"id": "climbing",
+					"level": 1
 				}
 			},
 			{
@@ -252,7 +254,8 @@
 				"text": "Duelist",
 				"link": {
 					"type": "trait",
-					"id": "duelist"
+					"id": "duelist",
+					"level": 1
 				}
 			},
 			{
@@ -262,7 +265,8 @@
 				"text": "Demon",
 				"link": {
 					"type": "trait",
-					"id": "demon"
+					"id": "demon",
+					"level": 1
 				}
 			},
 			{
@@ -300,7 +304,8 @@
 				"text": "Demon",
 				"link": {
 					"type": "trait",
-					"id": "demon"
+					"id": "demon",
+					"level": 1
 				}
 			},
 			{
@@ -356,7 +361,8 @@
 				"text": "Demon",
 				"link": {
 					"type": "trait",
-					"id": "demon"
+					"id": "demon",
+					"level": 1
 				}
 			},
 			{
@@ -392,7 +398,8 @@
 				"text": "Affinity",
 				"link": {
 					"type": "trait",
-					"id": "affinity--element"
+					"id": "affinity--element",
+					"level": 1
 				}
 			},
 			{
@@ -402,7 +409,8 @@
 				"text": "Affinity",
 				"link": {
 					"type": "trait",
-					"id": "affinity--element"
+					"id": "affinity--element",
+					"level": 1
 				}
 			},
 			{
@@ -412,7 +420,8 @@
 				"text": "Affinity",
 				"link": {
 					"type": "trait",
-					"id": "affinity--element"
+					"id": "affinity--element",
+					"level": 1
 				}
 			},
 			{
@@ -422,7 +431,8 @@
 				"text": "Affinity",
 				"link": {
 					"type": "trait",
-					"id": "affinity--element"
+					"id": "affinity--element",
+					"level": 1
 				}
 			},
 			{
@@ -978,7 +988,8 @@
 				"text": "Archery I",
 				"link": {
 					"type": "combat-art",
-					"id": "archery"
+					"id": "archery",
+					"level": 1
 				}
 			},
 			{
@@ -988,7 +999,8 @@
 				"text": "Archery",
 				"link": {
 					"type": "combat-art",
-					"id": "archery"
+					"id": "archery",
+					"level": 4
 				}
 			},
 			{
@@ -1033,7 +1045,8 @@
 				"text": "Affinities",
 				"link": {
 					"type": "trait",
-					"id": "affinity--element"
+					"id": "affinity--element",
+					"level": 1
 				}
 			},
 			{
@@ -1089,7 +1102,8 @@
 				"text": "Stealth I",
 				"link": {
 					"type": "skill",
-					"id": "stealth"
+					"id": "stealth",
+					"level": 1
 				}
 			},
 			{
@@ -1140,7 +1154,8 @@
 				"text": "Poison I",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 1
 				}
 			},
 			{
@@ -1150,7 +1165,8 @@
 				"text": "Poison",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			},
 			{
@@ -1224,7 +1240,8 @@
 				"text": "Fearless",
 				"link": {
 					"type": "trait",
-					"id": "fearless"
+					"id": "fearless",
+					"level": 1
 				}
 			},
 			{
@@ -1252,7 +1269,8 @@
 				"text": "Fearless",
 				"link": {
 					"type": "trait",
-					"id": "fearless"
+					"id": "fearless",
+					"level": 1
 				}
 			},
 			{
@@ -1308,7 +1326,8 @@
 				"text": "Tactician",
 				"link": {
 					"type": "trait",
-					"id": "tactician"
+					"id": "tactician",
+					"level": 1
 				}
 			},
 			{
@@ -1350,7 +1369,8 @@
 				"text": "Duelist",
 				"link": {
 					"type": "trait",
-					"id": "duelist"
+					"id": "duelist",
+					"level": 1
 				}
 			},
 			{

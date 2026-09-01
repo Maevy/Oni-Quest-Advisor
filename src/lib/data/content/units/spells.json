@@ -202,7 +202,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -212,7 +213,8 @@
 				"text": "Burn 1",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -249,7 +251,8 @@
 				"text": "Ricochet IV",
 				"link": {
 					"type": "trait",
-					"id": "ricochet--x"
+					"id": "ricochet--x",
+					"level": 1
 				}
 			},
 			{
@@ -383,7 +386,8 @@
 				"text": "Ricochet I",
 				"link": {
 					"type": "trait",
-					"id": "ricochet--x"
+					"id": "ricochet--x",
+					"level": 1
 				}
 			},
 			{
@@ -427,7 +431,8 @@
 				"text": "Poison II",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			},
 			{
@@ -464,7 +469,8 @@
 				"text": "Poison II",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			},
 			{
@@ -474,7 +480,8 @@
 				"text": "Sweep II",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			}
 		],
@@ -850,7 +857,8 @@
 				"text": "Ricochet IV",
 				"link": {
 					"type": "trait",
-					"id": "ricochet--x"
+					"id": "ricochet--x",
+					"level": 1
 				}
 			},
 			{
@@ -897,7 +905,8 @@
 				"text": "Ricochet IV",
 				"link": {
 					"type": "trait",
-					"id": "ricochet--x"
+					"id": "ricochet--x",
+					"level": 1
 				}
 			},
 			{
@@ -1132,7 +1141,8 @@
 				"text": "Burn 1",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			}
 		],
@@ -1166,7 +1176,8 @@
 				"text": "Burn 1",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -1213,7 +1224,8 @@
 				"text": "Sweep II",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			},
 			{
@@ -1223,7 +1235,8 @@
 				"text": "Burn 2",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -1250,7 +1263,8 @@
 				"text": "Sweep II",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			},
 			{
@@ -1260,7 +1274,8 @@
 				"text": "Burn 2",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -1324,7 +1339,8 @@
 				"text": "Knockback 2",
 				"link": {
 					"type": "trait",
-					"id": "knockback--x"
+					"id": "knockback--x",
+					"level": 1
 				}
 			},
 			{
@@ -1767,7 +1783,8 @@
 				"text": "Burn 1",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			}
 		],
@@ -1804,7 +1821,8 @@
 				"text": "Burn 3",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -1844,7 +1862,8 @@
 				"text": "Burn 3",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -2146,7 +2165,8 @@
 				"text": "Burn 1",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -2247,7 +2267,8 @@
 				"text": "Poison II",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			}
 		],
@@ -2285,7 +2306,11 @@
 		"level": 2,
 		"effect": [
 			{
-				"text": "(Armor-Piercing([trait.ARMOR_PIERCING]"
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
 			}
 		],
 		"pw": {
@@ -2338,7 +2363,8 @@
 				"text": "Undead",
 				"link": {
 					"type": "trait",
-					"id": "undead"
+					"id": "undead",
+					"level": 2
 				}
 			},
 			{
@@ -2702,7 +2728,8 @@
 				"text": "Burn 1",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 1
 				}
 			},
 			{
@@ -2833,7 +2860,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -2995,7 +3023,8 @@
 				"text": "Knockback 3",
 				"link": {
 					"type": "trait",
-					"id": "knockback--x"
+					"id": "knockback--x",
+					"level": 1
 				}
 			},
 			{

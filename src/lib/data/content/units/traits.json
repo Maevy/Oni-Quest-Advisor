@@ -96,7 +96,8 @@
 					"text": "Two-Handed",
 					"link": {
 						"type": "trait",
-						"id": "two-handed"
+						"id": "two-handed",
+						"level": 1
 					}
 				},
 				{

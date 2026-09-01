@@ -48,9 +48,11 @@
  * Skill/trait/combat-art entries carry the catalog's rule text per level in a
  * `levels` map (groups without per-level entries fall back to `description`).
  * Rules texts (class/skill/trait) are stored as segments; cross-references like
- * `(Knockdown)[trait.KNOCKDOWN]` become link segments, mid-sentence line breaks
- * are normalized to spaces. The catalogs are written in full - they also hold
- * the condition traits (Knockdown, Bleeding, ...) that rules texts link to.
+ * `(Knockdown)[trait.KNOCKDOWN]` become link segments (a `.1`/`.II` level
+ * suffix is kept on the link), mid-sentence line breaks are normalized to
+ * spaces, and known broken producer markup is repaired (SOURCE_LINK_FIXES).
+ * The catalogs are written in full - they also hold the condition traits
+ * (Knockdown, Bleeding, ...) that rules texts link to.
  * - faction availability from attributes.factions:
  *   - exactly one faction -> that faction's exclusive file
  *   - NEUTRAL-tagged (alone or combined) -> neutral.json, available to every faction
@@ -278,18 +280,46 @@ function normalize(text) {
 		.trim();
 }
 
-/** Rich-text segments; `(Knockdown)[trait.KNOCKDOWN]` becomes a link segment. */
+/** Broken rich-link markup in the producer dump, repaired before parsing. */
+const SOURCE_LINK_FIXES = [
+	['(Armor-Piercing([trait.ARMOR_PIERCING]', '(Armor-Piercing)[trait.ARMOR_PIERCING]'],
+	['[trait.POSION.', '[trait.POISON.']
+];
+
+const ROMAN_DIGITS = { I: 1, V: 5, X: 10 };
+
+/** Numeric or Roman level suffix of a link code, e.g. '2' or 'II'; undefined when unparseable. */
+function parseLinkLevel(suffix) {
+	if (/^\d+$/.test(suffix)) return Number(suffix);
+	let total = 0;
+	for (let index = 0; index < suffix.length; index++) {
+		const value = ROMAN_DIGITS[suffix[index]];
+		if (value === undefined) return undefined;
+		const next = ROMAN_DIGITS[suffix[index + 1]] ?? 0;
+		total += value < next ? -value : value;
+	}
+	return total > 0 ? total : undefined;
+}
+
+/**
+ * Rich-text segments; `(Knockdown)[trait.KNOCKDOWN]` becomes a link segment.
+ * A level suffix (`[trait.POISON.II]`, `[trait.KNOCKDOWN.1]`) is kept on the
+ * link so popups can grey out the levels above it.
+ */
 function richText(text) {
-	const normalized = normalize(text);
+	let normalized = normalize(text);
+	for (const [broken, fixed] of SOURCE_LINK_FIXES) {
+		normalized = normalized.split(broken).join(fixed);
+	}
 	const segments = [];
 	let last = 0;
-	const linkPattern = /\(([^()]*)\)\[([A-Za-z_-]+)\.([A-Z0-9_]+)(?:\.\d+)?\]/g;
+	const linkPattern = /\(([^()]*)\)\[([A-Za-z_-]+)\.([A-Z0-9_]+)(?:\.(\d+|[IVX]+))?\]/g;
 	for (const match of normalized.matchAll(linkPattern)) {
 		if (match.index > last) segments.push({ text: normalized.slice(last, match.index) });
-		segments.push({
-			text: match[1],
-			link: { type: match[2].toLowerCase(), id: kebab(match[3]) }
-		});
+		const link = { type: match[2].toLowerCase(), id: kebab(match[3]) };
+		const level = match[4] ? parseLinkLevel(match[4]) : undefined;
+		if (level !== undefined) link.level = level;
+		segments.push({ text: match[1], link });
 		last = match.index + match[0].length;
 	}
 	if (last < normalized.length) segments.push({ text: normalized.slice(last) });

@@ -62,7 +62,8 @@
 					"text": "Poison I",
 					"link": {
 						"type": "trait",
-						"id": "poison"
+						"id": "poison",
+						"level": 1
 					}
 				},
 				{
@@ -98,7 +99,8 @@
 					"text": "Knockdown",
 					"link": {
 						"type": "trait",
-						"id": "knockdown"
+						"id": "knockdown",
+						"level": 1
 					}
 				},
 				{
@@ -113,7 +115,8 @@
 					"text": "Sweep I",
 					"link": {
 						"type": "trait",
-						"id": "sweep"
+						"id": "sweep",
+						"level": 1
 					}
 				},
 				{
@@ -128,7 +131,8 @@
 					"text": "Crippling",
 					"link": {
 						"type": "trait",
-						"id": "crippling"
+						"id": "crippling",
+						"level": 1
 					}
 				},
 				{
@@ -143,7 +147,8 @@
 					"text": "Cleave",
 					"link": {
 						"type": "trait",
-						"id": "cleave"
+						"id": "cleave",
+						"level": 1
 					}
 				},
 				{
@@ -179,7 +184,8 @@
 					"text": "Knockdown",
 					"link": {
 						"type": "trait",
-						"id": "knockdown"
+						"id": "knockdown",
+						"level": 1
 					}
 				},
 				{
@@ -194,7 +200,8 @@
 					"text": "Ignore Armor",
 					"link": {
 						"type": "trait",
-						"id": "ignore-armor"
+						"id": "ignore-armor",
+						"level": 1
 					}
 				},
 				{

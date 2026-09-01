@@ -53,7 +53,8 @@
 				"text": "Vigilance",
 				"link": {
 					"type": "trait",
-					"id": "vigilance"
+					"id": "vigilance",
+					"level": 1
 				}
 			},
 			{
@@ -161,7 +162,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			}
 		],
@@ -253,7 +255,8 @@
 				"text": "Poison II",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			},
 			{
@@ -263,7 +266,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			}
 		],
@@ -299,7 +303,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			}
 		],
@@ -429,7 +434,8 @@
 				"text": "Poison I",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 1
 				}
 			}
 		],
@@ -460,7 +466,8 @@
 				"text": "Poison I",
 				"link": {
 					"type": "trait",
-					"id": "posion"
+					"id": "poison",
+					"level": 1
 				}
 			}
 		],
@@ -514,7 +521,8 @@
 				"text": "Poison I",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 1
 				}
 			}
 		],
@@ -544,7 +552,8 @@
 				"text": "Poison I",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 1
 				}
 			}
 		],
@@ -578,7 +587,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			}
 		],
@@ -628,7 +638,8 @@
 				"text": "Burn 3",
 				"link": {
 					"type": "trait",
-					"id": "burn--x"
+					"id": "burn--x",
+					"level": 3
 				}
 			}
 		],
@@ -659,7 +670,8 @@
 				"text": "Throwing",
 				"link": {
 					"type": "trait",
-					"id": "throwing"
+					"id": "throwing",
+					"level": 1
 				}
 			},
 			{
@@ -734,7 +746,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -784,7 +797,8 @@
 				"text": "Knockdown",
 				"link": {
 					"type": "trait",
-					"id": "knockdown"
+					"id": "knockdown",
+					"level": 1
 				}
 			},
 			{
@@ -881,7 +895,8 @@
 				"text": "Flight Skill",
 				"link": {
 					"type": "skill",
-					"id": "flight"
+					"id": "flight",
+					"level": 1
 				}
 			},
 			{
@@ -1035,7 +1050,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -1089,7 +1105,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			},
 			{
@@ -1099,7 +1116,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -1109,7 +1127,8 @@
 				"text": "Bleed",
 				"link": {
 					"type": "trait",
-					"id": "bleed"
+					"id": "bleed",
+					"level": 1
 				}
 			},
 			{
@@ -1142,7 +1161,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			},
 			{
@@ -1152,7 +1172,8 @@
 				"text": "Knockdown",
 				"link": {
 					"type": "trait",
-					"id": "knockdown"
+					"id": "knockdown",
+					"level": 1
 				}
 			},
 			{
@@ -1162,7 +1183,8 @@
 				"text": "Cleave",
 				"link": {
 					"type": "trait",
-					"id": "cleave"
+					"id": "cleave",
+					"level": 1
 				}
 			},
 			{
@@ -1226,7 +1248,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -1236,7 +1259,8 @@
 				"text": "Armor- Piercing",
 				"link": {
 					"type": "trait",
-					"id": "armor-piercing"
+					"id": "armor-piercing",
+					"level": 1
 				}
 			},
 			{
@@ -1256,7 +1280,8 @@
 				"text": "Stun",
 				"link": {
 					"type": "trait",
-					"id": "stun"
+					"id": "stun",
+					"level": 1
 				}
 			},
 			{
@@ -1290,7 +1315,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -1300,7 +1326,8 @@
 				"text": "Cleave",
 				"link": {
 					"type": "trait",
-					"id": "cleave"
+					"id": "cleave",
+					"level": 1
 				}
 			},
 			{
@@ -1408,7 +1435,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -1418,7 +1446,8 @@
 				"text": "Throwing",
 				"link": {
 					"type": "trait",
-					"id": "throwing"
+					"id": "throwing",
+					"level": 1
 				}
 			},
 			{
@@ -1472,7 +1501,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			},
 			{
@@ -1482,7 +1512,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -1492,7 +1523,8 @@
 				"text": "Bleed",
 				"link": {
 					"type": "trait",
-					"id": "bleed"
+					"id": "bleed",
+					"level": 1
 				}
 			},
 			{
@@ -1575,7 +1607,8 @@
 				"text": "Armor-Piercing",
 				"link": {
 					"type": "trait",
-					"id": "armor-piercing"
+					"id": "armor-piercing",
+					"level": 1
 				}
 			},
 			{
@@ -1701,7 +1734,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			}
 		],
@@ -1769,7 +1803,8 @@
 				"text": "Armor-Piercing",
 				"link": {
 					"type": "trait",
-					"id": "armor-piercing"
+					"id": "armor-piercing",
+					"level": 1
 				}
 			},
 			{
@@ -1823,7 +1858,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			}
 		],
@@ -1941,7 +1977,8 @@
 				"text": "Knockback 1",
 				"link": {
 					"type": "trait",
-					"id": "knockback--x"
+					"id": "knockback--x",
+					"level": 1
 				}
 			},
 			{
@@ -1961,7 +1998,8 @@
 				"text": "Sweep II",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			}
 		]
@@ -2000,7 +2038,8 @@
 				"text": "Sweep II",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			}
 		],
@@ -2088,7 +2127,8 @@
 				"text": "Sorceries",
 				"link": {
 					"type": "spell",
-					"id": "art-of-sorcery"
+					"id": "art-of-sorcery",
+					"level": 3
 				}
 			},
 			{
@@ -2173,7 +2213,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			}
 		],
@@ -2257,7 +2298,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -2277,7 +2319,8 @@
 				"text": "Cleave",
 				"link": {
 					"type": "trait",
-					"id": "cleave"
+					"id": "cleave",
+					"level": 1
 				}
 			},
 			{
@@ -2287,7 +2330,8 @@
 				"text": "Knockback 1",
 				"link": {
 					"type": "trait",
-					"id": "knockback--x"
+					"id": "knockback--x",
+					"level": 1
 				}
 			},
 			{
@@ -2322,7 +2366,8 @@
 				"text": "Armor-Piercing",
 				"link": {
 					"type": "trait",
-					"id": "armor-piercing"
+					"id": "armor-piercing",
+					"level": 1
 				}
 			},
 			{
@@ -2332,7 +2377,8 @@
 				"text": "Stun",
 				"link": {
 					"type": "trait",
-					"id": "stun"
+					"id": "stun",
+					"level": 1
 				}
 			},
 			{
@@ -2365,7 +2411,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -2404,7 +2451,8 @@
 				"text": "Throwing",
 				"link": {
 					"type": "trait",
-					"id": "throwing"
+					"id": "throwing",
+					"level": 1
 				}
 			}
 		],
@@ -2502,7 +2550,8 @@
 				"text": "Divine Spell",
 				"link": {
 					"type": "spell",
-					"id": "hieromancy"
+					"id": "hieromancy",
+					"level": 4
 				}
 			},
 			{
@@ -2546,7 +2595,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -2586,7 +2636,8 @@
 				"text": "Spellbound",
 				"link": {
 					"type": "trait",
-					"id": "spellbound--x"
+					"id": "spellbound--x",
+					"level": 1
 				}
 			},
 			{
@@ -2674,7 +2725,8 @@
 				"text": "Sweep II",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 2
 				}
 			},
 			{
@@ -2712,7 +2764,8 @@
 				"text": "Knockdown",
 				"link": {
 					"type": "trait",
-					"id": "knockdown"
+					"id": "knockdown",
+					"level": 1
 				}
 			},
 			{
@@ -2744,7 +2797,8 @@
 				"text": "Poison II",
 				"link": {
 					"type": "trait",
-					"id": "poison"
+					"id": "poison",
+					"level": 2
 				}
 			}
 		]
@@ -2779,7 +2833,8 @@
 				"text": "Two-Handed",
 				"link": {
 					"type": "trait",
-					"id": "two-handed"
+					"id": "two-handed",
+					"level": 1
 				}
 			},
 			{
@@ -2874,7 +2929,8 @@
 				"text": "Sweep I",
 				"link": {
 					"type": "trait",
-					"id": "sweep"
+					"id": "sweep",
+					"level": 1
 				}
 			},
 			{
@@ -2911,7 +2967,8 @@
 				"text": "Targetless",
 				"link": {
 					"type": "trait",
-					"id": "targetless"
+					"id": "targetless",
+					"level": 1
 				}
 			},
 			{

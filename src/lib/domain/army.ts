@@ -47,6 +47,8 @@ export type ArmyStats = Record<ArmyStatKey, number | null>;
 export type ArmyRulesLink = {
 	type: string;
 	id: string;
+	/** The level a suffixed link names (`[trait.POISON.II]`); higher levels grey out. */
+	level?: number;
 };
 
 /** One piece of rules text; `link` marks it as a clickable cross-reference. */
@@ -1188,6 +1190,12 @@ export function rulesLinkPopup(
 						: undefined;
 	const entry = index?.[link.id];
 	if (!entry) return null;
+	if (link.level !== undefined) {
+		return {
+			title: armyRulesTitle(entry.name, link.level),
+			sections: leveledSections(entry, link.level)
+		};
+	}
 	const levels = entry.levels ?? {};
 	const numbers = Object.keys(levels)
 		.map(Number)
