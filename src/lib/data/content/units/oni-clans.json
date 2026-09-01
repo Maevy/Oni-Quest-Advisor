@@ -53,7 +53,8 @@
 				"id": "berserk",
 				"level": 2
 			}
-		]
+		],
+		"stratagems": ["coordinated-assault", "mind-invasion", "painless-death", "recall-the-souls"]
 	},
 	{
 		"id": "blue-yaksha",
@@ -199,7 +200,8 @@
 				"id": "necromancy",
 				"level": 5
 			}
-		]
+		],
+		"stratagems": ["eternal-vigil", "final-gambit", "profane-mend", "soul-harvest"]
 	},
 	{
 		"id": "forgotten-hero",
@@ -400,7 +402,8 @@
 				"id": "berserk",
 				"level": 3
 			}
-		]
+		],
+		"stratagems": ["devour-the-enemy", "mark-of-red", "raid-expert"]
 	},
 	{
 		"id": "red-yaksha",

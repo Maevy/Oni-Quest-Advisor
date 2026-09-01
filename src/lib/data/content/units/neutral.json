@@ -133,7 +133,8 @@
 				"id": "fencing",
 				"level": 4
 			}
-		]
+		],
+		"stratagems": ["defensive-formation", "unconventional-tactics"]
 	},
 	{
 		"id": "helrin-expatriate",

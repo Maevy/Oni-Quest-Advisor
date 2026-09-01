@@ -6,6 +6,7 @@
 		ArmyRulesSpec,
 		ArmySpellSpec,
 		ArmyStats,
+		ArmyStratagemSpec,
 		ArmyUnitSpec
 	} from '$lib/domain';
 	import UnitCard from './UnitCard.svelte';
@@ -19,6 +20,7 @@
 		combatArtIndex: Record<string, ArmyRulesSpec>;
 		spellcraftIndex: Record<string, ArmyRulesSpec>;
 		spells: ArmySpellSpec[];
+		stratagemIndex: Record<string, ArmyStratagemSpec>;
 		armyRows: ArmyRosterRow[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -42,6 +44,7 @@
 		combatArtIndex,
 		spellcraftIndex,
 		spells,
+		stratagemIndex,
 		armyRows,
 		counts,
 		format,
@@ -308,6 +311,7 @@
 			{combatArtIndex}
 			{spellcraftIndex}
 			{spells}
+			{stratagemIndex}
 			stats={selectedCard.stats}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}

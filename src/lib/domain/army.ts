@@ -107,6 +107,17 @@ export type ArmySpellSpec = {
 	stk?: ArmySpellCost;
 };
 
+/** The rulebook category of a stratagem. */
+export type ArmyStratagemType = 'authority' | 'subterfuge' | 'tribe';
+
+/** A stratagem from the producer's stratagem catalog. */
+export type ArmyStratagemSpec = {
+	id: string;
+	name: string;
+	type: ArmyStratagemType;
+	effect: ArmyTextSegment[];
+};
+
 /** A trait on a unit; dynamic values fill the entry's (X)/(Element) placeholders. */
 export type ArmyTraitRef = {
 	id: string;
@@ -131,6 +142,8 @@ export type ArmyUnitSpec = {
 	combatArts?: ArmyCombatArtRef[];
 	/** Spellcraft references; casters only. */
 	spellcrafts?: ArmySpellcraftRef[];
+	/** Stratagem ids; only some units carry stratagems. */
+	stratagems?: string[];
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
 	mount?: { unitId: string; points: number };
@@ -158,7 +171,7 @@ export type ArmySpellRow = {
 	stk?: string;
 };
 
-/** A resolved rules popup: heading plus level sections or a spell table. */
+/** A resolved rules popup: heading plus level sections or a spell list. */
 export type ArmyRulesPopup = {
 	title: string;
 	sections: ArmyRulesSection[];
@@ -262,8 +275,8 @@ export function armyCopyCounts(entries: ArmyEntry[]): Record<string, number> {
 	}, {});
 }
 
-/** Rules entries keyed by id, for resolving a unit's class/skill/trait references. */
-export function indexArmyRules(entries: ArmyRulesSpec[]): Record<string, ArmyRulesSpec> {
+/** Rules entries keyed by id, for resolving a unit's class/skill/trait/stratagem references. */
+export function indexArmyRules<T extends { id: string }>(entries: T[]): Record<string, T> {
 	return Object.fromEntries(entries.map((entry) => [entry.id, entry]));
 }
 
@@ -459,7 +472,7 @@ export function spellCostDisplay(
 /**
  * The popup for a unit's spellcraft reference: the spells the unit can
  * actually cast - its group, at or below its level, in its affinity
- * elements - as table rows sorted Elder-first, then level, then name.
+ * elements - as rows sorted Elder-first, then level, then name.
  */
 export function spellcraftPopupFor(
 	entry: ArmyRulesSpec | undefined,
@@ -494,6 +507,27 @@ export function spellcraftPopupFor(
 			stk: spellCostDisplay(spell.stk, stats)
 		}));
 	return { title: armyRulesTitle(entry.name, ref.level), sections: [], spells: rows };
+}
+
+/** Display order of the stratagem types: rulebook categories, most common first. */
+const STRATAGEM_TYPE_ORDER: ArmyStratagemType[] = ['authority', 'subterfuge', 'tribe'];
+
+/**
+ * A unit's stratagem ids resolved against the catalog, sorted by type
+ * (Authority, Subterfuge, Tribe), then by name; unknown ids are skipped.
+ */
+export function stratagemsFor(
+	ids: string[],
+	index: Record<string, ArmyStratagemSpec>
+): ArmyStratagemSpec[] {
+	return ids
+		.map((id) => index[id])
+		.filter((entry): entry is ArmyStratagemSpec => entry !== undefined)
+		.sort(
+			(a, b) =>
+				STRATAGEM_TYPE_ORDER.indexOf(a.type) - STRATAGEM_TYPE_ORDER.indexOf(b.type) ||
+				a.name.localeCompare(b.name)
+		);
 }
 
 /** Rider stats when mounted: non-null mount stats override, statChanges add on top. */

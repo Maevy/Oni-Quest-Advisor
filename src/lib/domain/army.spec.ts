@@ -18,6 +18,7 @@ import {
 	skillPopupFor,
 	spellCostDisplay,
 	spellcraftPopupFor,
+	stratagemsFor,
 	substituteArmyTemplate,
 	toggleArmyMount,
 	traitPopupFor,
@@ -27,6 +28,7 @@ import {
 	type ArmyRulesSpec,
 	type ArmySpellSpec,
 	type ArmyStats,
+	type ArmyStratagemSpec,
 	type ArmyUnitContent,
 	type ArmyUnitSpec
 } from './army';
@@ -826,6 +828,58 @@ describe('spellcraftPopupFor', () => {
 		expect(
 			spellcraftPopupFor(undefined, { id: 'ghost', level: 1 }, FLAMESHAPER, STATS, SPELLS)
 		).toBeNull();
+	});
+});
+
+const STRATAGEM_INDEX: Record<string, ArmyStratagemSpec> = {
+	'rally-troops-helian': {
+		id: 'rally-troops-helian',
+		name: 'Rally Troops (Helian)',
+		type: 'authority',
+		effect: [{ text: 'A model shakes off Fatigue.' }]
+	},
+	backstab: {
+		id: 'backstab',
+		name: 'Backstab',
+		type: 'subterfuge',
+		effect: [{ text: 'The target suffers a Hit.' }]
+	},
+	aetherkin: {
+		id: 'aetherkin',
+		name: 'Aetherkin',
+		type: 'tribe',
+		effect: [{ text: 'Models have Resistance I (Spell).' }]
+	},
+	'active-support': {
+		id: 'active-support',
+		name: 'Active Support',
+		type: 'authority',
+		effect: [{ text: 'Up to two models may become enchanted.' }]
+	}
+};
+
+describe('stratagemsFor', () => {
+	it('resolves the ids and sorts by type order, then name', () => {
+		const stratagems = stratagemsFor(
+			['aetherkin', 'backstab', 'rally-troops-helian', 'active-support'],
+			STRATAGEM_INDEX
+		);
+		expect(stratagems.map((entry) => entry.name)).toEqual([
+			'Active Support',
+			'Rally Troops (Helian)',
+			'Backstab',
+			'Aetherkin'
+		]);
+	});
+
+	it('skips ids missing from the index', () => {
+		const stratagems = stratagemsFor(['ghost', 'backstab'], STRATAGEM_INDEX);
+		expect(stratagems.map((entry) => entry.id)).toEqual(['backstab']);
+	});
+
+	it('is empty for empty ids or when nothing resolves', () => {
+		expect(stratagemsFor([], STRATAGEM_INDEX)).toEqual([]);
+		expect(stratagemsFor(['ghost'], STRATAGEM_INDEX)).toEqual([]);
 	});
 });
 

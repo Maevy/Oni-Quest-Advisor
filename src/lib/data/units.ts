@@ -2,6 +2,7 @@ import type {
 	ArmyFactionId,
 	ArmyRulesSpec,
 	ArmySpellSpec,
+	ArmyStratagemSpec,
 	ArmyUnitContent,
 	ArmyUnitSpec
 } from '$lib/domain';
@@ -21,6 +22,10 @@ const spellModules = import.meta.glob('./content/units/spells.json', { eager: tr
 	string,
 	{ default: ArmySpellSpec[] }
 >;
+
+const stratagemModules = import.meta.glob('./content/units/stratagems.json', {
+	eager: true
+}) as Record<string, { default: ArmyStratagemSpec[] }>;
 
 const iconModules = import.meta.glob('../assets/uniticons/*/*.jpg', {
 	eager: true,
@@ -68,7 +73,8 @@ export function loadArmyUnits(): ArmyUnitContent {
 			key === 'traits' ||
 			key === 'combat-arts' ||
 			key === 'spellcrafts' ||
-			key === 'spells'
+			key === 'spells' ||
+			key === 'stratagems'
 		) {
 			continue;
 		}
@@ -118,4 +124,9 @@ export function loadArmySpellcrafts(): ArmyRulesSpec[] {
 /** Loads the spell catalog the spellcraft popups filter from. */
 export function loadArmySpells(): ArmySpellSpec[] {
 	return Object.values(spellModules)[0]?.default ?? [];
+}
+
+/** Loads the stratagem catalog referenced by unit `stratagems` ids. */
+export function loadArmyStratagems(): ArmyStratagemSpec[] {
+	return Object.values(stratagemModules)[0]?.default ?? [];
 }

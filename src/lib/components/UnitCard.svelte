@@ -7,16 +7,82 @@
 		rulesLinkPopup,
 		skillPopupFor,
 		spellcraftPopupFor,
+		stratagemsFor,
 		traitPopupFor,
 		type ArmyFactionConfig,
 		type ArmyRulesIndexes,
 		type ArmyRulesPopup,
 		type ArmyRulesSpec,
+		type ArmySpellRow,
 		type ArmySpellSpec,
 		type ArmyStats,
+		type ArmyStratagemSpec,
+		type ArmyStratagemType,
 		type ArmyTextSegment,
 		type ArmyUnitSpec
 	} from '$lib/domain';
+
+	/** Chip styling per spell element - literal classes so Tailwind sees them. */
+	const ELEMENT_CHIP_CLASSES: Record<string, string> = {
+		elder: 'border-violet-400/30 bg-violet-400/10 text-violet-300',
+		air: 'border-sky-400/30 bg-sky-400/10 text-sky-300',
+		earth: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+		divine: 'border-yellow-300/30 bg-yellow-300/10 text-yellow-200',
+		fire: 'border-red-400/30 bg-red-400/10 text-red-300',
+		profane: 'border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-300',
+		water: 'border-blue-400/30 bg-blue-400/10 text-blue-300'
+	};
+
+	type SpellGroup = { element: string; label: string; rows: ArmySpellRow[] };
+
+	/** Group the already Elder-first sorted spell rows by element. */
+	function spellGroups(spells: ArmySpellRow[]): SpellGroup[] {
+		const groups: SpellGroup[] = [];
+		for (const row of spells) {
+			const last = groups[groups.length - 1];
+			if (last && last.element === row.element) last.rows.push(row);
+			else groups.push({ element: row.element, label: row.elementName, rows: [row] });
+		}
+		return groups;
+	}
+
+	/** Chip styling per stratagem type - literal classes so Tailwind sees them. */
+	const STRATAGEM_TYPE_CHIPS: Record<ArmyStratagemType, { label: string; classes: string }> = {
+		authority: {
+			label: 'Authority',
+			classes: 'border-sky-400/30 bg-sky-400/10 text-sky-300'
+		},
+		subterfuge: {
+			label: 'Subterfuge',
+			classes: 'border-violet-400/30 bg-violet-400/10 text-violet-300'
+		},
+		tribe: {
+			label: 'Tribe',
+			classes: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+		}
+	};
+
+	type StratagemGroup = {
+		type: ArmyStratagemType;
+		label: string;
+		entries: ArmyStratagemSpec[];
+	};
+
+	/** Group the already type-sorted stratagems by their type. */
+	function stratagemGroups(stratagems: ArmyStratagemSpec[]): StratagemGroup[] {
+		const groups: StratagemGroup[] = [];
+		for (const entry of stratagems) {
+			const last = groups[groups.length - 1];
+			if (last && last.type === entry.type) last.entries.push(entry);
+			else
+				groups.push({
+					type: entry.type,
+					label: STRATAGEM_TYPE_CHIPS[entry.type].label,
+					entries: [entry]
+				});
+		}
+		return groups;
+	}
 
 	type Props = {
 		unit: ArmyUnitSpec;
@@ -27,6 +93,7 @@
 		combatArtIndex: Record<string, ArmyRulesSpec>;
 		spellcraftIndex: Record<string, ArmyRulesSpec>;
 		spells: ArmySpellSpec[];
+		stratagemIndex: Record<string, ArmyStratagemSpec>;
 		stats: ArmyStats;
 		mounted: boolean;
 		mountName?: string;
@@ -42,6 +109,7 @@
 		combatArtIndex,
 		spellcraftIndex,
 		spells,
+		stratagemIndex,
 		stats,
 		mounted,
 		mountName,
@@ -87,6 +155,7 @@
 			return popup ? [popup] : [];
 		})
 	);
+	let stratagems = $derived(unit.stratagems ? stratagemsFor(unit.stratagems, stratagemIndex) : []);
 
 	function openPopup(popup: ArmyRulesPopup): void {
 		popupStack = [...popupStack, popup];
@@ -170,30 +239,14 @@
 			</div>
 		</div>
 
-		<table class="mt-4 w-full table-fixed border-collapse text-center">
-			<thead>
-				<tr>
-					{#each ARMY_STAT_KEYS as key (key)}
-						<th
-							class="border border-slate-700/50 bg-slate-800/60 px-0.5 py-1 text-[10px] font-semibold tracking-wide text-sky-300"
-						>
-							{key}
-						</th>
-					{/each}
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					{#each ARMY_STAT_KEYS as key (key)}
-						<td
-							class="border border-slate-700/50 px-0.5 py-1 text-xs font-medium text-slate-100 tabular-nums"
-						>
-							{stats[key] ?? '–'}
-						</td>
-					{/each}
-				</tr>
-			</tbody>
-		</table>
+		<div class="mt-4 grid grid-cols-11 gap-1">
+			{#each ARMY_STAT_KEYS as key (key)}
+				<div class="rounded-md bg-slate-800/60 px-0.5 py-1.5 text-center">
+					<p class="text-[9px] font-semibold tracking-wide text-sky-300">{key}</p>
+					<p class="text-xs font-medium text-slate-100 tabular-nums">{stats[key] ?? '–'}</p>
+				</div>
+			{/each}
+		</div>
 
 		<div class="mt-4 space-y-3">
 			{#if skillTags.length > 0}
@@ -264,6 +317,36 @@
 					</div>
 				</div>
 			{/if}
+			{#if stratagems.length > 0}
+				<div>
+					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+						Stratagems
+					</h3>
+					<div class="space-y-2.5">
+						{#each stratagemGroups(stratagems) as group (group.type)}
+							<div>
+								<span
+									class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase {STRATAGEM_TYPE_CHIPS[
+										group.type
+									].classes}"
+								>
+									{group.label}
+								</span>
+								<div class="mt-1.5 space-y-1.5">
+									{#each group.entries as stratagem (stratagem.id)}
+										<div class="rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5">
+											<p class="text-sm font-medium text-slate-100">{stratagem.name}</p>
+											<p class="mt-1 text-xs text-slate-300">
+												{@render segmentsView(stratagem.effect)}
+											</p>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 
@@ -282,7 +365,7 @@
 				tabindex="-1"
 				aria-label={popup.title}
 				class={'max-h-[75dvh] w-full overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl ' +
-					(popup.spells ? 'max-w-lg' : 'max-w-sm')}
+					(popup.spells ? 'max-w-md' : 'max-w-sm')}
 				style="border-color: {faction.color}"
 				onclick={(event) => event.stopPropagation()}
 				onkeydown={(event) => {
@@ -295,64 +378,51 @@
 				<h3 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">{popup.title}</h3>
 				{#if popup.spells}
 					{#if popup.spells.length > 0}
-						<div class="mt-2 overflow-x-auto">
-							<table class="w-full border-collapse text-left text-xs">
-								<thead>
-									<tr>
-										{#each ['Element', 'Lv', 'Spell', 'Effect', 'PW', 'Type', 'RCH', 'STK'] as column (column)}
-											<th
-												class="border border-slate-700/50 bg-slate-800/60 px-1.5 py-1 text-[10px] font-semibold tracking-wide whitespace-nowrap text-sky-300"
-											>
-												{column}
-											</th>
+						<div class="mt-2 space-y-3">
+							{#each spellGroups(popup.spells) as group (group.element)}
+								<div>
+									<span
+										class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase {ELEMENT_CHIP_CLASSES[
+											group.element
+										] ?? 'border-slate-500/30 bg-slate-500/10 text-slate-300'}"
+									>
+										{group.label}
+									</span>
+									<div class="mt-1.5 space-y-1.5">
+										{#each group.rows as spell (spell.element + '-' + spell.level + '-' + spell.name)}
+											<div class="rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5">
+												<div class="flex items-baseline justify-between gap-2">
+													<p class="text-sm font-medium text-slate-100">{spell.name}</p>
+													<p
+														class="text-[10px] font-semibold whitespace-nowrap text-sky-300 uppercase"
+													>
+														Lv {spell.level}
+													</p>
+												</div>
+												<p class="mt-1 text-xs text-slate-300">
+													{@render segmentsView(spell.effect)}
+												</p>
+												{#if spell.pw || spell.type || spell.rch || spell.stk}
+													<div class="mt-1.5 flex flex-wrap gap-1">
+														{#each [['PW', spell.pw], ['Type', spell.type], ['RCH', spell.rch], ['STK', spell.stk]] as [label, value] (label)}
+															{#if value}
+																<span
+																	class="rounded-md bg-slate-900/60 px-1.5 py-0.5 text-[10px] text-slate-200"
+																>
+																	<span class="font-semibold tracking-wide text-slate-500 uppercase"
+																		>{label}</span
+																	>
+																	<span class="tabular-nums">{value}</span>
+																</span>
+															{/if}
+														{/each}
+													</div>
+												{/if}
+											</div>
 										{/each}
-									</tr>
-								</thead>
-								<tbody>
-									{#each popup.spells as spell (spell.element + '-' + spell.level + '-' + spell.name)}
-										<tr>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 whitespace-nowrap text-slate-300"
-											>
-												{spell.elementName}
-											</td>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 text-center text-slate-400 tabular-nums"
-											>
-												{spell.level}
-											</td>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 font-medium whitespace-nowrap text-slate-100"
-											>
-												{spell.name}
-											</td>
-											<td class="min-w-44 border border-slate-700/50 px-1.5 py-1 text-slate-300">
-												{@render segmentsView(spell.effect)}
-											</td>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 whitespace-nowrap text-slate-300 tabular-nums"
-											>
-												{spell.pw ?? '–'}
-											</td>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 whitespace-nowrap text-slate-300"
-											>
-												{spell.type ?? '–'}
-											</td>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 whitespace-nowrap text-slate-300"
-											>
-												{spell.rch ?? '–'}
-											</td>
-											<td
-												class="border border-slate-700/50 px-1.5 py-1 whitespace-nowrap text-slate-300"
-											>
-												{spell.stk ?? '–'}
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
+									</div>
+								</div>
+							{/each}
 						</div>
 					{:else}
 						<p class="mt-2 text-sm text-slate-500">

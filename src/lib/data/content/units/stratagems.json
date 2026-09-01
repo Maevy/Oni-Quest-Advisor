@@ -1,0 +1,956 @@
+[
+	{
+		"id": "active-support",
+		"name": "Active Support",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Up to two models may become enchanted with one of the Enchantment Spells available to the Leader."
+			}
+		]
+	},
+	{
+		"id": "adrenaline-rush",
+		"name": "Adrenaline Rush",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target self. In the Active Role, gain 1 additional AP but become "
+			},
+			{
+				"text": "Fatigued",
+				"link": {
+					"type": "trait",
+					"id": "fatigued"
+				}
+			},
+			{
+				"text": " until your next Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "advance",
+		"name": "Advance!",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "All models gain +1 SPD"
+			}
+		]
+	},
+	{
+		"id": "aetherkin",
+		"name": "Aetherkin",
+		"type": "tribe",
+		"effect": [
+			{
+				"text": "Models have Resistance I (Spell). Their attacks have Spell type and also deal magical damage."
+			}
+		]
+	},
+	{
+		"id": "arcane-link",
+		"name": "Arcane Link",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Each Sorcerer receives 1 Mana."
+			}
+		]
+	},
+	{
+		"id": "arcane-protection",
+		"name": "Arcane Protection",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Until the next Strategic Phase, whenever a Mage suffers one or more Hits, it may spend 1 Mana to gain +6 ARM for the remainder of that Activation Sequence."
+			}
+		]
+	},
+	{
+		"id": "back-to-back",
+		"name": "Back to Back",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "All models gain "
+			},
+			{
+				"text": "Vigilance",
+				"link": {
+					"type": "trait",
+					"id": "vigilance"
+				}
+			}
+		]
+	},
+	{
+		"id": "brazen-assault",
+		"name": "Brazen Assault",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Warriors gain "
+			},
+			{
+				"text": "Dash",
+				"link": {
+					"type": "skill",
+					"id": "dash"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			}
+		]
+	},
+	{
+		"id": "break-the-offensive",
+		"name": "Break the Offensive",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Warriors and Soldiers gain +3 DEF."
+			}
+		]
+	},
+	{
+		"id": "call-of-bravery",
+		"name": "Call of Bravery",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Other Goblin models in this model's Awareness cannot be "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "close-ranks",
+		"name": "Close Ranks",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Each Allied model receives +1 ARM for every other Allied model in Base contact. Warriors and Soldiers gain "
+			},
+			{
+				"text": "Vigilance",
+				"link": {
+					"type": "trait",
+					"id": "vigilance"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "coordinated-assault",
+		"name": "Coordinated Assault",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target ally gains "
+			},
+			{
+				"text": "Chain Attack",
+				"link": {
+					"type": "skill",
+					"id": "chain-attack"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "defensive-formation",
+		"name": "Defensive Formation",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Each friendly model receives +1 ARM for every other friendly model in Base Contact."
+			}
+		]
+	},
+	{
+		"id": "devour-the-enemy",
+		"name": "Devour the Enemy",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "The first time an Oni wounds an enemy this turn (excluding models with Undead, Construct or Elemental traits), it regains 1 HP."
+			}
+		]
+	},
+	{
+		"id": "dishearten",
+		"name": "Dishearten",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "Target 1 enemy in LoS, it must perform a halved M roll. On fail, it loses 1 Activation Point every turn, until your next Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "earthspeaker",
+		"name": "Earthspeaker",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Allied models (including self) in Awareness have Light Cover."
+			}
+		]
+	},
+	{
+		"id": "emberkin",
+		"name": "Emberkin",
+		"type": "tribe",
+		"effect": [
+			{
+				"text": "Models have "
+			},
+			{
+				"text": "Resistance I Fire",
+				"link": {
+					"type": "trait",
+					"id": "resistance--x"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Survival Scorching",
+				"link": {
+					"type": "trait",
+					"id": "survival--x-environment"
+				}
+			},
+			{
+				"text": ". If Incapacitated, they explode instead, dealing damage with Fire type and PW 10 to all models within 2”."
+			}
+		]
+	},
+	{
+		"id": "eternal-vigil",
+		"name": "Eternal Vigil",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target Undead model gains "
+			},
+			{
+				"text": "Watchful",
+				"link": {
+					"type": "trait",
+					"id": "watchful"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "evasion-tactics",
+		"name": "Evasion Tactics",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "All models gain +2 AG"
+			}
+		]
+	},
+	{
+		"id": "expeditionary-paragon",
+		"name": "Expeditionary Paragon",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target party member gains "
+			},
+			{
+				"text": "Soldier",
+				"link": {
+					"type": "class",
+					"id": "soldier"
+				}
+			},
+			{
+				"text": " class."
+			}
+		]
+	},
+	{
+		"id": "exploiting-weakness",
+		"name": "Exploiting Weakness",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "Unsuccessful Damage Rolls against target model may be rerolled once."
+			}
+		]
+	},
+	{
+		"id": "final-gambit",
+		"name": "Final Gambit",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "All Undead gain "
+			},
+			{
+				"text": "Unstoppable",
+				"link": {
+					"type": "trait",
+					"id": "unstoppable"
+				}
+			},
+			{
+				"text": " (may ignore size requirement). All Undead become Dead at the end of the turn. When an allied Undead becomes Dead, place AOE: Circular S centered in it. All models Withing the AOE suffer a Hit with PW 12 and (Poison II)[trait.POISON.II]. After resolving the AOE, remove the Undead."
+			}
+		]
+	},
+	{
+		"id": "guerrilla-tactics",
+		"name": "Guerrilla Tactics",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Assassins and Rogues gain the "
+			},
+			{
+				"text": " Hit and Retreat ",
+				"link": {
+					"type": "skill",
+					"id": "hit-and-retreat"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": " Backstab ",
+				"link": {
+					"type": "skill",
+					"id": "backstab"
+				}
+			},
+			{
+				"text": " skills."
+			}
+		]
+	},
+	{
+		"id": "hexcaller",
+		"name": "Hexcaller",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "1 enemy model in Awareness can become enchanted with a Spell available to this model."
+			}
+		]
+	},
+	{
+		"id": "hunter-tactics",
+		"name": "Hunter Tactics",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target model may perform Walk, during its End Phase."
+			}
+		]
+	},
+	{
+		"id": "ironhide",
+		"name": "Ironhide",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target self. Gain +3 ARM"
+			}
+		]
+	},
+	{
+		"id": "mana-syphon",
+		"name": "Mana Syphon",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "The Leader may spend Mana from other party members."
+			}
+		]
+	},
+	{
+		"id": "march",
+		"name": "March!",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Soldiers gain +1 SPD."
+			}
+		]
+	},
+	{
+		"id": "mark-of-red",
+		"name": "Mark of Red",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target Oni with STA 2 or less gains +1 STA."
+			}
+		]
+	},
+	{
+		"id": "mastery-of-poisons",
+		"name": "Mastery of Poisons",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Attacks of Assassins and Rogues gain the "
+			},
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": " Trait. Affected models that already have these, receive the "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": " Trait instead."
+			}
+		]
+	},
+	{
+		"id": "mind-invasion",
+		"name": "Mind Invasion",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "One enemy model within Awareness must perform an INT-3 roll. On a failure, it gains the "
+			},
+			{
+				"text": "Confused",
+				"link": {
+					"type": "trait",
+					"id": "confused"
+				}
+			},
+			{
+				"text": " State until your next Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "nursing-aura",
+		"name": "Nursing Aura",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Select up to 3 models. Each may regain 1 HP. If an Incapacitated model is selected, the leader must perform a successful INT roll in order for it to regain a HP."
+			}
+		]
+	},
+	{
+		"id": "overcome-pain",
+		"name": "Overcome Pain",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target Warrior not in "
+			},
+			{
+				"text": "Incapacitated",
+				"link": {
+					"type": "trait",
+					"id": "incapacitated"
+				}
+			},
+			{
+				"text": " State may regain 1 HP."
+			}
+		]
+	},
+	{
+		"id": "painless-death",
+		"name": "Painless Death",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "All Undead gain "
+			},
+			{
+				"text": "Berserker",
+				"link": {
+					"type": "class",
+					"id": "berserker"
+				}
+			},
+			{
+				"text": " class."
+			}
+		]
+	},
+	{
+		"id": "piercing-perception",
+		"name": "Piercing Perception",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "Cancel enemy Taunt Skills. Remove "
+			},
+			{
+				"text": "Shrouded",
+				"link": {
+					"type": "trait",
+					"id": "shrouded"
+				}
+			},
+			{
+				"text": " State of one target."
+			}
+		]
+	},
+	{
+		"id": "profane-mend",
+		"name": "Profane Mend",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Select up to 2 models. Each may regain 1 HP (including "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": " models)."
+			}
+		]
+	},
+	{
+		"id": "raid-expert",
+		"name": "Raid Expert",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Oni models gain "
+			},
+			{
+				"text": "Dash",
+				"link": {
+					"type": "skill",
+					"id": "dash"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Leap",
+				"link": {
+					"type": "skill",
+					"id": "leap"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "rally-troops-helian",
+		"name": "Rally Troops (Helian)",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Soldiers cannot become "
+			},
+			{
+				"text": "Panicked",
+				"link": {
+					"type": "trait",
+					"id": "panicked"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "rally-troops-soga",
+		"name": "Rally Troops (Soga)",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Models gain "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			},
+			{
+				"text": " and may cancel up to 1 State (Except Dead, Engaged or Incapacitated)."
+			}
+		]
+	},
+	{
+		"id": "recall-the-souls",
+		"name": "Recall the Souls",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Select up to 2 Dead models. Each regains 1 HP and cancles "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": " State. Models without the Undead trait require the caster to succeed on an INT roll first."
+			}
+		]
+	},
+	{
+		"id": "refined-conjuration",
+		"name": "Refined Conjuration",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Mana Cost of "
+			},
+			{
+				"text": "Conjuration Spells",
+				"link": {
+					"type": "spell",
+					"id": "art-of-conjuration"
+				}
+			},
+			{
+				"text": " is reduced by 1."
+			}
+		]
+	},
+	{
+		"id": "reinforced-claws",
+		"name": "Reinforced Claws",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target self. Gain "
+			},
+			{
+				"text": "Bleed",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": ". Melee Attacks gain +2 PW."
+			}
+		]
+	},
+	{
+		"id": "sacred-vow",
+		"name": "Sacred Vow",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Remove all enemy Enchantments from the target. The target cannot be affected by enemy Enchantments until your next Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "solemn-presence",
+		"name": "Solemn Presence",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Soldiers gain "
+			},
+			{
+				"text": "Vigilance",
+				"link": {
+					"type": "trait",
+					"id": "vigilance"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "soul-harvest",
+		"name": "Soul Harvest",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "Remove up to 2 "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": " models within Awareness. Gain 2 Mana for each removed "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": " model."
+			}
+		]
+	},
+	{
+		"id": "spiritual-paragon",
+		"name": "Spiritual Paragon",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "All models gain +4 M."
+			}
+		]
+	},
+	{
+		"id": "stalward-defenders",
+		"name": "Stalward Defenders",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Sentinels and Warriors recieve +3 DEF and "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "stonekin",
+		"name": "Stonekin",
+		"type": "tribe",
+		"effect": [
+			{
+				"text": "All Tier I have ARM +2. Tier II and above have ARM +3 and "
+			},
+			{
+				"text": "Survival Mountainous",
+				"link": {
+					"type": "trait",
+					"id": "survival--x-environment"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "striking-momentum",
+		"name": "Striking Momentum",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "When a Soldier declares an Attack in Reaction, it may immediately move directly towards the target activated model for a halved SPD."
+			}
+		]
+	},
+	{
+		"id": "swampkin",
+		"name": "Swampkin",
+		"type": "tribe",
+		"effect": [
+			{
+				"text": "Models have "
+			},
+			{
+				"text": "Resistance II Poison",
+				"link": {
+					"type": "trait",
+					"id": "resistance--x"
+				}
+			},
+			{
+				"text": " and "
+			},
+			{
+				"text": "Survival Swamp, Toxic",
+				"link": {
+					"type": "trait",
+					"id": "survival--x-environment"
+				}
+			},
+			{
+				"text": ". Tier I models have (Poison I)[trait.POISON.I]. Tier II and above have (Poison II)[trait.POISON.II]."
+			}
+		]
+	},
+	{
+		"id": "swift-retreat",
+		"name": "Swift Retreat",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "During the End Phase when in the Active Role, Assassins and Rogues may perform a Normal Movement."
+			}
+		]
+	},
+	{
+		"id": "talented-command",
+		"name": "Talented Command",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Target model gains "
+			},
+			{
+				"text": "Chain Attack",
+				"link": {
+					"type": "skill",
+					"id": "chain-attack"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "temporary-bind",
+		"name": "Temporary Bind",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Summoning Limit of the target summoned creature on the field is reduced to 0."
+			}
+		]
+	},
+	{
+		"id": "unconventional-tactics",
+		"name": "Unconventional Tactics",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "Negate all enemy Strategems currently in effect. At the start of the next Strategic Phase, the enemy Leader must perform an INT or M roll (their choice). On a fail, they cannot declare a Strategem this turn."
+			}
+		]
+	},
+	{
+		"id": "unfavorable-terrain",
+		"name": "Unfavorable Terrain",
+		"type": "subterfuge",
+		"effect": [
+			{
+				"text": "Enemy models suffer -1 SPD."
+			}
+		]
+	},
+	{
+		"id": "unwavering-presence",
+		"name": "Unwavering Presence",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Other party members gain "
+			},
+			{
+				"text": "Fearless",
+				"link": {
+					"type": "trait",
+					"id": "fearless"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "vicious-opportunism",
+		"name": "Vicious Opportunism",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Attacks by friendly models against "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": " models may reroll 1 Attack roll, gain +6PW and Cleave."
+			}
+		]
+	},
+	{
+		"id": "weavers-aura",
+		"name": "Weavers Aura",
+		"type": "authority",
+		"effect": [
+			{
+				"text": "Spell attacks cast by allies gain +2 PW."
+			}
+		]
+	}
+]

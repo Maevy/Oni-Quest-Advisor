@@ -44,7 +44,8 @@
 				"id": "cryomancy",
 				"level": 3
 			}
-		]
+		],
+		"stratagems": ["active-support", "talented-command", "weavers-aura"]
 	},
 	{
 		"id": "citadel-guard",
@@ -130,7 +131,8 @@
 				"id": "hieromancy",
 				"level": 4
 			}
-		]
+		],
+		"stratagems": ["nursing-aura", "spiritual-paragon"]
 	},
 	{
 		"id": "flameshaper",
@@ -220,7 +222,8 @@
 				"id": "art-of-sorcery",
 				"level": 1
 			}
-		]
+		],
+		"stratagems": ["expeditionary-paragon", "march", "rally-troops-helian", "striking-momentum"]
 	},
 	{
 		"id": "flameweaver-noble",
@@ -301,6 +304,7 @@
 				"id": "hieromancy",
 				"level": 1
 			}
-		]
+		],
+		"stratagems": ["sacred-vow", "solemn-presence"]
 	}
 ]

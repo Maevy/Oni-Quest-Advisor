@@ -59,7 +59,8 @@
 				"id": "fencing",
 				"level": 4
 			}
-		]
+		],
+		"stratagems": ["advance", "back-to-back", "brazen-assault", "evasion-tactics"]
 	},
 	{
 		"id": "great-guard",
@@ -101,7 +102,8 @@
 				"id": "fencing",
 				"level": 4
 			}
-		]
+		],
+		"stratagems": ["break-the-offensive", "close-ranks", "overcome-pain", "rally-troops-soga"]
 	},
 	{
 		"id": "kitsune-spellmaiden",
@@ -247,6 +249,7 @@
 				"id": "fencing",
 				"level": 4
 			}
-		]
+		],
+		"stratagems": ["hunter-tactics", "overcome-pain", "stalward-defenders"]
 	}
 ]

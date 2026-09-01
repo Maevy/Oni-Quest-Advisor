@@ -51,7 +51,8 @@
 				"id": "fencing",
 				"level": 3
 			}
-		]
+		],
+		"stratagems": ["dishearten", "guerrilla-tactics", "vicious-opportunism"]
 	},
 	{
 		"id": "night-temple-priestess",
@@ -154,6 +155,13 @@
 				"id": "assassination",
 				"level": 4
 			}
+		],
+		"stratagems": [
+			"exploiting-weakness",
+			"guerrilla-tactics",
+			"mastery-of-poisons",
+			"swift-retreat",
+			"unfavorable-terrain"
 		]
 	},
 	{
@@ -265,6 +273,7 @@
 				"id": "assassination",
 				"level": 3
 			}
-		]
+		],
+		"stratagems": ["guerrilla-tactics", "mastery-of-poisons", "piercing-perception"]
 	}
 ]

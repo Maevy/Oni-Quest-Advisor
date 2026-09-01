@@ -27,6 +27,10 @@
  *   name); the groups' spells go to spells.json with element/level/effect and
  *   the parsed PW/type/RCH/STK columns. Units keep { id, level } refs; access
  *   at display time is group + level + the unit's Affinity elements.
+ * - stratagems <- strategmList, written to stratagems.json (name, type and
+ *   effect; ids are slugified names because a third of the entries has no
+ *   code). Character references are matched by name - only 20 of 63 units
+ *   carry stratagems, so units keep plain id arrays (empty ones omitted).
  * Skill/trait/combat-art entries carry the catalog's rule text per level in a
  * `levels` map (groups without per-level entries fall back to `description`).
  * Rules texts (class/skill/trait) are stored as segments; cross-references like
@@ -83,7 +87,10 @@ function slug(name) {
 }
 
 function normalize(text) {
-	return (text ?? '').replace(/\s*\n\s*/g, ' ').trim();
+	return (text ?? '')
+		.replace(/\s*\n\s*/g, ' ')
+		.replace(/ {2,}/g, ' ')
+		.trim();
 }
 
 /** Rich-text segments; `(Knockdown)[trait.KNOCKDOWN]` becomes a link segment. */
@@ -220,6 +227,14 @@ for (const character of characters) {
 			level: craft.level
 		}))
 		.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
+	const stratagemIds = [
+		...new Set(
+			(attributes.stratagems?.data ?? [])
+				.map((wrapper) => wrapper.attributes)
+				.filter((stratagem) => stratagem?.name)
+				.map((stratagem) => slug(stratagem.name))
+		)
+	].sort();
 	const traitRefs = [];
 	for (const traitEntry of attributes.traits ?? []) {
 		const traitAttributes = traitEntry.trait?.data?.attributes;
@@ -248,6 +263,7 @@ for (const character of characters) {
 	if (traitRefs.length > 0) unit.traits = traitRefs;
 	if (combatArtRefs.length > 0) unit.combatArts = combatArtRefs;
 	if (spellcraftRefs.length > 0) unit.spellcrafts = spellcraftRefs;
+	if (stratagemIds.length > 0) unit.stratagems = stratagemIds;
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -329,6 +345,19 @@ for (const spell of spells) {
 spells.sort((a, b) => a.name.localeCompare(b.name));
 writeFileSync(join(outDir, 'spells.json'), JSON.stringify(spells, null, '\t') + '\n');
 console.log('spells: ' + spells.length + ' spells');
+const stratagems = pageProps.strategmList.data
+	.map((wrapper) => {
+		const stratagem = wrapper.attributes;
+		return {
+			id: slug(stratagem.name),
+			name: normalize(stratagem.name),
+			type: stratagem.type.toLowerCase(),
+			effect: richText(stratagem.effect)
+		};
+	})
+	.sort((a, b) => a.name.localeCompare(b.name));
+writeFileSync(join(outDir, 'stratagems.json'), JSON.stringify(stratagems, null, '\t') + '\n');
+console.log('stratagems: ' + stratagems.length + ' stratagems');
 if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
 	for (const entry of skipped) console.log(' - ' + entry);

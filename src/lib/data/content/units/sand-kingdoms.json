@@ -93,7 +93,8 @@
 				"id": "art-of-sorcery",
 				"level": 4
 			}
-		]
+		],
+		"stratagems": ["arcane-link", "arcane-protection", "mana-syphon"]
 	},
 	{
 		"id": "faris-outrider",
@@ -209,7 +210,8 @@
 				"id": "necromancy",
 				"level": 3
 			}
-		]
+		],
+		"stratagems": ["adrenaline-rush", "ironhide", "reinforced-claws"]
 	},
 	{
 		"id": "spelldancer-aeroturge",
@@ -346,6 +348,7 @@
 				"id": "wizardry",
 				"level": 1
 			}
-		]
+		],
+		"stratagems": ["refined-conjuration", "temporary-bind"]
 	}
 ]

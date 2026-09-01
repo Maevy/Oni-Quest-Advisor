@@ -50,7 +50,8 @@
 				"id": "shamanism",
 				"level": 3
 			}
-		]
+		],
+		"stratagems": ["call-of-bravery", "earthspeaker", "hexcaller"]
 	},
 	{
 		"id": "goblin-brawlers",
@@ -140,7 +141,8 @@
 				"id": "shamanism",
 				"level": 2
 			}
-		]
+		],
+		"stratagems": ["earthspeaker", "hexcaller", "unwavering-presence"]
 	},
 	{
 		"id": "goblin-skirmishers",
@@ -223,7 +225,8 @@
 				"level": 1,
 				"dynamicValue": "Difficult"
 			}
-		]
+		],
+		"stratagems": ["aetherkin", "emberkin", "stonekin", "swampkin"]
 	},
 	{
 		"id": "troll-prowler",
