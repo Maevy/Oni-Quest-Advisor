@@ -82,9 +82,13 @@ native/platform-specific one. Used on a phone screen during a game session.
   weapon replacement, stratagems, `costReduction` (Devotion: Paimon discounts
   every other upgrade army-wide by 1, min 1), spellcraft level-ups
   (`spellcraftLevelCap` from the affinity-filtered spell catalog + a choice
-  step when several schools can advance) and `choice` upgrades (e.g.
-  Glyphscribe: Reduce Weight — inscribe an item: STK +1/WGT −1 via per-row
-  item overrides, or +1 AG/SPD/+1 space); selections persist on the entry
+  step when several schools can advance) and `choice` upgrades —
+  Glyphscribe: Reduce Weight (inscribe an item: STK +1/WGT −1 via per-row
+  item overrides, or +1 AG/SPD/+1 space), Elemental Lineage (`grantTrait`
+  option: pick 1 of 4 Affinities, merged into the unit's affinity trait ref)
+  and Mana Catalyst (`replaceAffinity` option: swap one Affinity element for
+  Fire/Water/Earth/Air — a single element auto-resolves, several open a
+  second picker step); selections persist on the entry
   (`spellcraftChoices`, `upgradeChoices`). Tournament-mode roster upgrades
   are still pending. Upgrade artwork lives in `assets/upgrades/<Faction>/`,
   matched by normalized filename + `UPGRADE_ICON_ALIASES`.

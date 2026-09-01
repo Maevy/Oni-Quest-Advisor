@@ -30,7 +30,40 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   dialogs). Tournament-mode roster upgrades + the mode-switch warning are the
   pending follow-up.
 
-## What was done in the last session (army builder: stratagems, inventories, upgrades)
+## What was done in the last session (Sand Kingdoms selection upgrades)
+
+The pass over the upgrades that carry a selection inside them (the Helian
+League ones shipped in the session before) reached its last faction — the
+Sand Kingdoms. Today's `develop` commit: `d46ef5c`.
+
+1. **Arcane Tome audited, unchanged**: it already carried the same
+   `spellcraftLevelUp` treatment as Adept Shaper from the upgrades phase
+   (choice step when several spellcrafts can advance, auto-pick when only
+   one, `spellcraftLevelCap` gating, icon alias) — verified end to end, no
+   code change needed. Conjured Retinue and Personal Guard likewise stay
+   text-only: they affect summoned creatures, so there is nothing to pick
+   on the model itself.
+2. **Elemental Lineage codified** — new choice option kind `grantTrait`:
+   pick 1 of 4 Affinities (Fire/Water/Earth/Air); the element merges into
+   the unit's existing `affinity--element` trait ref (Djinnborn Marzban
+   style) or adds the ref when the unit has none. Options for already-held
+   elements are disabled ("Model already has this Affinity").
+3. **Mana Catalyst codified** — new choice option kind `replaceAffinity`:
+   pick the new element (Fire/Water/Earth/Air). A single current element is
+   replaced automatically; multi-Affinity units (Djinnborn Marzban,
+   Spelldancer Aeroturge/Voidcaster, Vizier of Conjurations) open a second
+   "Replace an Affinity" picker step choosing which element goes (stored as
+   `removedElement` on the choice, lowercase). Blocked for models without
+   an Affinity; options for held elements disabled. Both upgrades ripple on
+   automatically — unit-card trait tags, spellcraft popup spells and the
+   Arcane Tome level cap all follow the changed affinities (pinned by a
+   spec: Elder→Fire raises the Art of Sorcery cap 1→2).
+4. **Latent gating bug fixed**: `entryUpgradeBlock` computed the upgraded
+   unit without the entry's `upgradeChoices`/`itemIndex`, so stacked
+   choice upgrades gated against the un-granted unit — both are passed now.
+5. Tests 237 → 248; check/lint/build clean.
+
+## What was done in earlier sessions (army builder: stratagems, inventories, upgrades)
 
 Today's `develop` commits: `a3b0225`, `16ef7ef`, `8fdb247`, `9c18ba6` plus the
 closing selections work — one continuous army-builder arc:
@@ -65,9 +98,9 @@ closing selections work — one continuous army-builder arc:
    level cap (`spellcraftLevelCap` — spellcraft catalog specs carry no levels
    map) and open a choice step when several schools can advance; choice
    upgrades (`choice` effect with options) — Glyphscribe: Reduce Weight offers
-   *Inscribed Item* (pick a weapon/shield with weight, casting amplifiers
+   _Inscribed Item_ (pick a weapon/shield with weight, casting amplifiers
    excluded → STK +1, WGT −1 via per-row item overrides the unit card merges)
-   or *Inscribed Armor* (+1 AG/SPD, +1 inventory space). Selections persist on
+   or _Inscribed Armor_ (+1 AG/SPD, +1 inventory space). Selections persist on
    the entry (`spellcraftChoices`, `upgradeChoices`) and validate in
    `addEntryUpgrade`.
 6. Tests 182 → 237; check/lint/build clean.
