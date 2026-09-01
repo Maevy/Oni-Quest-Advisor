@@ -171,10 +171,12 @@
 			</button>
 			<button
 				type="button"
-				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('tournament')}
-				onclick={() => onSetFormat('tournament')}
+				disabled
+				title="Not yet implemented"
+				class="cursor-not-allowed px-4 py-1.5 text-sm font-semibold text-slate-500"
 			>
-				Tournament
+				Roster
+				<span class="block text-[10px] font-medium">not yet implemented</span>
 			</button>
 		</div>
 		<button
@@ -189,6 +191,14 @@
 			onclick={copyArmyCode}
 		>
 			{copyResult?.copied ? 'Copied ✓' : 'Copy Army Code to Clipboard'}
+		</button>
+		<button
+			type="button"
+			disabled
+			title="Not yet implemented"
+			class="cursor-not-allowed rounded-xl border-2 border-slate-600/60 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-slate-400"
+		>
+			Save Army
 		</button>
 		<div
 			class={'rounded-xl border-2 px-4 py-2 text-sm font-bold tabular-nums ' +

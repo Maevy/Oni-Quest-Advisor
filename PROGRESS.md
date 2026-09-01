@@ -69,6 +69,11 @@ Today's `develop` commit: `1f82129`.
 6. Tests 248 → 260; check/lint/build clean. (Note: the eagerly loaded
    content chunk crossed 500 kB and tripped Vite's size warning for the
    first time — a future lazy-loading candidate.)
+7. UI polish on top: filled copy-button colors and white faction-select
+   labels; the Tournament toggle was renamed **Roster** and disabled with a
+   "not yet implemented" hint, and a greyed-out **Save Army** teaser button
+   now sits beside the copy button (both upcoming features; the
+   `tournament` format itself stays in the domain and in army codes).
 
 ## What was done in earlier sessions (Sand Kingdoms selection upgrades)
 
