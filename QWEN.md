@@ -259,10 +259,11 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.5.1** — v0.5.0 (online 2-player mode,
-  phases 1–4, plus the hardening pass) plus the player-feedback round (join-accept
-  fix, official artwork + footer credit, neon border, one-time privacy/online-intro
-  notices, LF pin), deployed to Fly.io.
+  and push branch + tag. Current release: **v0.6.0** — the army builder (faction
+  select, producer unit import, unit cards with the full rules catalogs, mounts,
+  standard-mode upgrades with picker and choice dialogs, army codes with
+  roster-fingerprinted export/import, greyed-out Roster/Save-Army teasers),
+  deployed to Fly.io.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
   entry in `fly.toml` expects it; the deploy fails without it).

@@ -6,11 +6,15 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.5.1** (tag on `main`) — v0.5.0 (online 2-player mode,
-  phases 1–4, plus the cross-cutting hardening pass — both summarized below)
-  plus the player-feedback round summarized further down (join-accept fix,
-  official artwork, neon border, one-time notices, LF pin), deployed to Fly.io.
-  Day-to-day work happens on `develop`, pushed to
+- Latest release: **v0.6.0** (tag on `main`) — the whole army builder:
+  faction select, producer unit import, unit cards with the full rules
+  catalogs (classes, skills, traits, combat arts, spellcraft spell tables,
+  inline inventories and stratagems), mounts, standard-mode upgrades with
+  picker (slots, gating, conditional effects, cost reduction, spellcraft
+  level-up + inscribe/affinity choice upgrades), army codes (clipboard
+  export + import with roster-fingerprint versioning) and the
+  Roster/Save-Army teasers, deployed to Fly.io. The per-session details are
+  all recorded below. Day-to-day work happens on `develop`, pushed to
   `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the working branch is
   `develop`, not `main`).
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
@@ -23,13 +27,14 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - Missions currently in the app (`src/lib/data/content/missions/`): Treasure Hunt,
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
-- Army builder feature is on `develop` (unreleased): faction select, producer unit
-  import (`scripts/importUnits.mjs`), unit cards with classes, skills, traits,
+- Army builder shipped in v0.6.0: faction select, producer unit import
+  (`scripts/importUnits.mjs`), unit cards with classes, skills, traits,
   combat arts, spellcrafts, inventories and stratagems (inline cards), mounts,
   standard-mode upgrades (per-copy picks with slots, gating and choice dialogs)
   and army codes (clipboard export + import on the faction select).
-  Tournament-mode roster upgrades + the mode-switch warning are the
-  pending follow-up.
+  Roster-mode upgrades + the mode-switch warning and Save Army (list
+  persistence) are the pending follow-ups — both buttons already sit greyed
+  out in the builder header as teasers.
 
 ## What was done in the last session (army codes: export/import)
 
