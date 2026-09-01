@@ -31,6 +31,13 @@
  *   effect; ids are slugified names because a third of the entries has no
  *   code). Character references are matched by name - only 20 of 63 units
  *   carry stratagems, so units keep plain id arrays (empty ones omitted).
+ * - items <- itemList, written to items.json: PW becomes a toughness stat
+ *   (T is a statline key, with modifiers, or a fixed value), RCH becomes
+ *   structured range brackets (+ an AoE template and a raw-text fallback for
+ *   oddities like the Sealing Javelins' reach), STK mirrors the spell column,
+ *   effect keeps its rich links. Characters carry inventorySpace plus
+ *   inventory slots ({ id, qty }); the QTY lives on the slot, everything
+ *   else on the item.
  * Skill/trait/combat-art entries carry the catalog's rule text per level in a
  * `levels` map (groups without per-level entries fall back to `description`).
  * Rules texts (class/skill/trait) are stored as segments; cross-references like
@@ -154,7 +161,8 @@ function titleCase(code) {
 
 /**
  * Parses a PW/STK cell: fixed text ('8', '-', 'x', '5 in Active, ...') or a
- * character stat with an optional modifier ('Int', 'Int -3', 'Int+2', 'STA').
+ * character stat with an optional modifier ('Int', 'Int -3', 'Int+2', 'STA',
+ * and the item toughness column 'T', which is a statline key itself).
  */
 function parseCost(raw) {
 	if (raw === null || raw === undefined) return undefined;
@@ -168,6 +176,44 @@ function parseCost(raw) {
 		return cost;
 	}
 	return { fixed: trimmed };
+}
+
+/**
+ * Parses an item RCH cell into structured range brackets: `0-20'': 0` or the
+ * multi-line `0-24: 0\n25-48: -6` variants become { range, modifier } pairs
+ * (inches sign normalized), `AOE: Spray L` templates and leftover raw text
+ * (the Sealing Javelins' reach `T`) are kept separately.
+ */
+function parseReach(raw) {
+	if (raw === null || raw === undefined) return undefined;
+	const text = String(raw).trim();
+	if (text === '' || text === '-') return undefined;
+	const reach = { brackets: [] };
+	for (const line of text.split('\n')) {
+		let rest = line;
+		const aoeMatch = rest.match(/\bAOE\s*:\s*(.+)$/i);
+		if (aoeMatch) {
+			reach.aoe = normalize(aoeMatch[1]);
+			rest = rest.slice(0, aoeMatch.index).replace(/[,;\s]+$/, '');
+		}
+		rest = rest.trim();
+		if (!rest) continue;
+		const bracket = rest.match(/^(\d+)\s*[-–]\s*(\d+)\s*[’'"“”]*\s*:\s*([+-]?\d+)$/);
+		if (bracket) {
+			reach.brackets.push({
+				range: bracket[1] + '-' + bracket[2] + '"',
+				modifier: Number(bracket[3])
+			});
+			continue;
+		}
+		if (/^\d+$/.test(rest)) {
+			reach.brackets.push({ range: rest, modifier: 0 });
+			continue;
+		}
+		reach.text = reach.text ? reach.text + ', ' + rest : rest;
+	}
+	if (reach.brackets.length === 0 && !reach.aoe && !reach.text) return undefined;
+	return reach;
 }
 
 /** Display type of a spell: categories comma-separated, pipe, attack mode. */
@@ -235,6 +281,9 @@ for (const character of characters) {
 				.map((stratagem) => slug(stratagem.name))
 		)
 	].sort();
+	const inventoryRows = (attributes.inventory?.items ?? []).filter(
+		(row) => row.item?.data?.attributes?.code
+	);
 	const traitRefs = [];
 	for (const traitEntry of attributes.traits ?? []) {
 		const traitAttributes = traitEntry.trait?.data?.attributes;
@@ -264,6 +313,15 @@ for (const character of characters) {
 	if (combatArtRefs.length > 0) unit.combatArts = combatArtRefs;
 	if (spellcraftRefs.length > 0) unit.spellcrafts = spellcraftRefs;
 	if (stratagemIds.length > 0) unit.stratagems = stratagemIds;
+	if (inventoryRows.length > 0) {
+		if (typeof attributes.inventory.space === 'number') {
+			unit.inventorySpace = attributes.inventory.space;
+		}
+		unit.inventory = inventoryRows.map((row) => ({
+			id: kebab(row.item.data.attributes.code),
+			qty: row.QTY ?? 1
+		}));
+	}
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -358,6 +416,31 @@ const stratagems = pageProps.strategmList.data
 	.sort((a, b) => a.name.localeCompare(b.name));
 writeFileSync(join(outDir, 'stratagems.json'), JSON.stringify(stratagems, null, '\t') + '\n');
 console.log('stratagems: ' + stratagems.length + ' stratagems');
+const items = pageProps.itemList.data
+	.map((wrapper) => {
+		const item = wrapper.attributes;
+		const entry = {
+			id: kebab(item.code),
+			name: normalize(item.name),
+			category: item.category.toLowerCase()
+		};
+		if (item.attack_mode?.mode) entry.mode = kebab(item.attack_mode.mode);
+		const toughness = parseCost(item.PW);
+		if (toughness && toughness.fixed !== '-') entry.toughness = toughness;
+		const reach = parseReach(item.RCH);
+		if (reach) entry.reach = reach;
+		const stk = parseCost(item.STK);
+		if (stk && stk.fixed !== '-') entry.stk = stk;
+		entry.effect =
+			item.effect && item.effect.trim() !== '' && item.effect.trim() !== '/'
+				? richText(item.effect)
+				: [];
+		if (item.WGT !== null && item.WGT !== undefined) entry.weight = item.WGT;
+		return entry;
+	})
+	.sort((a, b) => a.name.localeCompare(b.name));
+writeFileSync(join(outDir, 'items.json'), JSON.stringify(items, null, '\t') + '\n');
+console.log('items: ' + items.length + ' items');
 if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
 	for (const entry of skipped) console.log(' - ' + entry);

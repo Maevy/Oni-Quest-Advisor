@@ -52,7 +52,18 @@
 				"level": 3
 			}
 		],
-		"stratagems": ["dishearten", "guerrilla-tactics", "vicious-opportunism"]
+		"stratagems": ["dishearten", "guerrilla-tactics", "vicious-opportunism"],
+		"inventorySpace": 4,
+		"inventory": [
+			{
+				"id": "mastercrafted-sword",
+				"qty": 1
+			},
+			{
+				"id": "parrying-dagger",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "night-temple-priestess",
@@ -111,6 +122,17 @@
 				"id": "succubi-magic",
 				"level": 1
 			}
+		],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "spear",
+				"qty": 1
+			},
+			{
+				"id": "succumbing-embrace",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -162,6 +184,13 @@
 			"mastery-of-poisons",
 			"swift-retreat",
 			"unfavorable-terrain"
+		],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "mastercrafted-piercing-dagger",
+				"qty": 2
+			}
 		]
 	},
 	{
@@ -217,6 +246,21 @@
 			{
 				"id": "assassination",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "short-bow",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
 			}
 		]
 	},
@@ -274,6 +318,25 @@
 				"level": 3
 			}
 		],
-		"stratagems": ["guerrilla-tactics", "mastery-of-poisons", "piercing-perception"]
+		"stratagems": ["guerrilla-tactics", "mastery-of-poisons", "piercing-perception"],
+		"inventorySpace": 8,
+		"inventory": [
+			{
+				"id": "crossbow",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
+			},
+			{
+				"id": "firecracker",
+				"qty": 1
+			},
+			{
+				"id": "grapeshot",
+				"qty": 1
+			}
+		]
 	}
 ]

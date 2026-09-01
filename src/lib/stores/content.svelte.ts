@@ -2,6 +2,7 @@ import {
 	loadArmyClasses,
 	loadArmyCombatArts,
 	loadArmyFactions,
+	loadArmyItems,
 	loadArmySkills,
 	loadArmySpellcrafts,
 	loadArmySpells,
@@ -14,6 +15,7 @@ import {
 } from '$lib/data';
 import type {
 	ArmyFactionConfig,
+	ArmyItemSpec,
 	ArmyRulesSpec,
 	ArmySpellSpec,
 	ArmyStratagemSpec,
@@ -35,6 +37,7 @@ class ContentStore {
 	armySpellcrafts = $state<ArmyRulesSpec[]>([]);
 	armySpells = $state<ArmySpellSpec[]>([]);
 	armyStratagems = $state<ArmyStratagemSpec[]>([]);
+	armyItems = $state<ArmyItemSpec[]>([]);
 	schemes = $state<SchemeCard[]>([]);
 	loaded = $state(false);
 
@@ -51,6 +54,7 @@ class ContentStore {
 		this.armySpellcrafts = loadArmySpellcrafts();
 		this.armySpells = loadArmySpells();
 		this.armyStratagems = loadArmyStratagems();
+		this.armyItems = loadArmyItems();
 		this.schemes = loadSchemes();
 		this.loaded = true;
 	}

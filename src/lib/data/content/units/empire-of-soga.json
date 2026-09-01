@@ -17,7 +17,22 @@
 			"ARM": 4,
 			"HP": 2,
 			"M": 16
-		}
+		},
+		"inventorySpace": 6,
+		"inventory": [
+			{
+				"id": "short-bow",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "clan-champion",
@@ -60,7 +75,22 @@
 				"level": 4
 			}
 		],
-		"stratagems": ["advance", "back-to-back", "brazen-assault", "evasion-tactics"]
+		"stratagems": ["advance", "back-to-back", "brazen-assault", "evasion-tactics"],
+		"inventorySpace": 4,
+		"inventory": [
+			{
+				"id": "spear",
+				"qty": 1
+			},
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "piercing-dagger",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "great-guard",
@@ -103,7 +133,22 @@
 				"level": 4
 			}
 		],
-		"stratagems": ["break-the-offensive", "close-ranks", "overcome-pain", "rally-troops-soga"]
+		"stratagems": ["break-the-offensive", "close-ranks", "overcome-pain", "rally-troops-soga"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "polearm",
+				"qty": 1
+			},
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "piercing-dagger",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "kitsune-spellmaiden",
@@ -154,6 +199,13 @@
 				"id": "purification-rites",
 				"level": 1
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "spirit-drum",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -193,6 +245,21 @@
 			{
 				"id": "fencing",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "bow",
+				"qty": 1
+			},
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
 			}
 		]
 	},
@@ -250,6 +317,17 @@
 				"level": 4
 			}
 		],
-		"stratagems": ["hunter-tactics", "overcome-pain", "stalward-defenders"]
+		"stratagems": ["hunter-tactics", "overcome-pain", "stalward-defenders"],
+		"inventorySpace": 6,
+		"inventory": [
+			{
+				"id": "stonesplitter",
+				"qty": 1
+			},
+			{
+				"id": "sealing-javelin",
+				"qty": 2
+			}
+		]
 	}
 ]

@@ -1,0 +1,2942 @@
+[
+	{
+		"id": "acid-vomit",
+		"name": "Acid Vomit",
+		"category": "weapon",
+		"mode": "natural-and-ranged",
+		"toughness": {
+			"fixed": "0"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Spray L"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Unstoppable",
+				"link": {
+					"type": "trait",
+					"id": "unstoppable"
+				}
+			},
+			{
+				"text": ". On hit, the target must perform a T-3 roll. On failure, it becomes "
+			},
+			{
+				"text": "Weakened",
+				"link": {
+					"type": "trait",
+					"id": "weakened"
+				}
+			},
+			{
+				"text": " until the user’s next Strategic Phase."
+			}
+		]
+	},
+	{
+		"id": "arcane-lantern",
+		"name": "Arcane Lantern",
+		"category": "accessory",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"effect": [
+			{
+				"text": "The wearer gains "
+			},
+			{
+				"text": "Vigilance",
+				"link": {
+					"type": "trait",
+					"id": "vigilance"
+				}
+			},
+			{
+				"text": ". "
+			},
+			{
+				"text": "Shrouded",
+				"link": {
+					"type": "trait",
+					"id": "shrouded"
+				}
+			},
+			{
+				"text": " and Intrigue States within the Wearer’s Awareness are canceled."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "banner-lance",
+		"name": "Banner Lance",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "battle-axe",
+		"name": "Battle Axe",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [],
+		"weight": 1
+	},
+	{
+		"id": "bisento",
+		"name": "Bisento",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "3"
+		},
+		"effect": [
+			{
+				"text": "Bleed",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "bite",
+		"name": "Bite",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": []
+	},
+	{
+		"id": "bite-and-claws",
+		"name": "Bite & Claws",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"fixed": "13"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": []
+	},
+	{
+		"id": "blighted-relic-blade",
+		"name": "Blighted Relic Blade",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"fixed": "18"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "4",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "bow",
+		"name": "Bow",
+		"category": "weapon",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0-24\"",
+					"modifier": 0
+				},
+				{
+					"range": "25-48\"",
+					"modifier": -6
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "casting-amplifier",
+		"name": "Casting Amplifier",
+		"category": "accessory",
+		"mode": "melee",
+		"effect": [
+			{
+				"text": "Wearer has +4 RCH when casting Spells."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "chimera-claws",
+		"name": "Chimera Claws",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Gain +1 STK when attacking a target without AP."
+			}
+		]
+	},
+	{
+		"id": "crushing-maw",
+		"name": "Chrushing Maw",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Crippling",
+				"link": {
+					"type": "trait",
+					"id": "crippling"
+				}
+			}
+		]
+	},
+	{
+		"id": "corroded-piercing-dagger",
+		"name": "Corroded Piercing Dagger",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "+1 STK when used against a model in "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": ". "
+			},
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": " "
+			},
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "corroded-sword",
+		"name": "Corroded Sword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "posion"
+				}
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "corroded-war-bow",
+		"name": "Corroded War Bow",
+		"category": "weapon",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0-20\"",
+					"modifier": 0
+				},
+				{
+					"range": "21-40\"",
+					"modifier": -6
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "corroded-weapon",
+		"name": "Corroded Weapon",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"fixed": "10"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Poison I",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "crossbow",
+		"name": "Crossbow",
+		"category": "weapon",
+		"mode": "ranged",
+		"toughness": {
+			"fixed": "13"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0-24\"",
+					"modifier": 3
+				},
+				{
+					"range": "25-48\"",
+					"modifier": -3
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "cursed-grab",
+		"name": "Cursed Grab",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Advantage Medium",
+				"link": {
+					"type": "trait",
+					"id": "advantage--x"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Burn 3",
+				"link": {
+					"type": "trait",
+					"id": "burn--x"
+				}
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "dagger",
+		"name": "Dagger",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Throwing",
+				"link": {
+					"type": "trait",
+					"id": "throwing"
+				}
+			},
+			{
+				"text": ". +1 STK when used against a model in "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": " State."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "deathweaving-fan",
+		"name": "Deathweaving Fan",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "Once per Activation, reroll a failed Profane Spell roll. To summon a Tier III or higher Undead via Ritual, spend Mana equal to the model’s Tier +1 and remove 2 "
+			},
+			{
+				"text": "Dead",
+				"link": {
+					"type": "trait",
+					"id": "dead"
+				}
+			},
+			{
+				"text": " models within Awareness."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "descrated-relic-blade",
+		"name": "Desecrated Relic Blade",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 4
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "earthen-fists",
+		"name": "Earthen Fists",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "empyrean-standard",
+		"name": "Empyrean Standard",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "Models within the wearer’s Awareness gain Fearless and ignore the effects of the Confused and Weakened States."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "firecracker",
+		"name": "Firecracker",
+		"category": "consumable",
+		"mode": "ranged",
+		"toughness": {
+			"fixed": "0"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Circular S",
+			"text": "T"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "fists-of-stone",
+		"name": "Fists of Stone",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			}
+		]
+	},
+	{
+		"id": "flying-carpet",
+		"name": "Flying Carpet",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "The model may use the "
+			},
+			{
+				"text": "Flight Skill",
+				"link": {
+					"type": "skill",
+					"id": "flight"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "gargoyles-claws",
+		"name": "Gargoyle’s Claws",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "The first time each turn this model deals a Wound, this model gains an Activation Point and the wounded model loses an Activation Point, if it has any."
+			}
+		]
+	},
+	{
+		"id": "glyph-of-protection",
+		"name": "Glyph of Protection",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "This model is always Enchanted with the Arcane Shield Spell. If it is removed, the Spell is re-applied at the start of the next Strategic Phase (any player's)."
+			}
+		]
+	},
+	{
+		"id": "glyphscribe-dagger",
+		"name": "Glyphscribe Dagger",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "+1 STK when using against a model in "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": ". "
+			},
+			{
+				"text": "Throwing",
+				"link": {
+					"type": "trait",
+					"id": "throwing"
+				}
+			},
+			{
+				"text": ": The Weapon returns to the users Inventory."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "grapeshot",
+		"name": "Grapeshot",
+		"category": "consumable",
+		"mode": "ranged",
+		"toughness": {
+			"fixed": "13"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Circular S",
+			"text": "T"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "great-axe",
+		"name": "Great Axe",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "great-shield",
+		"name": "Great Shield",
+		"category": "shield",
+		"mode": "melee",
+		"effect": [
+			{
+				"text": "-4 to incoming Melee Attacks to the Front. +4 ARM against incoming Ranged Attacks to the Front."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "greatsword",
+		"name": "Greatsword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Bleed",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "hack-and-thrash",
+		"name": "Hack & Thrash",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "haze-bomb",
+		"name": "Haze Bomb",
+		"category": "consumable",
+		"mode": "ranged",
+		"toughness": {
+			"fixed": "0"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Circular L",
+			"text": "T"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": " When using this Item, the model may reroll up to 1 failed roll. AOE becomes Hazy Environment until users' next Strategic Phase."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "heavy-bludgeon",
+		"name": "Heavy Bludgeon",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 4
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Armor- Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "heavy-polarm",
+		"name": "Heavy Polarm",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "ice-pick",
+		"name": "Ice Pick",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"fixed": "18"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "User gains +3 OFF, "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ". Once per Attack, the user may re-roll the Attack roll."
+			}
+		]
+	},
+	{
+		"id": "javelin",
+		"name": "Javelin",
+		"category": "consumable",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [],
+			"text": "T"
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "lance",
+		"name": "Lance",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Throwing",
+				"link": {
+					"type": "trait",
+					"id": "throwing"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "light-shield",
+		"name": "Light Shield",
+		"category": "shield",
+		"mode": "melee",
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"effect": [
+			{
+				"text": "-2 to incoming Melee Attacks to Front, +2 ARM against Ranged Attacks to the Front."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "longhilted-sword",
+		"name": "Longhilted Sword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Bleed",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "looted-weapons",
+		"name": "Looted Weapons",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [],
+		"weight": 1
+	},
+	{
+		"id": "mastercrafted-helrin-sword",
+		"name": "Mastercrafted Helrin Sword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "+1 STK in the Active Role."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "mastercrafted-piercing-dagger",
+		"name": "Mastercrafted Piercing Dagger",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": 1
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", +1 STK when used against a model in "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": " State."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "mastercrafted-sword",
+		"name": "Mastercrafted Sword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Once per Activation or Reaction, the user may reroll 1 Attack roll."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "missile-weapons",
+		"name": "Missile Weapons",
+		"category": "weapon",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0-20\"",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [],
+		"weight": 1
+	},
+	{
+		"id": "monks-staff",
+		"name": "Monk's Staff",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [],
+		"weight": 1
+	},
+	{
+		"id": "naginata",
+		"name": "Naginata",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Bleed",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "parrying-dagger",
+		"name": "Parrying Dagger",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "The target's Melee Attacks suffer a -2 mod. When used against a model in "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": " State, gain +1 STK."
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "piercing-dagger",
+		"name": "Piercing Dagger",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": -2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", +1 STK when used against a model in "
+			},
+			{
+				"text": "Crouched",
+				"link": {
+					"type": "trait",
+					"id": "crouched"
+				}
+			},
+			{
+				"text": " state."
+			}
+		]
+	},
+	{
+		"id": "polearm",
+		"name": "Polearm",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "poleaxe",
+		"name": "Poleaxe",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "profane-arc",
+		"name": "Profane Arc",
+		"category": "weapon",
+		"mode": "melee-and-ranged",
+		"toughness": {
+			"stat": "T",
+			"modifier": -4
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Spray L"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Weakening",
+				"link": {
+					"type": "trait",
+					"id": "weakening"
+				}
+			}
+		],
+		"weight": 0
+	},
+	{
+		"id": "quaking-smash",
+		"name": "Quaking Smash",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Knockback 1",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep II",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		]
+	},
+	{
+		"id": "raging-thrash",
+		"name": "Raging Trash",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"fixed": "18"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep II",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "relic-weapon",
+		"name": "Relic Weapon",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 4
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "rending-claws",
+		"name": "Rending Claws",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			}
+		]
+	},
+	{
+		"id": "scepter-of-sorceries",
+		"name": "Scepter of Sorceries",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "When casting "
+			},
+			{
+				"text": "Sorceries",
+				"link": {
+					"type": "spell",
+					"id": "art-of-sorcery"
+				}
+			},
+			{
+				"text": " in the Active Role, the wearer may reroll 1 die."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "sealing-javelin",
+		"name": "Sealing Javelins",
+		"category": "consumable",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [],
+			"text": "T"
+		},
+		"stk": {
+			"fixed": "QTY"
+		},
+		"effect": [
+			{
+				"text": "If this item hits a model with Incorporeal or Undead Trait, it automatically suffers 2 Wounds (no DMG roll necessary)."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "shield",
+		"name": "Shield",
+		"category": "shield",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "-3 to incoming Melee Attacks to the Front, +3 ARM against Ranged Attacks to the Front."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "short-bow",
+		"name": "Short Bow",
+		"category": "weapon",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0-20\"",
+					"modifier": 0
+				},
+				{
+					"range": "21-40\"",
+					"modifier": -6
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "short-sword",
+		"name": "Short Sword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "-"
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "slayers-blade",
+		"name": "Slayer's Blade",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Sweep I, Cleave. If the user has neither a Shield nor another Weapon equipped, it may reroll one Melee Attack Roll."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "slayers-lance",
+		"name": "Slayer’s Lance",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Unwieldy",
+				"link": {
+					"type": "trait",
+					"id": "unwieldy"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Knockback 1",
+				"link": {
+					"type": "trait",
+					"id": "knockback--x"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "small-bludgeon",
+		"name": "Small Bludgeon",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 3
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "smash-and-trash",
+		"name": "Smash and Trash",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Advantage Medium, Large",
+				"link": {
+					"type": "trait",
+					"id": "advantage--x"
+				}
+			}
+		]
+	},
+	{
+		"id": "spear",
+		"name": "Spear",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Throwing",
+				"link": {
+					"type": "trait",
+					"id": "throwing"
+				}
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "spectral-weapon",
+		"name": "Spectral Weapon",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			}
+		]
+	},
+	{
+		"id": "spirit-drum",
+		"name": "Spirit Drum",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "When equipped, the allies within the user’s Awareness do not suffer Morale penalties."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "staff-of-chaos",
+		"name": "Staff of Chaos",
+		"category": "accessory",
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"effect": [
+			{
+				"text": "When performing an Attack with a Spell in the Active Role, the wearer may reroll 1 die. When equipped, an enemy model can become "
+			},
+			{
+				"text": "Engaged",
+				"link": {
+					"type": "trait",
+					"id": "engaged"
+				}
+			},
+			{
+				"text": " if within RCH of this Item."
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "staff-of-conjuration",
+		"name": "Staff of Conjuration",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "When Wearer summons creatures, it can place them anywhere within its Awareness."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "staff-of-light",
+		"name": "Staff of Light",
+		"category": "accessory",
+		"effect": [
+			{
+				"text": "When casting a "
+			},
+			{
+				"text": "Divine Spell",
+				"link": {
+					"type": "spell",
+					"id": "hieromancy"
+				}
+			},
+			{
+				"text": " in the Active Role, the wearer may re-roll 1 die."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "stonesplitter",
+		"name": "Stonesplitter",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 2
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Bleed",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Two Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "succumbing-embrace",
+		"name": "Succumbing Embrace",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "Spellbound",
+				"link": {
+					"type": "trait",
+					"id": "spellbound--x"
+				}
+			},
+			{
+				"text": " (Life Leech)."
+			}
+		]
+	},
+	{
+		"id": "sword",
+		"name": "Sword",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "1",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA"
+		},
+		"effect": [
+			{
+				"text": "-"
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "tengu-screech",
+		"name": "Tengu Screech",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"fixed": "8"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "4",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Ignore Armor",
+				"link": {
+					"type": "trait",
+					"id": "ignore-armor"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Mindgame",
+				"link": {
+					"type": "trait",
+					"id": "mindgame"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep II",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": " This Weapon cannot cause "
+			},
+			{
+				"text": "Engaged",
+				"link": {
+					"type": "trait",
+					"id": "engaged"
+				}
+			},
+			{
+				"text": " state."
+			}
+		]
+	},
+	{
+		"id": "tidal-wave",
+		"name": "Tidal Wave",
+		"category": "weapon",
+		"mode": "natural-and-ranged",
+		"toughness": {
+			"fixed": "10"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Spray L"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Knockdown",
+				"link": {
+					"type": "trait",
+					"id": "knockdown"
+				}
+			},
+			{
+				"text": "."
+			}
+		]
+	},
+	{
+		"id": "venomous-bite",
+		"name": "Venomous Bite",
+		"category": "weapon",
+		"mode": "natural-and-melee",
+		"toughness": {
+			"stat": "T"
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Poison II",
+				"link": {
+					"type": "trait",
+					"id": "poison"
+				}
+			}
+		]
+	},
+	{
+		"id": "war-bow",
+		"name": "War Bow",
+		"category": "weapon",
+		"mode": "ranged",
+		"toughness": {
+			"stat": "T",
+			"modifier": 4
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "0-24\"",
+					"modifier": 0
+				},
+				{
+					"range": "25-48\"",
+					"modifier": -6
+				}
+			]
+		},
+		"stk": {
+			"stat": "STA",
+			"modifier": -1
+		},
+		"effect": [
+			{
+				"text": "Two-Handed",
+				"link": {
+					"type": "trait",
+					"id": "two-handed"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stun",
+				"link": {
+					"type": "trait",
+					"id": "stun"
+				}
+			},
+			{
+				"text": "."
+			}
+		],
+		"weight": 2
+	},
+	{
+		"id": "war-club-2",
+		"name": "War Club",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 4
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "war-club-1",
+		"name": "War Club",
+		"category": "weapon",
+		"mode": "melee",
+		"toughness": {
+			"stat": "T",
+			"modifier": 4
+		},
+		"reach": {
+			"brackets": [
+				{
+					"range": "2",
+					"modifier": 0
+				}
+			]
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "Armor-Piercing",
+				"link": {
+					"type": "trait",
+					"id": "armor-piercing"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep"
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Stagger",
+				"link": {
+					"type": "trait",
+					"id": "stagger"
+				}
+			}
+		],
+		"weight": 3
+	},
+	{
+		"id": "war-darts",
+		"name": "War Darts",
+		"category": "consumable",
+		"mode": "ranged",
+		"toughness": {
+			"fixed": "8"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Circular L",
+			"text": "T"
+		},
+		"stk": {
+			"fixed": "1"
+		},
+		"effect": [
+			{
+				"text": "Targetless",
+				"link": {
+					"type": "trait",
+					"id": "targetless"
+				}
+			},
+			{
+				"text": "; "
+			},
+			{
+				"text": "Bleeding",
+				"link": {
+					"type": "trait",
+					"id": "bleed"
+				}
+			},
+			{
+				"text": ". When used, the user receives +3 ACC."
+			}
+		],
+		"weight": 1
+	},
+	{
+		"id": "water-tentacle",
+		"name": "Water Tentacle",
+		"category": "weapon",
+		"mode": "natural-and-ranged",
+		"toughness": {
+			"fixed": "10"
+		},
+		"reach": {
+			"brackets": [],
+			"aoe": "Spray S"
+		},
+		"stk": {
+			"fixed": "2"
+		},
+		"effect": [
+			{
+				"text": "On hit, pull enemy 3” closer."
+			}
+		]
+	}
+]

@@ -9,7 +9,11 @@ import {
 	combatArtPopupFor,
 	effectiveMountedStats,
 	indexArmyRules,
+	inventorySpaceUsed,
 	isOverArmyLimit,
+	itemTypeDisplay,
+	rangeBracketDisplay,
+	reachBoxLines,
 	removeArmyCopy,
 	removeArmyEntry,
 	resolveArmyEntries,
@@ -24,6 +28,7 @@ import {
 	traitPopupFor,
 	unitsForFaction,
 	type ArmyEntry,
+	type ArmyItemSpec,
 	type ArmyRulesIndexes,
 	type ArmyRulesSpec,
 	type ArmySpellSpec,
@@ -757,12 +762,103 @@ describe('spellCostDisplay', () => {
 		);
 	});
 
+	it('resolves the item toughness column T like any statline key', () => {
+		expect(spellCostDisplay({ stat: 'T' }, STATS)).toBe('T (8)');
+		expect(spellCostDisplay({ stat: 'T', modifier: 2 }, STATS)).toBe('T (8) +2');
+		expect(spellCostDisplay({ fixed: 'QTY' }, STATS)).toBe('QTY');
+	});
+
 	it('shows the bare stat when the unit has no value for it', () => {
 		expect(spellCostDisplay({ stat: 'M' }, { ...STATS, M: null })).toBe('M');
 	});
 
 	it('is undefined without a cost', () => {
 		expect(spellCostDisplay(undefined, STATS)).toBeUndefined();
+	});
+});
+
+describe('rangeBracketDisplay', () => {
+	it('shows a range bracket with its modifier', () => {
+		expect(rangeBracketDisplay({ range: '0-20"', modifier: 0 })).toBe('0-20": 0');
+		expect(rangeBracketDisplay({ range: '25-48"', modifier: -6 })).toBe('25-48": -6');
+		expect(rangeBracketDisplay({ range: '0-24"', modifier: 3 })).toBe('0-24": +3');
+	});
+
+	it('shows a plain reach without a modifier', () => {
+		expect(rangeBracketDisplay({ range: '0', modifier: 0 })).toBe('0');
+		expect(rangeBracketDisplay({ range: '2', modifier: 0 })).toBe('2');
+	});
+});
+
+describe('reachBoxLines', () => {
+	it('lists the brackets, the AoE template and raw text in order', () => {
+		expect(
+			reachBoxLines({
+				brackets: [
+					{ range: '0-20"', modifier: 0 },
+					{ range: '21-40"', modifier: -6 }
+				]
+			})
+		).toEqual(['0-20": 0', '21-40": -6']);
+		expect(reachBoxLines({ brackets: [], aoe: 'Spray L' })).toEqual(['AoE: Spray L']);
+		expect(reachBoxLines({ brackets: [], text: 'T' })).toEqual(['T']);
+		expect(reachBoxLines({ brackets: [], aoe: 'Circular S', text: 'T' })).toEqual([
+			'AoE: Circular S',
+			'T'
+		]);
+	});
+
+	it('is a dash without reach', () => {
+		expect(reachBoxLines(undefined)).toEqual(['–']);
+		expect(reachBoxLines({ brackets: [] })).toEqual(['–']);
+	});
+});
+
+describe('itemTypeDisplay', () => {
+	it('combines mode and category, keeping "and" lowercase', () => {
+		expect(itemTypeDisplay('weapon', 'natural-and-melee')).toBe('Natural and Melee, Weapon');
+		expect(itemTypeDisplay('weapon', 'melee-and-ranged')).toBe('Melee and Ranged, Weapon');
+		expect(itemTypeDisplay('weapon', 'ranged')).toBe('Ranged, Weapon');
+	});
+
+	it('falls back to the category alone without a mode', () => {
+		expect(itemTypeDisplay('accessory')).toBe('Accessory');
+		expect(itemTypeDisplay('consumable')).toBe('Consumable');
+	});
+});
+
+describe('inventorySpaceUsed', () => {
+	const ITEMS: Record<string, ArmyItemSpec> = {
+		sword: { id: 'sword', name: 'Sword', category: 'weapon', effect: [], weight: 1 },
+		'great-shield': {
+			id: 'great-shield',
+			name: 'Great Shield',
+			category: 'shield',
+			effect: [],
+			weight: 3
+		},
+		amulet: { id: 'amulet', name: 'Amulet', category: 'accessory', effect: [] }
+	};
+
+	it('sums each copy of an item with its weight', () => {
+		expect(
+			inventorySpaceUsed(
+				[
+					{ id: 'sword', qty: 1 },
+					{ id: 'great-shield', qty: 2 }
+				],
+				ITEMS
+			)
+		).toBe(7);
+	});
+
+	it('counts weightless items and unknown ids as zero', () => {
+		expect(inventorySpaceUsed([{ id: 'amulet', qty: 3 }], ITEMS)).toBe(0);
+		expect(inventorySpaceUsed([{ id: 'ghost', qty: 1 }], ITEMS)).toBe(0);
+	});
+
+	it('is zero for an empty inventory', () => {
+		expect(inventorySpaceUsed([], ITEMS)).toBe(0);
 	});
 });
 

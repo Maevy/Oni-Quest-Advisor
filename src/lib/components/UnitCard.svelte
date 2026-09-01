@@ -3,13 +3,19 @@
 		ARMY_STAT_KEYS,
 		classPopupFor,
 		combatArtPopupFor,
+		inventorySpaceUsed,
+		itemTypeDisplay,
+		reachBoxLines,
 		romanNumeral,
 		rulesLinkPopup,
 		skillPopupFor,
+		spellCostDisplay,
 		spellcraftPopupFor,
 		stratagemsFor,
 		traitPopupFor,
 		type ArmyFactionConfig,
+		type ArmyItemCategory,
+		type ArmyItemSpec,
 		type ArmyRulesIndexes,
 		type ArmyRulesPopup,
 		type ArmyRulesSpec,
@@ -84,6 +90,52 @@
 		return groups;
 	}
 
+	/** Group header chips per item category - literal classes so Tailwind sees them. */
+	const ITEM_CATEGORY_CHIPS: Record<ArmyItemCategory, { label: string; classes: string }> = {
+		weapon: {
+			label: 'Weapons',
+			classes: 'border-sky-400/30 bg-sky-400/10 text-sky-300'
+		},
+		shield: {
+			label: 'Shields',
+			classes: 'border-blue-400/30 bg-blue-400/10 text-blue-300'
+		},
+		accessory: {
+			label: 'Accessories',
+			classes: 'border-violet-400/30 bg-violet-400/10 text-violet-300'
+		},
+		consumable: {
+			label: 'Consumables',
+			classes: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+		}
+	};
+
+	/** Display order of the item categories. */
+	const ITEM_CATEGORY_ORDER: ArmyItemCategory[] = ['weapon', 'shield', 'accessory', 'consumable'];
+
+	type InventoryRow = { item: ArmyItemSpec; qty: number };
+
+	/** The unit's inventory slots resolved against the item catalog. */
+	function resolveInventory(
+		slots: { id: string; qty: number }[],
+		index: Record<string, ArmyItemSpec>
+	): InventoryRow[] {
+		return slots.flatMap((slot) => {
+			const item = index[slot.id];
+			return item ? [{ item, qty: slot.qty }] : [];
+		});
+	}
+
+	type InventoryGroup = { category: ArmyItemCategory; rows: InventoryRow[] };
+
+	/** Group inventory rows by category in the rulebook order. */
+	function inventoryGroups(rows: InventoryRow[]): InventoryGroup[] {
+		return ITEM_CATEGORY_ORDER.flatMap((category) => {
+			const matching = rows.filter((row) => row.item.category === category);
+			return matching.length > 0 ? [{ category, rows: matching }] : [];
+		});
+	}
+
 	type Props = {
 		unit: ArmyUnitSpec;
 		faction: ArmyFactionConfig;
@@ -94,6 +146,7 @@
 		spellcraftIndex: Record<string, ArmyRulesSpec>;
 		spells: ArmySpellSpec[];
 		stratagemIndex: Record<string, ArmyStratagemSpec>;
+		itemIndex: Record<string, ArmyItemSpec>;
 		stats: ArmyStats;
 		mounted: boolean;
 		mountName?: string;
@@ -110,6 +163,7 @@
 		spellcraftIndex,
 		spells,
 		stratagemIndex,
+		itemIndex,
 		stats,
 		mounted,
 		mountName,
@@ -156,6 +210,8 @@
 		})
 	);
 	let stratagems = $derived(unit.stratagems ? stratagemsFor(unit.stratagems, stratagemIndex) : []);
+	let inventoryRows = $derived(unit.inventory ? resolveInventory(unit.inventory, itemIndex) : []);
+	let usedSpace = $derived(unit.inventory ? inventorySpaceUsed(unit.inventory, itemIndex) : 0);
 
 	function openPopup(popup: ArmyRulesPopup): void {
 		popupStack = [...popupStack, popup];
@@ -299,7 +355,7 @@
 					</div>
 				</div>
 			{/if}
-			{#if spellcraftTags.length > 0 || stratagems.length > 0}
+			{#if inventoryRows.length > 0 || spellcraftTags.length > 0 || stratagems.length > 0}
 				<hr class="border-slate-700/50" />
 			{/if}
 			{#if spellcraftTags.length > 0}
@@ -316,6 +372,80 @@
 							>
 								{tag.title}
 							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
+			{#if inventoryRows.length > 0}
+				<div>
+					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+						Inventory
+						{#if unit.inventorySpace}
+							<span class="ml-1 font-normal text-slate-300 normal-case">
+								({usedSpace}/{unit.inventorySpace} Space used)
+							</span>
+						{/if}
+					</h3>
+					<div class="space-y-2.5">
+						{#each inventoryGroups(inventoryRows) as group (group.category)}
+							<div>
+								<span
+									class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase {ITEM_CATEGORY_CHIPS[
+										group.category
+									].classes}"
+								>
+									{ITEM_CATEGORY_CHIPS[group.category].label}
+								</span>
+								<div class="mt-1.5 space-y-1.5">
+									{#each group.rows as row (row.item.id)}
+										<div class="rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5">
+											<p class="text-sm font-medium text-slate-100">{row.item.name}</p>
+											<p class="mt-0.5 text-[10px] tracking-wide text-slate-400 uppercase">
+												{itemTypeDisplay(row.item.category, row.item.mode)}
+											</p>
+											{#if row.item.effect.length > 0}
+												<p class="mt-1 text-xs text-slate-300">
+													{@render segmentsView(row.item.effect)}
+												</p>
+											{/if}
+											<div class="mt-1.5 grid grid-cols-5 gap-1">
+												<div class="rounded-md bg-slate-800/60 px-0.5 py-1 text-center">
+													<p class="text-[9px] font-semibold tracking-wide text-sky-300">PW</p>
+													<p class="text-[9px] font-medium text-slate-100 tabular-nums">
+														{spellCostDisplay(row.item.toughness, stats) ?? '–'}
+													</p>
+												</div>
+												<div class="rounded-md bg-slate-800/60 px-0.5 py-1 text-center">
+													<p class="text-[9px] font-semibold tracking-wide text-sky-300">RCH</p>
+													{#each reachBoxLines(row.item.reach) as line (line)}
+														<p class="text-[10px] font-medium text-slate-100 tabular-nums">
+															{line}
+														</p>
+													{/each}
+												</div>
+												<div class="rounded-md bg-slate-800/60 px-0.5 py-1 text-center">
+													<p class="text-[9px] font-semibold tracking-wide text-sky-300">STK</p>
+													<p class="text-[9px] font-medium text-slate-100 tabular-nums">
+														{spellCostDisplay(row.item.stk, stats) ?? '–'}
+													</p>
+												</div>
+												<div class="rounded-md bg-slate-800/60 px-0.5 py-1 text-center">
+													<p class="text-[9px] font-semibold tracking-wide text-sky-300">QTY</p>
+													<p class="text-[10px] font-medium text-slate-100 tabular-nums">
+														{row.qty}
+													</p>
+												</div>
+												<div class="rounded-md bg-slate-800/60 px-0.5 py-1 text-center">
+													<p class="text-[9px] font-semibold tracking-wide text-sky-300">WGT</p>
+													<p class="text-[10px] font-medium text-slate-100 tabular-nums">
+														{row.item.weight ?? '–'}
+													</p>
+												</div>
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
 						{/each}
 					</div>
 				</div>

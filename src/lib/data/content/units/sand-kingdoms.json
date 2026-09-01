@@ -35,6 +35,13 @@
 				"id": "art-of-sorcery",
 				"level": 3
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "dagger",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -94,7 +101,14 @@
 				"level": 4
 			}
 		],
-		"stratagems": ["arcane-link", "arcane-protection", "mana-syphon"]
+		"stratagems": ["arcane-link", "arcane-protection", "mana-syphon"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "glyph-of-protection",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "faris-outrider",
@@ -145,6 +159,21 @@
 			{
 				"id": "art-of-enchanting",
 				"level": 3
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "arcane-lantern",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
 			}
 		]
 	},
@@ -211,7 +240,14 @@
 				"level": 3
 			}
 		],
-		"stratagems": ["adrenaline-rush", "ironhide", "reinforced-claws"]
+		"stratagems": ["adrenaline-rush", "ironhide", "reinforced-claws"],
+		"inventorySpace": 2,
+		"inventory": [
+			{
+				"id": "chimera-claws",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "spelldancer-aeroturge",
@@ -349,6 +385,13 @@
 				"level": 1
 			}
 		],
-		"stratagems": ["refined-conjuration", "temporary-bind"]
+		"stratagems": ["refined-conjuration", "temporary-bind"],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "staff-of-conjuration",
+				"qty": 1
+			}
+		]
 	}
 ]

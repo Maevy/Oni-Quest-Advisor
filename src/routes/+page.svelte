@@ -139,6 +139,7 @@
 	let armyCombatArtIndex = $derived(indexArmyRules(contentStore.armyCombatArts));
 	let armySpellcraftIndex = $derived(indexArmyRules(contentStore.armySpellcrafts));
 	let armyStratagemIndex = $derived(indexArmyRules(contentStore.armyStratagems));
+	let armyItemIndex = $derived(indexArmyRules(contentStore.armyItems));
 </script>
 
 {#if navigationStore.showOnlineIntro}
@@ -172,6 +173,7 @@
 		spellcraftIndex={armySpellcraftIndex}
 		spells={contentStore.armySpells}
 		stratagemIndex={armyStratagemIndex}
+		itemIndex={armyItemIndex}
 		{armyRows}
 		counts={armyCounts}
 		format={armyBuilderStore.format}

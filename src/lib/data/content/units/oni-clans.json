@@ -54,7 +54,18 @@
 				"level": 2
 			}
 		],
-		"stratagems": ["coordinated-assault", "mind-invasion", "painless-death", "recall-the-souls"]
+		"stratagems": ["coordinated-assault", "mind-invasion", "painless-death", "recall-the-souls"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "war-club-2",
+				"qty": 1
+			},
+			{
+				"id": "cursed-grab",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "blue-yaksha",
@@ -108,6 +119,13 @@
 				"level": 1,
 				"dynamicValue": "Difficult"
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "bisento",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -138,6 +156,17 @@
 			{
 				"id": "undead",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "corroded-weapon",
+				"qty": 1
+			},
+			{
+				"id": "shield",
+				"qty": 1
 			}
 		]
 	},
@@ -201,7 +230,14 @@
 				"level": 5
 			}
 		],
-		"stratagems": ["eternal-vigil", "final-gambit", "profane-mend", "soul-harvest"]
+		"stratagems": ["eternal-vigil", "final-gambit", "profane-mend", "soul-harvest"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "deathweaving-fan",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "forgotten-hero",
@@ -245,6 +281,21 @@
 			{
 				"id": "fencing",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "corroded-war-bow",
+				"qty": 1
+			},
+			{
+				"id": "corroded-sword",
+				"qty": 1
+			},
+			{
+				"id": "corroded-piercing-dagger",
+				"qty": 1
 			}
 		]
 	},
@@ -292,6 +343,13 @@
 				"level": 1,
 				"dynamicValue": "Difficult"
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "war-club-1",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -337,6 +395,21 @@
 			{
 				"id": "unstoppable",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "smash-and-trash",
+				"qty": 1
+			},
+			{
+				"id": "crushing-maw",
+				"qty": 1
+			},
+			{
+				"id": "quaking-smash",
+				"qty": 1
 			}
 		]
 	},
@@ -403,7 +476,14 @@
 				"level": 3
 			}
 		],
-		"stratagems": ["devour-the-enemy", "mark-of-red", "raid-expert"]
+		"stratagems": ["devour-the-enemy", "mark-of-red", "raid-expert"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "descrated-relic-blade",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "red-yaksha",
@@ -471,6 +551,13 @@
 				"id": "berserk",
 				"level": 2
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "war-club-2",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -515,6 +602,13 @@
 			{
 				"id": "undead",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "spectral-weapon",
+				"qty": 1
 			}
 		]
 	}

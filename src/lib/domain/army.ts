@@ -118,6 +118,36 @@ export type ArmyStratagemSpec = {
 	effect: ArmyTextSegment[];
 };
 
+/** The rulebook category of an item. */
+export type ArmyItemCategory = 'weapon' | 'shield' | 'accessory' | 'consumable';
+
+/** One range bracket of an item's reach: distance band and hit modifier. */
+export type ArmyRangeBracket = { range: string; modifier: number };
+
+/** Structured reach of an item, parsed from the producer's RCH cell. */
+export type ArmyItemReach = {
+	brackets: ArmyRangeBracket[];
+	aoe?: string;
+	text?: string;
+};
+
+/** An item from the producer catalog; toughness/stk reuse the spell cost shape. */
+export type ArmyItemSpec = {
+	id: string;
+	name: string;
+	category: ArmyItemCategory;
+	/** Attack mode, e.g. 'melee', 'ranged', 'natural-and-melee'. */
+	mode?: string;
+	toughness?: ArmySpellCost;
+	reach?: ArmyItemReach;
+	stk?: ArmySpellCost;
+	effect: ArmyTextSegment[];
+	weight?: number;
+};
+
+/** A unit's inventory slot: how many copies of one item it carries. */
+export type ArmyInventorySlot = { id: string; qty: number };
+
 /** A trait on a unit; dynamic values fill the entry's (X)/(Element) placeholders. */
 export type ArmyTraitRef = {
 	id: string;
@@ -144,6 +174,10 @@ export type ArmyUnitSpec = {
 	spellcrafts?: ArmySpellcraftRef[];
 	/** Stratagem ids; only some units carry stratagems. */
 	stratagems?: string[];
+	/** Inventory capacity in space units. */
+	inventorySpace?: number;
+	/** Equipped items in the producer's order; ids resolve the item catalog. */
+	inventory?: ArmyInventorySlot[];
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
 	mount?: { unitId: string; points: number };
@@ -451,8 +485,9 @@ export function affinityElements(unit: ArmyUnitSpec): string[] {
 }
 
 /**
- * Display of a cost-like spell value against the unit's stats:
- * 'INT (12) -3', 'STA (2)' or the fixed text ('8', '-', 'x', ...).
+ * Display of a cost-like value against the unit's stats (spell PW/STK and
+ * item T/STK columns): 'INT (12) -3', 'T (10) +2', 'STA (2)' or the fixed
+ * text ('8', '-', 'x', 'QTY', ...).
  */
 export function spellCostDisplay(
 	cost: ArmySpellCost | undefined,
@@ -467,6 +502,43 @@ export function spellCostDisplay(
 		display += cost.modifier > 0 ? ' +' + cost.modifier : ' -' + Math.abs(cost.modifier);
 	}
 	return display;
+}
+
+/** Display of a reach bracket: '0-20": 0', '25-48: -6' or a plain reach '2'. */
+export function rangeBracketDisplay(bracket: ArmyRangeBracket): string {
+	if (!bracket.range.includes('-')) return bracket.range;
+	const modifier = bracket.modifier > 0 ? '+' + bracket.modifier : String(bracket.modifier);
+	return bracket.range + ': ' + modifier;
+}
+
+/** Value lines of the reach box: brackets, then AoE template, then raw text. */
+export function reachBoxLines(reach: ArmyItemReach | undefined): string[] {
+	if (!reach) return ['–'];
+	const lines = reach.brackets.map(rangeBracketDisplay);
+	if (reach.aoe) lines.push('AoE: ' + reach.aoe);
+	if (reach.text) lines.push(reach.text);
+	return lines.length > 0 ? lines : ['–'];
+}
+
+/** Space an inventory occupies: each copy counts its weight, weightless items are free. */
+export function inventorySpaceUsed(
+	slots: ArmyInventorySlot[],
+	index: Record<string, ArmyItemSpec>
+): number {
+	return slots.reduce((sum, slot) => sum + (index[slot.id]?.weight ?? 0) * slot.qty, 0);
+}
+
+/** Display type of an item: 'Natural and Melee, Weapon' or just 'Accessory'. */
+export function itemTypeDisplay(category: ArmyItemCategory, mode?: string): string {
+	const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
+	if (!mode) return categoryLabel;
+	const modeLabel = mode
+		.split('-')
+		.map((word, index) =>
+			index > 0 && word === 'and' ? word : word.charAt(0).toUpperCase() + word.slice(1)
+		)
+		.join(' ');
+	return modeLabel + ', ' + categoryLabel;
 }
 
 /**

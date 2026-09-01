@@ -92,6 +92,21 @@
 				"id": "fencing",
 				"level": 1
 			}
+		],
+		"inventorySpace": 7,
+		"inventory": [
+			{
+				"id": "small-bludgeon",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
+			},
+			{
+				"id": "shield",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -132,7 +147,14 @@
 				"level": 4
 			}
 		],
-		"stratagems": ["nursing-aura", "spiritual-paragon"]
+		"stratagems": ["nursing-aura", "spiritual-paragon"],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "staff-of-light",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "flameshaper",
@@ -223,7 +245,18 @@
 				"level": 1
 			}
 		],
-		"stratagems": ["expeditionary-paragon", "march", "rally-troops-helian", "striking-momentum"]
+		"stratagems": ["expeditionary-paragon", "march", "rally-troops-helian", "striking-momentum"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "mastercrafted-helrin-sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "flameweaver-noble",
@@ -259,6 +292,21 @@
 			{
 				"id": "art-of-sorcery",
 				"level": 3
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
+			},
+			{
+				"id": "scepter-of-sorceries",
+				"qty": 1
 			}
 		]
 	},
@@ -305,6 +353,21 @@
 				"level": 1
 			}
 		],
-		"stratagems": ["sacred-vow", "solemn-presence"]
+		"stratagems": ["sacred-vow", "solemn-presence"],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "banner-lance",
+				"qty": 1
+			},
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "empyrean-standard",
+				"qty": 1
+			}
+		]
 	}
 ]

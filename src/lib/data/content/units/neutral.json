@@ -48,6 +48,13 @@
 				"id": "berserk",
 				"level": 3
 			}
+		],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "heavy-polarm",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -81,6 +88,21 @@
 			{
 				"id": "tracking",
 				"level": 1
+			}
+		],
+		"inventorySpace": 7,
+		"inventory": [
+			{
+				"id": "short-sword",
+				"qty": 1
+			},
+			{
+				"id": "javelin",
+				"qty": 4
+			},
+			{
+				"id": "light-shield",
+				"qty": 1
 			}
 		]
 	},
@@ -134,7 +156,26 @@
 				"level": 4
 			}
 		],
-		"stratagems": ["defensive-formation", "unconventional-tactics"]
+		"stratagems": ["defensive-formation", "unconventional-tactics"],
+		"inventorySpace": 6,
+		"inventory": [
+			{
+				"id": "poleaxe",
+				"qty": 1
+			},
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "glyphscribe-dagger",
+				"qty": 1
+			},
+			{
+				"id": "shield",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "helrin-expatriate",
@@ -186,6 +227,17 @@
 				"id": "art-of-enchanting",
 				"level": 2
 			}
+		],
+		"inventorySpace": 7,
+		"inventory": [
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -225,6 +277,17 @@
 			{
 				"id": "assassination",
 				"level": 1
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "short-sword",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 2
 			}
 		]
 	},
@@ -273,6 +336,17 @@
 				"id": "fencing",
 				"level": 2
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "naginata",
+				"qty": 1
+			},
+			{
+				"id": "tengu-screech",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -312,6 +386,21 @@
 			{
 				"id": "fencing",
 				"level": 3
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "sword",
+				"qty": 1
+			},
+			{
+				"id": "bow",
+				"qty": 1
+			},
+			{
+				"id": "dagger",
+				"qty": 1
 			}
 		]
 	},
@@ -359,6 +448,17 @@
 			{
 				"id": "fencing",
 				"level": 3
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "greatsword",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
 			}
 		]
 	},
@@ -420,6 +520,13 @@
 				"id": "berserk",
 				"level": 3
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "relic-weapon",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -452,6 +559,17 @@
 			{
 				"id": "invocation",
 				"level": 3
+			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "monks-staff",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
 			}
 		]
 	},
@@ -490,6 +608,21 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Scorching"
+			}
+		],
+		"inventorySpace": 7,
+		"inventory": [
+			{
+				"id": "battle-axe",
+				"qty": 1
+			},
+			{
+				"id": "slayers-blade",
+				"qty": 1
+			},
+			{
+				"id": "great-shield",
+				"qty": 1
 			}
 		]
 	},
@@ -533,6 +666,17 @@
 			{
 				"id": "assassination",
 				"level": 1
+			}
+		],
+		"inventorySpace": 4,
+		"inventory": [
+			{
+				"id": "slayers-lance",
+				"qty": 1
+			},
+			{
+				"id": "short-sword",
+				"qty": 1
 			}
 		],
 		"mount": {
@@ -590,6 +734,13 @@
 				"id": "wizardry",
 				"level": 3
 			}
+		],
+		"inventorySpace": 5,
+		"inventory": [
+			{
+				"id": "dagger",
+				"qty": 1
+			}
 		]
 	},
 	{
@@ -631,6 +782,13 @@
 			{
 				"id": "fencing",
 				"level": 2
+			}
+		],
+		"inventorySpace": 4,
+		"inventory": [
+			{
+				"id": "short-sword",
+				"qty": 2
 			}
 		]
 	},

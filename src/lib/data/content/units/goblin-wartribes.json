@@ -51,7 +51,14 @@
 				"level": 3
 			}
 		],
-		"stratagems": ["call-of-bravery", "earthspeaker", "hexcaller"]
+		"stratagems": ["call-of-bravery", "earthspeaker", "hexcaller"],
+		"inventorySpace": 4,
+		"inventory": [
+			{
+				"id": "staff-of-chaos",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "goblin-brawlers",
@@ -87,6 +94,17 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Difficult"
+			}
+		],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "looted-weapons",
+				"qty": 1
+			},
+			{
+				"id": "bite",
+				"qty": 1
 			}
 		]
 	},
@@ -142,7 +160,14 @@
 				"level": 2
 			}
 		],
-		"stratagems": ["earthspeaker", "hexcaller", "unwavering-presence"]
+		"stratagems": ["earthspeaker", "hexcaller", "unwavering-presence"],
+		"inventorySpace": 4,
+		"inventory": [
+			{
+				"id": "staff-of-chaos",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "goblin-skirmishers",
@@ -178,6 +203,17 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Difficult"
+			}
+		],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "missile-weapons",
+				"qty": 1
+			},
+			{
+				"id": "bite",
+				"qty": 1
 			}
 		]
 	},
@@ -226,7 +262,18 @@
 				"dynamicValue": "Difficult"
 			}
 		],
-		"stratagems": ["aetherkin", "emberkin", "stonekin", "swampkin"]
+		"stratagems": ["aetherkin", "emberkin", "stonekin", "swampkin"],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "great-axe",
+				"qty": 1
+			},
+			{
+				"id": "bite",
+				"qty": 1
+			}
+		]
 	},
 	{
 		"id": "troll-prowler",
@@ -267,6 +314,21 @@
 				"id": "survival--x-environment",
 				"level": 1,
 				"dynamicValue": "Aquatic, Difficult, Toxic"
+			}
+		],
+		"inventorySpace": 3,
+		"inventory": [
+			{
+				"id": "rending-claws",
+				"qty": 1
+			},
+			{
+				"id": "acid-vomit",
+				"qty": 1
+			},
+			{
+				"id": "venomous-bite",
+				"qty": 1
 			}
 		]
 	}

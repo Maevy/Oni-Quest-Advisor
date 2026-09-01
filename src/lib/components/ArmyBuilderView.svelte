@@ -2,6 +2,7 @@
 	import type {
 		ArmyFactionConfig,
 		ArmyFormat,
+		ArmyItemSpec,
 		ArmyRosterRow,
 		ArmyRulesSpec,
 		ArmySpellSpec,
@@ -21,6 +22,7 @@
 		spellcraftIndex: Record<string, ArmyRulesSpec>;
 		spells: ArmySpellSpec[];
 		stratagemIndex: Record<string, ArmyStratagemSpec>;
+		itemIndex: Record<string, ArmyItemSpec>;
 		armyRows: ArmyRosterRow[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -45,6 +47,7 @@
 		spellcraftIndex,
 		spells,
 		stratagemIndex,
+		itemIndex,
 		armyRows,
 		counts,
 		format,
@@ -312,6 +315,7 @@
 			{spellcraftIndex}
 			{spells}
 			{stratagemIndex}
+			{itemIndex}
 			stats={selectedCard.stats}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}

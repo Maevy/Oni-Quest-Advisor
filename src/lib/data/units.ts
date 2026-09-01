@@ -1,5 +1,6 @@
 import type {
 	ArmyFactionId,
+	ArmyItemSpec,
 	ArmyRulesSpec,
 	ArmySpellSpec,
 	ArmyStratagemSpec,
@@ -26,6 +27,11 @@ const spellModules = import.meta.glob('./content/units/spells.json', { eager: tr
 const stratagemModules = import.meta.glob('./content/units/stratagems.json', {
 	eager: true
 }) as Record<string, { default: ArmyStratagemSpec[] }>;
+
+const itemModules = import.meta.glob('./content/units/items.json', { eager: true }) as Record<
+	string,
+	{ default: ArmyItemSpec[] }
+>;
 
 const iconModules = import.meta.glob('../assets/uniticons/*/*.jpg', {
 	eager: true,
@@ -74,7 +80,8 @@ export function loadArmyUnits(): ArmyUnitContent {
 			key === 'combat-arts' ||
 			key === 'spellcrafts' ||
 			key === 'spells' ||
-			key === 'stratagems'
+			key === 'stratagems' ||
+			key === 'items'
 		) {
 			continue;
 		}
@@ -129,4 +136,9 @@ export function loadArmySpells(): ArmySpellSpec[] {
 /** Loads the stratagem catalog referenced by unit `stratagems` ids. */
 export function loadArmyStratagems(): ArmyStratagemSpec[] {
 	return Object.values(stratagemModules)[0]?.default ?? [];
+}
+
+/** Loads the item catalog referenced by unit inventory slots. */
+export function loadArmyItems(): ArmyItemSpec[] {
+	return Object.values(itemModules)[0]?.default ?? [];
 }
