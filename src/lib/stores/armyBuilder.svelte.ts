@@ -22,20 +22,20 @@ import {
 	type ArmyRulesIndexes,
 	type ArmyUnitSpec,
 	type ArmyUpgradeSelection,
-	type ArmyUpgradeSpec
+	type ArmyUpgradeSpec,
+	type SavedArmy
 } from '$lib/domain';
+import { addSavedArmy, loadSavedArmies, removeSavedArmy } from '$lib/data/savedArmies';
 import { contentStore } from './content.svelte';
 
-/**
- * In-session army builder state. Selections are intentionally not persisted
- * yet - saving and loading lists arrives in a later phase.
- */
+/** In-session army builder state plus the device's saved army lists. */
 class ArmyBuilderStore {
 	factionId = $state<ArmyFactionId | null>(null);
 	format = $state<ArmyFormat>('standard');
 	entries = $state<ArmyEntry[]>([]);
 	/** Opens the builder on the Your-Army panel; set by a code import. */
 	startOnArmyPanel = $state(false);
+	savedArmies = $state<SavedArmy[]>([]);
 
 	points = $derived(armyPoints(this.entries, this.units, this.upgradeIndex));
 	limit = $derived(ARMY_FORMAT_POINTS[this.format]);
@@ -142,6 +142,34 @@ class ArmyBuilderStore {
 			{ factionId: this.factionId, format: this.format, entries: this.entries },
 			this.codeCatalog
 		);
+	}
+
+	/** Re-reads the device's saved armies (call when the load dialog opens). */
+	refreshSavedArmies(): void {
+		this.savedArmies = loadSavedArmies();
+	}
+
+	/** Persists the current army under a name; null on success, an error message otherwise. */
+	saveArmy(name: string): string | null {
+		const trimmed = name.trim();
+		if (trimmed === '') return 'Give the army a name first.';
+		const code = this.exportArmyCode();
+		if (!code || !this.factionId) return 'The army is empty.';
+		addSavedArmy({
+			id: crypto.randomUUID(),
+			name: trimmed,
+			factionId: this.factionId,
+			code,
+			createdAt: new Date().toISOString()
+		});
+		this.refreshSavedArmies();
+		return null;
+	}
+
+	/** Deletes a saved army from the device. */
+	deleteSavedArmy(armyId: string): void {
+		removeSavedArmy(armyId);
+		this.refreshSavedArmies();
 	}
 
 	/**

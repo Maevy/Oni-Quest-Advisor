@@ -104,7 +104,15 @@ native/platform-specific one. Used on a phone screen during a game session.
   every pick through the domain guards (an import can never be invalid) and
   opens the builder on the Your-Army panel; export is the "Copy Army Code"
   button in the builder header (clipboard API; when the clipboard is
-  unavailable the code is shown inline for manual copying).
+  unavailable the code is shown inline for manual copying). **Saved armies**:
+  the builder's "Save Army" button opens a name dialog and stores
+  `{ id, name, factionId, code, createdAt }` under
+  `oni-quest-advisor:saved-armies` — the code carries the whole list, so a
+  save is only metadata plus code (and shares the fingerprint check: saves
+  from before a roster update refuse to load instead of decoding wrong).
+  "Load Army" on the faction select lists them grouped by faction, newest
+  first (`groupSavedArmies`), replays the stored code through `importArmy`,
+  and deletes them via a per-row ✕ behind a Yes/No confirmation.
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
   is a hot-seat mode where both players share one device. The third

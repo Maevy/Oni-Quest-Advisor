@@ -30,11 +30,34 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   combat arts, spellcrafts, inventories and stratagems (inline cards), mounts,
   standard-mode upgrades (per-copy picks with slots, gating and choice dialogs)
   and army codes (clipboard export + import on the faction select).
-  Roster-mode upgrades + the mode-switch warning and Save Army (list
-  persistence) are the pending follow-ups — both buttons already sit greyed
-  out in the builder header as teasers.
+  Save/Load Army shipped afterwards (Save Army dialog in the builder header,
+  Load Army on the faction select; saves persist as code + metadata under
+  `oni-quest-advisor:saved-armies`). Roster-mode upgrades + the mode-switch
+  warning remain the pending follow-ups — the Roster tab still sits disabled
+  with a tooltip.
 
-## What was done in the last session (army builder polish: unit-card divider + compact stepper)
+## What was done in the last session (Save Army / Load Army)
+
+1. **Save Army** (builder header, was a greyed teaser): opens a dialog with a
+   name input (Save / Cancel, outside click or Escape cancels) and stores
+   `{ id, name, factionId, code, createdAt }` in `localStorage` under
+   `oni-quest-advisor:saved-armies` — the army code carries the whole list,
+   so a save is just metadata plus code. New domain `savedArmy.ts`
+   (`SavedArmy`, `groupSavedArmies` + spec), new `data/savedArmies.ts`,
+   `armyBuilderStore.saveArmy()/refreshSavedArmies()`, new
+   `SaveArmyDialog.svelte`.
+2. **Load Army** (faction select, below Import Army): `LoadArmyDialog.svelte`
+   lists the saved armies grouped by faction (config order), newest first,
+   name + save date per row; picking one replays the stored code through
+   `importArmy` (guards intact — an import can never be invalid) and opens
+   the builder on the Your-Army panel. Stale saves from before a roster
+   update show the roster-mismatch error on their row instead of loading.
+3. **Delete saved armies**: each load-list row carries a ✕ that opens the
+   shared `ConfirmDialog` ("Delete \<name\>?" — Yes/No); confirmed deletes go
+   through `data/savedArmies.ts removeSavedArmy` +
+   `armyBuilderStore.deleteSavedArmy`, and the list refreshes reactively.
+
+## What was done in earlier sessions (army builder polish: unit-card divider + compact stepper)
 
 1. **Unit card divider fixed**: Spellcrafts sat below the divider together with
    Inventory/Stratagems, but it belongs to the model's rules — the card now

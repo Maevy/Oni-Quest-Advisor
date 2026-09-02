@@ -6,6 +6,7 @@
 		getMissionsForSeason,
 		getScoreableResults,
 		getSeasons,
+		groupSavedArmies,
 		indexArmyRules,
 		resolveArmyEntries
 	} from '$lib/domain';
@@ -20,6 +21,8 @@
 	import GameModeSelect from '$lib/components/GameModeSelect.svelte';
 	import ArmyBuilderView from '$lib/components/ArmyBuilderView.svelte';
 	import ArmyFactionSelect from '$lib/components/ArmyFactionSelect.svelte';
+	import LoadArmyDialog from '$lib/components/LoadArmyDialog.svelte';
+	import SaveArmyDialog from '$lib/components/SaveArmyDialog.svelte';
 	import SeasonSelect from '$lib/components/SeasonSelect.svelte';
 	import MissionSelect from '$lib/components/MissionSelect.svelte';
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
@@ -147,6 +150,16 @@
 	let armyStratagemIndex = $derived(indexArmyRules(contentStore.armyStratagems));
 	let armyItemIndex = $derived(indexArmyRules(contentStore.armyItems));
 
+	// Save/Load Army dialogs
+	let showSaveArmy = $state(false);
+	let showLoadArmy = $state(false);
+	let savedArmyGroups = $derived(
+		groupSavedArmies(
+			armyBuilderStore.savedArmies,
+			contentStore.armyFactions.map((faction) => faction.id)
+		)
+	);
+
 	/** Copies the army share code; returns it so the UI can show it either way. */
 	async function copyArmyCode(): Promise<{ code: string; copied: boolean } | null> {
 		const code = armyBuilderStore.exportArmyCode();
@@ -187,6 +200,10 @@
 				if (error === null) navigationStore.openImportedArmy();
 				return error;
 			}}
+			onLoadArmy={() => {
+				armyBuilderStore.refreshSavedArmies();
+				showLoadArmy = true;
+			}}
 			onReturn={() => navigationStore.returnToGameMode()}
 		/>
 	{:else}
@@ -220,6 +237,7 @@
 		onReturn={() => navigationStore.leaveArmyBuilder()}
 		onSetFormat={(format) => armyBuilderStore.setFormat(format)}
 		onCopyCode={copyArmyCode}
+		onSaveArmy={() => (showSaveArmy = true)}
 		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}
@@ -398,5 +416,33 @@
 			missionProgressStore.setSchemeChecked(checkedIncrements, chosenSchemeCard.maxIncrements)}
 		onDeleteScheme={() => missionProgressStore.deleteScheme()}
 		onSetRound={(round) => missionProgressStore.setRound(round)}
+	/>
+{/if}
+
+{#if showSaveArmy}
+	<SaveArmyDialog
+		onSave={(name) => {
+			const error = armyBuilderStore.saveArmy(name);
+			if (error === null) showSaveArmy = false;
+			return error;
+		}}
+		onCancel={() => (showSaveArmy = false)}
+	/>
+{/if}
+
+{#if showLoadArmy}
+	<LoadArmyDialog
+		groups={savedArmyGroups}
+		factions={contentStore.armyFactions}
+		onLoad={(army) => {
+			const error = armyBuilderStore.importArmy(army.code);
+			if (error === null) {
+				showLoadArmy = false;
+				navigationStore.openImportedArmy();
+			}
+			return error;
+		}}
+		onDelete={(army) => armyBuilderStore.deleteSavedArmy(army.id)}
+		onCancel={() => (showLoadArmy = false)}
 	/>
 {/if}

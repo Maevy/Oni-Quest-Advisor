@@ -48,6 +48,7 @@
 		onReturn: () => void;
 		onSetFormat: (format: ArmyFormat) => void;
 		onCopyCode: () => Promise<{ code: string; copied: boolean } | null>;
+		onSaveArmy: () => void;
 		onAddUnit: (unitId: string) => void;
 		onRemoveUnit: (unitId: string) => void;
 		onRemoveEntry: (entryId: string) => void;
@@ -81,6 +82,7 @@
 		onReturn,
 		onSetFormat,
 		onCopyCode,
+		onSaveArmy,
 		onAddUnit,
 		onRemoveUnit,
 		onRemoveEntry,
@@ -193,9 +195,9 @@
 			</button>
 			<button
 				type="button"
-				disabled
-				title="Not yet implemented"
-				class="cursor-not-allowed rounded-xl border-2 border-slate-600/60 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-slate-400"
+				disabled={entries.length === 0}
+				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-sky-100 transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+				onclick={onSaveArmy}
 			>
 				Save Army
 			</button>

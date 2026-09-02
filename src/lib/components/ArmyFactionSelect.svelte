@@ -6,10 +6,11 @@
 		onSelect: (factionId: ArmyFactionId) => void;
 		/** Imports a pasted army code; null on success, the error otherwise. */
 		onImportCode: (code: string) => ArmyCodeDecodeError | null;
+		onLoadArmy: () => void;
 		onReturn: () => void;
 	};
 
-	let { factions, onSelect, onImportCode, onReturn }: Props = $props();
+	let { factions, onSelect, onImportCode, onLoadArmy, onReturn }: Props = $props();
 
 	const ERROR_MESSAGES: Record<ArmyCodeDecodeError, string> = {
 		invalid: 'This is not a valid army code.',
@@ -88,6 +89,13 @@
 			{#if error}
 				<p class="text-sm text-red-400" role="alert">{error}</p>
 			{/if}
+			<button
+				type="button"
+				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-sky-100 backdrop-blur transition hover:bg-sky-500/10 active:bg-sky-500/20"
+				onclick={onLoadArmy}
+			>
+				Load Army
+			</button>
 		</div>
 	</div>
 </div>

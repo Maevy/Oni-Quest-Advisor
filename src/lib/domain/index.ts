@@ -10,3 +10,4 @@ export * from './twoPlayer';
 export * from './online';
 export * from './army';
 export * from './armyCode';
+export * from './savedArmy';
