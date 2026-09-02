@@ -34,7 +34,29 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   persistence) are the pending follow-ups — both buttons already sit greyed
   out in the builder header as teasers.
 
-## What was done in the last session (v0.6.1 hotfix: rules-link repairs)
+## What was done in the last session (initial-load performance: lazy army content + portrait resize)
+
+Unreleased on `develop` (v0.6.1 still the latest release).
+
+1. **Army content lazy-loaded**: the six JSON globs and both artwork globs in
+   `data/units.ts` are now non-eager, so `loadArmyX()` return Promises and the
+   catalogs/artwork ship as separate chunks. `contentStore` is two-phase:
+   `load()` stays synchronous (missions, factions, schemes — the immediate
+   flow) and a new idempotent async `loadArmy()` (with `armyLoaded` flag) fills
+   everything army-related. The page triggers `loadArmy()` on the army-builder
+   button and shows a "Loading army builder…" hint on the faction select until
+   it resolves; the builder screen is only reachable through that gate, so
+   `importArmy` (army codes) keeps its synchronous contract.
+2. **First-screen portraits resized**: `Chiohime.png` 1024×1024 / 845 kB →
+   212×212 / 71 kB and `Rasetsu.png` 1024×1536 / 1046 kB → 212×318 / 97 kB
+   (rendered at ≤106 px, so 212 px is 2× display) — ~1.7 MB off the first
+   screen. Faction logos (261–725 kB PNGs) and upgrade artwork (43–64 kB JPGs)
+   remain a follow-up.
+3. **Build**: the 502 kB chunk warning is gone — largest client chunks are now
+   134 kB (page) + 92 kB (core), army catalogs split into on-demand chunks.
+   check/lint clean, 261 tests pass.
+
+## What was done in earlier sessions (v0.6.1 hotfix: rules-link repairs)
 
 Today's `develop` commit: `5c9684f`.
 

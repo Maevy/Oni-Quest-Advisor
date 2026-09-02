@@ -9,80 +9,89 @@ import type {
 	ArmyUpgradeSpec
 } from '$lib/domain';
 
-const unitModules = import.meta.glob('./content/units/*.json', { eager: true }) as Record<
+// Non-eager globs: the JSON/icon modules become separate chunks fetched when
+// loadArmy*() is first called, keeping the army builder out of the initial JS.
+const unitModules = import.meta.glob('./content/units/*.json') as Record<
 	string,
-	{ default: ArmyUnitSpec[] }
+	() => Promise<{ default: ArmyUnitSpec[] }>
 >;
 
 /** Centralized rules entries (classes/skills/traits/combat arts/spellcrafts). */
 const rulesModules = import.meta.glob(
-	'./content/units/{classes,skills,traits,combat-arts,spellcrafts}.json',
-	{ eager: true }
-) as Record<string, { default: ArmyRulesSpec[] }>;
+	'./content/units/{classes,skills,traits,combat-arts,spellcrafts}.json'
+) as Record<string, () => Promise<{ default: ArmyRulesSpec[] }>>;
 
-const spellModules = import.meta.glob('./content/units/spells.json', { eager: true }) as Record<
+const spellModules = import.meta.glob('./content/units/spells.json') as Record<
 	string,
-	{ default: ArmySpellSpec[] }
+	() => Promise<{ default: ArmySpellSpec[] }>
 >;
 
-const stratagemModules = import.meta.glob('./content/units/stratagems.json', {
-	eager: true
-}) as Record<string, { default: ArmyStratagemSpec[] }>;
-
-const itemModules = import.meta.glob('./content/units/items.json', { eager: true }) as Record<
+const stratagemModules = import.meta.glob('./content/units/stratagems.json') as Record<
 	string,
-	{ default: ArmyItemSpec[] }
+	() => Promise<{ default: ArmyStratagemSpec[] }>
 >;
 
-const upgradeModules = import.meta.glob('./content/units/upgrades.json', { eager: true }) as Record<
+const itemModules = import.meta.glob('./content/units/items.json') as Record<
 	string,
-	{ default: ArmyUpgradeSpec[] }
+	() => Promise<{ default: ArmyItemSpec[] }>
+>;
+
+const upgradeModules = import.meta.glob('./content/units/upgrades.json') as Record<
+	string,
+	() => Promise<{ default: ArmyUpgradeSpec[] }>
 >;
 
 const upgradeIconModules = import.meta.glob('../assets/upgrades/*/*.jpg', {
-	eager: true,
 	import: 'default'
-}) as Record<string, string>;
+}) as Record<string, () => Promise<string>>;
 
 const iconModules = import.meta.glob('../assets/uniticons/*/*.jpg', {
-	eager: true,
 	import: 'default'
-}) as Record<string, string>;
+}) as Record<string, () => Promise<string>>;
 
-/** Icons keyed by normalized file name (lowercase, alphanumeric only). */
-const iconsByName: Record<string, string> = Object.fromEntries(
-	Object.entries(iconModules).map(([path, url]) => [
-		(path.split('/').pop() ?? '')
-			.replace(/\.jpg$/, '')
-			.toLowerCase()
-			.replace(/[^a-z0-9]/g, ''),
-		url
-	])
-);
+async function iconUrlByName(): Promise<Record<string, string>> {
+	const loaded = await Promise.all(
+		Object.entries(iconModules).map(async ([path, load]) => [path, await load()] as const)
+	);
+	/** Icons keyed by normalized file name (lowercase, alphanumeric only). */
+	return Object.fromEntries(
+		loaded.map(([path, url]) => [
+			(path.split('/').pop() ?? '')
+				.replace(/\.jpg$/, '')
+				.toLowerCase()
+				.replace(/[^a-z0-9]/g, ''),
+			url
+		])
+	);
+}
 
 /** Units whose portrait is borrowed from another unit (no file of their own). */
 const ICON_ALIASES: Record<string, string> = {
 	'renegade-rasetsu': 'redrasetsu'
 };
 
-function iconFor(unit: ArmyUnitSpec): string | undefined {
+function iconFor(unit: ArmyUnitSpec, iconsByName: Record<string, string>): string | undefined {
 	const key = ICON_ALIASES[unit.id] ?? unit.name.toLowerCase().replace(/[^a-z0-9]/g, '');
 	return iconsByName[key];
 }
 
-function withIcons(units: ArmyUnitSpec[]): ArmyUnitSpec[] {
+function withIcons(units: ArmyUnitSpec[], iconsByName: Record<string, string>): ArmyUnitSpec[] {
 	return units.map((unit) => {
-		const icon = iconFor(unit);
+		const icon = iconFor(unit, iconsByName);
 		return icon ? { ...unit, icon } : unit;
 	});
 }
 
 /** Loads the per-faction unit files; neutral.json is the pool available to every faction. */
-export function loadArmyUnits(): ArmyUnitContent {
+export async function loadArmyUnits(): Promise<ArmyUnitContent> {
+	const iconsByName = await iconUrlByName();
+	const entries = await Promise.all(
+		Object.entries(unitModules).map(async ([path, load]) => [path, await load()] as const)
+	);
 	const factionUnits: ArmyUnitContent['factionUnits'] = {};
 	let neutralUnits: ArmyUnitSpec[] = [];
 	let mounts: ArmyUnitSpec[] = [];
-	for (const [path, module] of Object.entries(unitModules)) {
+	for (const [path, module] of entries) {
 		const key = path.split('/').pop()?.replace('.json', '') ?? '';
 		if (
 			key === 'classes' ||
@@ -98,73 +107,82 @@ export function loadArmyUnits(): ArmyUnitContent {
 			continue;
 		}
 		if (key === 'neutral') {
-			neutralUnits = withIcons(module.default);
+			neutralUnits = withIcons(module.default, iconsByName);
 		} else if (key === 'mounts') {
-			mounts = withIcons(module.default);
+			mounts = withIcons(module.default, iconsByName);
 		} else {
-			factionUnits[key as ArmyFactionId] = withIcons(module.default);
+			factionUnits[key as ArmyFactionId] = withIcons(module.default, iconsByName);
 		}
 	}
 	return { factionUnits, neutralUnits, mounts };
 }
 
-function rulesFile(fileName: string): ArmyRulesSpec[] {
-	const module = Object.entries(rulesModules).find(([path]) =>
+async function rulesFile(fileName: string): Promise<ArmyRulesSpec[]> {
+	const entry = Object.entries(rulesModules).find(([path]) =>
 		path.endsWith('/' + fileName + '.json')
-	)?.[1];
-	return module?.default ?? [];
+	);
+	if (!entry) return [];
+	return (await entry[1]()).default;
 }
 
 /** Loads the centralized class list referenced by unit `classes` ids. */
-export function loadArmyClasses(): ArmyRulesSpec[] {
+export function loadArmyClasses(): Promise<ArmyRulesSpec[]> {
 	return rulesFile('classes');
 }
 
 /** Loads the centralized skill list referenced by unit `skills` refs. */
-export function loadArmySkills(): ArmyRulesSpec[] {
+export function loadArmySkills(): Promise<ArmyRulesSpec[]> {
 	return rulesFile('skills');
 }
 
 /** Loads the centralized trait list referenced by unit `traits` refs. */
-export function loadArmyTraits(): ArmyRulesSpec[] {
+export function loadArmyTraits(): Promise<ArmyRulesSpec[]> {
 	return rulesFile('traits');
 }
 
 /** Loads the centralized combat-art list referenced by unit `combatArts` refs. */
-export function loadArmyCombatArts(): ArmyRulesSpec[] {
+export function loadArmyCombatArts(): Promise<ArmyRulesSpec[]> {
 	return rulesFile('combat-arts');
 }
 
 /** Loads the centralized spellcraft list referenced by unit `spellcrafts` refs. */
-export function loadArmySpellcrafts(): ArmyRulesSpec[] {
+export function loadArmySpellcrafts(): Promise<ArmyRulesSpec[]> {
 	return rulesFile('spellcrafts');
 }
 
 /** Loads the spell catalog the spellcraft popups filter from. */
-export function loadArmySpells(): ArmySpellSpec[] {
-	return Object.values(spellModules)[0]?.default ?? [];
+export async function loadArmySpells(): Promise<ArmySpellSpec[]> {
+	const load = Object.values(spellModules)[0];
+	return load ? (await load()).default : [];
 }
 
 /** Loads the stratagem catalog referenced by unit `stratagems` ids. */
-export function loadArmyStratagems(): ArmyStratagemSpec[] {
-	return Object.values(stratagemModules)[0]?.default ?? [];
+export async function loadArmyStratagems(): Promise<ArmyStratagemSpec[]> {
+	const load = Object.values(stratagemModules)[0];
+	return load ? (await load()).default : [];
 }
 
 /** Loads the item catalog referenced by unit inventory slots. */
-export function loadArmyItems(): ArmyItemSpec[] {
-	return Object.values(itemModules)[0]?.default ?? [];
+export async function loadArmyItems(): Promise<ArmyItemSpec[]> {
+	const load = Object.values(itemModules)[0];
+	return load ? (await load()).default : [];
 }
 
-/** Upgrade icons keyed by normalized file name (lowercase, alphanumeric only). */
-const upgradeIconsByName: Record<string, string> = Object.fromEntries(
-	Object.entries(upgradeIconModules).map(([path, url]) => [
-		(path.split('/').pop() ?? '')
-			.replace(/\.jpg$/, '')
-			.toLowerCase()
-			.replace(/[^a-z0-9]/g, ''),
-		url
-	])
-);
+async function upgradeIconUrlByName(): Promise<Record<string, string>> {
+	const loaded = await Promise.all(
+		Object.entries(upgradeIconModules).map(async ([path, load]) => [path, await load()] as const)
+	);
+	/** Upgrade icons keyed by normalized file name (lowercase, alphanumeric only). */
+	return Object.fromEntries(
+		loaded.map(([path, url]) => [
+			(path.split('/').pop() ?? '')
+				.replace(/\.jpg$/, '')
+				.toLowerCase()
+				.replace(/[^a-z0-9]/g, ''),
+			url
+		])
+	);
+}
 
 /**
  * Upgrades whose image file does not match the upgrade name (typo'd file
@@ -182,17 +200,23 @@ const UPGRADE_ICON_ALIASES: Record<string, string> = {
 	'seasoned-combatant-helian-league': 'seasonedcombatanthelian'
 };
 
-function upgradeIconFor(upgrade: ArmyUpgradeSpec): string | undefined {
+function upgradeIconFor(
+	upgrade: ArmyUpgradeSpec,
+	iconsByName: Record<string, string>
+): string | undefined {
 	const key =
 		UPGRADE_ICON_ALIASES[upgrade.id] ?? upgrade.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-	return upgradeIconsByName[key];
+	return iconsByName[key];
 }
 
 /** Loads the upgrade catalog picked onto units (standard) or into the roster. */
-export function loadArmyUpgrades(): ArmyUpgradeSpec[] {
-	const upgrades = Object.values(upgradeModules)[0]?.default ?? [];
+export async function loadArmyUpgrades(): Promise<ArmyUpgradeSpec[]> {
+	const load = Object.values(upgradeModules)[0];
+	if (!load) return [];
+	const upgrades = (await load()).default;
+	const iconsByName = await upgradeIconUrlByName();
 	return upgrades.map((upgrade) => {
-		const icon = upgradeIconFor(upgrade);
+		const icon = upgradeIconFor(upgrade, iconsByName);
 		return icon ? { ...upgrade, icon } : upgrade;
 	});
 }

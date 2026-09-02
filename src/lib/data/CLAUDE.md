@@ -4,7 +4,10 @@
   (missions, factions, schemes) and reading/writing `localStorage` for persisted
   per-mission progress.
 - Static content lives under `content/{missions,factions,schemes}/*.json` and is
-  loaded eagerly with `import.meta.glob`; progress is stored under the
+  loaded eagerly with `import.meta.glob`; the army builder catalogs
+  (`content/units/*.json` + unit/upgrade artwork) use non-eager globs so they
+  ship as separate chunks fetched on demand by `contentStore.loadArmy()` —
+  keep them out of the initial JS. Progress is stored under the
   `oni-quest-advisor:` localStorage key prefix. Exposes small, typed functions
   (`loadMissions()`, `loadSchemes()`, `loadMissionProgress(id)`,
   `saveMissionProgress(progress)`, ...) — callers (stores) get plain data back and

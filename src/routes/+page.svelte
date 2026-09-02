@@ -172,19 +172,28 @@
 		onSoloSelect={() => navigationStore.selectSoloMode()}
 		onTwoPlayerSelect={() => navigationStore.selectTwoPlayerMode()}
 		onOnlineSelect={() => navigationStore.selectOnlineMode()}
-		onArmyBuilderSelect={() => navigationStore.selectArmyBuilder()}
+		onArmyBuilderSelect={() => {
+			void contentStore.loadArmy();
+			navigationStore.selectArmyBuilder();
+		}}
 	/>
 {:else if navigationStore.screen === 'army-faction-select'}
-	<ArmyFactionSelect
-		factions={contentStore.armyFactions}
-		onSelect={(factionId) => navigationStore.selectArmyFaction(factionId)}
-		onImportCode={(code) => {
-			const error = armyBuilderStore.importArmy(code);
-			if (error === null) navigationStore.openImportedArmy();
-			return error;
-		}}
-		onReturn={() => navigationStore.returnToGameMode()}
-	/>
+	{#if contentStore.armyLoaded}
+		<ArmyFactionSelect
+			factions={contentStore.armyFactions}
+			onSelect={(factionId) => navigationStore.selectArmyFaction(factionId)}
+			onImportCode={(code) => {
+				const error = armyBuilderStore.importArmy(code);
+				if (error === null) navigationStore.openImportedArmy();
+				return error;
+			}}
+			onReturn={() => navigationStore.returnToGameMode()}
+		/>
+	{:else}
+		<div class="flex justify-center p-8">
+			<p class="text-sm text-slate-400">Loading army builder…</p>
+		</div>
+	{/if}
 {:else if navigationStore.screen === 'army-builder' && armyFaction}
 	<ArmyBuilderView
 		faction={armyFaction}
