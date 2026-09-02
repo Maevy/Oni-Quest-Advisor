@@ -149,7 +149,7 @@
 </script>
 
 <div class="flex min-h-dvh flex-col gap-4 px-4 pt-4 pb-6">
-	<div class="flex items-center justify-between">
+	<div class="flex items-center justify-between gap-2">
 		<button
 			type="button"
 			class="rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
@@ -157,29 +157,27 @@
 		>
 			← Main Menu
 		</button>
-		<span class="text-sm font-semibold" style="color: {faction.color}">{faction.name}</span>
+		<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
+			<button
+				type="button"
+				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('standard')}
+				onclick={() => onSetFormat('standard')}
+			>
+				Standard
+			</button>
+			<button
+				type="button"
+				disabled
+				title="Not yet implemented"
+				class="cursor-not-allowed px-4 py-2 text-sm font-semibold text-slate-500"
+			>
+				Roster
+			</button>
+		</div>
 	</div>
 
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div class="flex flex-wrap items-center gap-2">
-			<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
-				<button
-					type="button"
-					class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('standard')}
-					onclick={() => onSetFormat('standard')}
-				>
-					Standard
-				</button>
-				<button
-					type="button"
-					disabled
-					title="Not yet implemented"
-					class="cursor-not-allowed px-4 py-1.5 text-sm font-semibold text-slate-500"
-				>
-					Roster
-					<span class="block text-[10px] font-medium">not yet implemented</span>
-				</button>
-			</div>
 			<button
 				type="button"
 				aria-label="Copy Army Code to Clipboard"

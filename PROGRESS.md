@@ -48,6 +48,12 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
    "Copy Army Code", and toggle/copy/save now sit in one left-aligned group
    (points badge keeps the right edge) instead of spreading via
    justify-between.
+4. **Header rows rebalanced**: the Standard/Roster toggle moved up beside
+   `← Main Menu`, freeing the second row for Copy/Save + the points badge.
+   To make the top row fit on ~360 px phones, the faction name left the
+   header (its color still tints the panels/unit frames) and the Roster tab's
+   visible "not yet implemented" sublabel became a tooltip on the greyed-out
+   disabled tab.
 
 ## What was done in earlier sessions (initial-load performance: lazy army content + portrait resize)
 
