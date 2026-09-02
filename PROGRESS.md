@@ -44,6 +44,10 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
    0 the disabled `−` and the `0` are hidden — the row shows only `+` — and the
    stepper buttons shrank 40 → 36 px with tighter gaps, freeing ~75 px of row
    width for the unit name. Touch targets stay ≥ 36 px; portraits untouched.
+3. **Builder header compacted**: the copy button's label shrank to
+   "Copy Army Code", and toggle/copy/save now sit in one left-aligned group
+   (points badge keeps the right edge) instead of spreading via
+   justify-between.
 
 ## What was done in earlier sessions (initial-load performance: lazy army content + portrait resize)
 

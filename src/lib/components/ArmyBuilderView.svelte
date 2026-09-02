@@ -161,45 +161,47 @@
 	</div>
 
 	<div class="flex flex-wrap items-center justify-between gap-2">
-		<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
+		<div class="flex flex-wrap items-center gap-2">
+			<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
+				<button
+					type="button"
+					class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('standard')}
+					onclick={() => onSetFormat('standard')}
+				>
+					Standard
+				</button>
+				<button
+					type="button"
+					disabled
+					title="Not yet implemented"
+					class="cursor-not-allowed px-4 py-1.5 text-sm font-semibold text-slate-500"
+				>
+					Roster
+					<span class="block text-[10px] font-medium">not yet implemented</span>
+				</button>
+			</div>
 			<button
 				type="button"
-				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('standard')}
-				onclick={() => onSetFormat('standard')}
+				aria-label="Copy Army Code to Clipboard"
+				disabled={entries.length === 0}
+				class={'rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
+					(copyResult?.copied
+						? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200 active:bg-emerald-200'
+						: 'bg-sky-300 text-slate-950 hover:bg-sky-200 active:bg-sky-200') +
+					' disabled:cursor-not-allowed disabled:opacity-50'}
+				onclick={copyArmyCode}
 			>
-				Standard
+				{copyResult?.copied ? 'Copied ✓' : 'Copy Army Code'}
 			</button>
 			<button
 				type="button"
 				disabled
 				title="Not yet implemented"
-				class="cursor-not-allowed px-4 py-1.5 text-sm font-semibold text-slate-500"
+				class="cursor-not-allowed rounded-xl border-2 border-slate-600/60 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-slate-400"
 			>
-				Roster
-				<span class="block text-[10px] font-medium">not yet implemented</span>
+				Save Army
 			</button>
 		</div>
-		<button
-			type="button"
-			aria-label="Copy Army Code to Clipboard"
-			disabled={entries.length === 0}
-			class={'rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
-				(copyResult?.copied
-					? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200 active:bg-emerald-200'
-					: 'bg-sky-300 text-slate-950 hover:bg-sky-200 active:bg-sky-200') +
-				' disabled:cursor-not-allowed disabled:opacity-50'}
-			onclick={copyArmyCode}
-		>
-			{copyResult?.copied ? 'Copied ✓' : 'Copy Army Code to Clipboard'}
-		</button>
-		<button
-			type="button"
-			disabled
-			title="Not yet implemented"
-			class="cursor-not-allowed rounded-xl border-2 border-slate-600/60 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-slate-400"
-		>
-			Save Army
-		</button>
 		<div
 			class={'rounded-xl border-2 px-4 py-2 text-sm font-bold tabular-nums ' +
 				(isOverLimit ? 'border-red-500/60 text-red-400' : 'border-emerald-500/60 text-emerald-300')}
