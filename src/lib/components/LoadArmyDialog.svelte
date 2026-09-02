@@ -30,10 +30,6 @@
 		return factions.find((faction) => faction.id === factionId);
 	}
 
-	function formatDate(iso: string): string {
-		return new Date(iso).toLocaleDateString();
-	}
-
 	function load(army: SavedArmy): void {
 		const result = onLoad(army);
 		error = result ? { armyId: army.id, message: ERROR_MESSAGES[result] } : null;
@@ -65,11 +61,13 @@
 			<div class="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
 				{#each groups as group (group.factionId)}
 					<div>
-						<h3
-							class="mb-1.5 text-xs font-semibold tracking-wide uppercase"
-							style="color: {factionOf(group.factionId)?.color ?? '#e2e8f0'}"
-						>
-							{factionOf(group.factionId)?.name ?? group.factionId}
+						<h3 class="mb-1.5">
+							<span
+								class="inline-block rounded-md border-2 bg-slate-900/50 px-2 py-0.5 text-xs font-semibold tracking-wide text-slate-100 uppercase"
+								style="border-color: {factionOf(group.factionId)?.color ?? '#475569'}"
+							>
+								{factionOf(group.factionId)?.name ?? group.factionId}
+							</span>
 						</h3>
 						<div class="space-y-1.5">
 							{#each group.armies as army (army.id)}
@@ -77,14 +75,11 @@
 									<div class="flex items-center gap-1.5">
 										<button
 											type="button"
-											class="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5 text-left transition hover:bg-slate-800/60 active:bg-slate-800/80"
+											class="min-w-0 flex-1 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5 text-left transition hover:bg-slate-800/60 active:bg-slate-800/80"
 											onclick={() => load(army)}
 										>
-											<span class="min-w-0 truncate font-medium text-slate-100">
+											<span class="block truncate font-medium text-slate-100">
 												{army.name}
-											</span>
-											<span class="shrink-0 text-xs text-slate-400 tabular-nums">
-												{formatDate(army.createdAt)}
 											</span>
 										</button>
 										<button

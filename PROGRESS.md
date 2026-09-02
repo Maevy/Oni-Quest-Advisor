@@ -47,8 +47,9 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
    `armyBuilderStore.saveArmy()/refreshSavedArmies()`, new
    `SaveArmyDialog.svelte`.
 2. **Load Army** (faction select, below Import Army): `LoadArmyDialog.svelte`
-   lists the saved armies grouped by faction (config order), newest first,
-   name + save date per row; picking one replays the stored code through
+   lists the saved armies grouped by faction (config order, faction-colored
+   bordered chips as headers), newest first, one name per row (the save date
+   only drives the sort order); picking one replays the stored code through
    `importArmy` (guards intact — an import can never be invalid) and opens
    the builder on the Your-Army panel. Stale saves from before a roster
    update show the roster-mismatch error on their row instead of loading.
