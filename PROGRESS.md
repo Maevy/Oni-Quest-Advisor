@@ -6,12 +6,13 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.6.1** (tag on `main`) — v0.6.0 shipped the whole
-  army builder (faction select, producer unit import, unit cards with the
-  full rules catalogs, mounts, standard-mode upgrades with picker and
-  choice dialogs, army codes with roster-fingerprinted export/import,
-  Roster/Save-Army teasers); v0.6.1 is the rules-link hotfix (repaired
-  Piercing Stream's Armor-Piercing link, leveled trait links). The
+- Latest release: **v0.6.2** (tag on `main`) — v0.6.2 adds saved armies
+  (Save Army name dialog + Load Army list with delete and Standard/Roster
+  filter), the Roster format (125 pts, separate equipment pool, guarded
+  format switch, format-aware codes and saves), lazy-loaded army content,
+  resized first-screen portraits and a phone-polish round (unit-card
+  divider, compact stepper, header compaction, touch swipe, flip-tab
+  contrast, readability colors); v0.6.1 was the rules-link hotfix. The
   per-session details are all recorded below. Day-to-day work happens on
   `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note
   the working branch is `develop`, not `main`).
@@ -112,7 +113,7 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 
 ## What was done in earlier sessions (initial-load performance: lazy army content + portrait resize)
 
-Unreleased on `develop` (v0.6.1 still the latest release).
+Shipped in **v0.6.2**.
 
 1. **Army content lazy-loaded**: the six JSON globs and both artwork globs in
    `data/units.ts` are now non-eager, so `loadArmyX()` return Promises and the
