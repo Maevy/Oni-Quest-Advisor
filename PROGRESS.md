@@ -57,6 +57,11 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
    shared `ConfirmDialog` ("Delete \<name\>?" — Yes/No); confirmed deletes go
    through `data/savedArmies.ts removeSavedArmy` +
    `armyBuilderStore.deleteSavedArmy`, and the list refreshes reactively.
+4. **Panel flip tabs made unmissable** (player feedback: the edge button was
+   easy to miss): same positions as before (right `›` on Available Units,
+   left `‹` on Your Army) but inverted to the app's primary-button look —
+   solid sky-300 tab with a bold slate-950 glyph instead of the translucent
+   slate tab with a sky glyph.
 
 ## What was done in earlier sessions (army builder polish: unit-card divider + compact stepper)
 

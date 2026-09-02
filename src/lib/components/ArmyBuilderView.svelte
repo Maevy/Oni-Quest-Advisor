@@ -460,7 +460,7 @@
 		<button
 			type="button"
 			aria-label="Show available units"
-			class="fixed top-1/2 left-0 -translate-y-1/2 rounded-r-xl border border-l-0 border-slate-600/60 bg-slate-800/80 px-2 py-8 text-xl text-sky-300 backdrop-blur transition hover:bg-slate-700/80 active:bg-slate-700"
+			class="fixed top-1/2 left-0 -translate-y-1/2 rounded-r-xl bg-sky-300 px-2 py-8 text-xl font-bold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 			onclick={() => (showArmy = false)}
 		>
 			‹
@@ -469,7 +469,7 @@
 		<button
 			type="button"
 			aria-label="Show your army"
-			class="fixed top-1/2 right-0 -translate-y-1/2 rounded-l-xl border border-r-0 border-slate-600/60 bg-slate-800/80 px-2 py-8 text-xl text-sky-300 backdrop-blur transition hover:bg-slate-700/80 active:bg-slate-700"
+			class="fixed top-1/2 right-0 -translate-y-1/2 rounded-l-xl bg-sky-300 px-2 py-8 text-xl font-bold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 			onclick={() => (showArmy = true)}
 		>
 			›
