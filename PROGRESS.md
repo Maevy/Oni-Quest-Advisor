@@ -34,7 +34,18 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   persistence) are the pending follow-ups — both buttons already sit greyed
   out in the builder header as teasers.
 
-## What was done in the last session (initial-load performance: lazy army content + portrait resize)
+## What was done in the last session (army builder polish: unit-card divider + compact stepper)
+
+1. **Unit card divider fixed**: Spellcrafts sat below the divider together with
+   Inventory/Stratagems, but it belongs to the model's rules — the card now
+   reads Skills → Traits → Combat Arts → Spellcrafts, divider, then Inventory
+   → Stratagems, and the divider only renders when something sits below it.
+2. **Compact unit stepper** (Available Units panel, phone wrapping): at count
+   0 the disabled `−` and the `0` are hidden — the row shows only `+` — and the
+   stepper buttons shrank 40 → 36 px with tighter gaps, freeing ~75 px of row
+   width for the unit name. Touch targets stay ≥ 36 px; portraits untouched.
+
+## What was done in earlier sessions (initial-load performance: lazy army content + portrait resize)
 
 Unreleased on `develop` (v0.6.1 still the latest release).
 

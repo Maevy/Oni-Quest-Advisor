@@ -280,26 +280,27 @@
 										</span>
 									</div>
 								</div>
-								<div class="flex shrink-0 items-center gap-1.5">
-									<button
-										type="button"
-										disabled={(counts[unit.id] ?? 0) === 0}
-										aria-label={'Remove ' + unit.name}
-										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-xl font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-										onclick={() => onRemoveUnit(unit.id)}
-									>
-										−
-									</button>
-									<span
-										class="min-w-5 text-center text-sm font-semibold text-slate-300 tabular-nums"
-									>
-										{counts[unit.id] ?? 0}
-									</span>
+								<div class="flex shrink-0 items-center gap-1">
+									{#if (counts[unit.id] ?? 0) > 0}
+										<button
+											type="button"
+											aria-label={'Remove ' + unit.name}
+											class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-lg font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+											onclick={() => onRemoveUnit(unit.id)}
+										>
+											−
+										</button>
+										<span
+											class="min-w-4 text-center text-sm font-semibold text-slate-300 tabular-nums"
+										>
+											{counts[unit.id] ?? 0}
+										</span>
+									{/if}
 									<button
 										type="button"
 										disabled={(counts[unit.id] ?? 0) >= unit.limit}
 										aria-label={'Add ' + unit.name}
-										class="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-xl font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+										class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-lg font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
 										onclick={() => onAddUnit(unit.id)}
 									>
 										+
