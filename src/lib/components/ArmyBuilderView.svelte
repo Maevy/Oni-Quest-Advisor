@@ -337,11 +337,14 @@
 								>
 									<div class="flex min-w-0 items-center gap-1.5">
 										{#if upgrade.icon}
-											<img
-												src={upgrade.icon}
-												alt=""
-												class="h-7 w-7 shrink-0 rounded-full border border-slate-950/30 object-cover"
-											/>
+											<button
+												type="button"
+												aria-label={'Show details for ' + upgrade.name}
+												class="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-950/30 transition hover:opacity-80 active:opacity-80"
+												onclick={() => (detailUpgrade = upgrade)}
+											>
+												<img src={upgrade.icon} alt="" class="h-full w-full object-cover" />
+											</button>
 										{/if}
 										<div class="min-w-0">
 											<button
@@ -543,11 +546,14 @@
 										>
 											<div class="flex min-w-0 items-center gap-1.5">
 												{#if upgrade.icon}
-													<img
-														src={upgrade.icon}
-														alt=""
-														class="h-7 w-7 shrink-0 rounded-full border border-slate-950/30 object-cover"
-													/>
+													<button
+														type="button"
+														aria-label={'Show details for ' + upgrade.name}
+														class="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-950/30 transition hover:opacity-80 active:opacity-80"
+														onclick={() => (detailUpgrade = upgrade)}
+													>
+														<img src={upgrade.icon} alt="" class="h-full w-full object-cover" />
+													</button>
 												{/if}
 												<button
 													type="button"
