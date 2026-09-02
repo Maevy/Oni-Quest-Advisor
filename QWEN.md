@@ -68,8 +68,8 @@ native/platform-specific one. Used on a phone screen during a game session.
   display time), stratagem ids, `inventorySpace` + inventory `{ id, qty }`
   slots, and optionally `upgradesLocked` (rulebook exceptions: Tomoe, Kogetsu,
   Seigen, Tharos, Anari, Na'ra, Chiyohime, Chanra). The unit card renders the
-  rules refs as clickable tags (panels ordered Skills → Traits → Combat Arts,
-  divider, then Spellcrafts, Inventory, Stratagems) opening stacked popups —
+  rules refs as clickable tags (panels ordered Skills → Traits → Combat Arts →
+  Spellcrafts, divider, then Inventory, Stratagems) opening stacked popups —
   leveled ones list every level white up to the unit's level and greyed beyond
   (roman suffixes); spellcraft popups show element-grouped spell cards with
   PW/STK resolved against the unit's stats; inventories and stratagems render
