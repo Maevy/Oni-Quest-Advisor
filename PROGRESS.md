@@ -54,6 +54,12 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
    header (its color still tints the panels/unit frames) and the Roster tab's
    visible "not yet implemented" sublabel became a tooltip on the greyed-out
    disabled tab.
+5. **Touch swipe fixed**: the panel swipe only ever worked with a mouse — on
+   touch, the browser fires `pointercancel` (not `pointerup`) once it claims
+   the gesture for scrolling, so the handler never ran on phones. The panel
+   container now sets `touch-action: pan-y` (browser keeps vertical scrolling,
+   JS gets horizontal drags) plus a `pointercancel` reset; edge arrows and
+   taps stay as they were.
 
 ## What was done in earlier sessions (initial-load performance: lazy army content + portrait resize)
 

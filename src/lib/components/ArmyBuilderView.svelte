@@ -222,7 +222,7 @@
 	{/if}
 
 	<div
-		class="relative min-h-0 flex-1 overflow-hidden"
+		class="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
 		role="group"
 		aria-label="Army list panels"
 		onpointerdown={(e) => {
@@ -235,6 +235,11 @@
 			if (Math.abs(dx) > SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy)) {
 				showArmy = dx < 0;
 			}
+		}}
+		onpointercancel={() => {
+			// The browser took the gesture over for scrolling - no swipe.
+			swipeStartX = 0;
+			swipeStartY = 0;
 		}}
 	>
 		<div
