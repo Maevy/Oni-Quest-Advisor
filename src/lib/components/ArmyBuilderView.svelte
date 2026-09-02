@@ -335,28 +335,37 @@
 								<div
 									class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
 								>
-									<div class="min-w-0">
-										<button
-											type="button"
-											aria-label={'Show details for ' + upgrade.name}
-											class="block max-w-full truncate font-medium text-slate-100 transition hover:text-sky-200 active:text-sky-200"
-											onclick={() => (detailUpgrade = upgrade)}
-										>
-											{upgrade.name}
-										</button>
-										<div class="mt-1 flex items-center justify-center gap-1.5">
-											<span
-												class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
+									<div class="flex min-w-0 items-center gap-1.5">
+										{#if upgrade.icon}
+											<img
+												src={upgrade.icon}
+												alt=""
+												class="h-7 w-7 shrink-0 rounded-full border border-slate-950/30 object-cover"
+											/>
+										{/if}
+										<div class="min-w-0">
+											<button
+												type="button"
+												aria-label={'Show details for ' + upgrade.name}
+												class="block max-w-full truncate font-medium text-slate-100 transition hover:text-sky-200 active:text-sky-200"
+												onclick={() => (detailUpgrade = upgrade)}
 											>
-												{upgrade.cost} pts
-											</span>
-											{#if upgrade.limit}
+												{upgrade.name}
+											</button>
+											<div class="mt-1 flex items-center gap-1.5">
 												<span
-													class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
+													class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
 												>
-													Limit {upgrade.limit}
+													{upgrade.cost} pts
 												</span>
-											{/if}
+												{#if upgrade.limit}
+													<span
+														class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
+													>
+														Limit {upgrade.limit}
+													</span>
+												{/if}
+											</div>
 										</div>
 									</div>
 									<div class="flex shrink-0 items-center gap-1">
