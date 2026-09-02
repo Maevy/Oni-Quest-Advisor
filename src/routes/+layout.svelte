@@ -22,7 +22,7 @@
 
 <div class="flex min-h-dvh flex-col">
 	<div class="flex-1">{@render children()}</div>
-	<footer class="px-4 pt-6 pb-3 text-center text-[10px] leading-relaxed text-slate-500">
+	<footer class="px-4 pt-6 pb-3 text-center text-[10px] leading-relaxed text-slate-100">
 		Oni Quest Advisor is a pure fan project and not affiliated in any kind with FreeCompany d.o.o.
 		<span class="mt-1 block">
 			Artwork for this fan project has been provided by Freecompany d.o.o. under a free license for

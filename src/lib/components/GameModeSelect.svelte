@@ -26,7 +26,7 @@
 				</h1>
 				<img src={rasetsu} alt="Rasetsu" class="w-16 shrink-0 object-contain sm:w-24" />
 			</div>
-			<p class="text-slate-400">Select Game Mode</p>
+			<p class="text-slate-100">Select Game Mode</p>
 		</div>
 
 		<div class="flex w-full flex-col gap-3">
