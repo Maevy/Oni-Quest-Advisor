@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	addArmyUnit,
+	addRosterPick,
 	affinityElements,
 	armyCopyCounts,
 	armyPoints,
@@ -23,7 +24,9 @@ import {
 	removeArmyCopy,
 	removeArmyEntry,
 	removeEntryUpgrade,
+	removeRosterPick,
 	resolveArmyEntries,
+	rosterPickPoints,
 	romanNumeral,
 	rulesLinkPopup,
 	skillPopupFor,
@@ -2215,5 +2218,42 @@ describe('upgrade cost reduction', () => {
 		expect(armyPoints(entries, UNITS, COST_INDEX)).toBe(25 + 25 + 3 + 4);
 		const rows = resolveArmyEntries(entries, UNITS, MOUNTS, COST_INDEX, UPGRADE_ITEMS);
 		expect(rows[1].points).toBe(25 + 4);
+	});
+});
+
+describe('roster picks', () => {
+	it('adds copies up to the per-army limit and blocks beyond', () => {
+		let picks = addRosterPick([], 'imported-crossbow', UPGRADES);
+		picks = addRosterPick(picks, 'imported-crossbow', UPGRADES);
+		expect(picks).toEqual([{ id: 'imported-crossbow', qty: 1 }]);
+	});
+
+	it('allows unlimited copies when the upgrade has no limit', () => {
+		let picks = addRosterPick([], 'pouch', UPGRADES);
+		picks = addRosterPick(picks, 'pouch', UPGRADES);
+		picks = addRosterPick(picks, 'pouch', UPGRADES);
+		expect(picks).toEqual([{ id: 'pouch', qty: 3 }]);
+	});
+
+	it('ignores upgrades not available to the faction', () => {
+		const soga = upgradesForFaction('empire-of-soga', UPGRADES);
+		expect(addRosterPick([], 'gift-of-longevity-helian-league', soga)).toEqual([]);
+	});
+
+	it('removes one copy at a time and drops the pick at zero', () => {
+		let picks = addRosterPick([], 'pouch', UPGRADES);
+		picks = addRosterPick(picks, 'pouch', UPGRADES);
+		picks = removeRosterPick(picks, 'pouch');
+		expect(picks).toEqual([{ id: 'pouch', qty: 1 }]);
+		picks = removeRosterPick(picks, 'pouch');
+		expect(picks).toEqual([]);
+	});
+
+	it('scores picks at cost times quantity', () => {
+		const picks = [
+			{ id: 'pouch', qty: 2 },
+			{ id: 'imported-crossbow', qty: 1 }
+		];
+		expect(rosterPickPoints(picks, UPGRADE_INDEX)).toBe(2 * 1 + 5);
 	});
 });

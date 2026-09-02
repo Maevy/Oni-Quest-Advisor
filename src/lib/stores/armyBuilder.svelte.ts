@@ -2,6 +2,7 @@ import {
 	ARMY_FORMAT_POINTS,
 	addArmyUnit,
 	addEntryUpgrade,
+	addRosterPick,
 	armyPoints,
 	decodeArmy,
 	encodeArmy,
@@ -10,6 +11,8 @@ import {
 	removeArmyCopy,
 	removeArmyEntry,
 	removeEntryUpgrade,
+	removeRosterPick,
+	rosterPickPoints,
 	toggleArmyMount,
 	unitsForFaction,
 	upgradesForFaction,
@@ -19,6 +22,7 @@ import {
 	type ArmyFactionId,
 	type ArmyFormat,
 	type ArmyItemSpec,
+	type ArmyRosterPick,
 	type ArmyRulesIndexes,
 	type ArmyUnitSpec,
 	type ArmyUpgradeSelection,
@@ -36,8 +40,13 @@ class ArmyBuilderStore {
 	/** Opens the builder on the Your-Army panel; set by a code import. */
 	startOnArmyPanel = $state(false);
 	savedArmies = $state<SavedArmy[]>([]);
+	/** Roster (tournament) equipment pool; empty in standard armies. */
+	rosterPicks = $state<ArmyRosterPick[]>([]);
 
-	points = $derived(armyPoints(this.entries, this.units, this.upgradeIndex));
+	points = $derived(
+		armyPoints(this.entries, this.units, this.upgradeIndex) +
+			rosterPickPoints(this.rosterPicks, this.upgradeIndex)
+	);
 	limit = $derived(ARMY_FORMAT_POINTS[this.format]);
 	isOverLimit = $derived(isOverArmyLimit(this.points, this.format));
 
@@ -79,11 +88,26 @@ class ArmyBuilderStore {
 		this.factionId = factionId;
 		this.format = 'standard';
 		this.entries = [];
+		this.rosterPicks = [];
 		this.startOnArmyPanel = false;
 	}
 
+	/** Switches the format, clearing the list - the page confirms beforehand. */
 	setFormat(format: ArmyFormat): void {
+		if (format === this.format) return;
 		this.format = format;
+		this.entries = [];
+		this.rosterPicks = [];
+		this.startOnArmyPanel = false;
+	}
+
+	/** Adds one copy of an upgrade to the roster pool (limit-guarded). */
+	addRosterPick(upgradeId: string): void {
+		this.rosterPicks = addRosterPick(this.rosterPicks, upgradeId, this.upgrades);
+	}
+
+	removeRosterPick(upgradeId: string): void {
+		this.rosterPicks = removeRosterPick(this.rosterPicks, upgradeId);
 	}
 
 	addUnit(unitId: string): void {
@@ -139,7 +163,14 @@ class ArmyBuilderStore {
 	exportArmyCode(): string | null {
 		if (!this.factionId || this.entries.length === 0) return null;
 		return encodeArmy(
-			{ factionId: this.factionId, format: this.format, entries: this.entries },
+			{
+				factionId: this.factionId,
+				format: this.format,
+				entries: this.entries,
+				...(this.format === 'tournament' && this.rosterPicks.length > 0
+					? { picks: this.rosterPicks }
+					: {})
+			},
 			this.codeCatalog
 		);
 	}
@@ -160,7 +191,8 @@ class ArmyBuilderStore {
 			name: trimmed,
 			factionId: this.factionId,
 			code,
-			createdAt: new Date().toISOString()
+			createdAt: new Date().toISOString(),
+			format: this.format
 		});
 		this.refreshSavedArmies();
 		return null;
@@ -225,9 +257,19 @@ class ArmyBuilderStore {
 				if (next === before) return 'invalid';
 			}
 		}
+		const availableUpgrades = upgradesForFaction(factionId, contentStore.armyUpgrades);
+		let nextPicks: ArmyRosterPick[] = [];
+		for (const pick of decoded.list.picks ?? []) {
+			for (let copy = 0; copy < pick.qty; copy++) {
+				const grown = addRosterPick(nextPicks, pick.id, availableUpgrades);
+				if (grown === nextPicks) return 'invalid';
+				nextPicks = grown;
+			}
+		}
 		this.factionId = factionId;
 		this.format = format;
 		this.entries = next;
+		this.rosterPicks = nextPicks;
 		this.startOnArmyPanel = true;
 		return null;
 	}
@@ -237,6 +279,7 @@ class ArmyBuilderStore {
 		this.factionId = null;
 		this.format = 'standard';
 		this.entries = [];
+		this.rosterPicks = [];
 		this.startOnArmyPanel = false;
 	}
 }

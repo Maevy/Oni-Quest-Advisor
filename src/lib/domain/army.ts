@@ -571,6 +571,42 @@ export function upgradesForFaction(
 	return upgrades.filter((upgrade) => upgrade.factionId === undefined || upgrade.factionId === own);
 }
 
+/** A roster (tournament format) equipment pick: copies of one upgrade in the pool. */
+export type ArmyRosterPick = { id: string; qty: number };
+
+/**
+ * Adds one copy of an upgrade to the roster pool unless the upgrade is not
+ * available to the faction or its per-army limit is reached.
+ */
+export function addRosterPick(
+	picks: ArmyRosterPick[],
+	upgradeId: string,
+	available: ArmyUpgradeSpec[]
+): ArmyRosterPick[] {
+	const upgrade = available.find((candidate) => candidate.id === upgradeId);
+	if (!upgrade) return picks;
+	const qty = picks.find((pick) => pick.id === upgradeId)?.qty ?? 0;
+	if (upgrade.limit !== undefined && qty >= upgrade.limit) return picks;
+	return picks.some((pick) => pick.id === upgradeId)
+		? picks.map((pick) => (pick.id === upgradeId ? { ...pick, qty: pick.qty + 1 } : pick))
+		: [...picks, { id: upgradeId, qty: 1 }];
+}
+
+/** Removes one copy of a roster pool upgrade (the most recently added). */
+export function removeRosterPick(picks: ArmyRosterPick[], upgradeId: string): ArmyRosterPick[] {
+	return picks
+		.map((pick) => (pick.id === upgradeId ? { ...pick, qty: pick.qty - 1 } : pick))
+		.filter((pick) => pick.qty > 0);
+}
+
+/** Total points of the roster equipment pool. */
+export function rosterPickPoints(
+	picks: ArmyRosterPick[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec>
+): number {
+	return picks.reduce((total, pick) => total + (upgradeIndex[pick.id]?.cost ?? 0) * pick.qty, 0);
+}
+
 /** The trait that grants additional upgrade slots, one per level. */
 const RESOURCEFUL_TRAIT_ID = 'resourceful';
 

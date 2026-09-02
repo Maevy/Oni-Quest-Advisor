@@ -7,6 +7,7 @@
 		type ArmyFactionConfig,
 		type ArmyFormat,
 		type ArmyItemSpec,
+		type ArmyRosterPick,
 		type ArmyRosterRow,
 		type ArmyRulesIndexes,
 		type ArmyRulesSpec,
@@ -38,6 +39,8 @@
 		upgradeIndex: Record<string, ArmyUpgradeSpec>;
 		rulesIndexes: ArmyRulesIndexes;
 		armyRows: ArmyRosterRow[];
+		/** Roster (tournament) equipment pool. */
+		rosterPicks: ArmyRosterPick[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
 		points: number;
@@ -55,6 +58,8 @@
 		onToggleMount: (entryId: string) => void;
 		onAddUpgrade: (entryId: string, upgradeId: string, selection?: ArmyUpgradeSelection) => void;
 		onRemoveUpgrade: (entryId: string, upgradeId: string) => void;
+		onAddPick: (upgradeId: string) => void;
+		onRemovePick: (upgradeId: string) => void;
 	};
 
 	let {
@@ -73,6 +78,7 @@
 		upgradeIndex,
 		rulesIndexes,
 		armyRows,
+		rosterPicks,
 		counts,
 		format,
 		points,
@@ -88,8 +94,15 @@
 		onRemoveEntry,
 		onToggleMount,
 		onAddUpgrade,
-		onRemoveUpgrade
+		onRemoveUpgrade,
+		onAddPick,
+		onRemovePick
 	}: Props = $props();
+
+	/** Copies of one upgrade in the roster pool. */
+	function pickQty(upgradeId: string): number {
+		return rosterPicks.find((pick) => pick.id === upgradeId)?.qty ?? 0;
+	}
 
 	let showArmy = $state(false);
 	// Import flow: the store flags a code import, open on the Your-Army panel.
@@ -169,9 +182,8 @@
 			</button>
 			<button
 				type="button"
-				disabled
-				title="Not yet implemented"
-				class="cursor-not-allowed px-4 py-2 text-sm font-semibold text-slate-500"
+				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('tournament')}
+				onclick={() => onSetFormat('tournament')}
 			>
 				Roster
 			</button>
@@ -315,6 +327,67 @@
 								</div>
 							</div>
 						{/each}
+						{#if format === 'tournament'}
+							<h3 class="pt-2 pb-1 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+								Equipment
+							</h3>
+							{#each upgrades as upgrade (upgrade.id)}
+								<div
+									class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+								>
+									<div class="min-w-0">
+										<button
+											type="button"
+											aria-label={'Show details for ' + upgrade.name}
+											class="block max-w-full truncate font-medium text-slate-100 transition hover:text-sky-200 active:text-sky-200"
+											onclick={() => (detailUpgrade = upgrade)}
+										>
+											{upgrade.name}
+										</button>
+										<div class="mt-1 flex items-center justify-center gap-1.5">
+											<span
+												class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
+											>
+												{upgrade.cost} pts
+											</span>
+											{#if upgrade.limit}
+												<span
+													class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
+												>
+													Limit {upgrade.limit}
+												</span>
+											{/if}
+										</div>
+									</div>
+									<div class="flex shrink-0 items-center gap-1">
+										{#if pickQty(upgrade.id) > 0}
+											<button
+												type="button"
+												aria-label={'Remove ' + upgrade.name + ' from the roster'}
+												class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-lg font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+												onclick={() => onRemovePick(upgrade.id)}
+											>
+												−
+											</button>
+											<span
+												class="min-w-4 text-center text-sm font-semibold text-slate-300 tabular-nums"
+											>
+												{pickQty(upgrade.id)}
+											</span>
+										{/if}
+										<button
+											type="button"
+											disabled={upgrade.limit !== undefined && pickQty(upgrade.id) >= upgrade.limit}
+											aria-label={'Add ' + upgrade.name + ' to the roster'}
+											class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-lg font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+											onclick={() => onAddPick(upgrade.id)}
+										>
+											+
+										</button>
+									</div>
+								</div>
+							{/each}
+						{/if}
 					</div>
 				</div>
 			</section>
@@ -325,7 +398,7 @@
 					style="border-color: {faction.color}"
 				>
 					<h2 class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Your Army</h2>
-					{#if armyRows.length === 0}
+					{#if armyRows.length === 0 && rosterPicks.length === 0}
 						<p class="text-sm text-slate-500">No units yet. Add some from the unit list.</p>
 					{:else}
 						<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
@@ -449,6 +522,57 @@
 									{/if}
 								</div>
 							{/each}
+							{#if format === 'tournament' && rosterPicks.length > 0}
+								<h3 class="pt-2 pb-1 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+									Equipment
+								</h3>
+								{#each rosterPicks as pick (pick.id)}
+									{@const upgrade = upgradeIndex[pick.id]}
+									{#if upgrade}
+										<div
+											class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+										>
+											<div class="flex min-w-0 items-center gap-1.5">
+												{#if upgrade.icon}
+													<img
+														src={upgrade.icon}
+														alt=""
+														class="h-7 w-7 shrink-0 rounded-full border border-slate-950/30 object-cover"
+													/>
+												{/if}
+												<button
+													type="button"
+													aria-label={'Show details for ' + upgrade.name}
+													class="truncate font-medium text-slate-100 transition hover:text-sky-200 active:text-sky-200"
+													onclick={() => (detailUpgrade = upgrade)}
+												>
+													{upgrade.name}
+												</button>
+											</div>
+											<div class="flex shrink-0 items-center gap-1.5">
+												<span
+													class="rounded-md border border-slate-600/60 bg-slate-900/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300 tabular-nums"
+												>
+													×{pick.qty}
+												</span>
+												<span
+													class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
+												>
+													{upgrade.cost * pick.qty} pts
+												</span>
+												<button
+													type="button"
+													aria-label={'Remove ' + upgrade.name + ' from the roster'}
+													class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-red-500/50 bg-slate-900/60 text-lg font-bold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+													onclick={() => onRemovePick(pick.id)}
+												>
+													−
+												</button>
+											</div>
+										</div>
+									{/if}
+								{/each}
+							{/if}
 						</div>
 					{/if}
 				</div>

@@ -2,6 +2,7 @@
 	import type {
 		ArmyCodeDecodeError,
 		ArmyFactionConfig,
+		ArmyFormat,
 		SavedArmy,
 		SavedArmyGroup
 	} from '$lib/domain';
@@ -10,13 +11,20 @@
 	type Props = {
 		groups: SavedArmyGroup[];
 		factions: ArmyFactionConfig[];
+		/** Which format's saves are listed. */
+		filter: ArmyFormat;
+		onSetFilter: (format: ArmyFormat) => void;
 		/** Loads the saved army; null on success, the decode error otherwise. */
 		onLoad: (army: SavedArmy) => ArmyCodeDecodeError | null;
 		onDelete: (army: SavedArmy) => void;
 		onCancel: () => void;
 	};
 
-	let { groups, factions, onLoad, onDelete, onCancel }: Props = $props();
+	let { groups, factions, filter, onSetFilter, onLoad, onDelete, onCancel }: Props = $props();
+
+	function filterTabClasses(target: ArmyFormat): string {
+		return filter === target ? 'bg-sky-500/20 text-sky-100' : 'text-slate-400';
+	}
 
 	const ERROR_MESSAGES: Record<ArmyCodeDecodeError, string> = {
 		invalid: 'This saved army is not valid anymore.',
@@ -55,8 +63,27 @@
 		class="flex max-h-[80dvh] w-full max-w-sm flex-col rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur"
 	>
 		<h2 class="text-center text-lg font-semibold text-slate-100">Load Army</h2>
+		<div class="mt-3 flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
+			<button
+				type="button"
+				class={'flex-1 px-4 py-2 text-sm font-semibold transition ' + filterTabClasses('standard')}
+				onclick={() => onSetFilter('standard')}
+			>
+				Standard
+			</button>
+			<button
+				type="button"
+				class={'flex-1 px-4 py-2 text-sm font-semibold transition ' +
+					filterTabClasses('tournament')}
+				onclick={() => onSetFilter('tournament')}
+			>
+				Roster
+			</button>
+		</div>
 		{#if groups.length === 0}
-			<p class="mt-4 text-center text-sm text-slate-500">No saved armies yet.</p>
+			<p class="mt-4 text-center text-sm text-slate-500">
+				No saved {filter === 'standard' ? 'Standard' : 'Roster'} armies yet.
+			</p>
 		{:else}
 			<div class="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
 				{#each groups as group (group.factionId)}

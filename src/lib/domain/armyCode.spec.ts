@@ -311,6 +311,50 @@ describe('decodeArmy', () => {
 		expect(decodeArmy(codeHead(code), CATALOG)).toEqual({ ok: false, error: 'invalid' });
 	});
 
+	it('round-trips the roster equipment pool', () => {
+		const roster: ArmyList = {
+			factionId: 'helian-league',
+			format: 'tournament',
+			entries: [
+				{ id: 'e1', unitId: 'alpha' },
+				{ id: 'e2', unitId: 'nomad' }
+			],
+			picks: [
+				{ id: 'additional-protection', qty: 2 },
+				{ id: 'adept-shaper-helian-league', qty: 1 }
+			]
+		};
+		const decoded = decodeArmy(encodeArmy(roster, CATALOG), CATALOG);
+		if (!decoded.ok) throw new Error('expected the code to decode');
+		expect(decoded.list.format).toBe('tournament');
+		expect(decoded.list.picks).toEqual(roster.picks);
+	});
+
+	it('leaves picks absent for standard armies', () => {
+		const decoded = decodeArmy(encodeArmy(SAND_ARMY, CATALOG), CATALOG);
+		if (!decoded.ok) throw new Error('expected the code to decode');
+		expect(decoded.list.picks).toBeUndefined();
+	});
+
+	it('throws when a standard list carries picks', () => {
+		expect(() => encodeArmy({ ...SAND_ARMY, picks: [{ id: 'sword', qty: 1 }] }, CATALOG)).toThrow();
+	});
+
+	it('rejects a picks section on a standard code', () => {
+		const head = codeHead(encodeArmy(SAND_ARMY, CATALOG));
+		expect(decodeArmy(head + '0:0.1', CATALOG)).toEqual({ ok: false, error: 'invalid' });
+	});
+
+	it('rejects broken pick tokens', () => {
+		const head = codeHead(encodeArmy(HELIAN_ARMY, CATALOG));
+		for (const picks of ['zz.1', '0.0', '0', '0.1.2']) {
+			expect(decodeArmy(head + '0:' + picks, CATALOG)).toEqual({
+				ok: false,
+				error: 'invalid'
+			});
+		}
+	});
+
 	it('rejects structurally broken entry and upgrade tokens', () => {
 		const head = codeHead(encodeArmy(SAND_ARMY, CATALOG));
 		// Upgrade pool by index: 0 additional-protection (plain), 1 adept-shaper

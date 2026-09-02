@@ -4,6 +4,7 @@ import type {
 	ArmyFactionId,
 	ArmyFormat,
 	ArmyItemSpec,
+	ArmyRosterPick,
 	ArmyRulesSpec,
 	ArmyUnitContent,
 	ArmyUnitSpec,
@@ -13,22 +14,27 @@ import type {
 
 /**
  * Share codes for army lists. A code indexes every piece (faction, units,
- * upgrades, selections) into the sorted content catalogs, so codes stay
- * short (tens of characters, not JWT-sized). A roster fingerprint derived
- * from the catalogs themselves guards the indexes: codes built on a
- * different roster fail loudly instead of decoding into the wrong units.
+ * upgrades, selections, roster equipment) into the sorted content catalogs,
+ * so codes stay short (tens of characters, not JWT-sized). A roster
+ * fingerprint derived from the catalogs themselves guards the indexes:
+ * codes built on a different roster fail loudly instead of decoding into
+ * the wrong units.
  *
- * Layout: `A<fp3>:<faction36><s|t>:<entries>` — entries joined by `_`,
- * one entry = `<unit36>[*][-<upgrade36>[=<choice>]...]`, a choice being a
- * spellcraft index, an option index or an option index plus an item/element
- * index, interpreted through the upgrade's effects.
+ * Layout: `A<fp3>:<faction36><s|t>:<entries>[:<picks>]` — entries joined by
+ * `_`, one entry = `<unit36>[*][-<upgrade36>[=<choice>]...]`, a choice being
+ * a spellcraft index, an option index or an option index plus an item/element
+ * index, interpreted through the upgrade's effects. The optional picks
+ * section (tournament format only) lists the roster equipment pool as
+ * `<upgrade36>.<qty36>` tokens.
  */
 
-/** The serialized army: faction, format and every copy with its picks. */
+/** The serialized army: faction, format, every copy, and the roster pool. */
 export type ArmyList = {
 	factionId: ArmyFactionId;
 	format: ArmyFormat;
 	entries: ArmyEntry[];
+	/** Roster (tournament) equipment pool; absent for standard armies. */
+	picks?: ArmyRosterPick[];
 };
 
 /** The catalogs a code indexes into; both sides derive the fingerprint from them. */
@@ -185,6 +191,18 @@ export function encodeArmy(list: ArmyList, catalog: ArmyCodeCatalog): string {
 		}
 		return token;
 	});
+	if (list.format === 'standard' && (list.picks?.length ?? 0) > 0) {
+		throw new Error('Standard armies carry no roster picks');
+	}
+	const pickTokens =
+		list.format === 'tournament'
+			? (list.picks ?? []).map((pick) => {
+					const upgradeIndex = indexOfById(upgrades, pick.id);
+					if (upgradeIndex === -1) throw new Error('Unknown upgrade: ' + pick.id);
+					if (pick.qty < 1) throw new Error('Empty pick: ' + pick.id);
+					return to36(upgradeIndex) + '.' + to36(pick.qty);
+				})
+			: [];
 	const formatChar = list.format === 'standard' ? 's' : 't';
 	return (
 		CODE_VERSION +
@@ -193,7 +211,8 @@ export function encodeArmy(list: ArmyList, catalog: ArmyCodeCatalog): string {
 		to36(factionIndex) +
 		formatChar +
 		':' +
-		entryTokens.join('_')
+		entryTokens.join('_') +
+		(list.format === 'tournament' ? ':' + pickTokens.join('_') : '')
 	);
 }
 
@@ -290,10 +309,13 @@ export function decodeArmy(code: string, catalog: ArmyCodeCatalog): ArmyCodeDeco
 	const separator = normalized.indexOf(':', 5);
 	if (separator === -1) return invalid;
 	const head = normalized.slice(5, separator);
-	const entriesToken = normalized.slice(separator + 1);
+	const payloadParts = normalized.slice(separator + 1).split(':');
+	if (payloadParts.length > 2) return invalid;
+	const [entriesToken, picksToken] = payloadParts;
 	if (head.length < 2 || entriesToken === '') return invalid;
 	const formatChar = head[head.length - 1];
 	if (formatChar !== 's' && formatChar !== 't') return invalid;
+	if (picksToken !== undefined && formatChar !== 't') return invalid;
 	const factionIndex = from36(head.slice(0, -1));
 	if (factionIndex === null || factionIndex >= catalog.factions.length) return invalid;
 	const units = codeUnitPool(catalog.units);
@@ -306,12 +328,27 @@ export function decodeArmy(code: string, catalog: ArmyCodeCatalog): ArmyCodeDeco
 		if (!entry) return invalid;
 		entries.push(entry);
 	}
+	const picks: ArmyRosterPick[] = [];
+	if (picksToken) {
+		for (const token of picksToken.split('_')) {
+			const parts = token.split('.');
+			if (parts.length !== 2) return invalid;
+			const [upgradeToken, qtyToken] = parts;
+			if (!upgradeToken || !qtyToken) return invalid;
+			const upgradeIndex = from36(upgradeToken);
+			const qty = from36(qtyToken);
+			if (upgradeIndex === null || upgradeIndex >= upgrades.length) return invalid;
+			if (qty === null || qty < 1) return invalid;
+			picks.push({ id: upgrades[upgradeIndex].id, qty });
+		}
+	}
 	return {
 		ok: true,
 		list: {
 			factionId: catalog.factions[factionIndex].id,
 			format: formatChar === 's' ? 'standard' : 'tournament',
-			entries
+			entries,
+			...(picks.length > 0 ? { picks } : {})
 		}
 	};
 }

@@ -89,8 +89,15 @@ native/platform-specific one. Used on a phone screen during a game session.
   and Mana Catalyst (`replaceAffinity` option: swap one Affinity element for
   Fire/Water/Earth/Air — a single element auto-resolves, several open a
   second picker step); selections persist on the entry
-  (`spellcraftChoices`, `upgradeChoices`). Tournament-mode roster upgrades
-  are still pending. Upgrade artwork lives in `assets/upgrades/<Faction>/`,
+  (`spellcraftChoices`, `upgradeChoices`). **Roster format** (125 pts):
+  units keep mounts but carry no upgrades — the faction's upgrade catalog
+  becomes a separate equipment pool (`rosterPicks`, steppers with per-army
+  `limit` caps, costs count toward the cap; `addRosterPick`/`removeRosterPick`/
+  `rosterPickPoints` in domain). Switching Standard↔Roster with a non-empty
+  list asks for confirmation and clears it. Army codes carry the pool in an
+  optional picks section (tournament only); saves carry a `format` field
+  (absent on old saves = standard) and the Load Army dialog filters by it.
+  Upgrade artwork lives in `assets/upgrades/<Faction>/`,
   matched by normalized filename + `UPGRADE_ICON_ALIASES`.
   NEUTRAL-tagged units are available to every faction except the monster ones
   (`NON_NEUTRAL_FACTION_IDS`); mounts are never recruitable standalone — a

@@ -32,11 +32,31 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   and army codes (clipboard export + import on the faction select).
   Save/Load Army shipped afterwards (Save Army dialog in the builder header,
   Load Army on the faction select; saves persist as code + metadata under
-  `oni-quest-advisor:saved-armies`). Roster-mode upgrades + the mode-switch
-  warning remain the pending follow-ups — the Roster tab still sits disabled
-  with a tooltip.
+  `oni-quest-advisor:saved-armies`), then the Roster format (125 pts,
+  separate equipment pool, format-switch confirmation, format-aware codes
+  and saves) — see the session notes below.
 
-## What was done in the last session (Save Army / Load Army)
+## What was done in the last session (Roster armies)
+
+1. **Roster format implemented** (the old disabled Roster tab is live): a
+   roster army is units + mounts (no per-unit upgrades) plus a separate
+   equipment pool built from the faction's upgrade catalog — steppers in an
+   "Equipment" section of the Available panel, picked copies listed in a
+   second "Equipment" block of Your Army (×qty, total cost, remove). Each
+   copy costs points toward the 125 cap and is capped by the upgrade's
+   per-army `limit` (domain `addRosterPick`/`removeRosterPick`/
+   `rosterPickPoints` + specs).
+2. **Format switching guarded**: pressing Standard/Roster with a non-empty
+   list opens the shared ConfirmDialog ("…will be deleted", Yes/No); the
+   store's `setFormat` clears entries and picks on an actual switch.
+3. **Codes & saves are format-aware**: the share code gained an optional
+   picks section (`:<upgrade36>.<qty36>` tokens, tournament only; standard
+   codes with one are rejected, old codes still decode); `importArmy`
+   replays picks through the limit/faction guards; saves store `format`
+   (absent on pre-roster saves = standard) and the Load Army dialog filters
+   Standard/Roster via a toggle. 275 tests, check/lint clean.
+
+## What was done in earlier sessions (Save Army / Load Army)
 
 1. **Save Army** (builder header, was a greyed teaser): opens a dialog with a
    name input (Save / Cancel, outside click or Escape cancels) and stores

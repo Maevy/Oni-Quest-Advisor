@@ -8,7 +8,9 @@
 		getSeasons,
 		groupSavedArmies,
 		indexArmyRules,
-		resolveArmyEntries
+		resolveArmyEntries,
+		savedArmyFormat,
+		type ArmyFormat
 	} from '$lib/domain';
 	import {
 		armyBuilderStore,
@@ -21,6 +23,7 @@
 	import GameModeSelect from '$lib/components/GameModeSelect.svelte';
 	import ArmyBuilderView from '$lib/components/ArmyBuilderView.svelte';
 	import ArmyFactionSelect from '$lib/components/ArmyFactionSelect.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import LoadArmyDialog from '$lib/components/LoadArmyDialog.svelte';
 	import SaveArmyDialog from '$lib/components/SaveArmyDialog.svelte';
 	import SeasonSelect from '$lib/components/SeasonSelect.svelte';
@@ -153,12 +156,25 @@
 	// Save/Load Army dialogs
 	let showSaveArmy = $state(false);
 	let showLoadArmy = $state(false);
+	let loadFilter = $state<ArmyFormat>('standard');
 	let savedArmyGroups = $derived(
 		groupSavedArmies(
-			armyBuilderStore.savedArmies,
+			armyBuilderStore.savedArmies.filter((army) => savedArmyFormat(army) === loadFilter),
 			contentStore.armyFactions.map((faction) => faction.id)
 		)
 	);
+
+	// Format switch with a destructive-change confirmation
+	let formatSwitchTarget = $state<ArmyFormat | null>(null);
+
+	function requestFormat(format: ArmyFormat): void {
+		if (format === armyBuilderStore.format) return;
+		if (armyBuilderStore.entries.length > 0 || armyBuilderStore.rosterPicks.length > 0) {
+			formatSwitchTarget = format;
+		} else {
+			armyBuilderStore.setFormat(format);
+		}
+	}
 
 	/** Copies the army share code; returns it so the UI can show it either way. */
 	async function copyArmyCode(): Promise<{ code: string; copied: boolean } | null> {
@@ -235,9 +251,12 @@
 		isOverLimit={armyBuilderStore.isOverLimit}
 		startOnArmyPanel={armyBuilderStore.startOnArmyPanel}
 		onReturn={() => navigationStore.leaveArmyBuilder()}
-		onSetFormat={(format) => armyBuilderStore.setFormat(format)}
+		onSetFormat={requestFormat}
 		onCopyCode={copyArmyCode}
 		onSaveArmy={() => (showSaveArmy = true)}
+		rosterPicks={armyBuilderStore.rosterPicks}
+		onAddPick={(upgradeId) => armyBuilderStore.addRosterPick(upgradeId)}
+		onRemovePick={(upgradeId) => armyBuilderStore.removeRosterPick(upgradeId)}
 		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}
@@ -434,6 +453,8 @@
 	<LoadArmyDialog
 		groups={savedArmyGroups}
 		factions={contentStore.armyFactions}
+		filter={loadFilter}
+		onSetFilter={(format) => (loadFilter = format)}
 		onLoad={(army) => {
 			const error = armyBuilderStore.importArmy(army.code);
 			if (error === null) {
@@ -444,5 +465,21 @@
 		}}
 		onDelete={(army) => armyBuilderStore.deleteSavedArmy(army.id)}
 		onCancel={() => (showLoadArmy = false)}
+	/>
+{/if}
+
+{#if formatSwitchTarget}
+	<ConfirmDialog
+		text={'Switch to ' +
+			(formatSwitchTarget === 'standard' ? 'Standard' : 'Roster') +
+			'? The current list will be deleted.'}
+		confirmLabel="Yes"
+		cancelLabel="No"
+		onConfirm={() => {
+			const target = formatSwitchTarget;
+			if (target) armyBuilderStore.setFormat(target);
+			formatSwitchTarget = null;
+		}}
+		onCancel={() => (formatSwitchTarget = null)}
 	/>
 {/if}

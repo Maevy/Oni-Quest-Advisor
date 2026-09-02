@@ -1,9 +1,9 @@
-import type { ArmyFactionId } from './army';
+import type { ArmyFactionId, ArmyFormat } from './army';
 
 /**
  * A persisted army list. The code carries the whole list (faction, format,
- * copies, mounts, upgrades with their selections); the metadata exists only
- * so saves can be listed without decoding.
+ * copies, mounts, upgrades with their selections, roster equipment); the
+ * metadata exists only so saves can be listed without decoding.
  */
 export type SavedArmy = {
 	id: string;
@@ -12,7 +12,14 @@ export type SavedArmy = {
 	code: string;
 	/** ISO timestamp of when the army was saved. */
 	createdAt: string;
+	/** Absent on saves written before the roster format existed (= standard). */
+	format?: ArmyFormat;
 };
+
+/** The format a save belongs to; saves predating the field are standard. */
+export function savedArmyFormat(army: SavedArmy): ArmyFormat {
+	return army.format ?? 'standard';
+}
 
 export type SavedArmyGroup = {
 	factionId: ArmyFactionId;
