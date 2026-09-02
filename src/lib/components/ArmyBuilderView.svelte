@@ -340,7 +340,7 @@
 											<button
 												type="button"
 												aria-label={'Show details for ' + upgrade.name}
-												class="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-950/30 transition hover:opacity-80 active:opacity-80"
+												class="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-950/30 transition hover:opacity-80 active:opacity-80"
 												onclick={() => (detailUpgrade = upgrade)}
 											>
 												<img src={upgrade.icon} alt="" class="h-full w-full object-cover" />
@@ -549,7 +549,7 @@
 													<button
 														type="button"
 														aria-label={'Show details for ' + upgrade.name}
-														class="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-950/30 transition hover:opacity-80 active:opacity-80"
+														class="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-950/30 transition hover:opacity-80 active:opacity-80"
 														onclick={() => (detailUpgrade = upgrade)}
 													>
 														<img src={upgrade.icon} alt="" class="h-full w-full object-cover" />
