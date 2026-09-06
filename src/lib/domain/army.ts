@@ -43,6 +43,40 @@ export type ArmyStatKey = (typeof ARMY_STAT_KEYS)[number];
 /** Flat statline; null when the model has no value for that stat. */
 export type ArmyStats = Record<ArmyStatKey, number | null>;
 
+/**
+ * The size ladder, smallest first. The order is rules-relevant: upgrades gate
+ * on "Size Medium or smaller" and traits on "two or more Sizes larger", so
+ * sizes are compared by rank rather than by name. Colossal and Epic only occur
+ * on the producer's faction-less summons, but they are real rungs (spell texts
+ * exclude exactly those two from Knockback) and keep the ladder total.
+ */
+export const ARMY_UNIT_SIZES = [
+	'small',
+	'medium',
+	'large',
+	'huge',
+	'gigantic',
+	'colossal',
+	'epic'
+] as const;
+
+export type ArmyUnitSize = (typeof ARMY_UNIT_SIZES)[number];
+
+/** Position on the size ladder; higher means larger. */
+export function armyUnitSizeRank(size: ArmyUnitSize): number {
+	return ARMY_UNIT_SIZES.indexOf(size);
+}
+
+/** Whether a model is the given size or smaller ("Size Medium or smaller"). */
+export function armyUnitSizeAtMost(size: ArmyUnitSize, max: ArmyUnitSize): boolean {
+	return armyUnitSizeRank(size) <= armyUnitSizeRank(max);
+}
+
+/** The size as the rulebook prints it. */
+export function armyUnitSizeLabel(size: ArmyUnitSize): string {
+	return size.charAt(0).toUpperCase() + size.slice(1);
+}
+
 /** A reference from rules text to another rules entry, e.g. `(Knockdown)[trait.KNOCKDOWN]`. */
 export type ArmyRulesLink = {
 	type: string;
@@ -204,6 +238,8 @@ export type ArmyUpgradeRequirement = {
 	classes?: string[];
 	/** The unit must not have any of these traits. */
 	notTraits?: string[];
+	/** The unit must be this size or smaller ("Size Medium or smaller"). */
+	maxSize?: ArmyUnitSize;
 };
 
 /** An upgrade from the producer catalog. */
@@ -236,6 +272,8 @@ export type ArmyUnitSpec = {
 	points: number;
 	limit: number;
 	stats: ArmyStats;
+	/** Position on the size ladder; every model in the producer data has one. */
+	size: ArmyUnitSize;
 	/** Class ids, resolved against the centralized class list. */
 	classes: string[];
 	/** Skill references; a few units have none. */
@@ -256,7 +294,12 @@ export type ArmyUnitSpec = {
 	upgradesLocked?: boolean;
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */
 	statChanges?: Partial<Record<ArmyStatKey, number>>;
-	mount?: { unitId: string; points: number };
+	/**
+	 * Riders only: the mount this unit may take. Points and size are carried
+	 * here as well as in the mount catalog so army math and the upgrade gates
+	 * can resolve a mounted model without the mounts list.
+	 */
+	mount?: { unitId: string; points: number; size: ArmyUnitSize };
 	icon?: string;
 };
 
@@ -313,6 +356,8 @@ export type ArmyRosterRow = {
 	mount?: ArmyUnitSpec;
 	/** The rider's stats with upgrade and mount effects applied. */
 	effectiveStats: ArmyStats;
+	/** The size the model counts as - the mount's size while mounted. */
+	effectiveSize: ArmyUnitSize;
 	/** The unit with all picked upgrade effects applied. */
 	upgradedUnit: ArmyUnitSpec;
 	/** The picked upgrades, resolved. */
@@ -504,6 +549,7 @@ export function resolveArmyEntries(
 			upgrades.reduce((sum, upgrade) => sum + discountedUpgradeCost(upgrade, costReduction), 0);
 		const effectiveStats =
 			mounted && mount ? effectiveMountedStats(upgradedUnit, mount) : upgradedUnit.stats;
+		const effectiveSize = effectiveUnitSize(upgradedUnit, mounted);
 		return [
 			{
 				entryId: entry.id,
@@ -514,6 +560,7 @@ export function resolveArmyEntries(
 				mounted,
 				mount,
 				effectiveStats,
+				effectiveSize,
 				upgradedUnit,
 				upgrades,
 				itemOverrides: upgradeItemOverrides(upgrades, entry.upgradeChoices ?? {}, itemIndex)
@@ -838,8 +885,9 @@ export type ArmyUpgradeBlock = 'locked' | 'owned' | 'slots' | 'limit' | 'require
 
 /**
  * Block reason for picking an upgrade for an entry: already owned by this
- * copy, no free slot, the per-army limit is reached, the unit misses the
- * class requirement, or every level-up effect already sits at max level.
+ * copy, no free slot, the per-army limit is reached, the unit misses a
+ * requirement (class, forbidden trait, size ceiling), or every level-up
+ * effect already sits at max level.
  */
 export function entryUpgradeBlock(
 	entries: ArmyEntry[],
@@ -875,11 +923,14 @@ export function entryUpgradeBlock(
 		if (total >= upgrade.limit) return 'limit';
 	}
 	if (upgrade.requirement) {
-		const { classes: required, notTraits } = upgrade.requirement;
+		const { classes: required, notTraits, maxSize } = upgrade.requirement;
 		if (required && !required.some((classId) => unit.classes.includes(classId))) {
 			return 'requirement';
 		}
 		if (notTraits && notTraits.some((traitId) => unit.traits?.some((ref) => ref.id === traitId))) {
+			return 'requirement';
+		}
+		if (maxSize && !armyUnitSizeAtMost(effectiveUnitSize(unit, entry.mounted === true), maxSize)) {
 			return 'requirement';
 		}
 	}
@@ -1421,6 +1472,15 @@ export function effectiveMountedStats(unit: ArmyUnitSpec, mount: ArmyUnitSpec): 
 	return stats;
 }
 
+/**
+ * The size a model counts as in play: while mounted it is the mount's size,
+ * mirroring how the mount's stats override the rider's. A rider whose mount
+ * cannot be resolved keeps its own size.
+ */
+export function effectiveUnitSize(unit: ArmyUnitSpec, mounted: boolean): ArmyUnitSize {
+	return mounted ? (unit.mount?.size ?? unit.size) : unit.size;
+}
+
 /** Flips the mount on one copy; units without a mount option stay untouched. */
 export function toggleArmyMount(
 	entries: ArmyEntry[],
@@ -1434,6 +1494,50 @@ export function toggleArmyMount(
 	return entries.map((candidate) =>
 		candidate.id === entryId ? { ...candidate, mounted: !candidate.mounted } : candidate
 	);
+}
+
+/**
+ * The picked upgrades a mount toggle would newly invalidate - today that means
+ * a size-capped upgrade on a rider that takes on the size of its mount. Each
+ * pick is judged as a fresh one, so the 'owned' guard stays out of the way,
+ * against both the current and the toggled state; only upgrades that are legal
+ * now and blocked afterwards are reported. Empty for units without a mount and
+ * when unmounting, which can only relax a size ceiling.
+ */
+export function mountToggleConflicts(
+	entries: ArmyEntry[],
+	entryId: string,
+	units: ArmyUnitSpec[],
+	upgradeIndex: Record<string, ArmyUpgradeSpec>,
+	rules: ArmyRulesIndexes,
+	spells: ArmySpellSpec[] = [],
+	itemIndex: Record<string, ArmyItemSpec> = {}
+): ArmyUpgradeSpec[] {
+	const entry = entries.find((candidate) => candidate.id === entryId);
+	if (!entry) return [];
+	const toggled = toggleArmyMount(entries, entryId, units);
+	if (toggled === entries) return [];
+	const withoutUpgrade = (base: ArmyEntry[], upgradeId: string): ArmyEntry[] =>
+		base.map((candidate) =>
+			candidate.id === entryId
+				? { ...candidate, upgrades: (candidate.upgrades ?? []).filter((id) => id !== upgradeId) }
+				: candidate
+		);
+	const blockIn = (base: ArmyEntry[], upgrade: ArmyUpgradeSpec): ArmyUpgradeBlock | null =>
+		entryUpgradeBlock(
+			withoutUpgrade(base, upgrade.id),
+			entryId,
+			upgrade,
+			units,
+			upgradeIndex,
+			rules,
+			spells,
+			itemIndex
+		);
+	return (entry.upgrades ?? [])
+		.map((id) => upgradeIndex[id])
+		.filter((upgrade): upgrade is ArmyUpgradeSpec => upgrade !== undefined)
+		.filter((upgrade) => blockIn(entries, upgrade) === null && blockIn(toggled, upgrade) !== null);
 }
 
 /** True once the army costs strictly more than the format allows. */

@@ -18,6 +18,7 @@
 			"HP": null,
 			"M": null
 		},
+		"size": "huge",
 		"skills": [
 			{
 				"id": "hit-and-retreat",

@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+	ARMY_UNIT_SIZES,
 	addArmyUnit,
 	addRosterPick,
 	affinityElements,
 	armyCopyCounts,
 	armyPoints,
 	armyRulesTitle,
+	armyUnitSizeAtMost,
+	armyUnitSizeLabel,
+	armyUnitSizeRank,
 	armyUpgradeCostReduction,
 	addEntryUpgrade,
 	classPopupFor,
 	combatArtPopupFor,
 	effectiveMountedStats,
+	effectiveUnitSize,
 	entryUpgradeBlock,
 	indexArmyRules,
 	inscribableItems,
@@ -19,6 +24,7 @@ import {
 	isInscribableItem,
 	isOverArmyLimit,
 	itemTypeDisplay,
+	mountToggleConflicts,
 	rangeBracketDisplay,
 	reachBoxLines,
 	removeArmyCopy,
@@ -71,17 +77,42 @@ const STATS: ArmyStats = {
 };
 
 const UNITS: ArmyUnitSpec[] = [
-	{ id: 'warrior', name: 'Warrior', points: 25, limit: 3, stats: STATS, classes: ['warrior'] },
-	{ id: 'mage', name: 'Mage', points: 25, limit: 1, stats: STATS, classes: ['mage'] },
-	{ id: 'archer', name: 'Archer', points: 20, limit: 2, stats: STATS, classes: ['ranger'] },
+	{
+		id: 'warrior',
+		name: 'Warrior',
+		points: 25,
+		limit: 3,
+		stats: STATS,
+		size: 'medium',
+		classes: ['warrior']
+	},
+	{
+		id: 'mage',
+		name: 'Mage',
+		points: 25,
+		limit: 1,
+		stats: STATS,
+		size: 'medium',
+		classes: ['mage']
+	},
+	{
+		id: 'archer',
+		name: 'Archer',
+		points: 20,
+		limit: 2,
+		stats: STATS,
+		size: 'medium',
+		classes: ['ranger']
+	},
 	{
 		id: 'dragoon',
 		name: 'Slayer Dragoon',
 		points: 17,
 		limit: 2,
 		stats: STATS,
+		size: 'medium',
 		classes: ['assassin', 'rider'],
-		mount: { unitId: 'lupus-rex', points: 5 }
+		mount: { unitId: 'lupus-rex', points: 5, size: 'huge' }
 	}
 ];
 
@@ -104,6 +135,7 @@ const MOUNTS: ArmyUnitSpec[] = [
 			HP: null,
 			M: null
 		},
+		size: 'huge',
 		classes: ['mount'],
 		statChanges: { DEF: 3, T: 2, ARM: -2, HP: 1 }
 	}
@@ -199,6 +231,7 @@ describe('resolveArmyEntries', () => {
 				points: 25,
 				mounted: false,
 				effectiveStats: STATS,
+				effectiveSize: 'medium',
 				upgradedUnit: UNITS[0],
 				upgrades: [],
 				itemOverrides: {}
@@ -210,6 +243,7 @@ describe('resolveArmyEntries', () => {
 				points: 25,
 				mounted: false,
 				effectiveStats: STATS,
+				effectiveSize: 'medium',
 				upgradedUnit: UNITS[0],
 				upgrades: [],
 				itemOverrides: {}
@@ -229,6 +263,7 @@ describe('resolveArmyEntries', () => {
 				points: 5,
 				limit: 1,
 				stats: STATS,
+				size: 'gigantic',
 				classes: ['creature'],
 				icon: 'oni.jpg'
 			}
@@ -242,6 +277,7 @@ describe('resolveArmyEntries', () => {
 				icon: 'oni.jpg',
 				mounted: false,
 				effectiveStats: STATS,
+				effectiveSize: 'gigantic',
 				upgradedUnit: units[0],
 				upgrades: [],
 				itemOverrides: {}
@@ -249,7 +285,7 @@ describe('resolveArmyEntries', () => {
 		]);
 	});
 
-	it('marks a copy as mounted and adds the mount cost and stats', () => {
+	it("marks a copy as mounted and adds the mount's cost, stats and size", () => {
 		expect(
 			resolveArmyEntries([{ id: 'd1', unitId: 'dragoon', mounted: true }], UNITS, MOUNTS)
 		).toEqual([
@@ -273,6 +309,8 @@ describe('resolveArmyEntries', () => {
 					HP: 11,
 					M: 11
 				},
+				// The Medium dragoon counts as its Huge mount while mounted.
+				effectiveSize: 'huge',
 				upgradedUnit: DRAGOON,
 				upgrades: [],
 				itemOverrides: {}
@@ -343,6 +381,7 @@ describe('unitsForFaction', () => {
 					points: 12,
 					limit: 1,
 					stats: STATS,
+					size: 'medium',
 					classes: ['soldier']
 				}
 			],
@@ -353,6 +392,7 @@ describe('unitsForFaction', () => {
 					points: 8,
 					limit: 2,
 					stats: STATS,
+					size: 'large',
 					classes: ['creature']
 				}
 			]
@@ -364,6 +404,7 @@ describe('unitsForFaction', () => {
 				points: 17,
 				limit: 3,
 				stats: STATS,
+				size: 'small',
 				classes: ['soldier']
 			}
 		],
@@ -378,6 +419,7 @@ describe('unitsForFaction', () => {
 				points: 12,
 				limit: 1,
 				stats: STATS,
+				size: 'medium',
 				classes: ['soldier']
 			},
 			{
@@ -386,6 +428,7 @@ describe('unitsForFaction', () => {
 				points: 17,
 				limit: 3,
 				stats: STATS,
+				size: 'small',
 				classes: ['soldier']
 			}
 		]);
@@ -399,6 +442,7 @@ describe('unitsForFaction', () => {
 				points: 17,
 				limit: 3,
 				stats: STATS,
+				size: 'small',
 				classes: ['soldier']
 			}
 		]);
@@ -412,6 +456,7 @@ describe('unitsForFaction', () => {
 				points: 8,
 				limit: 2,
 				stats: STATS,
+				size: 'large',
 				classes: ['creature']
 			}
 		]);
@@ -756,6 +801,7 @@ const FLAMESHAPER: ArmyUnitSpec = {
 	points: 20,
 	limit: 1,
 	stats: { ...STATS, STA: 2, INT: 12 },
+	size: 'medium',
 	classes: ['sorcerer'],
 	traits: [
 		{ id: 'affinity--element', level: 1, dynamicElements: ['Fire'] },
@@ -1065,6 +1111,20 @@ describe('effectiveMountedStats', () => {
 	});
 });
 
+describe('effectiveUnitSize', () => {
+	it("is the model's own size while unmounted", () => {
+		expect(effectiveUnitSize(DRAGOON, false)).toBe('medium');
+	});
+
+	it("becomes the mount's size while mounted", () => {
+		expect(effectiveUnitSize(DRAGOON, true)).toBe('huge');
+	});
+
+	it('falls back to the own size for a unit that cannot be mounted', () => {
+		expect(effectiveUnitSize(UNITS[0], true)).toBe('medium');
+	});
+});
+
 const UPGRADES: ArmyUpgradeSpec[] = [
 	{
 		id: 'gift-of-longevity-helian-league',
@@ -1268,6 +1328,40 @@ describe('upgradeSlotsFor', () => {
 	});
 });
 
+describe('the size ladder', () => {
+	it('runs from the smallest to the largest size', () => {
+		// Pinned because the order is rules-relevant, not cosmetic: every gate and
+		// "two Sizes larger" comparison reads a rank off this array.
+		expect(ARMY_UNIT_SIZES).toEqual([
+			'small',
+			'medium',
+			'large',
+			'huge',
+			'gigantic',
+			'colossal',
+			'epic'
+		]);
+	});
+
+	it('ranks a size by its position on the ladder', () => {
+		expect(armyUnitSizeRank('small')).toBe(0);
+		expect(armyUnitSizeRank('medium')).toBeLessThan(armyUnitSizeRank('large'));
+		expect(armyUnitSizeRank('epic')).toBe(ARMY_UNIT_SIZES.length - 1);
+	});
+
+	it('treats a size ceiling as inclusive', () => {
+		expect(armyUnitSizeAtMost('small', 'medium')).toBe(true);
+		expect(armyUnitSizeAtMost('medium', 'medium')).toBe(true);
+		expect(armyUnitSizeAtMost('large', 'medium')).toBe(false);
+		expect(armyUnitSizeAtMost('gigantic', 'epic')).toBe(true);
+	});
+
+	it('labels a size the way the rulebook prints it', () => {
+		expect(armyUnitSizeLabel('small')).toBe('Small');
+		expect(armyUnitSizeLabel('gigantic')).toBe('Gigantic');
+	});
+});
+
 const BLOCK_RULES: ArmyRulesIndexes = {
 	classes: {},
 	skills: {},
@@ -1277,6 +1371,19 @@ const BLOCK_RULES: ArmyRulesIndexes = {
 		'art-of-sorcery': { id: 'art-of-sorcery', name: 'Art of Sorcery', levels: { 1: [], 2: [] } }
 	}
 };
+
+/** Flying Carpet - the only upgrade in the catalog with a size ceiling. */
+const FLYING_CARPET: ArmyUpgradeSpec = {
+	id: 'flying-carpet-sand-kingdoms',
+	name: 'Flying Carpet',
+	cost: 4,
+	limit: 1,
+	description: [],
+	requirement: { maxSize: 'medium' },
+	effects: [{ kind: 'item', itemId: 'flying-carpet' }]
+};
+
+const CARPET_INDEX = indexArmyRules([FLYING_CARPET]);
 
 describe('entryUpgradeBlock', () => {
 	it('is null when the upgrade can be picked', () => {
@@ -1378,6 +1485,56 @@ describe('entryUpgradeBlock', () => {
 		).toBeNull();
 	});
 
+	it('blocks units larger than the size ceiling', () => {
+		// UNITS[0] is Medium - exactly at the inclusive ceiling; the pariah is Gigantic.
+		const units: ArmyUnitSpec[] = [UNITS[0], { ...UNITS[1], id: 'pariah', size: 'gigantic' }];
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'w1', unitId: 'warrior' }],
+				'w1',
+				FLYING_CARPET,
+				units,
+				CARPET_INDEX,
+				BLOCK_RULES
+			)
+		).toBeNull();
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'p1', unitId: 'pariah' }],
+				'p1',
+				FLYING_CARPET,
+				units,
+				CARPET_INDEX,
+				BLOCK_RULES
+			)
+		).toBe('requirement');
+	});
+
+	it('gates a mounted copy by the mount size, not the rider size', () => {
+		// The Medium dragoon qualifies on foot; mounted on the Huge Lupus Rex it
+		// counts as Huge and the carpet is out of reach.
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'd1', unitId: 'dragoon' }],
+				'd1',
+				FLYING_CARPET,
+				UNITS,
+				CARPET_INDEX,
+				BLOCK_RULES
+			)
+		).toBeNull();
+		expect(
+			entryUpgradeBlock(
+				[{ id: 'd1', unitId: 'dragoon', mounted: true }],
+				'd1',
+				FLYING_CARPET,
+				UNITS,
+				CARPET_INDEX,
+				BLOCK_RULES
+			)
+		).toBe('requirement');
+	});
+
 	it('blocks level-ups when the unit already sits at the maximum level', () => {
 		const maxed: ArmyEntry[] = [
 			{
@@ -1447,6 +1604,67 @@ describe('entryUpgradeBlock', () => {
 		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[7], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
 			'max-level'
 		);
+	});
+});
+
+describe('mountToggleConflicts', () => {
+	/** The dragoon with the carpet picked while still on foot, which is legal at Medium. */
+	function carpetedDragoon(): ArmyEntry[] {
+		return addEntryUpgrade(
+			[{ id: 'd1', unitId: 'dragoon' }],
+			'd1',
+			FLYING_CARPET,
+			UNITS,
+			CARPET_INDEX,
+			BLOCK_RULES
+		);
+	}
+
+	it('is empty for a copy without upgrades', () => {
+		const entries: ArmyEntry[] = [{ id: 'd1', unitId: 'dragoon' }];
+		expect(mountToggleConflicts(entries, 'd1', UNITS, CARPET_INDEX, BLOCK_RULES)).toEqual([]);
+	});
+
+	it('is empty for a unit that cannot be mounted', () => {
+		const entries = addEntryUpgrade(
+			[{ id: 'w1', unitId: 'warrior' }],
+			'w1',
+			FLYING_CARPET,
+			UNITS,
+			CARPET_INDEX,
+			BLOCK_RULES
+		);
+		expect(entries[0]?.upgrades).toEqual([FLYING_CARPET.id]);
+		expect(mountToggleConflicts(entries, 'w1', UNITS, CARPET_INDEX, BLOCK_RULES)).toEqual([]);
+	});
+
+	it('lists the size-capped upgrade a rider loses by mounting', () => {
+		const entries = carpetedDragoon();
+		expect(entries[0]?.upgrades).toEqual([FLYING_CARPET.id]);
+		expect(mountToggleConflicts(entries, 'd1', UNITS, CARPET_INDEX, BLOCK_RULES)).toEqual([
+			FLYING_CARPET
+		]);
+	});
+
+	it('ignores upgrades that stay legal at the mount size', () => {
+		const entries = addEntryUpgrade(
+			[{ id: 'd1', unitId: 'dragoon' }],
+			'd1',
+			UPGRADES[0],
+			UNITS,
+			UPGRADE_INDEX,
+			BLOCK_RULES
+		);
+		expect(entries[0]?.upgrades).toEqual([UPGRADES[0].id]);
+		expect(mountToggleConflicts(entries, 'd1', UNITS, UPGRADE_INDEX, BLOCK_RULES)).toEqual([]);
+	});
+
+	it('is empty when unmounting, which can only relax the ceiling', () => {
+		// A state the picker no longer allows, but an old share code can still carry.
+		const entries: ArmyEntry[] = [
+			{ id: 'd1', unitId: 'dragoon', mounted: true, upgrades: [FLYING_CARPET.id] }
+		];
+		expect(mountToggleConflicts(entries, 'd1', UNITS, CARPET_INDEX, BLOCK_RULES)).toEqual([]);
 	});
 });
 

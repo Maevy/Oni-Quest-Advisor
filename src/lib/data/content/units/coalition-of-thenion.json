@@ -18,6 +18,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dash",
@@ -84,6 +85,7 @@
 			"HP": 1,
 			"M": 8
 		},
+		"size": "large",
 		"skills": [
 			{
 				"id": "charm",
@@ -154,6 +156,7 @@
 			"HP": 1,
 			"M": 8
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dual-wield",
@@ -212,6 +215,7 @@
 			"HP": 1,
 			"M": 10
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "climbing",
@@ -283,6 +287,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "clairvoyance",

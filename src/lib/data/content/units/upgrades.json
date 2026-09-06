@@ -577,6 +577,9 @@
 		"cost": 4,
 		"factionId": "sand-kingdoms",
 		"limit": 1,
+		"requirement": {
+			"maxSize": "medium"
+		},
 		"description": [
 			{
 				"text": "The model receives a "

@@ -69,6 +69,25 @@ const characters = pageProps.characterList.data;
 
 const STAT_KEYS = ['STA', 'SPD', 'OFF', 'DEF', 'ACC', 'INT', 'AG', 'T', 'ARM', 'HP', 'M'];
 
+/**
+ * The size ladder, smallest first - keep in sync with ARMY_UNIT_SIZES in
+ * lib/domain/army.ts. Only the label is usable: the producer's size_info.id is
+ * a per-character relation id (63 distinct ids for 7 sizes) and the dump has no
+ * size catalog. Content JSON is loaded behind a type assertion, so this list is
+ * the only thing standing between a producer typo and a silently wrong gate.
+ */
+const UNIT_SIZES = ['Small', 'Medium', 'Large', 'Huge', 'Gigantic', 'Colossal', 'Epic'];
+
+function sizeId(label) {
+	const known = UNIT_SIZES.find(
+		(candidate) => candidate.toLowerCase() === String(label).toLowerCase()
+	);
+	if (!known) {
+		throw new Error('unknown model size ' + JSON.stringify(label) + ' - extend UNIT_SIZES');
+	}
+	return known.toLowerCase();
+}
+
 const FACTIONS = {
 	HELIAN_LEAGUE: 'helian-league',
 	COALITION_OF_THENION: 'coalition-of-thenion',
@@ -243,8 +262,9 @@ const UPGRADE_EFFECTS = {
 
 /**
  * Requirements live in the description: 'Only a (Warrior)[class.WARRIOR] can
- * receive ...' (needs the class) and 'Cannot be assigned to a model with the
- * (Demon)[trait.DEMON] Trait' (forbidden trait). Parses both patterns.
+ * receive ...' (needs the class), 'Cannot be assigned to a model with the
+ * (Demon)[trait.DEMON] Trait' (forbidden trait) and 'may be equipped by a
+ * model of Size Medium or smaller' (size ceiling). Parses all three patterns.
  */
 function parseUpgradeRequirement(description) {
 	const classMatch = description.match(/^Only a (?:model of the )?\([^)]*\)\[class\.([A-Z_]+)\]/i);
@@ -253,11 +273,13 @@ function parseUpgradeRequirement(description) {
 			/\bCannot be assigned to a model with the \([^)]*\)\[trait\.([A-Z_]+)/gi
 		)
 	];
+	const sizeMatch = description.match(/\bSize:?\s+(\w+)\s+or smaller/i);
 	const requirement = {};
 	if (classMatch) requirement.classes = [kebab(classMatch[1])];
 	if (forbiddenMatches.length > 0) {
 		requirement.notTraits = [...new Set(forbiddenMatches.map((match) => kebab(match[1])))];
 	}
+	if (sizeMatch) requirement.maxSize = sizeId(sizeMatch[1]);
 	return Object.keys(requirement).length > 0 ? requirement : undefined;
 }
 
@@ -514,7 +536,8 @@ for (const character of characters) {
 		classes: (attributes.classes?.data ?? []).map((classEntry) =>
 			kebab(classEntry.attributes.code)
 		),
-		stats
+		stats,
+		size: sizeId(attributes.size_info?.size)
 	};
 	if (skillRefs.length > 0) unit.skills = skillRefs;
 	if (traitRefs.length > 0) unit.traits = traitRefs;
@@ -543,7 +566,8 @@ for (const character of characters) {
 		).attributes;
 		unit.mount = {
 			unitId: kebab(mountCode),
-			points: mountAttributes.recruitment_cost
+			points: mountAttributes.recruitment_cost,
+			size: sizeId(mountAttributes.size_info?.size)
 		};
 	}
 	if (MOUNT_CODES.has(attributes.code)) {

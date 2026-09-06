@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		ARMY_STAT_KEYS,
+		armyUnitSizeLabel,
 		classPopupFor,
 		combatArtPopupFor,
 		inventorySpaceUsed,
@@ -25,7 +26,8 @@
 		type ArmyStratagemSpec,
 		type ArmyStratagemType,
 		type ArmyTextSegment,
-		type ArmyUnitSpec
+		type ArmyUnitSpec,
+		type ArmyUnitSize
 	} from '$lib/domain';
 
 	/** Chip styling per spell element - literal classes so Tailwind sees them. */
@@ -148,6 +150,8 @@
 		stratagemIndex: Record<string, ArmyStratagemSpec>;
 		itemIndex: Record<string, ArmyItemSpec>;
 		stats: ArmyStats;
+		/** The size the model counts as - the mount's size while mounted. */
+		size: ArmyUnitSize;
 		mounted: boolean;
 		mountName?: string;
 		onClose: () => void;
@@ -165,6 +169,7 @@
 		stratagemIndex,
 		itemIndex,
 		stats,
+		size,
 		mounted,
 		mountName,
 		onClose
@@ -278,6 +283,9 @@
 			{/if}
 			<div class="min-w-0">
 				<h2 class="text-lg font-bold text-slate-100">{unit.name}</h2>
+				<p class="text-xs font-medium tracking-wide text-slate-300">
+					Size: {armyUnitSizeLabel(size)}
+				</p>
 				<p class="text-sm font-semibold" style="color: {faction.color}">{faction.name}</p>
 				<div class="mt-1.5 flex flex-wrap gap-1.5">
 					{#each classTags as tag (tag.title)}

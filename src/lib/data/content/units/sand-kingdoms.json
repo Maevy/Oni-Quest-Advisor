@@ -18,6 +18,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "affinity--element",
@@ -63,6 +64,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "flicker",
@@ -129,6 +131,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "follow-up",
@@ -196,6 +199,7 @@
 			"HP": 2,
 			"M": 14
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "climbing",
@@ -269,6 +273,7 @@
 			"HP": 1,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "charm",
@@ -317,6 +322,7 @@
 			"HP": 1,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "hit-and-retreat",
@@ -365,6 +371,7 @@
 			"HP": 1,
 			"M": 8
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "affinity--element",

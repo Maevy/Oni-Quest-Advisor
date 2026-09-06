@@ -18,6 +18,7 @@
 			"HP": 2,
 			"M": 16
 		},
+		"size": "medium",
 		"inventorySpace": 6,
 		"inventory": [
 			{
@@ -53,6 +54,7 @@
 			"HP": 3,
 			"M": 17
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dash",
@@ -111,6 +113,7 @@
 			"HP": 3,
 			"M": 17
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "impede",
@@ -169,6 +172,7 @@
 			"HP": 1,
 			"M": 15
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "charm",
@@ -227,6 +231,7 @@
 			"HP": 2,
 			"M": 17
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "duelist",
@@ -282,6 +287,7 @@
 			"HP": 3,
 			"M": 17
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "finishing-strike",

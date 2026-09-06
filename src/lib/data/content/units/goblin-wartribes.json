@@ -18,6 +18,7 @@
 			"HP": 3,
 			"M": 15
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "hit-and-retreat",
@@ -80,6 +81,7 @@
 			"HP": 1,
 			"M": 8
 		},
+		"size": "small",
 		"skills": [
 			{
 				"id": "climbing",
@@ -128,6 +130,7 @@
 			"HP": 2,
 			"M": 14
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "hit-and-retreat",
@@ -189,6 +192,7 @@
 			"HP": 1,
 			"M": 8
 		},
+		"size": "small",
 		"skills": [
 			{
 				"id": "climbing",
@@ -237,6 +241,7 @@
 			"HP": 5,
 			"M": 12
 		},
+		"size": "large",
 		"skills": [
 			{
 				"id": "finishing-strike",
@@ -295,6 +300,7 @@
 			"HP": 6,
 			"M": 10
 		},
+		"size": "huge",
 		"skills": [
 			{
 				"id": "infiltration",

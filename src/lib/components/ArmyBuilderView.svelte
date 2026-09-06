@@ -16,6 +16,7 @@
 		type ArmyStats,
 		type ArmyStratagemSpec,
 		type ArmyUnitSpec,
+		type ArmyUnitSize,
 		type ArmyUpgradeSelection,
 		type ArmyUpgradeSpec
 	} from '$lib/domain';
@@ -118,6 +119,7 @@
 	let selectedCard = $state<{
 		unit: ArmyUnitSpec;
 		stats: ArmyStats;
+		size: ArmyUnitSize;
 		mounted: boolean;
 		mountName?: string;
 		/** Item index with upgrade item overrides merged in (roster cards only). */
@@ -279,7 +281,8 @@
 										aria-label={'Show unit details for ' + unit.name}
 										class="h-[70px] w-[70px] shrink-0 overflow-hidden rounded-lg border-2 bg-slate-900/60 transition hover:bg-slate-800/60 active:bg-slate-800/80"
 										style="border-color: {faction.color}"
-										onclick={() => (selectedCard = { unit, stats: unit.stats, mounted: false })}
+										onclick={() =>
+											(selectedCard = { unit, stats: unit.stats, size: unit.size, mounted: false })}
 									>
 										<img src={unit.icon} alt="" class="h-full w-full object-contain" />
 									</button>
@@ -427,6 +430,7 @@
 													selectedCard = {
 														unit: row.upgradedUnit,
 														stats: row.effectiveStats,
+														size: row.effectiveSize,
 														mounted: row.mounted,
 														mountName: row.mount?.name,
 														itemIndex: { ...itemIndex, ...row.itemOverrides }
@@ -628,6 +632,7 @@
 			{stratagemIndex}
 			itemIndex={selectedCard.itemIndex ?? itemIndex}
 			stats={selectedCard.stats}
+			size={selectedCard.size}
 			mounted={selectedCard.mounted}
 			mountName={selectedCard.mountName}
 			onClose={() => (selectedCard = null)}

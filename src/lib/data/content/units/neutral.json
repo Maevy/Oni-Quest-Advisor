@@ -18,6 +18,7 @@
 			"HP": 3,
 			"M": 16
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "finishing-strike",
@@ -76,6 +77,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "hit-and-retreat",
@@ -125,6 +127,7 @@
 			"HP": 4,
 			"M": 17
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "finishing-strike",
@@ -196,6 +199,7 @@
 			"HP": 2,
 			"M": 16
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "chain-attack",
@@ -259,6 +263,7 @@
 			"HP": 1,
 			"M": 8
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dual-wield",
@@ -310,6 +315,7 @@
 			"HP": 3,
 			"M": 14
 		},
+		"size": "large",
 		"skills": [
 			{
 				"id": "impede",
@@ -369,6 +375,7 @@
 			"HP": 2,
 			"M": 17
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "duelist",
@@ -424,6 +431,7 @@
 			"HP": 3,
 			"M": 17
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "finishing-strike",
@@ -482,6 +490,7 @@
 			"HP": 4,
 			"M": 16
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dash",
@@ -549,6 +558,7 @@
 			"HP": 2,
 			"M": 16
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "affinity--element",
@@ -593,6 +603,7 @@
 			"HP": 2,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "shield-wall",
@@ -646,6 +657,7 @@
 			"HP": 2,
 			"M": 15
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dash",
@@ -682,7 +694,8 @@
 		],
 		"mount": {
 			"unitId": "lupus-rex",
-			"points": 5
+			"points": 5,
+			"size": "huge"
 		}
 	},
 	{
@@ -704,6 +717,7 @@
 			"HP": 1,
 			"M": 12
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "stealth",
@@ -763,6 +777,7 @@
 			"HP": 2,
 			"M": 10
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dash",
@@ -812,6 +827,7 @@
 			"HP": 2,
 			"M": 14
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "affinity--element",

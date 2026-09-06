@@ -32,15 +32,24 @@ const FACTIONS: ArmyFactionConfig[] = [
 const UNITS: ArmyUnitContent = {
 	factionUnits: {
 		'helian-league': [
-			{ id: 'alpha', name: 'Alpha', points: 10, limit: 2, stats: STATS, classes: ['warrior'] },
+			{
+				id: 'alpha',
+				name: 'Alpha',
+				points: 10,
+				limit: 2,
+				stats: STATS,
+				size: 'medium',
+				classes: ['warrior']
+			},
 			{
 				id: 'bravo',
 				name: 'Bravo',
 				points: 12,
 				limit: 1,
 				stats: STATS,
+				size: 'medium',
 				classes: ['rider'],
-				mount: { unitId: 'lupus', points: 5 }
+				mount: { unitId: 'lupus', points: 5, size: 'huge' }
 			}
 		],
 		'sand-kingdoms': [
@@ -50,6 +59,7 @@ const UNITS: ArmyUnitContent = {
 				points: 15,
 				limit: 2,
 				stats: STATS,
+				size: 'small',
 				classes: ['mage'],
 				traits: [{ id: 'affinity--element', level: 1, dynamicElements: ['Elder'] }]
 			},
@@ -59,15 +69,34 @@ const UNITS: ArmyUnitContent = {
 				points: 20,
 				limit: 1,
 				stats: STATS,
+				size: 'huge',
 				classes: ['warrior'],
-				mount: { unitId: 'lupus', points: 5 }
+				mount: { unitId: 'lupus', points: 5, size: 'huge' }
 			}
 		]
 	},
 	neutralUnits: [
-		{ id: 'nomad', name: 'Nomad', points: 8, limit: 3, stats: STATS, classes: ['rogue'] }
+		{
+			id: 'nomad',
+			name: 'Nomad',
+			points: 8,
+			limit: 3,
+			stats: STATS,
+			size: 'medium',
+			classes: ['rogue']
+		}
 	],
-	mounts: [{ id: 'lupus', name: 'Lupus', points: 5, limit: 2, stats: STATS, classes: ['mount'] }]
+	mounts: [
+		{
+			id: 'lupus',
+			name: 'Lupus',
+			points: 5,
+			limit: 2,
+			stats: STATS,
+			size: 'huge',
+			classes: ['mount']
+		}
+	]
 };
 
 const UPGRADES: ArmyUpgradeSpec[] = [
@@ -291,11 +320,37 @@ describe('decodeArmy', () => {
 				...UNITS,
 				neutralUnits: [
 					...UNITS.neutralUnits,
-					{ id: 'aaa-new-unit', name: 'New', points: 5, limit: 1, stats: STATS, classes: [] }
+					{
+						id: 'aaa-new-unit',
+						name: 'New',
+						points: 5,
+						limit: 1,
+						stats: STATS,
+						size: 'medium',
+						classes: []
+					}
 				]
 			}
 		};
 		expect(decodeArmy(code, changed)).toEqual({ ok: false, error: 'roster-mismatch' });
+	});
+
+	it('keeps codes valid when a unit field the code does not index changes', () => {
+		const code = encodeArmy(SAND_ARMY, CATALOG);
+		const sandUnits = UNITS.factionUnits['sand-kingdoms'] ?? [];
+		const resized: ArmyCodeCatalog = {
+			...CATALOG,
+			units: {
+				...UNITS,
+				factionUnits: {
+					...UNITS.factionUnits,
+					'sand-kingdoms': sandUnits.map((unit) =>
+						unit.id === 'caster' ? { ...unit, size: 'large' } : unit
+					)
+				}
+			}
+		};
+		expect(decodeArmy(code, resized)).toEqual(decodeArmy(code, CATALOG));
 	});
 
 	it('rejects an out-of-range unit index', () => {

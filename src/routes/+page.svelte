@@ -176,6 +176,18 @@
 		}
 	}
 
+	// Mount toggle that would drop upgrades, confirmed the same way
+	let mountConflict = $state<{ entryId: string; names: string[] } | null>(null);
+
+	function requestToggleMount(entryId: string): void {
+		const conflicts = armyBuilderStore.mountConflicts(entryId);
+		if (conflicts.length > 0) {
+			mountConflict = { entryId, names: conflicts.map((upgrade) => upgrade.name) };
+		} else {
+			armyBuilderStore.toggleMount(entryId);
+		}
+	}
+
 	/** Copies the army share code; returns it so the UI can show it either way. */
 	async function copyArmyCode(): Promise<{ code: string; copied: boolean } | null> {
 		const code = armyBuilderStore.exportArmyCode();
@@ -260,7 +272,7 @@
 		onAddUnit={(unitId) => armyBuilderStore.addUnit(unitId)}
 		onRemoveUnit={(unitId) => armyBuilderStore.removeUnit(unitId)}
 		onRemoveEntry={(entryId) => armyBuilderStore.removeEntry(entryId)}
-		onToggleMount={(entryId) => armyBuilderStore.toggleMount(entryId)}
+		onToggleMount={requestToggleMount}
 		onAddUpgrade={(entryId, upgradeId, selection) =>
 			armyBuilderStore.addUpgrade(entryId, upgradeId, selection)}
 		onRemoveUpgrade={(entryId, upgradeId) => armyBuilderStore.removeUpgrade(entryId, upgradeId)}
@@ -481,5 +493,21 @@
 			formatSwitchTarget = null;
 		}}
 		onCancel={() => (formatSwitchTarget = null)}
+	/>
+{/if}
+
+{#if mountConflict}
+	<ConfirmDialog
+		text={'Mount this model? Its size changes, so ' +
+			mountConflict.names.join(', ') +
+			' will be removed.'}
+		confirmLabel="Yes"
+		cancelLabel="No"
+		onConfirm={() => {
+			const conflict = mountConflict;
+			if (conflict) armyBuilderStore.toggleMount(conflict.entryId);
+			mountConflict = null;
+		}}
+		onCancel={() => (mountConflict = null)}
 	/>
 {/if}

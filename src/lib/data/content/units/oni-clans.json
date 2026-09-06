@@ -18,6 +18,7 @@
 			"HP": 4,
 			"M": 16
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "charm",
@@ -86,6 +87,7 @@
 			"HP": 4,
 			"M": 14
 		},
+		"size": "large",
 		"skills": [
 			{
 				"id": "flicker",
@@ -147,6 +149,7 @@
 			"HP": 1,
 			"M": 20
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "elemental-essence--element",
@@ -189,6 +192,7 @@
 			"HP": 4,
 			"M": 16
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "chain-attack",
@@ -259,6 +263,7 @@
 			"HP": 2,
 			"M": 20
 		},
+		"size": "medium",
 		"traits": [
 			{
 				"id": "elemental-essence--element",
@@ -319,6 +324,7 @@
 			"HP": 4,
 			"M": 14
 		},
+		"size": "huge",
 		"skills": [
 			{
 				"id": "leap",
@@ -372,6 +378,7 @@
 			"HP": 8,
 			"M": 18
 		},
+		"size": "gigantic",
 		"skills": [
 			{
 				"id": "regeneration",
@@ -433,6 +440,7 @@
 			"HP": 6,
 			"M": 16
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "dash",
@@ -505,6 +513,7 @@
 			"HP": 5,
 			"M": 14
 		},
+		"size": "large",
 		"skills": [
 			{
 				"id": "backstab",
@@ -580,6 +589,7 @@
 			"HP": 1,
 			"M": 20
 		},
+		"size": "medium",
 		"skills": [
 			{
 				"id": "infiltration",

@@ -8,6 +8,7 @@ import {
 	encodeArmy,
 	indexArmyRules,
 	isOverArmyLimit,
+	mountToggleConflicts,
 	removeArmyCopy,
 	removeArmyEntry,
 	removeEntryUpgrade,
@@ -123,8 +124,29 @@ class ArmyBuilderStore {
 		this.entries = removeArmyEntry(this.entries, entryId);
 	}
 
+	/** The picked upgrades a mount toggle on this copy would invalidate. */
+	mountConflicts(entryId: string): ArmyUpgradeSpec[] {
+		return mountToggleConflicts(
+			this.entries,
+			entryId,
+			this.units,
+			this.upgradeIndex,
+			this.rulesIndexes,
+			contentStore.armySpells,
+			this.itemIndex
+		);
+	}
+
+	/**
+	 * Flips the mount on one copy, dropping the upgrades the new size
+	 * invalidates - the page confirms beforehand.
+	 */
 	toggleMount(entryId: string): void {
-		this.entries = toggleArmyMount(this.entries, entryId, this.units);
+		let next = this.entries;
+		for (const upgrade of this.mountConflicts(entryId)) {
+			next = removeEntryUpgrade(next, entryId, upgrade.id);
+		}
+		this.entries = toggleArmyMount(next, entryId, this.units);
 	}
 
 	/** Picks an upgrade for one copy unless the domain rules block it. */
