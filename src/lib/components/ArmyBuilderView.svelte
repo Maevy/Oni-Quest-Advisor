@@ -130,6 +130,22 @@
 	/** The upgrade shown in the detail window, while it is open. */
 	let detailUpgrade = $state<ArmyUpgradeSpec | null>(null);
 
+	/**
+	 * A new copy appends to the end of Your Army, and the pick happens on the
+	 * other panel - so scroll that list to the end as soon as the army grows.
+	 * The panel is still in the DOM while translated away, which means the new
+	 * row is already in view by the time the player flips to it.
+	 */
+	let armyList = $state<HTMLDivElement | undefined>(undefined);
+	let seenEntryCount: number | null = null;
+	$effect(() => {
+		const count = entries.length;
+		// Seeded on the first run, so mounting with an existing army does not scroll.
+		const grew = seenEntryCount !== null && count > seenEntryCount;
+		seenEntryCount = count;
+		if (grew && armyList) armyList.scrollTop = armyList.scrollHeight;
+	});
+
 	function freeUpgradeSlots(row: ArmyRosterRow): number {
 		return Math.max(0, upgradeSlotsFor(row.upgradedUnit, row.upgrades) - row.upgrades.length);
 	}
@@ -165,7 +181,7 @@
 	}
 </script>
 
-<div class="flex min-h-dvh flex-col gap-4 px-4 pt-4 pb-6">
+<div class="flex h-dvh flex-col gap-4 overflow-hidden px-4 pt-4 pb-6">
 	<div class="flex items-center justify-between gap-2">
 		<button
 			type="button"
@@ -270,7 +286,7 @@
 					<h2 class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">
 						Available Units
 					</h2>
-					<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+					<div class="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
 						{#each units as unit (unit.id)}
 							<div
 								class="flex items-center justify-between gap-2 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
@@ -416,7 +432,10 @@
 					{#if armyRows.length === 0 && rosterPicks.length === 0}
 						<p class="text-sm text-slate-500">No units yet. Add some from the unit list.</p>
 					{:else}
-						<div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+						<div
+							bind:this={armyList}
+							class="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1"
+						>
 							{#each armyRows as row (row.entryId)}
 								<div class="rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5">
 									<div class="flex items-center justify-between gap-2">
