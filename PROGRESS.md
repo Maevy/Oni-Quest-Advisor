@@ -35,9 +35,72 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Load Army on the faction select; saves persist as code + metadata under
   `oni-quest-advisor:saved-armies`), then the Roster format (125 pts,
   separate equipment pool, format-switch confirmation, format-aware codes
-  and saves) — see the session notes below.
+  and saves) — see the session notes below. The model size migration
+  (unreleased, on `develop`) followed: `size_info` became a required, ordered
+  `ArmyUnitSize`, Flying Carpet's size ceiling got automated, and a mounted
+  model now counts as its mount's size.
 
-## What was done in the last session (Roster armies)
+## What was done in the last session (model size)
+
+Unreleased — sits on `develop` on top of v0.6.2.
+
+1. **`size_info` migrated** — the last rules-relevant character field left in
+   the producer dump. All 63 characters carry `size_info: { id, size }`, and
+   all 57 imported units now have a **required** `ArmyUnitSpec.size`. The `id`
+   is discarded: it is a per-character Strapi relation id (63 distinct ids for
+   7 sizes) and the dump has no size catalog, so only the label is usable.
+   Values across the roster: Medium 46, Large 5, Huge 4, Small 3, Gigantic 3,
+   Colossal 1, Epic 1 — the last two occur only on faction-less summons the
+   import skips, but they are real rungs (the Art of Sorcery / Cryomancy spell
+   text excludes exactly those two from Knockback).
+2. **Modelled as an ordered literal union, not a string**: `ARMY_UNIT_SIZES`
+   as const (`small` … `epic`, smallest first) → `ArmyUnitSize`, plus
+   `armyUnitSizeRank` / `armyUnitSizeAtMost` / `armyUnitSizeLabel` in
+   `domain/army.ts`. Every size rule in the game is a comparison ("Size Medium
+   or smaller", "two or more Sizes larger"), which a free-form string cannot
+   answer; the union also matches the house style (no TS enums anywhere in the
+   repo, and `ARMY_STAT_KEYS` → `ArmyStatKey` already does the const-array
+   trick). The ladder **order is inferred** — nothing in the dump states it, it
+   was derived from the value set plus that spell text.
+3. **The import is the data gate**: `data/units.ts` loads the content JSON
+   behind a type assertion, so `npm run check` cannot see a bad size value.
+   The import's `sizeId()` therefore **throws** on an unknown or missing label
+   — the only thing standing between a producer typo and a silently wrong gate.
+4. **Flying Carpet's size ceiling automated**: `parseUpgradeRequirement` now
+   also reads "may be equipped by a model of Size Medium or smaller" into
+   `requirement.maxSize`, and `entryUpgradeBlock` gates on it through the
+   existing `'requirement'` block reason (the picker already renders that as
+   "Model does not meet the requirement", so no new UI text was needed). It is
+   the only size-gateable rule in the catalog; Unwieldy ("Size: Medium or
+   smaller → STK can never exceed 1"), Stagger / Knockdown / Knockback ("two
+   or more Sizes larger than the attacker") and Trample stay prose.
+5. **A mounted model counts as its mount's size** (player decision): the
+   Medium Slayer Dragoon becomes Huge on Lupus Rex and can no longer take
+   Flying Carpet. Implemented as `ArmyUnitSpec.mount.size`, denormalized onto
+   the rider exactly like the mount's `points` already was — which is what lets
+   `entryUpgradeBlock` gate a mounted copy without a mounts catalog and
+   without touching its signature (~30 call sites). Domain
+   `effectiveUnitSize(unit, mounted)` + `ArmyRosterRow.effectiveSize`; the
+   `UnitCard` takes a `size` prop the same way it takes `stats` and prints
+   "Size: X" between the unit name and the faction line.
+6. **Mounting cannot leave an illegal upgrade behind**: a size-capped pick made
+   on foot used to survive the mount toggle, so domain `mountToggleConflicts`
+   lists the picks the toggle _newly_ blocks (each is judged as a fresh pick
+   against both the current and the toggled state, so the `'owned'` guard stays
+   out of the way and still-legal upgrades are untouched). The page confirms
+   through the shared ConfirmDialog ("Mount this model? Its size changes, so
+   Flying Carpet will be removed.", Yes/No) and the store's `toggleMount` drops
+   them via `removeEntryUpgrade` — the same "the page confirms beforehand"
+   pattern as `setFormat`.
+7. **Backward compatibility**: the new field does not invalidate army codes or
+   saved armies (`catalogFingerprint` hashes unit ids, mount pairings and
+   upgrade effect kinds only — pinned by a new spec). But `importArmy` returns
+   `'invalid'` when a replayed pick is blocked, so a pre-size code holding a
+   _mounted_ dragoon _with_ Flying Carpet is now rejected instead of silently
+   trimmed. Accepted: that list is genuinely illegal under the new rule.
+8. Tests 275 → 290; check/lint/build clean.
+
+## What was done in earlier sessions (Roster armies)
 
 1. **Roster format implemented** (the old disabled Roster tab is live): a
    roster army is units + mounts (no per-unit upgrades) plus a separate

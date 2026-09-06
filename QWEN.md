@@ -60,9 +60,14 @@ native/platform-specific one. Used on a phone screen during a game session.
   `spells.json`, `stratagems.json`, `items.json` (RCH parsed into structured
   range brackets) and `upgrades.json` (cost, per-army limit, faction, curated
   effects in the import's `UPGRADE_EFFECTS` table, requirements parsed from
-  the descriptions) — re-run on every producer update and review the diff.
+  the descriptions: class, forbidden trait, size ceiling) — re-run on every
+  producer update and review the diff.
   Units carry points, a copy `limit`, an 11-key statline (`STA`…`M`, null when
-  a model has no value), an optional portrait, catalog refs (class ids,
+  a model has no value), a required `size` on the ordered `ArmyUnitSize`
+  ladder (`small`…`epic` — sizes are compared by rank because every size rule
+  is a ceiling or a "two Sizes larger" test, and the import **throws** on an
+  unknown label since content JSON is loaded behind a type assertion), an
+  optional portrait, catalog refs (class ids,
   `{ id, level }` skill/trait/combat-art/spellcraft refs; trait refs add
   `dynamicValue`/`dynamicElements` that fill `(X)`/`(Element)` templates at
   display time), stratagem ids, `inventorySpace` + inventory `{ id, qty }`
@@ -102,7 +107,11 @@ native/platform-specific one. Used on a phone screen during a game session.
   NEUTRAL-tagged units are available to every faction except the monster ones
   (`NON_NEUTRAL_FACTION_IDS`); mounts are never recruitable standalone — a
   rider's `mount` adds the mount's cost when toggled, mount `stats` override
-  the rider's (non-null only) and `statChanges` add on top. **Army codes**
+  the rider's (non-null only), `statChanges` add on top and a mounted model
+  counts as the **mount's size** (`mount.size` via `effectiveUnitSize`) —
+  because mounting can invalidate a size-capped pick, `mountToggleConflicts`
+  lists what the toggle would drop and the page confirms before `toggleMount`
+  removes it. **Army codes**
   (`domain/armyCode.ts`): a whole list (faction, format, copies, mounts,
   upgrades incl. all selections) serializes to a short share code — base36
   indexes into the sorted content catalogs behind a version char + FNV-1a
