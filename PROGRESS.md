@@ -6,7 +6,11 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.6.2** (tag on `main`) — v0.6.2 adds saved armies
+- Latest release: **v0.6.3** (tag on `main`) — v0.6.3 migrates model size
+  (`size_info` → a required, ordered `ArmyUnitSize`), automates Flying
+  Carpet's "Size Medium or smaller" ceiling, makes a mounted model count as
+  its mount's size (confirming before an invalidated upgrade is dropped) and
+  fixes the army builder's panel scrolling; v0.6.2 added saved armies
   (Save Army name dialog + Load Army list with delete and Standard/Roster
   filter), the Roster format (125 pts, separate equipment pool, guarded
   format switch, format-aware codes and saves), lazy-loaded army content,
@@ -35,14 +39,13 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   Load Army on the faction select; saves persist as code + metadata under
   `oni-quest-advisor:saved-armies`), then the Roster format (125 pts,
   separate equipment pool, format-switch confirmation, format-aware codes
-  and saves) — see the session notes below. The model size migration
-  (unreleased, on `develop`) followed: `size_info` became a required, ordered
-  `ArmyUnitSize`, Flying Carpet's size ceiling got automated, and a mounted
-  model now counts as its mount's size.
+  and saves) — see the session notes below. v0.6.3 added model size:
+  `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
+  ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (model size)
+## What was done in the last session (model size + builder scrolling)
 
-Unreleased — sits on `develop` on top of v0.6.2.
+Released as **v0.6.3**.
 
 1. **`size_info` migrated** — the last rules-relevant character field left in
    the producer dump. All 63 characters carry `size_info: { id, size }`, and
@@ -98,7 +101,37 @@ Unreleased — sits on `develop` on top of v0.6.2.
    `'invalid'` when a replayed pick is blocked, so a pre-size code holding a
    _mounted_ dragoon _with_ Flying Carpet is now rejected instead of silently
    trimmed. Accepted: that list is genuinely illegal under the new rule.
-8. Tests 275 → 290; check/lint/build clean.
+8. **Builder panel scrolling fixed** (player report: scroll the long Available
+   list, pick a unit, flip right — and the short Your Army panel left you far
+   below your army, so you had to scroll back up). The root was
+   `flex min-h-dvh flex-col`: a _minimum_ height, so the root grew to the full
+   length of the unit list, the panels' `min-h-0 flex-1 overflow-y-auto` lists
+   never got a height to scroll within, and the **document** became the one
+   scroller shared by both panels. Now `h-dvh overflow-hidden` — the header
+   (Main Menu, format toggle, Copy/Save, points badge) stays pinned and each
+   panel scrolls itself, keeping its own position across flips. Note this is
+   the only full-height screen in the app; every other screen scrolls the
+   document, and internal scrolling elsewhere uses a definite height
+   (`UnitCard`'s `max-h-[85dvh]`).
+9. **`overscroll-contain` on both lists**: even with a definite height the
+   document is still `100dvh + footer` tall (`+layout.svelte` stacks
+   `flex-1` content and the footer in a `min-h-dvh` column), so scrolling
+   chained into it. It showed only in Your Army — a short list cannot scroll
+   at all, so it passed every gesture straight to the page and the button bar
+   slid away, while Available Units behaved. `overscroll-contain` stops the
+   propagation; a list that cannot scroll is permanently at its boundary.
+   Dragging on the header or card padding still reaches that ~90px of document
+   scroll, which is what keeps the footer (artwork credit + version) reachable
+   on this screen. Needs Safari 16+.
+10. **New picks scroll into view**: `addArmyUnit` appends and the pick happens
+    on the other panel, so an `$effect` on `entries.length` scrolls the Your
+    Army list to its end when the army grows. Both panels stay in the DOM
+    while the track is translated, so the new row is already in view by the
+    time the player flips. The count is seeded inside the effect (not at
+    module scope — Svelte flags that as `state_referenced_locally`), so
+    mounting with an existing army via a code import or a saved army does not
+    scroll.
+11. Tests 275 → 290; check/lint/build clean.
 
 ## What was done in earlier sessions (Roster armies)
 

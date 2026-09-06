@@ -239,7 +239,13 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   plus the one-time `OnlineIntroNotice` shown before first entry), also reusing the
   shared panels (collapsible there via `Panel`'s `collapsible` prop). The army
   builder adds `ArmyFactionSelect`, `ArmyBuilderView` (sliding panels, swipe,
-  mount toggles) and the `UnitCard` statline popup.
+  mount toggles) and the `UnitCard` statline popup. `ArmyBuilderView` is the
+  app's only **full-height screen**: an `h-dvh overflow-hidden` root with a
+  pinned header and per-panel `overflow-y-auto overscroll-contain` lists. Going
+  back to `min-h-dvh` lets the root grow to the length of the unit list, which
+  makes the document the one scroller shared by both panels and strands the
+  player far below a short panel after scrolling a long one; every other screen
+  scrolls the document normally.
 
 Each layer folder has its own `CLAUDE.md` with the specific rules for that layer —
 read it before adding files there.
@@ -283,13 +289,16 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.6.2** — v0.6.0 shipped the army
-  builder; v0.6.2 finished it: saved armies (Save Army name dialog + Load Army
-  list with delete and Standard/Roster filter), the Roster format (125 pts,
-  separate equipment pool, guarded format switch, format-aware codes and
-  saves), lazy-loaded army content, resized first-screen portraits and the
-  phone-polish round (unit-card divider, compact stepper, header compaction,
-  touch swipe, flip-tab contrast, readability colors), deployed to Fly.io.
+  and push branch + tag. Current release: **v0.6.3** — v0.6.0 shipped the army
+  builder, v0.6.2 finished it (saved armies with the Save Army name dialog and
+  the Load Army list with delete and Standard/Roster filter, the Roster format
+  at 125 pts with a separate equipment pool and a guarded format switch,
+  format-aware codes and saves, lazy-loaded army content, resized first-screen
+  portraits and the phone-polish round), and v0.6.3 migrated model size
+  (`size_info` → a required, ordered `ArmyUnitSize`; Flying Carpet's "Medium or
+  smaller" ceiling automated; a mounted model counts as its mount's size, with
+  a confirmation before an invalidated upgrade is dropped) and fixed the
+  builder's panel scrolling. Deployed to Fly.io.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
   entry in `fly.toml` expects it; the deploy fails without it).
