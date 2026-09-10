@@ -26,7 +26,10 @@ native/platform-specific one. Used on a phone screen during a game session.
   objectives with VP and a scoreable-instance `count`), optional `important` callouts
   (rules notes shown alongside Results — not scored), and quest rules (prose sections).
   Ceasefire missions additionally get the automatic red-boxed "Ceasefire broken"
-  −4 VP objective (`CEASEFIRE_OBJECTIVE`, added by `getScoreableResults`).
+  objective (`CEASEFIRE_OBJECTIVE`, added by `getScoreableResults`): −4 VP per
+  breach, scoreable 3 times, rendered as red boxes. Their own Results carry **no
+  Round-1 objectives** — the ceasefire forbids VP in round 1 (guarded by
+  `data/missions.spec.ts`).
   Marker rulers (`showRuler`) are measured from the **nearest** map edge
   (`rulerAnchor`) — always the shortest path a player would actually measure (≤ 18",
   one of the 4 corner combinations); never revert to measuring from top-left.
@@ -280,8 +283,8 @@ read it before adding files there.
   `npm run preview`
 - `npm run check` — svelte-kit sync + svelte-check (type check, strict)
 - `npm run lint` — prettier --check + eslint · `npm run format` — prettier --write
-- `npm run test` — vitest run (tests: `src/**/*.{test,spec}.ts`, currently all in
-  `lib/domain`)
+- `npm run test` — vitest run (tests: `src/**/*.{test,spec}.ts` — `lib/domain`,
+  `lib/server`, plus a mission-content spec in `lib/data`)
 
 After code changes, verify with `npm run check`, `npm run lint`, and `npm run test`.
 
@@ -289,16 +292,18 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.6.3** — v0.6.0 shipped the army
-  builder, v0.6.2 finished it (saved armies with the Save Army name dialog and
-  the Load Army list with delete and Standard/Roster filter, the Roster format
-  at 125 pts with a separate equipment pool and a guarded format switch,
-  format-aware codes and saves, lazy-loaded army content, resized first-screen
-  portraits and the phone-polish round), and v0.6.3 migrated model size
-  (`size_info` → a required, ordered `ArmyUnitSize`; Flying Carpet's "Medium or
-  smaller" ceiling automated; a mounted model counts as its mount's size, with
-  a confirmation before an invalidated upgrade is dropped) and fixed the
-  builder's panel scrolling. Deployed to Fly.io.
+  and push branch + tag. Current release: **v0.6.4** — v0.6.2 finished the army
+  builder (saved armies with the Save Army name dialog and the Load Army list
+  with delete and Standard/Roster filter, the Roster format at 125 pts with a
+  separate equipment pool and a guarded format switch, format-aware codes and
+  saves, lazy-loaded army content, resized first-screen portraits and the
+  phone-polish round), v0.6.3 migrated model size (`size_info` → a required,
+  ordered `ArmyUnitSize`; Flying Carpet's "Medium or smaller" ceiling automated;
+  a mounted model counts as its mount's size, with a confirmation before an
+  invalidated upgrade is dropped) and fixed the builder's panel scrolling, and
+  v0.6.4 is a scoring hotfix: "Ceasefire broken" is scoreable three times at
+  −4 VP each (red boxes) and the ceasefire missions no longer offer Round-1 VP.
+  Deployed to Fly.io.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
   entry in `fly.toml` expects it; the deploy fails without it).

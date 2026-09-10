@@ -6,11 +6,16 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.6.3** (tag on `main`) — v0.6.3 migrates model size
-  (`size_info` → a required, ordered `ArmyUnitSize`), automates Flying
-  Carpet's "Size Medium or smaller" ceiling, makes a mounted model count as
+- Latest release: **v0.6.4** (tag on `main`) — a scoring hotfix from player
+  feedback: "Ceasefire broken" is scoreable three times at −4 VP each (red
+  boxes instead of a single checkbox) and the ceasefire missions no longer
+  offer Round-1 VP (Quarter War lost its two Round-1 objectives, Awaiting
+  Reinforcements went from 5 to 4 boxes per objective), both carrying an amber
+  `important` note that round 1 cannot score; v0.6.3 migrated model size
+  (`size_info` → a required, ordered `ArmyUnitSize`), automated Flying
+  Carpet's "Size Medium or smaller" ceiling, made a mounted model count as
   its mount's size (confirming before an invalidated upgrade is dropped) and
-  fixes the army builder's panel scrolling; v0.6.2 added saved armies
+  fixed the army builder's panel scrolling; v0.6.2 added saved armies
   (Save Army name dialog + Load Army list with delete and Standard/Roster
   filter), the Roster format (125 pts, separate equipment pool, guarded
   format switch, format-aware codes and saves), lazy-loaded army content,
@@ -43,7 +48,50 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (model size + builder scrolling)
+## What was done in the last session (v0.6.4 scoring hotfix)
+
+Two player-reported scoring bugs, both around the 1st Round Ceasefire. Released
+as **v0.6.4**.
+
+1. **"Ceasefire broken" is scoreable three times**: the penalty is incurred per
+   breach (every Attack/damage in Round 1 costs −4 VP again), but
+   `CEASEFIRE_OBJECTIVE` had `count: 1` — a single checkbox, so a second breach
+   could not be recorded. Now `count: 3`, i.e. up to −12 VP. All three modes
+   picked the boxes up automatically because the panels branch on `count > 1`,
+   and the online endpoint clamps against the same `objective.count` from the
+   bundled content — no server change needed. The total was already uncapped
+   downwards (the rule says a party may drop below 0; no panel clamps at 0), so
+   three breaches show as e.g. "−11 / 10".
+2. **Red boxes for the penalty**: `IncrementBoxes` gained an optional `tone`
+   prop (`'score' | 'penalty'`), passed as `penalty` for the ceasefire row from
+   `ResultsPanel`, `ResultsPanelTwoPlayer` (both seats) and
+   `OnlineResultsPanel` (both seats) — otherwise the shared component would
+   have rendered sky-blue ✓ boxes inside the red card. (The single-checkbox
+   branch's red styling in the two local panels is now unreachable for this
+   objective; left in place.)
+3. **Round-1 scoring removed from the ceasefire missions**: Quarter War shipped
+   `stronger-presence-round-1` and `uncontested-round-1` (10 → 8 objectives),
+   and Awaiting Reinforcements' three per-round objectives had `count: 5` — one
+   box per round including round 1 — now 4. Clue Trail was already correct
+   (Rounds 2–5 only) and is the pattern both now follow.
+4. **Both missions gained the amber `important` note** "Players cannot score VP
+   during Round 1 (Ceasefire)." — `important` was already wired into every
+   Results view (`MissionDetail`, `MissionDetailTwoPlayer`, `OnlineGameView`,
+   `OnlineMissionView`), so no component change was needed.
+5. **Persisted counts are clamped in the VP math**: `calculateTotalVP` and
+   `calculateTwoPlayerVP` cap a stored checked count at `objective.count`.
+   Saves (and in-flight online games) from before the fix could hold 5 ticks on
+   a now-4-box objective, and the old reduce kept paying out the removed
+   instance while the UI showed only 4 boxes. Removed Quarter War round-1 ticks
+   simply stop counting — that objective no longer exists in the content, which
+   is the intended outcome. No migration needed for either storage.
+6. **New content guard**: `src/lib/data/missions.spec.ts` — the first spec
+   outside `lib/domain`/`lib/server` — fails when a ceasefire mission ships a
+   Results objective whose text mentions Round 1, and pins Awaiting
+   Reinforcements' 4-box round-ends, so neither bug can come back with the next
+   mission added. Tests 290 → 297; check/lint clean.
+
+## What was done in earlier sessions (model size + builder scrolling)
 
 Released as **v0.6.3**.
 
