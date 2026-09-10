@@ -130,11 +130,14 @@ export function calculateTwoPlayerVP(
 	playerProgress: PlayerProgress,
 	schemeCard: SchemeCard | null
 ): number {
-	const resultsVP = getScoreableResults(mission).reduce(
-		(sum, objective) =>
-			sum + objective.vp * (playerProgress.checkedObjectiveCounts[objective.id] ?? 0),
-		0
-	);
+	const resultsVP = getScoreableResults(mission).reduce((sum, objective) => {
+		// Persisted counts can predate a content change that lowered an objective's count.
+		const checked = Math.min(
+			playerProgress.checkedObjectiveCounts[objective.id] ?? 0,
+			objective.count
+		);
+		return sum + objective.vp * checked;
+	}, 0);
 	const schemeVP =
 		playerProgress.scheme && schemeCard
 			? schemeVp(schemeCard, playerProgress.scheme.checkedIncrements)

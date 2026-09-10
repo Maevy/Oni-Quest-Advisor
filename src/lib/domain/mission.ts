@@ -39,11 +39,12 @@ export type Mission = {
 
 export const CEASEFIRE_OBJECTIVE_ID = 'ceasefire-broken';
 
+/** Every breach of the ceasefire costs −4 VP again, so the penalty is scoreable more than once. */
 export const CEASEFIRE_OBJECTIVE: ResultObjectiveDef = {
 	id: CEASEFIRE_OBJECTIVE_ID,
 	text: 'Ceasefire broken',
 	vp: -4,
-	count: 1
+	count: 3
 };
 
 export type RuleCallout = {

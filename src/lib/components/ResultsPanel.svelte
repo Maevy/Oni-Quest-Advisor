@@ -38,6 +38,7 @@
 					<IncrementBoxes
 						count={objective.count}
 						{checkedCount}
+						tone={isCeasefire ? 'penalty' : 'score'}
 						onSetChecked={(count) => onSetChecked(objective.id, count, objective.count)}
 					/>
 				{:else}

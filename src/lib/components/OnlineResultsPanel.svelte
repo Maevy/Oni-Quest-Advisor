@@ -63,6 +63,7 @@
 							count={objective.count}
 							checkedCount={myChecked[objective.id] ?? 0}
 							disabled={!editable}
+							tone={isCeasefire ? 'penalty' : 'score'}
 							onSetChecked={(count) => onSetChecked(objective.id, count, objective.count)}
 						/>
 					</div>
@@ -72,6 +73,7 @@
 							count={objective.count}
 							checkedCount={opponentChecked[objective.id] ?? 0}
 							disabled
+							tone={isCeasefire ? 'penalty' : 'score'}
 							onSetChecked={() => {}}
 						/>
 					</div>

@@ -10,7 +10,7 @@ import {
 	setTwoPlayerSchemeChecked,
 	setTwoPlayerSchemeDraft
 } from './twoPlayer';
-import { CEASEFIRE_OBJECTIVE_ID, type Mission } from './mission';
+import { CEASEFIRE_OBJECTIVE, CEASEFIRE_OBJECTIVE_ID, type Mission } from './mission';
 import { MAX_TOTAL_VP, MIN_ROUND, MAX_ROUND } from './progress';
 import { type SchemeCard } from './scheme';
 
@@ -202,9 +202,48 @@ describe('calculateTwoPlayerVP', () => {
 		const ceasefireMission: Mission = { ...mission, ceasefire: true };
 		let progress = createEmptyTwoPlayerProgress(ceasefireMission.id);
 		progress = setTwoPlayerObjectiveChecked(progress, 'player1', 'unlock-cache', 1, 1);
-		progress = setTwoPlayerObjectiveChecked(progress, 'player1', CEASEFIRE_OBJECTIVE_ID, 1, 1);
+		progress = setTwoPlayerObjectiveChecked(
+			progress,
+			'player1',
+			CEASEFIRE_OBJECTIVE_ID,
+			1,
+			CEASEFIRE_OBJECTIVE.count
+		);
 
 		expect(calculateTwoPlayerVP(ceasefireMission, progress.player1, null)).toBe(1 - 4);
+	});
+
+	it('subtracts the ceasefire penalty again for every further breach', () => {
+		const ceasefireMission: Mission = { ...mission, ceasefire: true };
+		let progress = createEmptyTwoPlayerProgress(ceasefireMission.id);
+		progress = setTwoPlayerObjectiveChecked(progress, 'player1', 'unlock-cache', 1, 1);
+		progress = setTwoPlayerObjectiveChecked(
+			progress,
+			'player1',
+			CEASEFIRE_OBJECTIVE_ID,
+			CEASEFIRE_OBJECTIVE.count,
+			CEASEFIRE_OBJECTIVE.count
+		);
+
+		expect(calculateTwoPlayerVP(ceasefireMission, progress.player1, null)).toBe(1 - 12);
+	});
+
+	it('counts a persisted checked count only up to the objective count', () => {
+		// A save from before an objective's count was lowered must not keep paying out the
+		// removed instances (Awaiting Reinforcements went from 5 to 4 scoreable round-ends).
+		const trimmed: Mission = {
+			...mission,
+			results: [{ id: 'hold-round', text: 'Hold at the end of the round.', vp: 1, count: 4 }]
+		};
+		const progress = setTwoPlayerObjectiveChecked(
+			createEmptyTwoPlayerProgress(trimmed.id),
+			'player1',
+			'hold-round',
+			5,
+			5
+		);
+
+		expect(calculateTwoPlayerVP(trimmed, progress.player1, null)).toBe(4);
 	});
 
 	it('caps at MAX_TOTAL_VP', () => {

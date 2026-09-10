@@ -35,12 +35,12 @@ describe('getScoreableResults', () => {
 });
 
 describe('CEASEFIRE_OBJECTIVE', () => {
-	it('is a single checkbox worth −4 VP, labeled "Ceasefire broken"', () => {
+	it('is a −4 VP penalty that can be scored three times, labeled "Ceasefire broken"', () => {
 		expect(CEASEFIRE_OBJECTIVE).toEqual({
 			id: CEASEFIRE_OBJECTIVE_ID,
 			text: 'Ceasefire broken',
 			vp: -4,
-			count: 1
+			count: 3
 		});
 	});
 });

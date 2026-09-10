@@ -5,9 +5,16 @@
 		onSetChecked: (checkedCount: number) => void;
 		/** Frozen phases / read-only opponent view render the boxes inert. */
 		disabled?: boolean;
+		/** 'penalty' tints the boxes red — used by the "Ceasefire broken" objective. */
+		tone?: 'score' | 'penalty';
 	};
 
-	let { count, checkedCount, onSetChecked, disabled = false }: Props = $props();
+	let { count, checkedCount, onSetChecked, disabled = false, tone = 'score' }: Props = $props();
+
+	const ACHIEVED_TONES = {
+		score: 'border-sky-500 bg-sky-500/40 text-sky-100',
+		penalty: 'border-red-500 bg-red-500/40 text-red-100'
+	} as const;
 
 	function boxNumbers(n: number): number[] {
 		return Array.from({ length: n }, (_unused, index) => index + 1);
@@ -26,7 +33,7 @@
 			type="button"
 			{disabled}
 			class="flex h-7 w-7 items-center justify-center rounded border-2 text-sm font-bold {achieved
-				? 'border-sky-500 bg-sky-500/40 text-sky-100'
+				? ACHIEVED_TONES[tone]
 				: 'border-slate-500 bg-slate-900 text-transparent'} disabled:cursor-not-allowed"
 			onclick={() => handleClick(box)}
 			aria-label={`${box} of ${count} achieved`}

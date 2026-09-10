@@ -66,10 +66,11 @@ export function calculateTotalVP(
 	progress: MissionProgress,
 	schemeCard: SchemeCard | null
 ): number {
-	const resultsVP = getScoreableResults(mission).reduce(
-		(sum, objective) => sum + objective.vp * (progress.checkedObjectiveCounts[objective.id] ?? 0),
-		0
-	);
+	const resultsVP = getScoreableResults(mission).reduce((sum, objective) => {
+		// Persisted counts can predate a content change that lowered an objective's count.
+		const checked = Math.min(progress.checkedObjectiveCounts[objective.id] ?? 0, objective.count);
+		return sum + objective.vp * checked;
+	}, 0);
 
 	const schemeVP =
 		progress.scheme && schemeCard ? schemeVp(schemeCard, progress.scheme.checkedIncrements) : 0;

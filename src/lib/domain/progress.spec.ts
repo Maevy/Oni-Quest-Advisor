@@ -6,7 +6,7 @@ import {
 	setObjectiveChecked,
 	setSchemeDraft
 } from './progress';
-import { CEASEFIRE_OBJECTIVE_ID, type Mission } from './mission';
+import { CEASEFIRE_OBJECTIVE, CEASEFIRE_OBJECTIVE_ID, type Mission } from './mission';
 import { chooseScheme, setSchemeChecked, type SchemeCard } from './scheme';
 
 const mission: Mission = {
@@ -123,9 +123,40 @@ describe('calculateTotalVP', () => {
 			1,
 			1
 		);
-		progress = setObjectiveChecked(progress, CEASEFIRE_OBJECTIVE_ID, 1, 1);
+		progress = setObjectiveChecked(progress, CEASEFIRE_OBJECTIVE_ID, 1, CEASEFIRE_OBJECTIVE.count);
 
 		expect(calculateTotalVP(ceasefireMission, progress, null)).toBe(1 - 4);
+	});
+
+	it('subtracts the ceasefire penalty again for every further breach', () => {
+		const ceasefireMission: Mission = { ...mission, ceasefire: true };
+		let progress = setObjectiveChecked(
+			createEmptyProgress(ceasefireMission.id),
+			'unlock-cache',
+			1,
+			1
+		);
+		progress = setObjectiveChecked(
+			progress,
+			CEASEFIRE_OBJECTIVE_ID,
+			CEASEFIRE_OBJECTIVE.count,
+			CEASEFIRE_OBJECTIVE.count
+		);
+
+		// The penalty is uncapped downwards: a party can end the quest below 0 VP.
+		expect(calculateTotalVP(ceasefireMission, progress, null)).toBe(1 - 12);
+	});
+
+	it('counts a persisted checked count only up to the objective count', () => {
+		// A save from before an objective's count was lowered must not keep paying out the
+		// removed instances (Awaiting Reinforcements went from 5 to 4 scoreable round-ends).
+		const trimmed: Mission = {
+			...mission,
+			results: [{ id: 'hold-round', text: 'Hold at the end of the round.', vp: 1, count: 4 }]
+		};
+		const progress = setObjectiveChecked(createEmptyProgress(trimmed.id), 'hold-round', 5, 5);
+
+		expect(calculateTotalVP(trimmed, progress, null)).toBe(4);
 	});
 
 	it('does not count the ceasefire penalty while it is unchecked', () => {

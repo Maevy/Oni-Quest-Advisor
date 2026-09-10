@@ -31,21 +31,22 @@
 			"id": "near-obelisk",
 			"text": "Gain 1 VP if you have at least one model within 7\" of the Obelisk at the end of the round.",
 			"vp": 1,
-			"count": 5
+			"count": 4
 		},
 		{
 			"id": "stronger-presence-obelisk",
 			"text": "Gain 1 VP if you have a Stronger Presence within 7\" of the Obelisk at the end of the round.",
 			"vp": 1,
-			"count": 5
+			"count": 4
 		},
 		{
 			"id": "sole-presence-obelisk",
 			"text": "Gain 1 VP if you have a model within 7\" of the Obelisk and your opponent has none within that range at the end of the round.",
 			"vp": 1,
-			"count": 5
+			"count": 4
 		}
 	],
+	"important": ["Players cannot score VP during Round 1 (Ceasefire)."],
 	"questRules": [
 		{
 			"label": "Stronger Presence",
