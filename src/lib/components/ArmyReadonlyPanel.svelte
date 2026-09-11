@@ -22,9 +22,6 @@
 		</p>
 	</div>
 	<p class="mt-0.5 text-xs" style="color: {view.faction.color}">{view.faction.name}</p>
-	<p class="mt-2 text-xs text-slate-500">
-		Read-only: tap units and upgrades to inspect them, the list itself cannot change here.
-	</p>
 
 	<ul class="mt-3 flex flex-col gap-2">
 		{#each view.rows as row (row.entryId)}
@@ -50,15 +47,26 @@
 					</div>
 				</div>
 				{#if row.upgrades.length > 0}
-					<div class="mt-2 flex flex-wrap gap-1.5">
+					<div class="mt-1.5 space-y-1 pl-8">
 						{#each row.upgrades as upgrade (upgrade.id)}
-							<button
-								type="button"
-								class="rounded-full border border-orange-400/50 bg-slate-900/60 px-2.5 py-1 text-xs font-medium text-orange-300 transition hover:bg-orange-400/10 active:bg-orange-400/20"
-								onclick={() => onShowUpgrade(upgrade)}
-							>
-								{upgrade.name}
-							</button>
+							<div class="flex min-w-0 items-center gap-1.5">
+								<span class="text-slate-500">└</span>
+								<button
+									type="button"
+									aria-label={'Show details for ' + upgrade.name}
+									class="flex min-w-0 items-center gap-1.5 rounded-full bg-orange-400 py-0.5 pr-2.5 pl-0.5 text-[11px] font-semibold text-slate-950 transition hover:bg-orange-300 active:bg-orange-300"
+									onclick={() => onShowUpgrade(upgrade)}
+								>
+									{#if upgrade.icon}
+										<img
+											src={upgrade.icon}
+											alt=""
+											class="h-5 w-5 shrink-0 rounded-full border border-slate-950/30 object-cover"
+										/>
+									{/if}
+									<span class="truncate">{upgrade.name}</span>
+								</button>
+							</div>
 						{/each}
 					</div>
 				{/if}
