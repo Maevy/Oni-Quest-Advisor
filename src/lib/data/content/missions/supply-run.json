@@ -82,12 +82,39 @@
 	},
 	"results": [
 		{
-			"id": "deposit-resources",
-			"text": "Gain 2 VP for each Resources deposited in your own Cache.",
+			"id": "deposit-resources-round-2",
+			"text": "Gain 2 VP at the end of the round for each Resources deposited in your own Cache.",
 			"vp": 2,
-			"count": 8
+			"count": 4,
+			"round": 2,
+			"group": "deposit-resources"
+		},
+		{
+			"id": "deposit-resources-round-3",
+			"text": "Gain 2 VP at the end of the round for each Resources deposited in your own Cache.",
+			"vp": 2,
+			"count": 4,
+			"round": 3,
+			"group": "deposit-resources"
+		},
+		{
+			"id": "deposit-resources-round-4",
+			"text": "Gain 2 VP at the end of the round for each Resources deposited in your own Cache.",
+			"vp": 2,
+			"count": 4,
+			"round": 4,
+			"group": "deposit-resources"
+		},
+		{
+			"id": "deposit-resources-round-5",
+			"text": "Gain 2 VP at the end of the round for each Resources deposited in your own Cache.",
+			"vp": 2,
+			"count": 4,
+			"round": 5,
+			"group": "deposit-resources"
 		}
 	],
+	"important": ["Models may not Interact with Intrigue Tokens during Round 1."],
 	"questRules": [
 		{
 			"label": "Resources (Intrigue)",

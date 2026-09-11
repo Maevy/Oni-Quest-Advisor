@@ -103,4 +103,20 @@ describe('mission content', () => {
 			expect(members.every((member) => member.count === 1)).toBe(true);
 		}
 	});
+
+	it('splits Supply Run into one scoreable row per round-end', () => {
+		// Resources cannot be looted during Round 1 (models may not Interact with Intrigue Tokens
+		// then), so the first scoreable round-end is Round 2 — a rules choice, not the ceasefire
+		// guard, since Supply Run has no ceasefire. Resources are deposited repeatedly, so each
+		// round carries four boxes rather than one.
+		const supplyRun = missions.find((mission) => mission.id === 'supply-run');
+		expect(supplyRun?.ceasefire).toBe(false);
+
+		const groups = [...groupMembers(supplyRun?.results ?? []).values()];
+		expect(groups.map((members) => members[0].group)).toEqual(['deposit-resources']);
+
+		const members = groups[0];
+		expect(members.map((member) => member.round)).toEqual([2, 3, 4, 5]);
+		expect(members.every((member) => member.count === 4)).toBe(true);
+	});
 });

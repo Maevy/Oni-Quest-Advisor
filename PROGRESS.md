@@ -58,7 +58,37 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (overlay Escape handling)
+## What was done in the last session (Supply Run rescoring)
+
+**Supply Run's Results were wrong**: a single `deposit-resources` objective at `count: 8` — one
+flat pool of eight 2-VP deposits — instead of per-round scoring.
+
+1. Converted to the additive v2 round/group format: one entry per scoreable round-end, all
+   sharing the group `deposit-resources`, `count: 4` and `vp: 2` each, with round-neutral text
+   ("…at the end of the round…"). Rounds **2–5**, so the briefing renders five rows with Round 1
+   as a locked _No VP_ row — structurally identical to Clue Trail, just four boxes instead of one.
+2. **Round 1 does not score** because Resources cannot be looted then: the mission's own Quest
+   Rules forbid Interacting with Intrigue Tokens during Round 1, and a model can only deposit what
+   it already carries. This is a _rules_ exclusion, **not** the ceasefire guard — Supply Run is
+   `ceasefire: false`. That distinction is written into the new guard's comment so nobody later
+   "fixes" it by adding Round 1 back.
+3. Added an `important` callout — _"Models may not Interact with Intrigue Tokens during Round 1."_
+   — reusing the Quest Rules wording verbatim rather than inventing any. The locked Round-1 row
+   renders beside Results, which is where a player looks for the reason; Magic Stones does the
+   same.
+4. **New content guard** in `lib/data/missions.spec.ts` pinning the shape (one
+   `deposit-resources` group, rounds `[2,3,4,5]`, `count === 4`, `ceasefire === false`), matching
+   the existing Awaiting Reinforcements guard. **313 tests pass** (was 312).
+
+The objective id changed from `deposit-resources` to `deposit-resources-round-N`, so any
+previously saved Supply Run progress that ticked the old eight boxes is orphaned — inert rather
+than broken, since VP math only sums ids the mission actually defines.
+
+Still unconverted: the grouped per-round card renders **only in the Mission Briefing**. The
+interactive tracker, hot-seat and online still show Supply Run as four separate cards with
+`R2`…`R5` chips — the "bring grouped Results to hot-seat + online" TODO.
+
+## What was done earlier today (overlay Escape handling)
 
 The first defect surfaced by the docs survey, fixed on its own. **`Escape` did nothing in the
 army dialogs unless focus happened to sit inside them.**
