@@ -261,11 +261,6 @@ its row.
 
 ## Open questions
 
-- **`Escape` is unreliable in the army dialogs.** `SaveArmyDialog`, `LoadArmyDialog`, `UnitCard`
-  and `ArmyUpgradePicker` bind `onkeydown` to non-focusable backdrop `div`s with no `tabindex` and
-  no window listener, so `Escape` only works while focus happens to be inside — e.g. while typing
-  in the name input. `RuleCalloutDialog` does this correctly with a window-level listener; the
-  army dialogs should match it.
 - **The Roster equipment pool ignores the Paimon cost reduction.** Structurally impossible today
   (the reduction scans per-entry upgrades). Is that the correct ruling?
 - **Nothing blocks exceeding the point cap** — only the badge turns red. Intentional, but worth

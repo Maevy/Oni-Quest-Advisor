@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onEscapeKey } from './escapeKey';
+
 	type Props = {
 		text: string;
 		confirmLabel: string;
@@ -16,6 +18,9 @@
 		onConfirm,
 		onCancel
 	}: Props = $props();
+
+	// Escape never confirms — it takes the cancel branch, same as the cancel button.
+	$effect(() => onEscapeKey(onCancel));
 </script>
 
 <div

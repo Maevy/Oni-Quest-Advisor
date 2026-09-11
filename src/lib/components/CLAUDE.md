@@ -21,3 +21,12 @@
   `RuleLabels` (buttons, emits `onOpenRule`) + `RuleCalloutDialog` (overlay), wired in
   `DescriptionPanel`. Dialogs use `z-50`; the `CommandPanel` tab is `z-40` and the
   briefing's sticky header `z-30`.
+- **Escape goes through `escapeKey.ts`, never an element `onkeydown`.** Register it from
+  the overlay's script with `$effect(() => onEscapeKey(close))`. A backdrop `div` is not
+  focusable, so an `onkeydown` on it only fires while focus happens to sit inside the
+  overlay — which is exactly how Escape came to do nothing in the army dialogs. The
+  helper keeps a stack, so nested overlays (Load Army over the builder plus its delete
+  confirmation, a unit card plus its rules popups) close exactly one layer per keypress,
+  the topmost one. For outside-click, test `event.target === event.currentTarget` on the
+  backdrop instead of putting `onclick={stopPropagation}` on the card: a click handler on
+  a `role="dialog"` div trips `a11y_click_events_have_key_events`.

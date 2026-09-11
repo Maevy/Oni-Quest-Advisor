@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onEscapeKey } from './escapeKey';
+
 	type Props = {
 		/** Persists the army under the given name; null on success, the error otherwise. */
 		onSave: (name: string) => string | null;
@@ -10,6 +12,8 @@
 	let name = $state('');
 	let error = $state<string | null>(null);
 
+	$effect(() => onEscapeKey(onCancel));
+
 	function save(): void {
 		error = onSave(name);
 	}
@@ -20,9 +24,6 @@
 	class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 px-6 backdrop-blur-sm"
 	onclick={(e) => {
 		if (e.target === e.currentTarget) onCancel();
-	}}
-	onkeydown={(e) => {
-		if (e.key === 'Escape') onCancel();
 	}}
 >
 	<div

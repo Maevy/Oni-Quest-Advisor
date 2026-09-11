@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ArmyUpgradeSpec } from '$lib/domain';
+	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
 		upgrade: ArmyUpgradeSpec;
@@ -10,14 +11,15 @@
 	};
 
 	let { upgrade, cost, factionColor, onClose }: Props = $props();
+
+	$effect(() => onEscapeKey(onClose));
 </script>
 
 <div
 	class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
 	role="presentation"
-	onclick={onClose}
-	onkeydown={(event) => {
-		if (event.key === 'Escape') onClose();
+	onclick={(event) => {
+		if (event.target === event.currentTarget) onClose();
 	}}
 >
 	<div
@@ -26,11 +28,6 @@
 		aria-label={upgrade.name}
 		class="max-h-[85dvh] w-full max-w-sm overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
 		style="border-color: {factionColor}"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => {
-			if (event.key === 'Escape') onClose();
-			event.stopPropagation();
-		}}
 	>
 		<div class="flex items-start justify-between gap-2">
 			<div class="flex min-w-0 items-center gap-3">

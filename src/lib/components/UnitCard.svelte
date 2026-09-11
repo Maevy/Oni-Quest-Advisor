@@ -29,6 +29,7 @@
 		type ArmyUnitSpec,
 		type ArmyUnitSize
 	} from '$lib/domain';
+	import { onEscapeKey } from './escapeKey';
 
 	/** Chip styling per spell element - literal classes so Tailwind sees them. */
 	const ELEMENT_CHIP_CLASSES: Record<string, string> = {
@@ -226,6 +227,15 @@
 	function closeTopPopup(): void {
 		popupStack = popupStack.slice(0, -1);
 	}
+
+	// One registration serves the card and its whole rules-popup stack: Escape closes the top
+	// popup while any are open, and the card itself once they are gone.
+	$effect(() =>
+		onEscapeKey(() => {
+			if (popupStack.length > 0) closeTopPopup();
+			else onClose();
+		})
+	);
 </script>
 
 {#snippet segmentsView(segments: ArmyTextSegment[])}
@@ -252,9 +262,8 @@
 <div
 	class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm"
 	role="presentation"
-	onclick={onClose}
-	onkeydown={(event) => {
-		if (event.key === 'Escape') onClose();
+	onclick={(event) => {
+		if (event.target === event.currentTarget) onClose();
 	}}
 >
 	<div
@@ -263,14 +272,6 @@
 		aria-label={unit.name}
 		class="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
 		style="border-color: {faction.color}"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => {
-			if (event.key === 'Escape') {
-				if (popupStack.length > 0) closeTopPopup();
-				else onClose();
-			}
-			event.stopPropagation();
-		}}
 	>
 		<div class="flex items-start gap-3">
 			{#if unit.icon}
@@ -498,8 +499,7 @@
 			style="z-index: {60 + index * 10}"
 			role="presentation"
 			onclick={(event) => {
-				event.stopPropagation();
-				closeTopPopup();
+				if (event.target === event.currentTarget) closeTopPopup();
 			}}
 		>
 			<div
@@ -509,13 +509,6 @@
 				class={'max-h-[75dvh] w-full overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl ' +
 					(popup.spells ? 'max-w-md' : 'max-w-sm')}
 				style="border-color: {faction.color}"
-				onclick={(event) => event.stopPropagation()}
-				onkeydown={(event) => {
-					if (event.key === 'Escape') {
-						event.stopPropagation();
-						closeTopPopup();
-					}
-				}}
 			>
 				<h3 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">{popup.title}</h3>
 				{#if popup.spells}

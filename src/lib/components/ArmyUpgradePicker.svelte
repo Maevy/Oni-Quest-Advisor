@@ -15,6 +15,7 @@
 		type ArmyUpgradeOption,
 		type ArmyUpgradeSpec
 	} from '$lib/domain';
+	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
 		entry: ArmyEntry;
@@ -58,6 +59,8 @@
 		onSelectChoice,
 		onClose
 	}: Props = $props();
+
+	$effect(() => onEscapeKey(onClose));
 
 	const BLOCK_LABELS: Record<ArmyUpgradeBlock, string> = {
 		locked: 'This model cannot receive upgrades',
@@ -146,9 +149,8 @@
 <div
 	class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm"
 	role="presentation"
-	onclick={onClose}
-	onkeydown={(event) => {
-		if (event.key === 'Escape') onClose();
+	onclick={(event) => {
+		if (event.target === event.currentTarget) onClose();
 	}}
 >
 	<div
@@ -157,11 +159,6 @@
 		aria-label={'Choose an upgrade for ' + unitName}
 		class="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
 		style="border-color: {factionColor}"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => {
-			if (event.key === 'Escape') onClose();
-			event.stopPropagation();
-		}}
 	>
 		{#if pendingUpgrade && choiceEffectOf(pendingUpgrade) && pendingOptionId !== null}
 			{@const pendingOption = choiceEffectOf(pendingUpgrade)?.options.find(

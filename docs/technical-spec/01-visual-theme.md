@@ -121,8 +121,21 @@ if everything glows, nothing does.
 | Command Panel tab (fixed to the right edge) | `z-40`  |
 | Mission briefing sticky header              | `z-30`  |
 
-Backdrop is the app-standard `bg-slate-950/70 backdrop-blur-sm`. Every dialog closes on
-outside click **and** `Escape`.
+Backdrop is `bg-slate-950/70 backdrop-blur-sm` for informational popups (rule callouts, the unit
+card, the upgrade picker and its detail view) and the heavier `bg-slate-950/90` for dialogs that
+gate a decision (Save Army, Load Army, Confirm). Every dialog closes on outside click **and**
+`Escape`.
+
+**`Escape` runs through one shared stack**, `components/escapeKey.ts`. Each open overlay
+registers a handler from an `$effect`; a single window listener dispatches to the **topmost** one
+only, so nested overlays — Load Army over the builder plus its delete confirmation, a unit card
+plus its rules popups — close exactly one layer per keypress. Binding `onkeydown` to the backdrop
+`div` instead does not work: that div is not focusable, so the handler only fires while focus
+happens to sit inside the overlay. That is how Escape came to do nothing in the army dialogs.
+
+Outside-click is detected with `event.target === event.currentTarget` on the backdrop, **not**
+with `stopPropagation` on the card — a click handler on a `role="dialog"` div trips
+`a11y_click_events_have_key_events`.
 
 **The trap:** a `fixed inset-0` overlay must render as a **sibling of `Panel`, never inside
 it**. A non-`none` `backdrop-filter` makes the panel the containing block for its fixed

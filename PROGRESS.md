@@ -58,7 +58,51 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (docs catch-up — no code changes)
+## What was done in the last session (overlay Escape handling)
+
+The first defect surfaced by the docs survey, fixed on its own. **`Escape` did nothing in the
+army dialogs unless focus happened to sit inside them.**
+
+1. **Root cause.** `SaveArmyDialog`, `LoadArmyDialog`, `UnitCard`, `ArmyUpgradePicker` and
+   `ArmyUpgradeDetail` bound `onkeydown` to their backdrop `div`. A `div` is not focusable, so
+   the handler only fired while the event bubbled up from a focused descendant — e.g. while
+   typing in the Save dialog's name input. Click anywhere else first and Escape went dead.
+   `ConfirmDialog` had no Escape handling at all, which is also why `LoadArmyDialog`'s
+   documented "Escape unwinds a pending delete confirmation" never worked.
+2. **Fix: a shared Escape stack**, `components/escapeKey.ts` — `onEscapeKey(handler)` returns a
+   disposer, used as `$effect(() => onEscapeKey(close))`. One window listener dispatches to the
+   **topmost** registered handler only. A stack rather than a per-overlay window listener is
+   required because these overlays nest: Load Army over the builder plus its delete confirm, a
+   unit card plus its rules popups. Separate listeners would close _several_ layers per keypress
+   — and in `LoadArmyDialog` would run `cancelOrUnwind` twice, closing the dialog along with the
+   confirm. `UnitCard` registers a single handler covering its whole popup stack, so it still
+   unwinds one popup per press. All seven overlays now use it, including `RuleCalloutDialog`,
+   whose correct-but-local window listener was refactored onto the helper so it cannot
+   double-fire when stacked.
+3. **Two knock-on fixes the a11y lint forced.** Removing the card-level `onkeydown` exposed
+   `a11y_click_events_have_key_events` on the four `role="dialog"` divs carrying
+   `onclick={(e) => e.stopPropagation()}`. Those handlers existed only to shield the backdrop's
+   close-on-click, so outside-click now tests `event.target === event.currentTarget` on the
+   backdrop — the pattern `SaveArmyDialog`/`LoadArmyDialog` already used, and
+   behaviour-preserving including for nested `UnitCard` popups. `svelte-check` is back to
+   **0 errors / 0 warnings** (it reported 4 mid-fix). `role="presentation"` backdrops are exempt
+   from that rule, which is why the backdrops never warned.
+4. **Behaviour added, not just repaired:** `ConfirmDialog` now closes on Escape, taking the
+   cancel branch — Escape never confirms. That makes it consistent at all four of its call sites:
+   the army format switch, the mount-conflict warning, closing an online game, and deleting a
+   saved army.
+5. **Covered by tests** — `components/escapeKey.spec.ts`, 7 cases: topmost-only dispatch, other
+   keys ignored, fallback once the top is disposed, mid-stack dispose, one shared listener
+   attached/detached, double-dispose a no-op. It stubs `window` with `vi.stubGlobal` because the
+   vitest environment is `node`. **312 tests pass** (was 305).
+6. **Docs updated with the fix**: the convention is written into `lib/components/CLAUDE.md`,
+   `technical-spec/01-visual-theme.md` explains the stack and the a11y rationale, and the
+   `functional-spec/08-army-builder.md` open question is removed.
+
+Untouched: backdrop click behaviour, all styling, and every other defect from the survey's list
+below — they remain open questions in the specs.
+
+## What was done earlier today (docs catch-up — no code changes)
 
 Started from a single stale fact — `QWEN.md` and `docs/functional-spec/04-schemes-panel.md`
 both still gave the pre-v0.4.1 scheme draw brackets — and turned into the full `docs/`
@@ -93,11 +137,10 @@ stable"). **Docs only; no source file changed.** 305 tests pass, `lint` clean.
 5. **Findings were recorded as Open questions, not fixed** — this was a docs session, so each one
    is written into the relevant spec's Open questions with enough context to act on later. The
    ones that look like genuine defects rather than gaps:
-   - **`Escape` is focus-dependent in four army dialogs.** `SaveArmyDialog`, `LoadArmyDialog`,
-     `UnitCard` and `ArmyUpgradePicker` bind `onkeydown` to non-focusable backdrop `div`s with no
-     `tabindex` and no window listener, so `Escape` only works while focus happens to be inside.
-     `RuleCalloutDialog` does it correctly with a window-level listener — that is the pattern to
-     copy.
+   - **`Escape` was focus-dependent in four army dialogs** — `SaveArmyDialog`, `LoadArmyDialog`,
+     `UnitCard` and `ArmyUpgradePicker` bound `onkeydown` to non-focusable backdrop `div`s, so it
+     only worked while focus happened to be inside. **Fixed immediately after this commit**; see
+     the overlay Escape notes below.
    - **The Roster equipment pool can never receive the Paimon cost reduction.**
      `armyUpgradeCostReduction` only scans per-entry `upgrades`, and Roster entries carry none,
      so `rosterPickPoints` always charges raw cost. Needs a rules ruling before it is "fixed".

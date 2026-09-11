@@ -7,6 +7,7 @@
 		SavedArmyGroup
 	} from '$lib/domain';
 	import ConfirmDialog from './ConfirmDialog.svelte';
+	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
 		groups: SavedArmyGroup[];
@@ -47,6 +48,10 @@
 		if (deleteCandidate) deleteCandidate = null;
 		else onCancel();
 	}
+
+	// The delete confirmation renders as a sibling overlay and registers on top of this one, so
+	// Escape unwinds it first and only closes the dialog on a second press.
+	$effect(() => onEscapeKey(cancelOrUnwind));
 </script>
 
 <div
@@ -54,9 +59,6 @@
 	class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 px-6 backdrop-blur-sm"
 	onclick={(e) => {
 		if (e.target === e.currentTarget) onCancel();
-	}}
-	onkeydown={(e) => {
-		if (e.key === 'Escape') cancelOrUnwind();
 	}}
 >
 	<div

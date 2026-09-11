@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { RuleCallout } from '$lib/domain';
+	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
 		/** The callout to explain, or null while closed. */
@@ -11,11 +12,7 @@
 
 	$effect(() => {
 		if (!rule) return;
-		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') onClose();
-		};
-		window.addEventListener('keydown', onKeyDown);
-		return () => window.removeEventListener('keydown', onKeyDown);
+		return onEscapeKey(onClose);
 	});
 </script>
 
