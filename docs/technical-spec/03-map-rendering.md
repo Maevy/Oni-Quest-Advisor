@@ -1,70 +1,171 @@
 # Map Rendering
 
-The map is the hardest part of Panel 3 (see
-[functional-spec/02-mission-detail-static-panels.md](../functional-spec/02-mission-detail-static-panels.md))
-and now the map's _content_ has moved from "static image" to "structured data" (per
-the earlier decision in the functional-spec Q&A) — this is that data model and its
-rendering behavior.
+The Deployment Map is `components/MissionMap.svelte`, driven entirely by the mission's
+`map` object (`MapSpec` in `lib/domain/map.ts`). All geometry is pure domain
+(`rulerAnchor`, `drawHorizontalDeployment`, `drawCircularDeployment`) and unit-tested in
+`map.spec.ts`; the component only turns it into SVG.
 
-## Map bounds
+## Bounds and coordinate system
 
-- Every map is a **36 × 36 inch** square box. This is the fixed playing-field size for
-  every mission — not configurable per mission, always 36×36.
-- Two players only: **Player Blue** and **Player Red**. Any zone that belongs to a
-  player is always mirrored — whatever Blue gets, Red gets the symmetrical opposite.
+- Every map is a fixed **36 × 36 inch** square — `MAP_SIZE_INCHES = 36`, not configurable per
+  mission.
+- Origin is **top-left**: X increases rightward, Y increases downward. The exact centre is
+  `x: 18, y: 18`.
+- The SVG uses `viewBox="0 0 36 36"`, so **every number in the markup is inches** — stroke
+  widths, font sizes and dash arrays included. The frame is
+  `mx-auto w-full max-w-72 rounded-xs border border-slate-700/20 bg-slate-950/70` (the one
+  hard-edged, near-black surface in the app, so the board reads as a playing surface rather
+  than a frosted panel). Panel title: **Deployment Map**, optionally `collapsible`.
+
+## Orientation grid
+
+Internal guide lines every **6″** (`GRID_STEP_INCHES = 6`, i.e. at 6/12/18/24/30 on both
+axes), stroke `rgba(148,163,184,0.18)`, width `0.08`, dash `0.6 0.6`. **No gameplay
+meaning** — purely a visual aid for eyeballing positions. Deliberately faint enough to sit
+behind zones and markers.
 
 ## Deployment zones
 
-Two zone shapes, each described by a single **range** value (a depth or radius in
-inches) — the mirroring for the other player is automatic, not something the mission
-author configures separately.
+Two players only — **Blue** and **Red** — and every zone is **mirrored**: whatever Blue gets,
+Red gets the symmetrical opposite. A mission authors exactly **one** zone with a single
+`rangeInches`; the mirror is derived, never configured. A mission is never rendered with no
+zone at all.
 
-Every mission defines exactly one zone (horizontal or radial) — a mission is never
-rendered with no deployment zone at all.
+|        | Blue                    | Red                      |
+| ------ | ----------------------- | ------------------------ |
+| Fill   | `rgba(56,189,248,0.18)` | `rgba(248,113,113,0.18)` |
+| Stroke | `rgba(56,189,248,0.6)`  | `rgba(248,113,113,0.6)`  |
+| Label  | `rgb(56,189,248)`       | `rgb(248,113,113)`       |
 
-### Horizontal deployment — `drawHorizontalDeployment(range)`
+Zone outlines are **dashed** (`stroke-dasharray="1.2 0.8"`, width `0.15`) so the boundary
+reads as a measured limit rather than a wall.
 
-- Players face top-to-bottom / bottom-to-top.
-- Blue's zone: a box spanning the _full width_ of the map, `range` inches deep,
-  starting from the bottom edge going up. Rendered in a blue tint.
-- Red's zone: the mirrored box, `range` inches deep, starting from the top edge going
-  down. Rendered in a red tint.
-- The zone's depth (`range`, in inches) is shown as a visible label on the side of the
-  zone, so the player can see e.g. "8 inches deep."
+### Horizontal — `drawHorizontalDeployment(rangeInches)`
 
-### Radial (circular) deployment — `drawCircularDeployment(range)`
+Players face top-to-bottom / bottom-to-top. Both zones span the **full width**:
 
-- Blue's zone: a circular area with radius `range`, centered on the **bottom-right**
-  corner of the map (so within the map bounds it renders as a quarter-circle wedge).
-  Rendered in a blue tint.
-- Red's zone: the mirrored quarter-circle, radius `range`, centered on the **top-left**
-  corner. Rendered in a red tint.
-- Same idea as horizontal: the `range` should be visibly labeled so the player can
-  read off the radius.
+- Red: `y = 0`, height `rangeInches` (down from the top edge).
+- Blue: `y = 36 − rangeInches`, height `rangeInches` (up from the bottom edge).
 
-Only one of these two zone shapes is used per mission (a mission picks either
-horizontal or radial deployment, passing just its `range`).
+### Radial — `drawCircularDeployment(rangeInches)`
+
+Quarter-circle wedges, radius `rangeInches`, drawn as
+`M cx cy L arcStart A r r 0 0 1 arcEnd Z`:
+
+- Red: centred on the **top-left** corner `(0, 0)`.
+- Blue: centred on the **bottom-right** corner `(36, 36)`.
+
+### Zone labels
+
+Each zone carries a centred, two-line label in its own saturated hue:
+
+1. **`Deployment Zone`** — bold, letter-spacing `0.05`.
+2. **`{rangeInches}"`** — at 0.7× the title size.
+
+Horizontal zones use title size `1.9` (range line `1.33`), placed at `x = 18`, `y =` the zone's
+vertical centre. Radial zones use the smaller title size `1.35` so the label fits inside the
+corner arc, placed at `(r × 0.44, r × 0.38)` for Red and
+`(36 − r × 0.44, 36 − r × 0.38)` for Blue.
+
+This replaced the old pale corner text: the label now states _what_ the shaded area is, not
+just its number, and uses the zone's own hue so Red and Blue are separable at a glance.
+
+## Quarters cross
+
+`map.quarters: true` draws a **solid** centre cross — one vertical and one horizontal line at
+`18` — stroke `rgba(148,163,184,0.8)`, width `0.2`. Used when the four quadrants are
+gameplay-relevant (e.g. Quarter War). Solid, not dashed, so it is visibly a different kind of
+line from the orientation grid and the zone outlines.
 
 ## Objective markers
 
-- Coordinate origin is fixed as **top-left** for every map: X increases to the right,
-  Y increases downward. E.g. the exact center of the 36×36 map is `X: 18, Y: 18`.
-- Each marker has a **shape**: one of `star`, `box`, `triangle`, `circle`, `x`.
-- Each marker has a **label** (e.g. `"Cache"`) — an explicit text field linking it to
-  the corresponding Results-panel objective, rather than relying on the player to
-  infer which marker is which from context.
-- Each marker has a **colour**, configurable per marker in its JSON (not fixed/shared
-  across all markers) — lets a mission author group related objectives visually.
-- Each marker has a **ruler flag**. When `true`, a short dimension-line style guide is
-  drawn: one segment from the left edge to the marker (labeled with the Y distance)
-  and one from the top edge to the marker (labeled with the X distance), stopping at
-  the marker — not a full crosshair across the whole map. When `false`, no guide lines
-  are drawn for that marker — since every map is symmetrical, players are expected to
-  eyeball the position without needing exact numbers every time.
-- Marker overlap (two markers placed close together or on top of each other) is the
-  mission author's responsibility to avoid via careful coordinate choice — the
-  renderer does not detect or auto-adjust for it.
+```jsonc
+{
+	"id": "clue-1",
+	"x": 6,
+	"y": 18,
+	"shape": "triangle",
+	"label": "Clue",
+	"color": "#d946ef",
+	"showRuler": true,
+	"labelPosition": "below"
+}
+```
+
+`color` is used **verbatim** as both fill and stroke, so a mission author can group related
+objectives visually (any CSS colour string). Shapes (`MarkerShape`) and their sizes in inches:
+
+| Shape      | Geometry                                                           |
+| ---------- | ------------------------------------------------------------------ |
+| `circle`   | radius `1.2`                                                       |
+| `box`      | `2.4 × 2.4`, centred on the coordinate                             |
+| `triangle` | circumradius `1.4`, apex up, base at `y + r`                       |
+| `star`     | 10-point polygon, outer `1.4`, inner `× 0.45`, first point at −90° |
+| `x`        | two diagonals spanning `±1.2`, stroke-width `0.4`                  |
+
+**Marker label**: `marker.label`, font-size `1.3`, fill `rgb(226,232,240)`, horizontally
+centred on `x`. Vertically at `y − 1.8` when `labelPosition: 'above'`, otherwise `y + 2.3`
+(below is the default). `labelPosition` exists purely to avoid collisions with a nearby
+marker's label.
+
+**Overlap is the author's responsibility** — the renderer does not detect or auto-adjust
+overlapping _markers_. Only ruler labels auto-stagger (below).
+
+## Rulers (`showRuler`)
+
+Measured from the **nearest edge**, not always from top-left. `rulerAnchor()` picks, per axis
+independently, whichever edge is closer — `x ≤ 18` → left, otherwise right; `y ≤ 18` → top,
+otherwise bottom — and reports the short distance. Ties go left/top. So a marker 5″ from the
+right edge is labelled `5"`, never `31"`.
+
+> This is the single most important rule here and the one most likely to be regressed: the
+> anchor is always the **shortest path a player would actually measure**, which is by
+> construction ≤ 18″ and one of the four corner combinations. Never revert to measuring
+> everything from the top-left.
+
+For a ruler marker the component draws two dashed guide segments (`rgba(148,163,184,0.7)`,
+width `0.1`, dash `0.4 0.4`), each stopping **at the marker** — not a full crosshair:
+
+- a horizontal segment from the chosen left/right edge to the marker, at `marker.y`;
+- a vertical segment from the chosen top/bottom edge to the marker, at `marker.x`.
+
+Distance labels are font-size `1.2`, fill `rgb(203,213,225)`, text `{xDistance}"` and
+`{yDistance}"`.
+
+### Label staggering
+
+Two ruler markers sharing a coordinate would print their labels on top of each other (Clue
+Trail has four markers all at `y = 18`). `rulerLabelOffset(marker, axis)` returns that
+marker's index among the ruler markers sharing the same coordinate **on that axis**, and the
+label is pushed inward by that index:
+
+- **X-axis label**: offset `0.4 + index × 2.4` inward from the anchor edge (text anchored
+  `start` or `end` to match the edge), at `y = marker.y − 0.5`.
+- **Y-axis label**: `x = marker.x + 0.4`; `y = 1.4 + index × 1.6` when anchored top, or
+  `36 − 0.7 − index × 1.6` when anchored bottom.
+
+The offsets are per-axis, so markers that share only `x` or only `y` stagger on just that one.
+
+## Adding or editing a map
+
+1. Pick the zone type and its `rangeInches`; the mirror is automatic.
+2. Place markers with explicit `x`/`y` in inches from the top-left.
+3. Set `showRuler: true` only where a player would actually measure — a symmetrical layout
+   usually needs it on one marker per group, not all of them.
+4. Use `labelPosition: 'above'` to resolve a label collision; choose coordinates to avoid
+   marker overlap.
+5. Set `quarters: true` only when the four quadrants matter to the mission's rules.
+6. Look at it on a phone: the frame renders at ≤ 288 px wide (`max-w-72`), so 1.2–1.3 unit
+   font sizes are already near the legibility floor.
 
 ## Open questions
 
-None remaining for this document.
+- **Visual sign-off is still pending** on the radial `Deployment Zone` label fit (Quarter War,
+  Toxic Infestation) — the smaller `1.35` title size was chosen to fit inside the corner arc,
+  but a large radius may still crowd it.
+- Ruler stagger offsets are hand-tuned magic numbers (`2.4`, `1.6`). They work for the current
+  content; a mission with many co-linear ruler markers may need wider steps.
+- Marker overlap is unhandled by design. Would a lightweight collision warning in a content
+  guard be worth it, given missions are authored by hand and reviewed?
+- The orientation grid is hardcoded at 6″. If a mission ever needs a different subdivision
+  (or none), `GRID_STEP_INCHES` would have to become map data.

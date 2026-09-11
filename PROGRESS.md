@@ -36,6 +36,12 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 - The planning basis for the online mode lives in `MULTIPLAYER_PLAN.md` at the
   project root — **gitignored, local-only, never pushed**. It holds the full player
   journey spec, the phase/state model, the phasing table and the decisions log.
+- **`docs/` is current again** (2026-09-11): the functional and technical specs were
+  caught up against the code and extended from 7 spec documents to 14 (16 files with
+  the two READMEs), covering the whole app rather than just the v0.1.0 mission flow.
+  Where the code and `MULTIPLAYER_PLAN.md` disagree, **`docs/` is the spec and the plan
+  is design history** — the eight as-built divergences are listed in
+  `docs/technical-spec/06-online-architecture.md`.
 - Missions currently in the app (`src/lib/data/content/missions/`): Treasure Hunt,
   Clue Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation,
   Open Hostilities, Awaiting Reinforcements.
@@ -52,7 +58,75 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (mission briefing — solo phase 1, unreleased)
+## What was done in the last session (docs catch-up — no code changes)
+
+Started from a single stale fact — `QWEN.md` and `docs/functional-spec/04-schemes-panel.md`
+both still gave the pre-v0.4.1 scheme draw brackets — and turned into the full `docs/`
+catch-up that `QWEN.md` had been deferring ("catch them up when the behavior is considered
+stable"). **Docs only; no source file changed.** 305 tests pass, `lint` clean.
+
+1. **`docs/` grew from 7 spec documents to 14** (9 files to 16 counting the two READMEs).
+   Everything existing was rewritten against the code, and seven new documents cover the
+   features that had no spec at all:
+   `functional-spec/05-command-panel.md`, `06-two-player-hot-seat.md`,
+   `07-online-two-player.md`, `08-army-builder.md`, `technical-spec/04-scheme-data-format.md`,
+   `05-army-data-format.md`, `06-online-architecture.md`. Both spec READMEs were rebuilt
+   (entity glossary now covers online and army-builder entities, plus a screen map).
+2. **Method**: three parallel code surveys (presentation layer / army builder / online
+   backend) plus direct reading of `domain`, `stores` and `data`. Every claim was verified
+   against the implementation, not carried over from the old docs or from
+   `MULTIPLAYER_PLAN.md` — which is why the surveys also produced a divergence list.
+3. **`QWEN.md` corrections** (four, all verified): the draw brackets are **≤13 → 2, 14–15 → 3,
+   ≥16 → 4**; `COMMON_FACTION_ID` is **dead** — no card uses it, so `shared.json` means "in 2+
+   decks", not "in every deck"; a `schemeDraft` survives _deleting the chosen Scheme_ but **not**
+   a mission `Reset` (which rebuilds from `createEmptyProgress()`); and the Docs section now
+   indexes the full spec set instead of saying the specs lag. `src/lib/domain/CLAUDE.md`'s rule
+   example was stale the same way and is fixed too.
+4. **`MULTIPLAYER_PLAN.md`** (local-only): the §9 open question about updating the docs is
+   resolved, a §10 decisions row records the catch-up, and the **eight places where the code has
+   moved past the plan** are now written down in `technical-spec/06-online-architecture.md` —
+   SSE notifications carry no `seq`; the joiner's seat token is **client-generated**, not
+   server-issued; `round-snapshotted` payloads are `{round, player1, player2}` not `{vp1, vp2}`;
+   `faction-drafted` payloads are partial; there is **no `applyEvent`/replay**; `closeGame`
+   refuses once finished/closed; §2.2's scheme-box row omits the reveal gate §8 added; and §9's
+   "30 days" retention is superseded by the shipped 90.
+5. **Findings were recorded as Open questions, not fixed** — this was a docs session, so each one
+   is written into the relevant spec's Open questions with enough context to act on later. The
+   ones that look like genuine defects rather than gaps:
+   - **`Escape` is focus-dependent in four army dialogs.** `SaveArmyDialog`, `LoadArmyDialog`,
+     `UnitCard` and `ArmyUpgradePicker` bind `onkeydown` to non-focusable backdrop `div`s with no
+     `tabindex` and no window listener, so `Escape` only works while focus happens to be inside.
+     `RuleCalloutDialog` does it correctly with a window-level listener — that is the pattern to
+     copy.
+   - **The Roster equipment pool can never receive the Paimon cost reduction.**
+     `armyUpgradeCostReduction` only scans per-entry `upgrades`, and Roster entries carry none,
+     so `rosterPickPoints` always charges raw cost. Needs a rules ruling before it is "fixed".
+   - **`pendingJoinNickname` is not stripped server-side** — `viewForSeat` puts it in every
+     seat's view and only the client hides it. Harmless today (a pending join exists only while
+     seat 2 is empty) but the visibility filter should not depend on that coincidence.
+   - **Hot-seat `activePlayer` is not persisted**, so a reload silently returns control to P1 —
+     potentially showing P1's hidden scheme to whoever holds the phone, which is exactly what the
+     swap countdown exists to prevent.
+   - **The Command Panel's `Reset` has no confirmation**, unlike every other destructive action
+     in the app, and it wipes objectives, scheme, draft _and_ round (both players, in hot-seat).
+   - Dead/misleading copy: `OnlineLobby` still renders _"Round controls arrive in the next
+     update."_ for an `active` game; `"Do you really want to close the game ?"` has a stray
+     space; the close-confirm cancel button reads **Keep playing** in the lobby but **Cancel** in
+     the game view.
+   - Inconsistent rendering: completed-objective strike-through is solo-only; `count: 1` renders
+     as a native checkbox in some panels and a single increment box in others; upgrade
+     descriptions strip rich links in the picker/detail dialogs but render them in the unit card;
+     the item box labelled **PW** actually shows `toughness`.
+   - `armyCode.ts`'s header comment documents the layout as `A<fp3>:…` but `CODE_VERSION` is the
+     lowercase `'a'` the spec asserts — comment is wrong, code is right.
+   - **No content spec for schemes or army JSON** (missions have six guards). The 20-cards-per-deck
+     invariant, scheme id uniqueness, `incrementVp.length === maxIncrements`, and army invariants
+     like "every trait ref resolves" are all unverified.
+6. **Solo `mission-detail` remains unreachable by clicking** (Start Game is disabled in the
+   briefing) — unchanged from the previous session, and now documented as such in
+   `functional-spec/01-navigation-flow.md` rather than being a surprise during testing.
+
+## What was done in an earlier session (mission briefing — solo phase 1, unreleased)
 
 The second iteration of the features starts with the **solo view**, split into two
 phases. Only phase 1 exists so far: clicking a mission opens a read-only **Mission

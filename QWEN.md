@@ -35,9 +35,10 @@ native/platform-specific one. Used on a phone screen during a game session.
   one of the 4 corner combinations); never revert to measuring from top-left.
 - **Faction** → a player-selectable side with its own 20-card Scheme deck; cards can
   be shared across several factions' decks. A `common` pool for cards in every
-  faction's deck exists too (`COMMON_FACTION_ID`).
+  faction's deck exists too (`COMMON_FACTION_ID`) but **no card uses it** — `shared.json`
+  means "in 2+ decks", and its cards enumerate explicit faction ids instead.
 - **Scheme** → secret objective card drawn from a faction's deck (+ common pool).
-  Draw count depends on intelligence: ≤12 → 1, 13–15 → 2, ≥16 → 3. Cards have
+  Draw count depends on intelligence: ≤13 → 2, 14–15 → 3, ≥16 → 4. Cards have
   `factionIds` (whose decks contain the card), `copies` (physical copies — a uniform
   number or per-faction overrides, e.g. Virtuous Commander: 4 Helian / 2 elsewhere;
   Stand Your Ground: 4 Sand / 2 elsewhere), `maxIncrements` (checkboxes), and either
@@ -138,7 +139,8 @@ native/platform-specific one. Used on a phone screen during a game session.
   **"Online 2 Player Game"** button opens the server-backed online flow — its own
   screens (`online-create`/`online-join`/`online-game`), not part of `GameMode`.
 - **MissionProgress** (solo) → per-mission play state: checked objective counts, the
-  chosen Scheme, a `schemeDraft` (faction/intelligence) that survives resets, and
+  chosen Scheme, a `schemeDraft` (faction/intelligence) that survives deleting the
+  chosen Scheme — but not a mission `Reset`, which rebuilds progress from empty — and
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
   = 1–5). Total VP = checked Results VP + checked Scheme increments, capped at
   `MAX_TOTAL_VP` = 10 (a player cannot earn more per mission); the Command Panel
@@ -317,12 +319,16 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 `docs/` holds the specs the app is built against — consult them before changing
 behavior or visuals:
 
-- `docs/functional-spec/` — behavior: navigation flow, mission detail panels,
-  Results panel, Schemes panel. Entity glossary in its README.
-- `docs/technical-spec/` — visual theme, mission JSON format, map rendering.
+- `docs/functional-spec/` — behavior: navigation flow, the static mission panels,
+  Results, Schemes, the Command Panel, hot-seat mode, the online player journey and
+  the army builder. Entity glossary and screen map in its README.
+- `docs/technical-spec/` — visual theme, mission JSON format, map rendering, faction
+  and Scheme JSON, army content and the import pipeline, and the online architecture
+  (state model, API, SSE, SQLite, lifecycle).
 
-Spec docs end with **Open questions** sections; keep them updated when decisions
-get made. Note: the specs currently **lag behind** the features added around v0.1.0
-(Command Panel, rule popups, ceasefire objective, Scheme decks) and v0.4.01
-(two-player hot seat mode, active-player gating, swap mechanic) — they were
-intentionally left untouched; catch them up when the behavior is considered stable.
+Spec docs end with **Open questions** sections that double as the behavioral backlog;
+keep them updated when decisions get made. The specs were **caught up against the code
+in September 2026**, having previously lagged everything from v0.1.0 through v0.6.4
+plus the unreleased Mission Briefing. Keep them current as behavior changes, and
+record a known inconsistency there rather than leaving it undocumented — several
+strike-through, confirmation-dialog and dead-branch gaps are already listed.
