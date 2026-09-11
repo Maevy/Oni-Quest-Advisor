@@ -60,6 +60,28 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (vitality tracks in the Army view)
+
+The read-only Army rows now carry the live-tracking visuals, ready for the damage and status
+feature that closes this iteration.
+
+1. **`VitalityTrack.svelte`** (new): a column of markers for one stat — red **hearts** for HP,
+   yellow **orbs** for stamina — taking `current` and `max`, so depletion later needs no markup
+   change. Four markers per line, then a new line (HP 8 renders as 4 + 4). A depleted marker keeps
+   its coloured outline with a black fill at 70 % opacity, exactly as specified for the future
+   damage states.
+2. **Wired into each Army row** on the right edge: HP track above, stamina track below, drawn from
+   the copy's _effective_ stats (mount and upgrade effects included); a null stat renders no track.
+   Each track exposes `role="img"` with an `aria-label` like `HP 4 of 4`.
+3. **Nothing depletes yet** — `current` equals `max` everywhere. Making the row clickable to assign
+   damage, and the further statuses, is the next step of this iteration and is untouched.
+4. **Verified in a real browser** with an 8-unit Oni Clans army (Helian's pool tops out at HP 3, so
+   it cannot exercise wrapping): every row carries both tracks, all start full, and HP 8 / HP 6 wrap
+   to exactly two lines. The screenshot shows hearts above orbs on each row's right edge. `lint`
+   clean, `svelte-check` 0/0, 313 tests.
+5. **Docs**: `functional-spec/01` describes the tracks and notes the depleted style is pre-built;
+   this file records the session.
+
 ## What was done in the last session (Pick Army + the read-only Army view)
 
 The army builder and the mission flow finally meet.

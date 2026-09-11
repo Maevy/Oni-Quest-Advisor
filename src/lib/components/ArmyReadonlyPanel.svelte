@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ArmyRosterRow, ArmyUpgradeSpec, ArmyView } from '$lib/domain';
 	import Panel from './Panel.svelte';
+	import VitalityTrack from './VitalityTrack.svelte';
 
 	type Props = {
 		view: ArmyView;
@@ -44,6 +45,22 @@
 							{row.points} pts{#if row.mounted}
 								· mounted on {row.mount?.name}{/if}
 						</p>
+					</div>
+					<div class="flex shrink-0 flex-col items-end gap-1">
+						{#if row.effectiveStats.HP !== null}
+							<VitalityTrack
+								kind="hp"
+								current={row.effectiveStats.HP}
+								max={row.effectiveStats.HP}
+							/>
+						{/if}
+						{#if row.effectiveStats.STA !== null}
+							<VitalityTrack
+								kind="stamina"
+								current={row.effectiveStats.STA}
+								max={row.effectiveStats.STA}
+							/>
+						{/if}
 					</div>
 				</div>
 				{#if row.upgrades.length > 0}

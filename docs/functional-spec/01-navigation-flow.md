@@ -152,6 +152,12 @@ the upgrade detail — both purely informational — but there are no steppers, 
 mount toggle and no remove buttons, so the list cannot change. With no army attached it says so
 and points back at the briefing's Pick Army.
 
+Each row also carries the model's **vitality** on its right edge: red hearts for HP and yellow
+orbs for stamina, four per line before wrapping, drawn from the copy's effective stats. They
+render full today; the depleted style (coloured outline, black fill at 70 % opacity) already
+exists, so damage and later statuses can empty them without touching the markup. Assigning that
+damage — making the row interactive — is deliberately not built yet.
+
 On a phone, a **horizontal swipe** across the screen steps between the views in the same order —
 swipe left for the next view, right for the previous — clamped at both ends. The views live in one
 sliding strip, so the outgoing view physically leaves the way the gesture came from and the
