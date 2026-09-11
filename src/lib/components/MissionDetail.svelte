@@ -1,5 +1,16 @@
 <script lang="ts">
-	import type { Faction, Mission, MissionProgress, ResultsEntry, SchemeCard } from '$lib/domain';
+	import type {
+		ArmyRosterRow,
+		ArmyUpgradeSpec,
+		ArmyView,
+		Faction,
+		Mission,
+		MissionProgress,
+		ResultsEntry,
+		SchemeCard
+	} from '$lib/domain';
+	import ArmyReadonlyPanel from './ArmyReadonlyPanel.svelte';
+	import ArmyUpgradeDetail from './ArmyUpgradeDetail.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import DescriptionPanel from './DescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
@@ -9,6 +20,7 @@
 	import ScoreSummaryPanel from './ScoreSummaryPanel.svelte';
 	import SchemesPanel from './SchemesPanel.svelte';
 	import SetupPanel from './SetupPanel.svelte';
+	import UnitCard from './UnitCard.svelte';
 
 	type GameView = 'scoring' | 'army' | 'mission';
 
@@ -27,6 +39,8 @@
 		factions: Faction[];
 		drawnSchemes: SchemeCard[];
 		chosenSchemeCard: SchemeCard | null;
+		/** The army attached to this run, resolved for display; null when none is picked. */
+		armyView: ArmyView | null;
 		/** Called once the player confirms — abandoning discards the whole run. */
 		onAbandon: () => void;
 		onReset: () => void;
@@ -48,6 +62,7 @@
 		factions,
 		drawnSchemes,
 		chosenSchemeCard,
+		armyView,
 		onAbandon,
 		onReset,
 		onSetObjectiveChecked,
@@ -63,6 +78,11 @@
 	/** A started game always opens on the score sheet; the other two views are reference. */
 	let view = $state<GameView>('scoring');
 	let confirmAbandon = $state(false);
+
+	// The army popups live at the screen root: the sliding strip carries a transform, which
+	// would become the containing block for their fixed overlays and trap them inside a pane.
+	let armyCardRow = $state<ArmyRosterRow | null>(null);
+	let armyDetailUpgrade = $state<ArmyUpgradeSpec | null>(null);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
@@ -178,12 +198,20 @@
 			</div>
 			<div class="min-h-0 w-1/3 touch-pan-y overflow-y-auto overscroll-contain pb-6">
 				<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
-					<Panel title="Army">
-						<p class="text-sm text-slate-400">
-							The list you are playing will appear here. This view is not wired up yet — until it
-							is, build and inspect your army from the main menu's Army Builder.
-						</p>
-					</Panel>
+					{#if armyView}
+						<ArmyReadonlyPanel
+							view={armyView}
+							onShowUnit={(row) => (armyCardRow = row)}
+							onShowUpgrade={(upgrade) => (armyDetailUpgrade = upgrade)}
+						/>
+					{:else}
+						<Panel title="Army">
+							<p class="text-sm text-slate-400">
+								No army is attached to this run. Pick one from the mission briefing before starting
+								the game.
+							</p>
+						</Panel>
+					{/if}
 				</div>
 			</div>
 			<div class="min-h-0 w-1/3 touch-pan-y overflow-y-auto overscroll-contain pb-6">
@@ -210,5 +238,34 @@
 		cancelLabel="Keep playing"
 		onConfirm={onAbandon}
 		onCancel={() => (confirmAbandon = false)}
+	/>
+{/if}
+
+{#if armyView && armyCardRow}
+	<UnitCard
+		unit={armyCardRow.upgradedUnit}
+		faction={armyView.faction}
+		classIndex={armyView.classIndex}
+		skillIndex={armyView.skillIndex}
+		traitIndex={armyView.traitIndex}
+		combatArtIndex={armyView.combatArtIndex}
+		spellcraftIndex={armyView.spellcraftIndex}
+		spells={armyView.spells}
+		stratagemIndex={armyView.stratagemIndex}
+		itemIndex={{ ...armyView.itemIndex, ...armyCardRow.itemOverrides }}
+		stats={armyCardRow.effectiveStats}
+		size={armyCardRow.effectiveSize}
+		mounted={armyCardRow.mounted}
+		mountName={armyCardRow.mount?.name}
+		onClose={() => (armyCardRow = null)}
+	/>
+{/if}
+
+{#if armyView && armyDetailUpgrade}
+	<ArmyUpgradeDetail
+		upgrade={armyDetailUpgrade}
+		cost={armyDetailUpgrade.cost}
+		factionColor={armyView.faction.color}
+		onClose={() => (armyDetailUpgrade = null)}
 	/>
 {/if}

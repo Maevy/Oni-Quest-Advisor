@@ -132,7 +132,10 @@ native/platform-specific one. Used on a phone screen during a game session.
   from before a roster update refuse to load instead of decoding wrong).
   "Load Army" on the faction select lists them grouped by faction, newest
   first (`groupSavedArmies`), replays the stored code through `importArmy`,
-  and deletes them via a per-row ✕ behind a Yes/No confirmation.
+  and deletes them via a per-row ✕ behind a Yes/No confirmation. Saved
+  **standard**-format armies also feed the mission flow: the briefing's
+  "Pick Army" button attaches one to the run as a `pickedArmy` snapshot,
+  shown read-only in the tracker's Army view.
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
   is a hot-seat mode where both players share one device. The third
@@ -140,9 +143,11 @@ native/platform-specific one. Used on a phone screen during a game session.
   screens (`online-create`/`online-join`/`online-game`), not part of `GameMode`.
 - **MissionProgress** (solo) → per-mission play state: checked objective counts, the
   chosen Scheme, a `schemeDraft` (faction/intelligence) that survives deleting the
-  chosen Scheme — but not a mission `Reset`, which rebuilds progress from empty — and
+  chosen Scheme — but not a mission `Reset`, which rebuilds progress from empty —
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
-  = 1–5). Total VP = checked Results VP + checked Scheme increments, capped at
+  = 1–5), and `pickedArmy`: a **snapshot** (`{ name, factionId, code }`) of a saved
+  standard army attached from the briefing's **Pick Army** button, rendered read-only
+  in the tracker's Army view. Total VP = checked Results VP + checked Scheme increments, capped at
   `MAX_TOTAL_VP` = 10 (a player cannot earn more per mission); the tracker's untitled score
   panel shows the total against that cap.
 - **OpenGame** (solo) → `{ missionId }`, the marker that a run is live. Written by

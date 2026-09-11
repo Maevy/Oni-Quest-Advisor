@@ -210,6 +210,28 @@ because the content is loaded behind a type assertion. **Do not soften it to a w
 It **warns** (without failing) on upgrades with no curated effects and on skipped faction-less
 units.
 
+## Saved armies and the picked-army snapshot
+
+Saved armies live under `oni-quest-advisor:saved-armies` as a newest-first array of
+`SavedArmy`: `{ id, name, factionId, code, createdAt, format? }`. The metadata exists only so
+saves can be listed without decoding; the **code carries the whole list**. `format` is absent on
+saves written before the Roster format existed, and `savedArmyFormat()` reads that as `standard`.
+
+A mission run attaches one of them as a **snapshot**, `PickedArmy` = `{ name, factionId, code }`,
+stored on `MissionProgress.pickedArmy` and therefore persisted with the run, restored on resume,
+and deleted with the run on abandon. Snapshotting (rather than referencing the save's id) is
+deliberate: editing or deleting the save afterwards must not change a game in progress.
+
+- The briefing's **Pick Army** picker lists only saves whose `savedArmyFormat` is `standard`.
+- Display resolves the snapshot with `decodeArmy` + `resolveArmyEntries`
+  (`missionProgressStore.pickedArmyRows()`), so the read-only Army view shows exactly what the
+  code encodes, upgrades and mount included.
+- A roster change that moves the fingerprint makes the snapshot **undecodable**; the Army view
+  then says no army can be shown rather than guessing at wrong units — the same loud-rejection
+  trade the share code makes.
+- Army catalogs are lazy chunks, so anything that shows a picked army must have called
+  `contentStore.loadArmy()` first; the page triggers it when a run carries a pick.
+
 ## Open questions
 
 - **`data-import/` is untracked** and its track-or-ignore decision is still open. Tracking it

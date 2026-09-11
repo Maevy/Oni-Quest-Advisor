@@ -7,7 +7,8 @@ import {
 	saveOpenGame
 } from '$lib/data';
 import * as domain from '$lib/domain';
-import type { Mission, MissionProgress, SchemeCard } from '$lib/domain';
+import type { ArmyRosterRow, Mission, MissionProgress, PickedArmy, SchemeCard } from '$lib/domain';
+import { contentStore } from './content.svelte';
 
 class MissionProgressStore {
 	progress = $state<MissionProgress | null>(null);
@@ -53,9 +54,48 @@ class MissionProgressStore {
 	/** Explicit reset for a fresh play of the mission: clears checked objectives and the chosen Scheme. */
 	resetMission(): void {
 		if (!this.progress) return;
-		this.progress = domain.createEmptyProgress(this.progress.missionId);
+		// The attached army is the list being fielded, not scoring state - a fresh play keeps it.
+		const pickedArmy = this.progress.pickedArmy;
+		this.progress = { ...domain.createEmptyProgress(this.progress.missionId), pickedArmy };
 		this.drawnSchemes = [];
 		this.persist();
+	}
+
+	/** Attaches a saved army to this run as a snapshot; later edits to the save cannot leak in. */
+	pickArmy(army: PickedArmy): void {
+		if (!this.progress) return;
+		this.progress = { ...this.progress, pickedArmy: army };
+		this.persist();
+	}
+
+	clearPickedArmy(): void {
+		if (!this.progress) return;
+		this.progress = { ...this.progress, pickedArmy: null };
+		this.persist();
+	}
+
+	/**
+	 * The attached army resolved for display; null when nothing is picked, the catalogs are
+	 * still loading, or the snapshot no longer decodes against the current roster.
+	 */
+	pickedArmyRows(): ArmyRosterRow[] | null {
+		const picked = this.progress?.pickedArmy;
+		if (!picked || !contentStore.armyLoaded) return null;
+		const decoded = domain.decodeArmy(picked.code, {
+			factions: contentStore.armyFactions,
+			units: contentStore.armyUnits,
+			upgrades: contentStore.armyUpgrades,
+			spellcrafts: contentStore.armySpellcrafts,
+			items: contentStore.armyItems
+		});
+		if (!decoded.ok) return null;
+		return domain.resolveArmyEntries(
+			decoded.list.entries,
+			domain.unitsForFaction(decoded.list.factionId, contentStore.armyUnits),
+			contentStore.armyUnits.mounts,
+			domain.indexArmyRules(contentStore.armyUpgrades),
+			domain.indexArmyRules(contentStore.armyItems)
+		);
 	}
 
 	setDraftFaction(factionId: string | null): void {

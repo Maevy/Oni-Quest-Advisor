@@ -60,6 +60,39 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (Pick Army + the read-only Army view)
+
+The army builder and the mission flow finally meet.
+
+1. **Upload Army became Pick Army** and works. It opens a picker listing the device's saved
+   **standard**-format armies (Roster saves excluded — a run fields a standard list); picking one
+   attaches it to the run. With none saved it asks _"It seems you don't have any saved armies. Do
+   you want to create one?"_ — **Create one** jumps to the army builder, **Not now** closes.
+2. **The attachment is a snapshot**, `PickedArmy { name, factionId, code }` on `MissionProgress`
+   (`pickedArmy`), so it persists with the run, survives reload/resume, dies with the run on
+   abandon, and cannot be changed by later edits or deletion of the save. `resetMission()` keeps
+   it deliberately: a fresh play of the same mission still fields the same list.
+3. **Selected Army panel** in the briefing, between Mission Description and Setup: army name,
+   faction name in the faction colour, and an ✕ that detaches it.
+4. **The tracker's Army view** renders the snapshot read-only: one row per copy (portrait, name,
+   points, mount) plus a pill per picked upgrade. Portraits open the unit card and pills open the
+   upgrade detail — both already pure-inspection components — but there are no steppers, upgrade
+   slots, mount toggles or remove buttons, so the list cannot change. The unit/upgrade overlays
+   render at the **screen root**, not inside the pane: the sliding strip carries a transform, which
+   would otherwise become the containing block for their `fixed` positioning and trap them.
+5. **Verified end to end in a real browser — 22 assertions**: the empty-state prompt on both
+   branches; building and saving a standard army through the builder UI; picking it; panel
+   placement between Description and Setup; ✕ removing it; the Army view showing name, faction and
+   points with zero add and zero remove controls; the unit card opening and closing; and the pick
+   surviving a reload via the resume prompt. `lint` clean, `svelte-check` 0/0, 313 tests, build OK.
+6. **Docs**: `functional-spec/01` (Pick Army flow, Army view contents, new open question), `02`
+   (briefing panel order), `08` (saved armies now feed the mission flow; snapshot-vs-link and
+   Roster-excluded open questions), `technical-spec/05` (new "Saved armies and the picked-army
+   snapshot" section), `QWEN.md` (`pickedArmy`, Pick Army), plus this file's TODO list.
+
+**Left open on purpose:** the picked army is display-only (nothing validates it against the
+mission), and Roster saves have no path into a run.
+
 ## What was done in the last session (solo tracker: three views + the open-game lifecycle)
 
 Continuation of solo phase 2. After Start Game the tracker is no longer one long scrolling
@@ -424,9 +457,9 @@ Morale / Ceasefire labels) → Setup → Deployment Map → Results → Schemes 
   online screens / the army builder each place and color their buttons differently again.
   One shared header component — title slot plus left/right action slots, consistent button
   treatments and a decision on sticky vs. in-flow — should replace all of them.
-- **Upload Army / the Army view**: the blue button's eventual purpose — attach a built or
-  saved army to a mission run. The tracker's stubbed **Army** tab is waiting on the same
-  decision, so one answer unblocks both.
+- **The picked army is display-only**: nothing validates the attached list against the
+  mission (points, faction, required units), and Roster saves cannot be picked at all.
+  Both are deliberate for now; revisit if the army should matter beyond reference.
 - **Bring the grouped Results to hot-seat and online** (solo's tracker has it now), so
   Awaiting Reinforcements stops rendering 12 separate cards there.
 - **Three views in hot-seat?** Solo's tracker now splits Scoring / Army / Mission behind a

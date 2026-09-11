@@ -3,9 +3,10 @@
 A standalone list-building tool, separate from the mission flow. The player picks a faction and
 builds an army under a format's point cap, inspecting every rule a unit carries along the way.
 
-It is reached from the main menu's **Army Builder** button (violet) and **never enters the
-mission flow** — it does not set a game mode, and nothing it builds is attached to a mission yet
-(that is the Mission Briefing's disabled **Upload Army** button, still unbuilt).
+It is reached from the main menu's **Army Builder** button (violet) and never sets a game mode.
+What it saves does reach the mission flow, though: the Mission Briefing's **Pick Army** button
+lists saved **standard**-format armies and attaches one to the run as a read-only snapshot — see
+[01-navigation-flow.md](./01-navigation-flow.md).
 
 The builder is **in-memory only**. Leaving it discards the list; army codes and saved armies are
 the only persistence. Data formats, the import pipeline and code serialization are in
@@ -273,6 +274,8 @@ its row.
   or a rename.
 - **The unit-card popup stack has no depth limit.** Rules links can nest arbitrarily; on a phone a
   deep stack is only closable one layer at a time.
-- **Upload Army is unbuilt.** The whole builder currently produces nothing the mission flow can
-  use — the code and the save are the only outputs. Attaching an army to a mission run is the
-  obvious next step and the reason the briefing's blue button exists.
+- **A picked army is a snapshot, not a link.** Saving an army and then picking it for a run copies
+  name, faction and code into the run; editing or deleting the save afterwards does not touch the
+  run. Whether a run should instead track its save live is undecided.
+- **Roster saves cannot be picked.** The picker lists standard-format saves only, so a Roster list
+  built in the builder has no path into a mission run yet.

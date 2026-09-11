@@ -1,5 +1,6 @@
 import { getScoreableResults, type Mission } from './mission';
 import { schemeVp, type ChosenScheme, type SchemeCard } from './scheme';
+import type { PickedArmy } from './savedArmy';
 
 export type SchemeDraft = {
 	factionId: string | null;
@@ -21,6 +22,8 @@ export type MissionProgress = {
 	schemeDraft: SchemeDraft;
 	/** Which round the table is currently on, tracked manually by the players (MIN_ROUND..MAX_ROUND). */
 	currentRound: number;
+	/** The army attached to this run, if the player picked one; a snapshot, not a live save. */
+	pickedArmy: PickedArmy | null;
 };
 
 export function createEmptyProgress(missionId: string): MissionProgress {
@@ -29,7 +32,8 @@ export function createEmptyProgress(missionId: string): MissionProgress {
 		checkedObjectiveCounts: {},
 		scheme: null,
 		schemeDraft: { factionId: null, intelligence: null },
-		currentRound: MIN_ROUND
+		currentRound: MIN_ROUND,
+		pickedArmy: null
 	};
 }
 

@@ -115,8 +115,16 @@ skips the briefing entirely and goes straight to `mission-detail`.
 
 A read-only walkthrough of the mission: no scheme selection, no VP scoring, no score panel. See
 [02-mission-detail-static-panels.md](./02-mission-detail-static-panels.md) for the panel stack.
-Its sticky top bar carries **← Return** (→ `returnToMissionSelect()`), **Upload Army** (disabled —
-a later feature) and **Start Game** (→ `startGame()`).
+Its sticky top bar carries **← Return** (→ `returnToMissionSelect()`), **Pick Army** and
+**Start Game** (→ `startGame()`).
+
+**Pick Army** opens a picker listing the device's saved **standard**-format armies (Roster saves
+are excluded — a mission run fields a standard list). With none saved it instead asks _"It seems
+you don't have any saved armies. Do you want to create one?"_ — **Create one** jumps to the army
+builder, **Not now** closes. Picking attaches a **snapshot** (`PickedArmy`: name, faction, code)
+to the run, shown as a **Selected Army** panel between the Description and Setup panels with an
+**✕** that detaches it again. The snapshot means later edits or deletion of the save cannot change
+a run that is already under way.
 
 **Start Game is the boundary between browsing and playing**: it records the mission as the **open
 game** and switches to `mission-detail`. From then on the run has a lifecycle — see below.
@@ -132,11 +140,17 @@ opens on **Scoring**; the other two are reference views the player can switch to
 | View        | Contents                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------- |
 | **Scoring** | score panel (VP total, round stepper, Reset) → Results (editable) → Schemes (editable)                  |
-| **Army**    | a stub — the list the player is fielding will go here; it is not wired up yet                           |
+| **Army**    | the picked army, **read-only**: copies with portraits and upgrade pills, all inspectable, none mutable  |
 | **Mission** | the static panels only: Description (with its rule-label popups) → Setup → Deployment Map → Quest Rules |
 
 Results and Schemes live **only** in Scoring, so nothing appears twice: the Mission view is the
 reference sheet, not a second read-only copy of the score.
+
+The **Army** view renders the attached snapshot: one row per copy with its portrait, name, points
+and mount, plus a pill per picked upgrade. Tapping a portrait opens the unit card and a pill opens
+the upgrade detail — both purely informational — but there are no steppers, no upgrade slots, no
+mount toggle and no remove buttons, so the list cannot change. With no army attached it says so
+and points back at the briefing's Pick Army.
 
 On a phone, a **horizontal swipe** across the screen steps between the views in the same order —
 swipe left for the next view, right for the previous — clamped at both ends. The views live in one
@@ -242,9 +256,9 @@ breaking.
 
 ## Open questions
 
-- **The Army view is a stub.** It is the third of the tracker's views and currently says so.
-  Wiring it to a built or saved army is the same work as the briefing's **Upload Army** button —
-  one decision ("what does it mean to attach an army to a run?") unblocks both.
+- **Should the picked army influence anything beyond display?** Today it is a reference sheet in
+  the Army view; nothing checks the list against the mission (points, faction, required units).
+  The snapshot is already there if such a rule ever arrives.
 - **Should hot-seat get the three-view layout too?** Solo now splits Scoring / Army / Mission
   behind a sticky bar; hot-seat is still one long scrolling screen with a drawer. See
   [05-score-and-round-controls.md](./05-score-and-round-controls.md).

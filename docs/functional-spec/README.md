@@ -137,9 +137,9 @@ made, and treat them as the backlog of behavioural gaps. The cross-cutting ones:
 - **The shared header component.** Every screen invents its own button constellation; one header
   (title slot + left/right action slots) should replace them all. Tracked in
   [../technical-spec/01-visual-theme.md](../technical-spec/01-visual-theme.md).
-- **Upload Army / the Army view.** Two halves of one missing feature: the briefing's disabled blue
-  button, and the tracker's **Army** tab, which is a stub. Both wait on the same decision — what it
-  means to attach a built or saved army to a run.
+- **The picked army is display-only.** The Army view is a reference sheet; nothing validates the
+  list against the mission (points, faction, required units). Whether it ever should is an open
+  question in [01-navigation-flow.md](./01-navigation-flow.md).
 - **Grouped Results in hot-seat and online.** Solo renders per-round cards in both the briefing
   and the tracker; the other two modes still show one card per round-entry (Awaiting
   Reinforcements: 12 cards).

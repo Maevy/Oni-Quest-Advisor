@@ -12,7 +12,9 @@
 		resolveArmyEntries,
 		savedArmyFormat,
 		type ArmyFormat,
-		type Mission
+		type ArmyView,
+		type Mission,
+		type SavedArmy
 	} from '$lib/domain';
 	import {
 		armyBuilderStore,
@@ -39,6 +41,7 @@
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
+	import PickArmyDialog from '$lib/components/PickArmyDialog.svelte';
 
 	contentStore.load();
 
@@ -175,6 +178,69 @@
 	let armySpellcraftIndex = $derived(indexArmyRules(contentStore.armySpellcrafts));
 	let armyStratagemIndex = $derived(indexArmyRules(contentStore.armyStratagems));
 	let armyItemIndex = $derived(indexArmyRules(contentStore.armyItems));
+
+	// The army attached to the current run, resolved for the read-only Army view.
+	let pickedArmyRows = $derived(missionProgressStore.pickedArmyRows());
+	let pickedArmyFaction = $derived.by(() => {
+		const picked = missionProgressStore.progress?.pickedArmy;
+		return picked
+			? contentStore.armyFactions.find((faction) => faction.id === picked.factionId)
+			: undefined;
+	});
+	let armyView = $derived.by((): ArmyView | null => {
+		const picked = missionProgressStore.progress?.pickedArmy;
+		const rows = pickedArmyRows;
+		const faction = pickedArmyFaction;
+		if (!picked || !rows || !faction) return null;
+		return {
+			army: picked,
+			rows,
+			faction,
+			classIndex: armyClassIndex,
+			skillIndex: armySkillIndex,
+			traitIndex: armyTraitIndex,
+			combatArtIndex: armyCombatArtIndex,
+			spellcraftIndex: armySpellcraftIndex,
+			spells: contentStore.armySpells,
+			stratagemIndex: armyStratagemIndex,
+			itemIndex: armyItemIndex
+		};
+	});
+
+	// A resumed run may carry an army whose catalogs are not loaded yet.
+	$effect(() => {
+		if (missionProgressStore.progress?.pickedArmy && !contentStore.armyLoaded) {
+			void contentStore.loadArmy();
+		}
+	});
+
+	// Pick Army dialog
+	let showPickArmy = $state(false);
+	let showCreateArmyPrompt = $state(false);
+	let pickArmies = $state<SavedArmy[]>([]);
+
+	async function openPickArmy(): Promise<void> {
+		await contentStore.loadArmy();
+		armyBuilderStore.refreshSavedArmies();
+		const standard = armyBuilderStore.savedArmies.filter(
+			(army) => savedArmyFormat(army) === 'standard'
+		);
+		if (standard.length === 0) {
+			showCreateArmyPrompt = true;
+			return;
+		}
+		pickArmies = standard;
+		showPickArmy = true;
+	}
+
+	function selectPickedArmy(army: SavedArmy): void {
+		missionProgressStore.pickArmy({
+			name: army.name,
+			factionId: army.factionId,
+			code: army.code
+		});
+		showPickArmy = false;
+	}
 
 	// Save/Load Army dialogs
 	let showSaveArmy = $state(false);
@@ -418,7 +484,11 @@
 	<MissionBriefing
 		mission={selectedMission}
 		entries={resultsEntries}
+		pickedArmy={missionProgressStore.progress?.pickedArmy ?? null}
+		{pickedArmyFaction}
 		onReturn={() => navigationStore.returnToMissionSelect()}
+		onPickArmy={() => void openPickArmy()}
+		onClearArmy={() => missionProgressStore.clearPickedArmy()}
 		onStart={() => navigationStore.startGame()}
 	/>
 {:else if isTwoPlayer && selectedMission && twoPlayerProgressStore.progress}
@@ -463,6 +533,7 @@
 		factions={contentStore.factions}
 		drawnSchemes={missionProgressStore.drawnSchemes}
 		{chosenSchemeCard}
+		{armyView}
 		onAbandon={() => navigationStore.abandonGame()}
 		onReset={() => missionProgressStore.resetMission()}
 		onSetObjectiveChecked={(objectiveId, checkedCount, maxCount) =>
@@ -550,5 +621,27 @@
 			mountConflict = null;
 		}}
 		onCancel={() => (mountConflict = null)}
+	/>
+{/if}
+
+{#if showPickArmy}
+	<PickArmyDialog
+		armies={pickArmies}
+		factions={contentStore.armyFactions}
+		onPick={selectPickedArmy}
+		onCancel={() => (showPickArmy = false)}
+	/>
+{/if}
+
+{#if showCreateArmyPrompt}
+	<ConfirmDialog
+		text="It seems you don't have any saved armies. Do you want to create one?"
+		confirmLabel="Create one"
+		cancelLabel="Not now"
+		onConfirm={() => {
+			showCreateArmyPrompt = false;
+			navigationStore.selectArmyBuilder();
+		}}
+		onCancel={() => (showCreateArmyPrompt = false)}
 	/>
 {/if}

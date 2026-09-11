@@ -1,4 +1,12 @@
 import type { ArmyFactionId, ArmyFormat } from './army';
+import type {
+	ArmyFactionConfig,
+	ArmyItemSpec,
+	ArmyRosterRow,
+	ArmyRulesSpec,
+	ArmySpellSpec,
+	ArmyStratagemSpec
+} from './army';
 
 /**
  * A persisted army list. The code carries the whole list (faction, format,
@@ -25,6 +33,34 @@ export type SavedArmyGroup = {
 	factionId: ArmyFactionId;
 	/** Newest first. */
 	armies: SavedArmy[];
+};
+
+/**
+ * The army attached to a mission run: a snapshot taken at pick time, so later edits
+ * or deletion of the save cannot change a run that is already under way.
+ */
+export type PickedArmy = {
+	name: string;
+	factionId: ArmyFactionId;
+	code: string;
+};
+
+/**
+ * Everything the read-only army view needs, resolved once per render: the snapshot,
+ * its copies joined with unit specs, and the catalogs the unit card resolves against.
+ */
+export type ArmyView = {
+	army: PickedArmy;
+	rows: ArmyRosterRow[];
+	faction: ArmyFactionConfig;
+	classIndex: Record<string, ArmyRulesSpec>;
+	skillIndex: Record<string, ArmyRulesSpec>;
+	traitIndex: Record<string, ArmyRulesSpec>;
+	combatArtIndex: Record<string, ArmyRulesSpec>;
+	spellcraftIndex: Record<string, ArmyRulesSpec>;
+	spells: ArmySpellSpec[];
+	stratagemIndex: Record<string, ArmyStratagemSpec>;
+	itemIndex: Record<string, ArmyItemSpec>;
 };
 
 /** Groups saved armies by faction (in `factionOrder`), newest first within each group. */

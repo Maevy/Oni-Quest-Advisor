@@ -1,23 +1,39 @@
 <script lang="ts">
-	import type { Mission, ResultsEntry } from '$lib/domain';
+	import type { ArmyFactionConfig, Mission, PickedArmy, ResultsEntry } from '$lib/domain';
 	import MissionDescriptionPanel from './MissionDescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import MissionTitlePanel from './MissionTitlePanel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import ResultsBriefingPanel from './ResultsBriefingPanel.svelte';
 	import SchemesBriefingPanel from './SchemesBriefingPanel.svelte';
+	import SelectedArmyPanel from './SelectedArmyPanel.svelte';
 	import SetupPanel from './SetupPanel.svelte';
 
 	type Props = {
 		mission: Mission;
 		/** Results laid out for display — plain objectives plus per-round cards. */
 		entries: ResultsEntry[];
+		/** The army attached to this run, if any. */
+		pickedArmy: PickedArmy | null;
+		pickedArmyFaction: ArmyFactionConfig | undefined;
 		onReturn: () => void;
+		/** Opens the saved-army picker. */
+		onPickArmy: () => void;
+		onClearArmy: () => void;
 		/** Switches to the interactive tracker. */
 		onStart: () => void;
 	};
 
-	let { mission, entries, onReturn, onStart }: Props = $props();
+	let {
+		mission,
+		entries,
+		pickedArmy,
+		pickedArmyFaction,
+		onReturn,
+		onPickArmy,
+		onClearArmy,
+		onStart
+	}: Props = $props();
 </script>
 
 <div class="min-h-dvh pb-6">
@@ -31,13 +47,12 @@
 				<span aria-hidden="true">←</span> Return
 			</button>
 			<div class="ml-auto flex items-center gap-2">
-				<!-- Wired up once armies attach to a mission run. -->
 				<button
 					type="button"
-					disabled
 					class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2 text-sm font-medium text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+					onclick={onPickArmy}
 				>
-					Upload Army
+					Pick Army
 				</button>
 				<button
 					type="button"
@@ -57,6 +72,9 @@
 			brokenMorale={mission.brokenMorale}
 			ceasefire={mission.ceasefire}
 		/>
+		{#if pickedArmy}
+			<SelectedArmyPanel army={pickedArmy} faction={pickedArmyFaction} onRemove={onClearArmy} />
+		{/if}
 		<SetupPanel setup={mission.setup} />
 		<MissionMap map={mission.map} />
 		<ResultsBriefingPanel {entries} important={mission.important} />
