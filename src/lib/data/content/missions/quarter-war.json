@@ -19,51 +19,67 @@
 	"results": [
 		{
 			"id": "stronger-presence-round-2",
-			"text": "Receive 1 VP at the end of Round 2 for each Quarter in which you have Stronger Presence.",
+			"text": "Receive 1 VP at the end of the round for each Quarter in which you have Stronger Presence.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 2,
+			"group": "stronger-presence"
 		},
 		{
 			"id": "stronger-presence-round-3",
-			"text": "Receive 1 VP at the end of Round 3 for each Quarter in which you have Stronger Presence.",
+			"text": "Receive 1 VP at the end of the round for each Quarter in which you have Stronger Presence.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 3,
+			"group": "stronger-presence"
 		},
 		{
 			"id": "stronger-presence-round-4",
-			"text": "Receive 1 VP at the end of Round 4 for each Quarter in which you have Stronger Presence.",
+			"text": "Receive 1 VP at the end of the round for each Quarter in which you have Stronger Presence.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 4,
+			"group": "stronger-presence"
 		},
 		{
 			"id": "stronger-presence-round-5",
-			"text": "Receive 1 VP at the end of Round 5 for each Quarter in which you have Stronger Presence.",
+			"text": "Receive 1 VP at the end of the round for each Quarter in which you have Stronger Presence.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 5,
+			"group": "stronger-presence"
 		},
 		{
 			"id": "uncontested-round-2",
-			"text": "Receive 1 VP at the end of Round 2 for each Quarter fully containing one or more models and no enemy models.",
+			"text": "Receive 1 VP at the end of the round for each Quarter fully containing one or more models and no enemy models.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 2,
+			"group": "uncontested"
 		},
 		{
 			"id": "uncontested-round-3",
-			"text": "Receive 1 VP at the end of Round 3 for each Quarter fully containing one or more models and no enemy models.",
+			"text": "Receive 1 VP at the end of the round for each Quarter fully containing one or more models and no enemy models.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 3,
+			"group": "uncontested"
 		},
 		{
 			"id": "uncontested-round-4",
-			"text": "Receive 1 VP at the end of Round 4 for each Quarter fully containing one or more models and no enemy models.",
+			"text": "Receive 1 VP at the end of the round for each Quarter fully containing one or more models and no enemy models.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 4,
+			"group": "uncontested"
 		},
 		{
 			"id": "uncontested-round-5",
-			"text": "Receive 1 VP at the end of Round 5 for each Quarter fully containing one or more models and no enemy models.",
+			"text": "Receive 1 VP at the end of the round for each Quarter fully containing one or more models and no enemy models.",
 			"vp": 1,
-			"count": 4
+			"count": 4,
+			"round": 5,
+			"group": "uncontested"
 		}
 	],
 	"important": ["Players cannot score VP during Round 1 (Ceasefire)."],

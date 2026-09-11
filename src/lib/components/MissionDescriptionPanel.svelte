@@ -5,23 +5,22 @@
 	import RuleLabels from './RuleLabels.svelte';
 
 	type Props = {
-		name: string;
 		description: string;
 		brokenMorale: boolean;
 		ceasefire: boolean;
 		collapsible?: boolean;
 	};
 
-	let { name, description, brokenMorale, ceasefire, collapsible = false }: Props = $props();
+	let { description, brokenMorale, ceasefire, collapsible = false }: Props = $props();
 
 	let openRule = $state<RuleCallout | null>(null);
 </script>
 
-<Panel title={name} {collapsible}>
-	<div class="mb-3">
+<Panel title="Mission Description" {collapsible}>
+	<p class="text-slate-300">{description}</p>
+	<div class="mt-3">
 		<RuleLabels {brokenMorale} {ceasefire} onOpenRule={(rule) => (openRule = rule)} />
 	</div>
-	<p class="text-slate-300">{description}</p>
 </Panel>
 
 <!-- Sibling of <Panel>, never inside it: Panel's backdrop-blur would become the overlay's

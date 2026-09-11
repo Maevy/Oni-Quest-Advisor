@@ -2,6 +2,7 @@
 	import { CEASEFIRE_OBJECTIVE_ID, type Mission, type ResultObjectiveDef } from '$lib/domain';
 	import DescriptionPanel from './DescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
+	import ObjectiveRoundChip from './ObjectiveRoundChip.svelte';
 	import Panel from './Panel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import SetupPanel from './SetupPanel.svelte';
@@ -36,7 +37,7 @@
 						: 'border-slate-600/30 bg-slate-900/30'}"
 				>
 					<p class="text-sm {isCeasefire ? 'text-red-200' : 'text-slate-200'}">
-						{objective.text}
+						<ObjectiveRoundChip round={objective.round} />{objective.text}
 					</p>
 					<span
 						class="shrink-0 text-sm font-semibold {isCeasefire ? 'text-red-300' : 'text-sky-300'}"

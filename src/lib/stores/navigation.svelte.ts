@@ -16,6 +16,7 @@ export type Screen =
 	| 'army-builder'
 	| 'season-select'
 	| 'mission-select'
+	| 'mission-briefing'
 	| 'mission-detail'
 	| 'online-create'
 	| 'online-join'
@@ -124,12 +125,14 @@ class NavigationStore {
 
 	selectMission(missionId: string): void {
 		this.selectedMissionId = missionId;
-		this.screen = 'mission-detail';
 		if (this.gameMode === 'two-player') {
 			twoPlayerProgressStore.loadForMission(missionId);
-		} else {
-			missionProgressStore.loadForMission(missionId);
+			this.screen = 'mission-detail';
+			return;
 		}
+		missionProgressStore.loadForMission(missionId);
+		// Solo phase 1: the read-only briefing. Phase 2 (the interactive tracker) follows later.
+		this.screen = 'mission-briefing';
 	}
 
 	returnToMissionSelect(): void {

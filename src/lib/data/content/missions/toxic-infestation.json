@@ -56,27 +56,35 @@
 		},
 		{
 			"id": "control-round-2",
-			"text": "Gain 1 VP at the end of Round 2 for each Toxic Vine under your control.",
+			"text": "Gain 1 VP at the end of the round for each Toxic Vine under your control.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 2,
+			"group": "control"
 		},
 		{
 			"id": "control-round-3",
-			"text": "Gain 1 VP at the end of Round 3 for each Toxic Vine under your control.",
+			"text": "Gain 1 VP at the end of the round for each Toxic Vine under your control.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 3,
+			"group": "control"
 		},
 		{
 			"id": "control-round-4",
-			"text": "Gain 1 VP at the end of Round 4 for each Toxic Vine under your control.",
+			"text": "Gain 1 VP at the end of the round for each Toxic Vine under your control.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 4,
+			"group": "control"
 		},
 		{
 			"id": "control-round-5",
-			"text": "Gain 1 VP at the end of Round 5 for each Toxic Vine under your control.",
+			"text": "Gain 1 VP at the end of the round for each Toxic Vine under your control.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 5,
+			"group": "control"
 		}
 	],
 	"important": [

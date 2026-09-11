@@ -18,51 +18,67 @@
 	"results": [
 		{
 			"id": "across-center-round-2",
-			"text": "Receive 1 VP at the end of Round 2 for each of your Ink Snails fully across the center line.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully across the center line.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 2,
+			"group": "across-center"
 		},
 		{
 			"id": "across-center-round-3",
-			"text": "Receive 1 VP at the end of Round 3 for each of your Ink Snails fully across the center line.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully across the center line.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 3,
+			"group": "across-center"
 		},
 		{
 			"id": "across-center-round-4",
-			"text": "Receive 1 VP at the end of Round 4 for each of your Ink Snails fully across the center line.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully across the center line.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 4,
+			"group": "across-center"
 		},
 		{
 			"id": "across-center-round-5",
-			"text": "Receive 1 VP at the end of Round 5 for each of your Ink Snails fully across the center line.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully across the center line.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 5,
+			"group": "across-center"
 		},
 		{
 			"id": "in-opponent-zone-round-2",
-			"text": "Receive 1 VP at the end of Round 2 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully within your opponent's Deployment Zone.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 2,
+			"group": "in-opponent-zone"
 		},
 		{
 			"id": "in-opponent-zone-round-3",
-			"text": "Receive 1 VP at the end of Round 3 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully within your opponent's Deployment Zone.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 3,
+			"group": "in-opponent-zone"
 		},
 		{
 			"id": "in-opponent-zone-round-4",
-			"text": "Receive 1 VP at the end of Round 4 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully within your opponent's Deployment Zone.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 4,
+			"group": "in-opponent-zone"
 		},
 		{
 			"id": "in-opponent-zone-round-5",
-			"text": "Receive 1 VP at the end of Round 5 for each of your Ink Snails fully within your opponent's Deployment Zone.",
+			"text": "Receive 1 VP at the end of the round for each of your Ink Snails fully within your opponent's Deployment Zone.",
 			"vp": 1,
-			"count": 2
+			"count": 2,
+			"round": 5,
+			"group": "in-opponent-zone"
 		}
 	],
 	"questRules": [

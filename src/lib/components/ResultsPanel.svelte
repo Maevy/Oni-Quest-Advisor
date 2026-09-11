@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CEASEFIRE_OBJECTIVE_ID, type ResultObjectiveDef } from '$lib/domain';
 	import IncrementBoxes from './IncrementBoxes.svelte';
+	import ObjectiveRoundChip from './ObjectiveRoundChip.svelte';
 	import Panel from './Panel.svelte';
 
 	type Props = {
@@ -25,9 +26,9 @@
 					: 'px-2 py-1.5'}"
 			>
 				<div class="flex items-start justify-between gap-3">
-					<span class={complete ? 'text-slate-500 line-through' : 'text-slate-200'}>
-						{objective.text}
-					</span>
+					<span class={complete ? 'text-slate-500 line-through' : 'text-slate-200'}
+						><ObjectiveRoundChip round={objective.round} />{objective.text}</span
+					>
 					<span
 						class="shrink-0 text-sm font-semibold {isCeasefire ? 'text-red-300' : 'text-sky-300'}"
 					>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { MAX_ROUND, MAX_TOTAL_VP, MIN_ROUND, type PlayerKey } from '$lib/domain';
+	import { roundAccent } from './roundAccent';
 
 	type Props = {
 		totalVPP1: number;
@@ -16,15 +17,7 @@
 
 	let open = $state(false);
 
-	const ROUND_ACCENTS: Record<number, { border: string; text: string }> = {
-		1: { border: 'border-emerald-500', text: 'text-emerald-300' },
-		2: { border: 'border-lime-500', text: 'text-lime-300' },
-		3: { border: 'border-amber-400', text: 'text-amber-300' },
-		4: { border: 'border-orange-500', text: 'text-orange-300' },
-		5: { border: 'border-red-500', text: 'text-red-300' }
-	};
-
-	let accent = $derived(ROUND_ACCENTS[round]);
+	let accent = $derived(roundAccent(round));
 </script>
 
 <div class="fixed top-1/2 right-0 z-40 flex -translate-y-1/2 items-stretch">

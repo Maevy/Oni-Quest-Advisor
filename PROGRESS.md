@@ -25,6 +25,10 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   per-session details are all recorded below. Day-to-day work happens on
   `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note
   the working branch is `develop`, not `main`).
+- **Unreleased, in progress on `develop`** (ahead of the v0.6.4 tag): the second
+  iteration of the solo view — phase 1, the read-only **Mission Briefing** screen,
+  and the additive v2 Results schema (`round`/`group`) behind its per-round cards.
+  Not tagged, not deployed; details in the last session's notes below.
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
   v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
   would have to create the volume first:
@@ -48,7 +52,102 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (v0.6.4 scoring hotfix)
+## What was done in the last session (mission briefing — solo phase 1, unreleased)
+
+The second iteration of the features starts with the **solo view**, split into two
+phases. Only phase 1 exists so far: clicking a mission opens a read-only **Mission
+Briefing** instead of the interactive tracker. Nothing here is tagged or deployed — it
+sits on `develop` ahead of v0.6.4.
+
+**Phase 1 = the briefing** (new `mission-briefing` screen, `MissionBriefing.svelte`):
+no scheme selection, no VP scoring, no Command Panel. A sticky top bar carries three
+buttons — red **← Return** (works, back to mission select), blue **Upload Army**
+(disabled; a major feature later) and emerald **Start Game** (disabled; it will move to
+phase 2). Hot-seat two-player is untouched and still goes straight to `mission-detail`
+— `selectMission()` now branches on `gameMode`. Panel order: mission title (own panel,
+centered `text-3xl` headline) → Mission Description (flavour text, then the Broken
+Morale / Ceasefire labels) → Setup → Deployment Map → Results → Schemes (read-only:
+"Can be selected when the game starts.") → Quest Rules.
+
+1. **v2 Results schema, additive**: `ResultObjectiveDef` gained `round?: number` and
+   `group?: string`, with the convention _one entry per round_ and round-neutral
+   texts. Chosen deliberately over collapsing the per-round entries into a single id:
+   five missions (Clue Trail, Magic Stones, Quarter War, Snail Chase, Toxic Infestation)
+   already had per-round ids, so annotating them changed **no id and no count** —
+   persisted progress, VP math, hot-seat, the online state and the wire protocol all
+   stayed untouched. Awaiting Reinforcements was the exception (its rounds were
+   implicit in `count: 4`) and was split 3 → 12 per-round objectives; its previously
+   saved solo progress resets, which is the accepted cost.
+2. **`groupResults()`** (`lib/domain/results.ts`) turns the flat objective list into
+   `ResultsEntry[]`: plain objectives pass through in order, grouped ones become a card
+   at their first member's position with a row for **every** round 1–5 and
+   `objective: null` where nothing scores. User decision: always 5 rows, so round
+   colors line up across missions and a locked round is explicit rather than implied.
+3. **Round accents are shared now**: `components/roundAccent.ts` owns the green→red map
+   (plus a translucent row `background`); both Command Panels import it instead of
+   keeping private copies, and the briefing rows use the same hues at `/10` opacity.
+4. **`ResultsBriefingPanel`** renders the cards — objective text + VP, then one row per
+   round tinted with that round's color, a round label, and that round's boxes
+   **disabled** (user decision: show them inert, so phase 2 only has to enable them).
+   Locked rows read "No VP". Ungrouped objectives (Open Hostilities, Supply Run,
+   Treasure Hunt, Toxic Infestation's Avatar) and the red ceasefire card render as
+   before.
+5. **Deployment map visuals**: frame border down to `/20` and `rounded-xs` (2 px —
+   "reduce the rounded edges almost completely"), zone outlines dashed
+   (`stroke-dasharray="1.2 0.8"` in inches), and each zone carries a centered bold
+   **"Deployment Zone"** label plus its range in the zone's own saturated hue
+   (red-400 / sky-400) instead of the old pale corner text. Radial zones use a smaller
+   size to fit inside the corner arc.
+6. **Round chips in the other modes**: since the grouped texts are round-neutral,
+   `ObjectiveRoundChip` (`R2`…`R5` in the round's color) went into `ResultsPanel`,
+   `ResultsPanelTwoPlayer`, `OnlineResultsPanel` and `OnlineMissionView` so they don't
+   lose the round information. They still render one card per objective, so Awaiting
+   Reinforcements shows 12 cards there until they adopt the grouped panel.
+7. **Rule-callout overlay bug — a regression from this session's own extraction, found
+   by the user and fixed**: moving the Broken Morale / Ceasefire labels into
+   `RuleLabels` had moved the popup _inside_ `Panel`, whose `backdrop-blur` makes it the
+   containing block for `position: fixed` descendants — the overlay covered only that
+   panel and every later panel painted over it. Split into `RuleLabels` (buttons, emits
+   `onOpenRule`) + `RuleCalloutDialog` (overlay), rendered as a **sibling** of `Panel`
+   by `DescriptionPanel` and `MissionDescriptionPanel`, at `z-50` (was `z-30`) with the
+   app's standard `bg-slate-950/70 backdrop-blur-sm` backdrop; clicking anywhere outside
+   or Escape closes it. The rule is written into `lib/components/CLAUDE.md`. The army
+   builder's popups were checked and are fine (rendered at `ArmyBuilderView`'s top
+   level, outside its blurred panels).
+8. **Other component work**: `MissionTitlePanel`, `MissionDescriptionPanel` and
+   `SchemesBriefingPanel` are new; `RuleLabels` / `RuleCalloutDialog` came out of
+   `DescriptionPanel`, which now renders identically to before.
+9. **Tests**: 305 passing (was 297) — five `groupResults` specs
+   (`lib/domain/results.spec.ts`) plus new content invariants in
+   `lib/data/missions.spec.ts`; the ceasefire Round-1 guard now checks the `round`
+   field, not only the text. `check` and `lint` clean. The mission JSONs were migrated
+   by a throwaway script and verified so that **only the `results` arrays** differ from
+   HEAD.
+
+### TODO / next
+
+- **Unify the top button bar.** Every screen currently invents its own header
+  constellation: the briefing has a sticky 3-button bar (red Return left, Upload Army +
+  Start Game right), `MissionDetail` a lone right-aligned sky "Return" pill sitting in
+  the flow, and `MissionSelect` / `SeasonSelect` / `GameModeSelect` / the online screens
+  / the army builder each place and color their buttons differently again. One shared
+  header component — title slot plus left/right action slots, consistent button
+  treatments and a decision on sticky vs. in-flow — should replace all of them.
+- **Phase 2**: wire the emerald **Start Game** to something like
+  `navigationStore.startGame()` switching to `mission-detail`, and make the interactive
+  Results panel reuse the round-grouped layout (per-round boxes writing to the per-round
+  objective ids — the progress shape already supports that unchanged).
+- **Upload Army**: the blue button's eventual purpose — attach a built or saved army to
+  a mission run.
+- **Bring the grouped Results to hot-seat and online**, so Awaiting Reinforcements stops
+  rendering 12 separate cards there.
+- **Solo `mission-detail` is currently unreachable by clicking** (Start Game is
+  disabled). Expected until phase 2 lands, but worth remembering when testing.
+- **Visual sign-off still pending** on the radial "Deployment Zone" label fit (Quarter
+  War, Toxic Infestation), 4-box rows at phone width, and whether the filled `bg-red-500`
+  Return is notable enough.
+
+## What was done in earlier sessions (v0.6.4 scoring hotfix)
 
 Two player-reported scoring bugs, both around the 1st Round Ceasefire. Released
 as **v0.6.4**.
@@ -709,11 +808,21 @@ registration step. Shape (see `lib/domain/mission.ts`):
   id, season, name, description, brokenMorale, ceasefire,
   setup: [{ label, description }],
   map: { zone: { type: 'horizontal' | 'radial', rangeInches }, markers: [...], quarters?: bool },
-  results: [{ id, text, vp, count }],
+  results: [{ id, text, vp, count, round?, group? }],
   important?: [string],
   questRules: [{ label, description }]
 }
 ```
+
+Round-scoped Results carry **one entry per round**: `round` says which round it scores
+at the end of, `group` names the card the entries belong to, and `text` is
+round-neutral ("at the end of the round"). `count` then means "instances scoreable in
+that round" (4 Quarters, 2 Ink Snails, 1 Obelisk check). `groupResults()`
+(`lib/domain/results.ts`) collapses a group into one card carrying a row for **every**
+round 1–5, `null` where nothing scores — that is how a ceasefire mission's locked
+Round 1 and Magic Stones' rounds 1/3/5 are expressed. `lib/data/missions.spec.ts`
+guards the invariants (unique ids, `round` in range and always grouped, group members
+interchangeable apart from their round).
 
 Markers (`lib/domain/map.ts`): `{ id, x, y, shape: 'star'|'box'|'triangle'|'circle'|'x',
 label, color, showRuler, labelPosition?: 'above'|'below' }`. The map is a fixed

@@ -1,6 +1,7 @@
 export * from './random';
 export * from './map';
 export * from './mission';
+export * from './results';
 export * from './season';
 export * from './faction';
 export * from './scheme';

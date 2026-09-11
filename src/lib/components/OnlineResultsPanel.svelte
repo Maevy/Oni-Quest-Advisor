@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CEASEFIRE_OBJECTIVE_ID, type PlayerKey, type ResultObjectiveDef } from '$lib/domain';
 	import IncrementBoxes from './IncrementBoxes.svelte';
+	import ObjectiveRoundChip from './ObjectiveRoundChip.svelte';
 	import Panel from './Panel.svelte';
 
 	type Props = {
@@ -48,7 +49,7 @@
 			>
 				<div class="flex items-start justify-between gap-2">
 					<p class="text-sm {isCeasefire ? 'text-red-200' : 'text-slate-200'}">
-						{objective.text}
+						<ObjectiveRoundChip round={objective.round} />{objective.text}
 					</p>
 					<span
 						class="shrink-0 text-sm font-semibold {isCeasefire ? 'text-red-300' : 'text-sky-300'}"

@@ -14,3 +14,10 @@
   need matching padding reserved in the surrounding layout — `MissionDetail` keeps
   right padding clear for the closed tab; the expanded panel intentionally
   overlays content.
+- Overlays (`fixed inset-0`) must render as a **sibling of `Panel`, never inside it**: a
+  non-`none` `backdrop-filter` makes the panel the containing block for its fixed
+  descendants, so the overlay would cover only that panel and every later panel would
+  paint over it. Split trigger from overlay and let the parent hold the open state —
+  `RuleLabels` (buttons, emits `onOpenRule`) + `RuleCalloutDialog` (overlay), wired in
+  `DescriptionPanel`. Dialogs use `z-50`; the `CommandPanel` tab is `z-40` and the
+  briefing's sticky header `z-30`.

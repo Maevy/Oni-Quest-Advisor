@@ -10,7 +10,10 @@
 			"label": "Obelisk",
 			"description": "There is 1 Objective Marker at the center of the field."
 		},
-		{ "label": "Standard Deployment", "description": "8\" Deployment Zones." }
+		{
+			"label": "Standard Deployment",
+			"description": "8\" Deployment Zones."
+		}
 	],
 	"map": {
 		"zone": { "type": "horizontal", "rangeInches": 8 },
@@ -28,22 +31,100 @@
 	},
 	"results": [
 		{
-			"id": "near-obelisk",
+			"id": "near-obelisk-round-2",
 			"text": "Gain 1 VP if you have at least one model within 7\" of the Obelisk at the end of the round.",
 			"vp": 1,
-			"count": 4
+			"count": 1,
+			"round": 2,
+			"group": "near-obelisk"
 		},
 		{
-			"id": "stronger-presence-obelisk",
+			"id": "near-obelisk-round-3",
+			"text": "Gain 1 VP if you have at least one model within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 3,
+			"group": "near-obelisk"
+		},
+		{
+			"id": "near-obelisk-round-4",
+			"text": "Gain 1 VP if you have at least one model within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 4,
+			"group": "near-obelisk"
+		},
+		{
+			"id": "near-obelisk-round-5",
+			"text": "Gain 1 VP if you have at least one model within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 5,
+			"group": "near-obelisk"
+		},
+		{
+			"id": "stronger-presence-obelisk-round-2",
 			"text": "Gain 1 VP if you have a Stronger Presence within 7\" of the Obelisk at the end of the round.",
 			"vp": 1,
-			"count": 4
+			"count": 1,
+			"round": 2,
+			"group": "stronger-presence-obelisk"
 		},
 		{
-			"id": "sole-presence-obelisk",
+			"id": "stronger-presence-obelisk-round-3",
+			"text": "Gain 1 VP if you have a Stronger Presence within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 3,
+			"group": "stronger-presence-obelisk"
+		},
+		{
+			"id": "stronger-presence-obelisk-round-4",
+			"text": "Gain 1 VP if you have a Stronger Presence within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 4,
+			"group": "stronger-presence-obelisk"
+		},
+		{
+			"id": "stronger-presence-obelisk-round-5",
+			"text": "Gain 1 VP if you have a Stronger Presence within 7\" of the Obelisk at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 5,
+			"group": "stronger-presence-obelisk"
+		},
+		{
+			"id": "sole-presence-obelisk-round-2",
 			"text": "Gain 1 VP if you have a model within 7\" of the Obelisk and your opponent has none within that range at the end of the round.",
 			"vp": 1,
-			"count": 4
+			"count": 1,
+			"round": 2,
+			"group": "sole-presence-obelisk"
+		},
+		{
+			"id": "sole-presence-obelisk-round-3",
+			"text": "Gain 1 VP if you have a model within 7\" of the Obelisk and your opponent has none within that range at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 3,
+			"group": "sole-presence-obelisk"
+		},
+		{
+			"id": "sole-presence-obelisk-round-4",
+			"text": "Gain 1 VP if you have a model within 7\" of the Obelisk and your opponent has none within that range at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 4,
+			"group": "sole-presence-obelisk"
+		},
+		{
+			"id": "sole-presence-obelisk-round-5",
+			"text": "Gain 1 VP if you have a model within 7\" of the Obelisk and your opponent has none within that range at the end of the round.",
+			"vp": 1,
+			"count": 1,
+			"round": 5,
+			"group": "sole-presence-obelisk"
 		}
 	],
 	"important": ["Players cannot score VP during Round 1 (Ceasefire)."],

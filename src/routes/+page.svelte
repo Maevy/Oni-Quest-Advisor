@@ -6,6 +6,7 @@
 		getMissionsForSeason,
 		getScoreableResults,
 		getSeasons,
+		groupResults,
 		groupSavedArmies,
 		indexArmyRules,
 		resolveArmyEntries,
@@ -28,6 +29,7 @@
 	import SaveArmyDialog from '$lib/components/SaveArmyDialog.svelte';
 	import SeasonSelect from '$lib/components/SeasonSelect.svelte';
 	import MissionSelect from '$lib/components/MissionSelect.svelte';
+	import MissionBriefing from '$lib/components/MissionBriefing.svelte';
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
 	import MissionDetailTwoPlayer from '$lib/components/MissionDetailTwoPlayer.svelte';
 	import OnlineCreate from '$lib/components/OnlineCreate.svelte';
@@ -63,6 +65,8 @@
 			null
 	);
 	let resultsForMission = $derived(selectedMission ? getScoreableResults(selectedMission) : []);
+	/** Results grouped into per-round cards for the read-only briefing. */
+	let briefingEntries = $derived(groupResults(resultsForMission));
 
 	// Online mode derived values
 	let missionsBySeason = $derived(
@@ -390,6 +394,12 @@
 		onReturn={() => navigationStore.returnToSeasonSelect()}
 		onRandom={() => navigationStore.rollRandomMission()}
 		onSelectMission={(missionId) => navigationStore.selectMission(missionId)}
+	/>
+{:else if navigationStore.screen === 'mission-briefing' && selectedMission}
+	<MissionBriefing
+		mission={selectedMission}
+		entries={briefingEntries}
+		onReturn={() => navigationStore.returnToMissionSelect()}
 	/>
 {:else if isTwoPlayer && selectedMission && twoPlayerProgressStore.progress}
 	<MissionDetailTwoPlayer

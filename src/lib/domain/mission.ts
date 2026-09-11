@@ -12,6 +12,13 @@ export type ResultObjectiveDef = {
 	vp: number;
 	/** How many independent times this objective can be scored (e.g. one per token on the table). */
 	count: number;
+	/**
+	 * Round this objective scores at the end of. Round-scoped Results carry one entry per round, so
+	 * per-round progress needs no extra state — the objective id already keys the round.
+	 */
+	round?: number;
+	/** Card this entry belongs to when several per-round entries share one heading. */
+	group?: string;
 };
 
 export type QuestRuleSection = {

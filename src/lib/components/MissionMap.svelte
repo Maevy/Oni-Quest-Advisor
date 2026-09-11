@@ -16,13 +16,17 @@
 	const BLUE = {
 		fill: 'rgba(56, 189, 248, 0.18)',
 		stroke: 'rgba(56, 189, 248, 0.6)',
-		text: 'rgb(186, 230, 253)'
+		/** Saturated hue of the zone itself, so the label reads as "this zone is blue". */
+		label: 'rgb(56, 189, 248)'
 	};
 	const RED = {
 		fill: 'rgba(248, 113, 113, 0.18)',
 		stroke: 'rgba(248, 113, 113, 0.6)',
-		text: 'rgb(254, 202, 202)'
+		label: 'rgb(248, 113, 113)'
 	};
+
+	/** Centered heading + range inside one deployment zone. */
+	type ZoneLabel = { cx: number; cy: number; fill: string; titleSize: number };
 
 	function arcPath(zone: {
 		cx: number;
@@ -67,10 +71,38 @@
 	);
 </script>
 
+{#snippet zoneLabels(labels: ZoneLabel[])}
+	{#each labels as label (label.fill)}
+		<text
+			x={label.cx}
+			y={label.cy - label.titleSize * 0.42}
+			fill={label.fill}
+			font-size={label.titleSize}
+			font-weight="700"
+			letter-spacing="0.05"
+			text-anchor="middle"
+			dominant-baseline="middle"
+		>
+			Deployment Zone
+		</text>
+		<text
+			x={label.cx}
+			y={label.cy + label.titleSize * 0.72}
+			fill={label.fill}
+			font-size={label.titleSize * 0.7}
+			font-weight="600"
+			text-anchor="middle"
+			dominant-baseline="middle"
+		>
+			{map.zone.rangeInches}"
+		</text>
+	{/each}
+{/snippet}
+
 <Panel title="Deployment Map" {collapsible}>
 	<svg
 		viewBox="0 0 {MAP_SIZE_INCHES} {MAP_SIZE_INCHES}"
-		class="mx-auto w-full max-w-72 rounded-xl border border-slate-700/60 bg-slate-950/70"
+		class="mx-auto w-full max-w-72 rounded-xs border border-slate-700/20 bg-slate-950/70"
 	>
 		{#each gridPositions as pos (pos)}
 			<line
@@ -103,6 +135,7 @@
 				fill={RED.fill}
 				stroke={RED.stroke}
 				stroke-width="0.15"
+				stroke-dasharray="1.2 0.8"
 			/>
 			<rect
 				x={zones.blue.x}
@@ -112,27 +145,47 @@
 				fill={BLUE.fill}
 				stroke={BLUE.stroke}
 				stroke-width="0.15"
+				stroke-dasharray="1.2 0.8"
 			/>
-			<text x="0.8" y={zones.red.y + zones.red.height / 2} fill={RED.text} font-size="1.6"
-				>{map.zone.rangeInches}"</text
-			>
-			<text x="0.8" y={zones.blue.y + zones.blue.height / 2} fill={BLUE.text} font-size="1.6"
-				>{map.zone.rangeInches}"</text
-			>
+			{@render zoneLabels([
+				{
+					cx: MAP_SIZE_INCHES / 2,
+					cy: zones.red.y + zones.red.height / 2,
+					fill: RED.label,
+					titleSize: 1.9
+				},
+				{
+					cx: MAP_SIZE_INCHES / 2,
+					cy: zones.blue.y + zones.blue.height / 2,
+					fill: BLUE.label,
+					titleSize: 1.9
+				}
+			])}
 		{:else}
 			{@const zones = drawCircularDeployment(map.zone.rangeInches)}
-			<path d={arcPath(zones.red)} fill={RED.fill} stroke={RED.stroke} stroke-width="0.15" />
-			<path d={arcPath(zones.blue)} fill={BLUE.fill} stroke={BLUE.stroke} stroke-width="0.15" />
-			<text x={zones.red.r * 0.32} y={zones.red.r * 0.32} fill={RED.text} font-size="1.6"
-				>{map.zone.rangeInches}"</text
-			>
-			<text
-				x={MAP_SIZE_INCHES - zones.blue.r * 0.32}
-				y={MAP_SIZE_INCHES - zones.blue.r * 0.32}
-				fill={BLUE.text}
-				font-size="1.6"
-				text-anchor="end">{map.zone.rangeInches}"</text
-			>
+			<path
+				d={arcPath(zones.red)}
+				fill={RED.fill}
+				stroke={RED.stroke}
+				stroke-width="0.15"
+				stroke-dasharray="1.2 0.8"
+			/>
+			<path
+				d={arcPath(zones.blue)}
+				fill={BLUE.fill}
+				stroke={BLUE.stroke}
+				stroke-width="0.15"
+				stroke-dasharray="1.2 0.8"
+			/>
+			{@render zoneLabels([
+				{ cx: zones.red.r * 0.44, cy: zones.red.r * 0.38, fill: RED.label, titleSize: 1.35 },
+				{
+					cx: MAP_SIZE_INCHES - zones.blue.r * 0.44,
+					cy: MAP_SIZE_INCHES - zones.blue.r * 0.38,
+					fill: BLUE.label,
+					titleSize: 1.35
+				}
+			])}
 		{/if}
 
 		{#if map.quarters}
