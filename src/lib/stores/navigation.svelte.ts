@@ -1,4 +1,5 @@
 import * as domain from '$lib/domain';
+import { clearOpenGame, loadOpenGame } from '$lib/data';
 import {
 	acknowledgePrivacyNotice,
 	isOnlineIntroSeen,
@@ -131,8 +132,49 @@ class NavigationStore {
 			return;
 		}
 		missionProgressStore.loadForMission(missionId);
-		// Solo phase 1: the read-only briefing. Phase 2 (the interactive tracker) follows later.
+		// Solo lands on the read-only briefing; Start Game moves on to the tracker.
 		this.screen = 'mission-briefing';
+	}
+
+	/** Leaves the solo briefing for the interactive tracker and marks the run as the open game. */
+	startGame(): void {
+		missionProgressStore.beginGame();
+		this.screen = 'mission-detail';
+	}
+
+	/**
+	 * Re-enters the open game found at app start, straight into the tracker — the briefing is for
+	 * deciding whether to play, and that decision was already made. Solo only, since an open game
+	 * is a solo run.
+	 */
+	resumeOpenGame(mission: domain.Mission): void {
+		this.gameMode = 'solo';
+		this.selectedSeason = mission.season;
+		this.selectedMissionId = mission.id;
+		missionProgressStore.loadForMission(mission.id);
+		this.screen = 'mission-detail';
+	}
+
+	/**
+	 * App start: returns the mission of a solo game left open, so the page can offer to resume it.
+	 * A record pointing at a mission the bundled content no longer has is stale, and is dropped
+	 * here rather than offered.
+	 */
+	findResumableGame(): domain.Mission | null {
+		const open = loadOpenGame();
+		if (!open) return null;
+		const mission = contentStore.missions.find((candidate) => candidate.id === open.missionId);
+		if (!mission) {
+			clearOpenGame();
+			return null;
+		}
+		return mission;
+	}
+
+	/** Solo: the tracker's Return, once confirmed. Discards the run and goes back to the list. */
+	abandonGame(): void {
+		missionProgressStore.abandonGame();
+		this.returnToMissionSelect();
 	}
 
 	returnToMissionSelect(): void {

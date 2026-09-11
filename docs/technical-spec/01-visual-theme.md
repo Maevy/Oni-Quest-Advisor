@@ -22,16 +22,19 @@ what keeps text legible over artwork; do not put content on top of it without a 
 
 Surface scale (all translucent, all with `backdrop-blur`):
 
-| Role                               | Recipe                                                                                  |
-| ---------------------------------- | --------------------------------------------------------------------------------------- |
-| Panel                              | `rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur`              |
-| Dialog                             | `rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur`              |
-| Raised popup (unit/upgrade detail) | `rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl`                                    |
-| Command Panel tab                  | `rounded-l-2xl border border-r-0 border-slate-700/60 bg-slate-900/85 p-3 backdrop-blur` |
-| Map frame                          | `rounded-xs border border-slate-700/20 bg-slate-950/70`                                 |
+| Role                                 | Recipe                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel                                | `rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur`                                                                                                                                                                                                                                                                                                                                                                            |
+| Dialog                               | `rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur`                                                                                                                                                                                                                                                                                                                                                                            |
+| Raised popup (unit/upgrade detail)   | `rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Command Panel tab (hot-seat)         | `rounded-l-2xl border border-r-0 border-slate-700/60 bg-slate-900/85 p-3 backdrop-blur`                                                                                                                                                                                                                                                                                                                                                               |
+| Segmented tab switcher               | container `overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60`; tab `px-3 py-2 text-sm font-semibold`, active `bg-sky-500/20 text-sky-100`, inactive `text-slate-400`                                                                                                                                                                                                                                                              |
+| View switcher with sliding spotlight | container `relative grid grid-cols-3 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5`; overlay `absolute inset-y-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded-lg bg-sky-500/25 ring-1 ring-sky-300/70 shadow-[0_0_18px_rgba(56,189,248,0.45)] transition-transform duration-300`, translated `activeIndex × 100%`; buttons above it, `relative z-10 px-2 py-2 text-sm font-semibold`, active `text-sky-100`, inactive `text-slate-400` |
+| Map frame                            | `rounded-xs border border-slate-700/20 bg-slate-950/70`                                                                                                                                                                                                                                                                                                                                                                                               |
 
-Panel headings are always
-`text-sm font-semibold tracking-wide text-sky-300 uppercase`.
+Panel headings, where a panel has one, are always
+`text-sm font-semibold tracking-wide text-sky-300 uppercase`. `title` is optional: the solo score
+panel omits it, because a centred hero VP number is self-evident and a heading above it was noise.
 
 The one deliberate exception to "soft rounded edges": the map frame uses `rounded-xs` (2 px)
 so the 36″ board reads as a hard-edged playing surface, and its border is dropped to `/20` so
@@ -115,11 +118,11 @@ if everything glows, nothing does.
 
 ## Overlays, stacking and the backdrop-filter trap
 
-| Layer                                       | z-index |
-| ------------------------------------------- | ------- |
-| Dialogs and rule popups                     | `z-50`  |
-| Command Panel tab (fixed to the right edge) | `z-40`  |
-| Mission briefing sticky header              | `z-30`  |
+| Layer                                                 | z-index |
+| ----------------------------------------------------- | ------- |
+| Dialogs and rule popups                               | `z-50`  |
+| Command Panel tab (hot-seat, fixed to the right edge) | `z-40`  |
+| Sticky header (mission briefing)                      | `z-30`  |
 
 Backdrop is `bg-slate-950/70 backdrop-blur-sm` for informational popups (rule callouts, the unit
 card, the upgrade picker and its detail view) and the heavier `bg-slate-950/90` for dialogs that
@@ -147,14 +150,42 @@ pattern — trigger component (`RuleLabels`, emits `onOpenRule`) + overlay compo
 `src/lib/components/CLAUDE.md`.
 
 Fixed-position overlays also need **matching padding reserved** in the surrounding layout for
-their collapsed state (`MissionDetail` keeps the right edge clear for the Command Panel tab);
-the expanded panel intentionally covers content.
+their collapsed state (`MissionDetailTwoPlayer` keeps the right edge clear with `pr-10` for the
+Command Panel tab); the expanded panel intentionally covers content. Solo reserves nothing — its
+drawer was replaced by an inline panel when the tracker became a three-view screen.
+
+The **segmented tab switcher** (army format tabs, saved-army filter) is a single monolithic pill
+whose active segment tints. The solo tracker's **view switcher** is deliberately different: three
+equal buttons in a `grid-cols-3`, with a glowing **spotlight** — a one-cell-wide overlay carrying a
+sky fill, ring and drop-shadow — that _slides_ under the active button via `transition-transform`,
+so pressing another view moves the light rather than repainting a background. Both mark the active
+tab with `aria-pressed`; the spotlight adds `motion-reduce:transition-none`.
+
+> The grid is load-bearing: an earlier `flex` version gave the buttons unequal widths, because
+> `flex-1` floors each item at its label's content width, and the spotlight's thirds math then no
+> longer matched any button. `grid-cols-3` makes the cells equal by definition.
+
+**Swiping between views** reuses the army builder's gesture contract on the tracker root:
+`touch-pan-y`, a ≥ 50 px mostly-horizontal pointer move, and `pointercancel` (the browser taking
+over for scrolling) cancels it. It listens to **touch and pen pointers only**. A mouse drag is a
+text selection on desktop, and letting it double as a swipe makes the browser cancel the gesture
+and swallow the click mid-drag — precisely how the first implementation broke. The swipe surface
+carries no ARIA role on purpose (an explicit `svelte-ignore` says why): the three labelled buttons
+are the accessible control, the gesture is a redundant shortcut.
+
+`touch-pan-y` must sit on the **scrolling panes**, not only on the root. A scroll container with
+the default `touch-action: auto` makes Chromium reserve horizontal gestures for itself and fire
+`pointercancel`, which silently kills the swipe — the first strip implementation failed exactly
+this way until the panes got the property too.
 
 ## Scrolling model
 
-**One screen is full-height: `ArmyBuilderView`.** Its root is `h-dvh overflow-hidden` with a
-pinned header, and each of the two sliding panels scrolls itself
-(`overflow-y-auto overscroll-contain`).
+**Two screens are full-height: `ArmyBuilderView` and the solo tracker (`MissionDetail`).** Both
+have an `h-dvh overflow-hidden` root with a header pinned by layout, and each of their
+side-by-side panels scrolls itself (`overflow-y-auto overscroll-contain`). The tracker needs it
+for exactly the reason the builder does: its three views live in one sliding strip, and a shared
+document scroller would strand the player below a short view after reading a long one. Per-view
+scrollers also mean each view keeps its own scroll position across a switch.
 
 This is load-bearing, not stylistic. With `min-h-dvh` the root grows to the length of the unit
 list, the panels' `min-h-0 flex-1 overflow-y-auto` lists never receive a height to scroll

@@ -13,9 +13,11 @@
 		/** Results laid out for display — plain objectives plus per-round cards. */
 		entries: ResultsEntry[];
 		onReturn: () => void;
+		/** Switches to the interactive tracker. */
+		onStart: () => void;
 	};
 
-	let { mission, entries, onReturn }: Props = $props();
+	let { mission, entries, onReturn, onStart }: Props = $props();
 </script>
 
 <div class="min-h-dvh pb-6">
@@ -37,11 +39,10 @@
 				>
 					Upload Army
 				</button>
-				<!-- Phase 2 of the solo flow. -->
 				<button
 					type="button"
-					disabled
 					class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-3 py-2 text-sm font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+					onclick={onStart}
 				>
 					Start Game
 				</button>

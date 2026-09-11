@@ -52,6 +52,12 @@ each `src/lib/` folder.
   and a hidden scheme **cannot be scored at all**.
 - **Total VP** — Results VP + Scheme VP, capped at 10, not floored at 0 (ceasefire penalties can
   push a party negative).
+- **Open game** (solo) — a run started from the briefing and not yet abandoned, recorded under
+  `oni-quest-advisor:open-game`. Its existence is what makes the app offer to resume on the next
+  launch; abandoning deletes it together with that mission's progress.
+- **Game view** (solo tracker) — one of the three tabs the tracker splits into: **Scoring** (the
+  default, holding the score panel, Results and Schemes), **Army** and **Mission** (the static
+  reference panels).
 
 ### Online
 
@@ -87,20 +93,24 @@ each `src/lib/` folder.
 ## Screen map
 
 ```
-game-mode ──┬── Solo ────────────▶ season-select ▶ mission-select ▶ mission-briefing ┆▶ mission-detail
+game-mode ──┬── Solo ────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── 2 Player ────────▶ season-select ▶ mission-select ▶ mission-detail
             ├── Online 2 Player ─▶ [intro notice] ▶ online-create ▶ online-join ▶ online-game
             └── Army Builder ────▶ army-faction-select ▶ army-builder
 ```
 
 `/join/[code]` is the invite-link entry point; it hands the code to navigation and continues in
-the single-page flow on `/`. Full detail, including what each transition clears, in
-[01-navigation-flow.md](./01-navigation-flow.md).
+the single-page flow on `/`.
+
+The solo `mission-detail` is itself a **three-view screen** — **Scoring** (the default), **Army**
+and **Mission** — behind a sticky tab bar, and is entered either by pressing Start Game or by
+resuming an **open game** at app start. Full detail, including the open-game lifecycle and what
+each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
 
 ## Documents
 
-1. [01-navigation-flow.md](./01-navigation-flow.md) — the screen map, every transition, state on
-   navigation, one-time notices.
+1. [01-navigation-flow.md](./01-navigation-flow.md) — the screen map, every transition, the solo
+   open-game lifecycle (start / abandon / resume), state on navigation, one-time notices.
 2. [02-mission-detail-static-panels.md](./02-mission-detail-static-panels.md) — Description (incl.
    the rule-label popups), Setup, Deployment Map, Quest Rules; panel order per screen;
    collapsibility.
@@ -109,8 +119,9 @@ the single-page flow on `/`. Full detail, including what each transition clears,
    and reset.
 4. [04-schemes-panel.md](./04-schemes-panel.md) — faction/intelligence/draw/select/track, the draw
    brackets, hidden vs revealed in each mode.
-5. [05-command-panel.md](./05-command-panel.md) — the right-edge drawer: total VP, round stepper,
-   reset, and the hot-seat swap.
+5. [05-score-and-round-controls.md](./05-score-and-round-controls.md) — where the running score,
+   round stepper and reset live: an inline panel in solo's Scoring view, a right-edge drawer in
+   hot-seat (with its swap mechanic), and nothing at all in online.
 6. [06-two-player-hot-seat.md](./06-two-player-hot-seat.md) — one device, two secrets: state
    model, seat colours, the swap countdown, and how it differs from online.
 7. [07-online-two-player.md](./07-online-two-player.md) — the online player journey: create,
@@ -126,10 +137,12 @@ made, and treat them as the backlog of behavioural gaps. The cross-cutting ones:
 - **The shared header component.** Every screen invents its own button constellation; one header
   (title slot + left/right action slots) should replace them all. Tracked in
   [../technical-spec/01-visual-theme.md](../technical-spec/01-visual-theme.md).
-- **Solo phase 2.** The Mission Briefing's **Start Game** is still disabled, so the solo
-  interactive tracker is currently unreachable by clicking. Wiring it, and making the interactive
-  Results panel reuse the round-grouped layout, is the next solo iteration.
-- **Upload Army.** The briefing's disabled blue button is a placeholder for attaching a built or
-  saved army to a mission run — the point where the army builder and the mission flow meet.
-- **Grouped Results everywhere.** Only the briefing renders per-round cards; hot-seat and online
-  still show one card per round-entry (Awaiting Reinforcements: 12 cards).
+- **Upload Army / the Army view.** Two halves of one missing feature: the briefing's disabled blue
+  button, and the tracker's **Army** tab, which is a stub. Both wait on the same decision — what it
+  means to attach a built or saved army to a run.
+- **Grouped Results in hot-seat and online.** Solo renders per-round cards in both the briefing
+  and the tracker; the other two modes still show one card per round-entry (Awaiting
+  Reinforcements: 12 cards).
+- **Three views in hot-seat?** Solo's tracker now splits into Scoring / Army / Mission behind a
+  sticky tab bar; hot-seat is still one long scrolling screen with a right-edge drawer — see
+  [05-score-and-round-controls.md](./05-score-and-round-controls.md).

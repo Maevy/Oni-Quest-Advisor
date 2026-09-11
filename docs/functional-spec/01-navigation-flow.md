@@ -37,10 +37,18 @@ online-create | online-join | online-game
              (solo) │           │ (two-player)                    ▼
                     ▼           ▼                            online-game
           mission-briefing   mission-detail
-                    ┆
-                    ┆ "Start Game" — disabled (phase 2)
+                    │        (all panels + the Command Panel drawer)
+                    │ "Start Game" — records the open game
                     ▼
-             mission-detail
+             mission-detail  ══▶  [ Scoring | Army | Mission ]  (Scoring is the default)
+                    │
+                    │ "← Return" → confirm "Abandon this game?"
+                    ├── Keep playing ─▶ stays put
+                    └── Abandon ──────▶ mission-select  (open game + progress deleted)
+
+  app start ──open game found──▶ "You have an open game: {mission}"
+                                   ├── Resume Game ─▶ mission-detail (progress restored)
+                                   └── Abandon ─────▶ stays on game-mode (progress deleted)
 
 
   game-mode ──"Army Builder"──▶ army-faction-select ──pick faction──▶ army-builder
@@ -97,25 +105,86 @@ Clicking a mission → `selectMission(missionId)`, which **branches on `gameMode
 | `two-player` | `twoPlayerProgressStore.loadForMission(id)` | `mission-detail`   |
 | `solo`       | `missionProgressStore.loadForMission(id)`   | `mission-briefing` |
 
-> **Current solo behaviour (phase 1 of the solo-view iteration).** Solo opens the read-only
-> **Mission Briefing**, not the interactive tracker. The briefing's **Start Game** button — the
-> intended transition into `mission-detail` — is still disabled, so **solo `mission-detail` is
-> unreachable by clicking**. That is expected until phase 2 wires it up. Hot-seat play is
-> unaffected and still goes straight to `mission-detail`.
+Solo therefore reaches the tracker in **two steps**: the mission click opens the read-only
+**Mission Briefing**, and its **Start Game** button (`startGame()`) switches to `mission-detail`.
+Progress is loaded once, at the mission click, so Start Game changes only the screen — nothing is
+re-initialised, and any previously saved state for that mission is already in place. Hot-seat
+skips the briefing entirely and goes straight to `mission-detail`.
 
 ## Screen 4a — Mission Briefing (`mission-briefing`, solo only)
 
-A read-only walkthrough of the mission: no scheme selection, no VP scoring, no Command Panel.
-See [02-mission-detail-static-panels.md](./02-mission-detail-static-panels.md) for the panel
-stack. Its sticky top bar carries **← Return** (→ `returnToMissionSelect()`), **Upload Army**
-(disabled — a later feature) and **Start Game** (disabled — phase 2).
+A read-only walkthrough of the mission: no scheme selection, no VP scoring, no score panel. See
+[02-mission-detail-static-panels.md](./02-mission-detail-static-panels.md) for the panel stack.
+Its sticky top bar carries **← Return** (→ `returnToMissionSelect()`), **Upload Army** (disabled —
+a later feature) and **Start Game** (→ `startGame()`).
+
+**Start Game is the boundary between browsing and playing**: it records the mission as the **open
+game** and switches to `mission-detail`. From then on the run has a lifecycle — see below.
 
 ## Screen 4b — Mission Detail (`mission-detail`)
 
-The interactive tracker: static panels plus Results, Schemes and the Command Panel overlay.
-Its **Return** → `returnToMissionSelect()`: back to `mission-select` for the mission's season,
-clearing `selectedMissionId` — never all the way back to Season Select. This holds whether the
-player arrived by tile click or by **Random**.
+The interactive tracker. In **solo** it is a **three-view screen** under a sticky top bar that
+mirrors the briefing's: red **← Return** on the left, and three **Scoring / Army / Mission**
+buttons on the right with a glowing **spotlight** that slides under whichever is active
+(`aria-pressed` marks it for assistive tech). A started game always
+opens on **Scoring**; the other two are reference views the player can switch to at any time.
+
+| View        | Contents                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| **Scoring** | score panel (VP total, round stepper, Reset) → Results (editable) → Schemes (editable)                  |
+| **Army**    | a stub — the list the player is fielding will go here; it is not wired up yet                           |
+| **Mission** | the static panels only: Description (with its rule-label popups) → Setup → Deployment Map → Quest Rules |
+
+Results and Schemes live **only** in Scoring, so nothing appears twice: the Mission view is the
+reference sheet, not a second read-only copy of the score.
+
+On a phone, a **horizontal swipe** across the screen steps between the views in the same order —
+swipe left for the next view, right for the previous — clamped at both ends. The views live in one
+sliding strip, so the outgoing view physically leaves the way the gesture came from and the
+incoming one arrives from the opposite edge; the header's spotlight slides along in step. Each
+view keeps its own scroll position. A mostly-vertical drag scrolls instead and cancels the swipe.
+The three buttons remain the accessible path; the swipe is a shortcut, never the only way.
+
+In **hot-seat** the same screen id renders `MissionDetailTwoPlayer` instead — one long scrolling
+screen with every panel, plus the right-edge Command Panel drawer and the swap countdown. It has no
+view switcher. See [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
+
+### Return means abandon (solo)
+
+The tracker's **← Return** does not navigate directly — it asks _"Abandon this game? All progress
+will be lost."_ with **Keep playing** (the prominent branch, and what Escape takes) and **Abandon**.
+Confirming calls `abandonGame()`, which deletes the open-game record **and** that mission's saved
+progress, then returns to `mission-select`. There is deliberately no path back to the briefing from
+the tracker, because leaving the tracker ends the run.
+
+## Open game lifecycle (solo)
+
+A solo run is an explicit session, not "whatever progress happens to be saved for this mission".
+One game can be open at a time, recorded under `oni-quest-advisor:open-game`
+(`lib/data/openGame.ts`).
+
+| Event                             | Effect                                                                                                                                         |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Start Game** in the briefing    | records the open game, enters the tracker                                                                                                      |
+| **← Return → Abandon**            | deletes the open game _and_ the mission's progress, back to the mission list                                                                   |
+| **← Return → Keep playing** / Esc | nothing changes                                                                                                                                |
+| **Reload or reopen the app**      | the record is still there → the resume prompt appears                                                                                          |
+| **Resume Game**                   | `resumeOpenGame(mission)` restores season, mission and progress and enters the tracker **directly** — not the briefing, that decision was made |
+| **Abandon** from the prompt       | deletes the record and the progress, stays on the main menu                                                                                    |
+
+The prompt reads _"You have an open game: {mission name}. Abandoning it loses all progress."_ and
+deliberately makes **Resume Game** the prominent button _and_ the Escape branch — losing a run is
+never the accidental choice. It is skipped when an online seat resumed instead, so an online game
+wins; the solo record survives and is offered on a later start.
+
+A record pointing at a mission the bundled content no longer has is **stale**:
+`findResumableGame()` drops it silently rather than offering a game that cannot render.
+
+Progress written before this feature existed has no open-game record. It is not discarded — it is
+picked up when that mission is next started, so no one loses an old run to the upgrade.
+
+Hot-seat and online have no open-game record: hot-seat progress simply persists per mission, and
+online state lives on the server.
 
 ## Army builder flow
 
@@ -144,10 +213,14 @@ Menu".
 
 ## State on navigation
 
-- **Play progress is not discarded on Return.** `returnToMissionSelect()` clears only the
-  _selection_; the checked objectives, chosen scheme and round live in `localStorage` keyed by
-  mission id (`oni-quest-advisor:mission-progress:` solo, `oni-quest-advisor:2p-progress:`
-  hot-seat). Re-entering the mission restores them.
+- **Solo progress belongs to the open game.** Ticking a box writes
+  `oni-quest-advisor:mission-progress:{missionId}`; abandoning deletes it together with the
+  `oni-quest-advisor:open-game` record. Merely viewing the briefing writes nothing — a progress
+  record only appears once the run actually mutates.
+- **Hot-seat progress is not session-scoped.** `returnToMissionSelect()` clears only the
+  _selection_; checked objectives, schemes and the round stay under
+  `oni-quest-advisor:2p-progress:{missionId}` and are restored on re-entry. Hot-seat has no
+  abandon flow and no resume prompt.
 - The scheme **draft** (faction + intelligence inputs) is part of that persisted progress and
   survives a scheme delete/reset, so the player only re-presses Draw.
 - Online state lives on the **server**; the seat (game code + seat + token) is in `localStorage`
@@ -169,10 +242,20 @@ breaking.
 
 ## Open questions
 
-- **Deep linking**: should a mission/season be reachable by URL, so closing and reopening the
-  browser resumes the same screen? Today navigation is in-memory only; progress survives (via
-  `localStorage`) but the player lands back on the mode select and must re-click through. The
-  online flow already has a URL entry point (`/join/[code]`) — the same trick could serve solo.
+- **The Army view is a stub.** It is the third of the tracker's views and currently says so.
+  Wiring it to a built or saved army is the same work as the briefing's **Upload Army** button —
+  one decision ("what does it mean to attach an army to a run?") unblocks both.
+- **Should hot-seat get the three-view layout too?** Solo now splits Scoring / Army / Mission
+  behind a sticky bar; hot-seat is still one long scrolling screen with a drawer. See
+  [05-score-and-round-controls.md](./05-score-and-round-controls.md).
+- **Only one open game can exist**, and nothing enforces it — `beginGame()` simply overwrites the
+  record. Unreachable by clicking today (the tracker's Return abandons before the mission list is
+  reachable again), but a deep link or a "switch mission" control would need a rule.
+- **Deep linking**: should a mission/season be reachable by URL? Navigation is still in-memory
+  only. Solo is now partly covered — an open game is offered on the next app start — but a player
+  who merely _browsed_ to a mission (briefing, never pressed Start Game) lands back on the mode
+  select and must re-click through. The online flow already has a URL entry point
+  (`/join/[code]`) — the same trick could serve solo.
 - **Browser back**: because screens are not routes, the hardware/browser back button exits the
   app instead of going up a level. On a phone this is a real mis-tap risk. Is intercepting it
   wanted?

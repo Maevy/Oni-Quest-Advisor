@@ -16,9 +16,8 @@ Identical to solo up to the mission click: `game-mode` → `season-select` → `
 - `two-player` → loads into `twoPlayerProgressStore` and goes **straight to `mission-detail`**.
 - `solo` → loads into `missionProgressStore` and goes to the read-only `mission-briefing`.
 
-So hot-seat **skips the Mission Briefing entirely** and lands on the interactive tracker. That is
-also why hot-seat is unaffected by the solo briefing's disabled Start Game button: it never
-passes through that screen.
+So hot-seat **skips the Mission Briefing entirely** and lands on the interactive tracker, while
+solo passes through the briefing first and reaches the same tracker via its **Start Game** button.
 
 ## State model
 
@@ -92,17 +91,19 @@ The swap does **not** touch progress — objectives, schemes and the round all s
 
 ## Command Panel
 
-`CommandPanelTwoPlayer` is the solo panel plus:
+`CommandPanelTwoPlayer` is the app's remaining right-edge drawer — solo folded its score, round
+and reset into an inline panel when the tracker became a three-view screen. It carries:
 
 - **two** VP blocks — `P1 VP` (sky) and `P2 VP` (orange), each `{total} / 10`, computed
   independently from that player's objectives and scheme;
 - the **Swap Player** button;
 - an `Active` + `P1`/`P2` indicator on the collapsed tab, in the active player's colour.
 
-The round stepper is shared (one round for the table, not per player) and identical to solo.
+The round stepper behaves exactly as solo's (one round for the table, not per player) but is laid
+out **vertically**, `+` above the badge and `−` below.
 **Reset** clears both players' progress and returns `activePlayer` to `player1`.
 
-See [05-command-panel.md](./05-command-panel.md).
+See [05-score-and-round-controls.md](./05-score-and-round-controls.md).
 
 ## Differences from online play
 

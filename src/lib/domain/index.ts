@@ -6,6 +6,7 @@ export * from './season';
 export * from './faction';
 export * from './scheme';
 export * from './progress';
+export * from './openGame';
 export * from './gameMode';
 export * from './twoPlayer';
 export * from './online';

@@ -52,18 +52,23 @@ An objective that scores at the end of a round is authored as **one entry per ro
 [../technical-spec/02-mission-data-format.md](../technical-spec/02-mission-data-format.md)).
 How that renders **depends on the panel**:
 
-- **Mission Briefing** (`ResultsBriefingPanel`) — the only panel that collapses a group. One
-  card per group: heading text + VP, then **a row for every round 1–5**. A round that scores
-  shows `Round {n}` in that round's accent over a tinted background, with that round's boxes
-  (disabled — the briefing is read-only). A round that cannot score renders as a muted row
-  reading _**No VP**_, so a locked round is explicit rather than implied. Always five rows, so
-  round colours line up across missions.
-- **Every other panel** — one card per objective entry, each carrying only its `R{n}` chip. A
+- **Solo — briefing _and_ tracker** (`ResultsBriefingPanel`, `ResultsPanel`) — both collapse a
+  group into one card: heading text + VP, then **a row for every round 1–5**. A round that scores
+  shows `Round {n}` in that round's accent over a tinted background with that round's boxes; a
+  round that cannot score renders as a muted row reading _**No VP**_, so a locked round is
+  explicit rather than implied. Always five rows, so round colours line up across missions. The
+  two panels are the same layout at two levels of interactivity: the briefing's boxes are
+  disabled, the tracker's write to that round's own objective id — no extra progress state, since
+  the id already encodes the round.
+- **Hot-seat and online** — one card per objective entry, each carrying only its `R{n}` chip. A
   group of four therefore appears as four separate cards.
 
+A grouped card also tracks completion as a whole: its heading is struck through once **every**
+scoreable round in it is maxed out.
+
 > Consequence worth knowing: **Awaiting Reinforcements shows 12 separate cards** in hot-seat and
-> online play (3 groups × 4 rounds) until those panels adopt the grouped layout. Solo shows the
-> same 12 in the tracker, but 3 grouped cards in the briefing.
+> online play (3 groups × 4 rounds) until those panels adopt the grouped layout too. Solo now
+> shows 3 grouped cards in both the briefing and the tracker.
 
 ## Ceasefire missions
 
@@ -87,8 +92,9 @@ Total VP = checked Results VP + checked Scheme increments, **capped at `MAX_TOTA
 (a player cannot earn more per mission) and **not floored at 0** — the rules allow a party to
 drop below zero, so three ceasefire breaches can legitimately show as `−11 / 10`.
 
-It is displayed in the Command Panel as `{total} / 10`, and per player in hot-seat and online.
-See [05-command-panel.md](./05-command-panel.md).
+It is displayed as `{total} / 10` — in the solo tracker's untitled score panel, in hot-seat's
+Command Panel drawer (one block per player), and in the online game header. See
+[05-score-and-round-controls.md](./05-score-and-round-controls.md).
 
 Because a stored count can predate a content change that lowered an objective's `count`, the VP
 math clamps each stored count to `objective.count` before multiplying. Old saves (and in-flight
@@ -98,7 +104,7 @@ online games) therefore can never pay out an instance the UI no longer shows.
 
 | Panel                                  | Who can edit                                  | Notes                                                                                                                      |
 | -------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `ResultsPanel` (solo)                  | the player                                    | strikes through completed objectives                                                                                       |
+| `ResultsPanel` (solo tracker)          | the player                                    | grouped per-round cards, editable; strikes through a completed objective or group                                          |
 | `ResultsPanelTwoPlayer` (hot-seat)     | **both players, at all times**                | each row splits into a P1 (sky) and a P2 (orange) cell with its own boxes; objectives are _not_ gated by the active player |
 | `OnlineResultsPanel`                   | own column, **only during the Scoring phase** | two columns: `{you} (you)` editable, opponent's always read-only; frozen during the Reveal phase                           |
 | `ResultsBriefingPanel` (solo briefing) | nobody                                        | read-only, grouped per-round cards, boxes shown inert                                                                      |
@@ -119,19 +125,24 @@ shared table.
 - Because progress is keyed by **objective id**, renaming an id orphans the stored count, and a
   duplicate id inside one mission would make two rows share a single count (guarded by
   `lib/data/missions.spec.ts`).
-- **Reset** lives in the Command Panel and rebuilds progress from empty: it clears the checked
-  objectives **and** the chosen Scheme **and** the scheme draft **and** the round. It is a
-  "fresh play of this mission", not a "clear the board".
+- **Reset** (in the untitled score panel solo, the Command Panel drawer in hot-seat) rebuilds
+  progress from empty: it clears the checked objectives **and** the chosen Scheme **and** the
+  scheme draft **and** the round. It is a "fresh play of this mission", not a "clear the board" —
+  and it leaves the run open.
+- **Solo only:** abandoning the run — the tracker's ← Return, or the resume prompt on app start —
+  deletes the whole progress record together with the open-game marker. Reset restarts the
+  mission; abandoning ends it. See [01-navigation-flow.md](./01-navigation-flow.md).
 
 ## Open questions
 
 - **Completion strike-through is solo-only.** `ResultsPanel` strikes a completed objective;
   `ResultsPanelTwoPlayer` and `OnlineResultsPanel` never do. Either all three should, or none —
   the inconsistency is invisible only because the panels are never on screen together.
-- **Bring the grouped layout to the interactive panels.** The per-round cards exist and are
-  proven read-only; making them writable (per-round boxes writing to the per-round objective
-  ids) is the natural next step and needs no progress-shape change. Until then Awaiting
-  Reinforcements is 12 cards in three of four views.
+- **Bring the grouped layout to hot-seat and online.** Solo now has it in both the briefing and
+  the tracker — writable per-round boxes needing no progress-shape change, since the objective id
+  already encodes the round — so the conversion is proven and mostly mechanical. Until the other
+  two follow, Awaiting Reinforcements is 3 grouped cards in solo but 12 separate cards in hot-seat
+  and online.
 - **`count: 1` renders two different ways** across panels (checkbox vs one box). Harmless, but
   it means a control's appearance does not imply its behaviour. Unify on boxes?
 - **No per-objective note field.** Players sometimes want to jot _why_ a box is ticked (which

@@ -11,7 +11,8 @@
 		indexArmyRules,
 		resolveArmyEntries,
 		savedArmyFormat,
-		type ArmyFormat
+		type ArmyFormat,
+		type Mission
 	} from '$lib/domain';
 	import {
 		armyBuilderStore,
@@ -41,12 +42,30 @@
 
 	contentStore.load();
 
-	// Resume an online seat from a previous visit, if any.
+	/** A solo game left open by a previous visit, awaiting the resume-or-abandon choice. */
+	let resumableMission = $state<Mission | null>(null);
+
+	// Resume an online seat from a previous visit if any; otherwise offer the open solo game.
 	onMount(() => {
 		void onlineGameStore.resumeSession().then((resumed) => {
-			if (resumed) navigationStore.enterOnlineGame();
+			if (resumed) {
+				navigationStore.enterOnlineGame();
+				return;
+			}
+			resumableMission = navigationStore.findResumableGame();
 		});
 	});
+
+	function resumeOpenGame(): void {
+		if (resumableMission) navigationStore.resumeOpenGame(resumableMission);
+		resumableMission = null;
+	}
+
+	/** The startup prompt's destructive branch — discards the run and stays on the main menu. */
+	function abandonResumableGame(): void {
+		missionProgressStore.abandonGame();
+		resumableMission = null;
+	}
 
 	let inviteUrl = $derived(
 		browser && onlineGameStore.view
@@ -65,8 +84,8 @@
 			null
 	);
 	let resultsForMission = $derived(selectedMission ? getScoreableResults(selectedMission) : []);
-	/** Results grouped into per-round cards for the read-only briefing. */
-	let briefingEntries = $derived(groupResults(resultsForMission));
+	/** Results grouped into per-round cards, shared by the briefing and the solo tracker. */
+	let resultsEntries = $derived(groupResults(resultsForMission));
 
 	// Online mode derived values
 	let missionsBySeason = $derived(
@@ -398,8 +417,9 @@
 {:else if navigationStore.screen === 'mission-briefing' && selectedMission}
 	<MissionBriefing
 		mission={selectedMission}
-		entries={briefingEntries}
+		entries={resultsEntries}
 		onReturn={() => navigationStore.returnToMissionSelect()}
+		onStart={() => navigationStore.startGame()}
 	/>
 {:else if isTwoPlayer && selectedMission && twoPlayerProgressStore.progress}
 	<MissionDetailTwoPlayer
@@ -437,13 +457,13 @@
 {:else if selectedMission && missionProgressStore.progress}
 	<MissionDetail
 		mission={selectedMission}
-		results={resultsForMission}
+		entries={resultsEntries}
 		progress={missionProgressStore.progress}
 		{totalVP}
 		factions={contentStore.factions}
 		drawnSchemes={missionProgressStore.drawnSchemes}
 		{chosenSchemeCard}
-		onReturn={() => navigationStore.returnToMissionSelect()}
+		onAbandon={() => navigationStore.abandonGame()}
 		onReset={() => missionProgressStore.resetMission()}
 		onSetObjectiveChecked={(objectiveId, checkedCount, maxCount) =>
 			missionProgressStore.setObjectiveChecked(objectiveId, checkedCount, maxCount)}
@@ -457,6 +477,17 @@
 			missionProgressStore.setSchemeChecked(checkedIncrements, chosenSchemeCard.maxIncrements)}
 		onDeleteScheme={() => missionProgressStore.deleteScheme()}
 		onSetRound={(round) => missionProgressStore.setRound(round)}
+	/>
+{/if}
+
+<!-- Escape and the prominent button both resume: abandoning a run is never the accidental choice. -->
+{#if resumableMission}
+	<ConfirmDialog
+		text={'You have an open game: ' + resumableMission.name + '. Abandoning it loses all progress.'}
+		confirmLabel="Abandon"
+		cancelLabel="Resume Game"
+		onConfirm={abandonResumableGame}
+		onCancel={resumeOpenGame}
 	/>
 {/if}
 

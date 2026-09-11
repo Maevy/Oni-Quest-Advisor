@@ -1,4 +1,11 @@
-import { loadMissionProgress, saveMissionProgress } from '$lib/data';
+import {
+	clearMissionProgress,
+	clearOpenGame,
+	loadMissionProgress,
+	loadOpenGame,
+	saveMissionProgress,
+	saveOpenGame
+} from '$lib/data';
 import * as domain from '$lib/domain';
 import type { Mission, MissionProgress, SchemeCard } from '$lib/domain';
 
@@ -17,6 +24,24 @@ class MissionProgressStore {
 
 	private persist(): void {
 		if (this.progress) saveMissionProgress(this.progress);
+	}
+
+	/** Marks the loaded mission as the one open solo game — called when Start Game is pressed. */
+	beginGame(): void {
+		if (!this.progress) return;
+		saveOpenGame({ missionId: this.progress.missionId });
+	}
+
+	/**
+	 * Abandons the open game. The record and that mission's saved progress both go, so the run
+	 * cannot be resumed later and its boxes cannot score again.
+	 */
+	abandonGame(): void {
+		const open = loadOpenGame();
+		clearOpenGame();
+		if (open) clearMissionProgress(open.missionId);
+		this.progress = null;
+		this.drawnSchemes = [];
 	}
 
 	setObjectiveChecked(objectiveId: string, checkedCount: number, maxCount: number): void {

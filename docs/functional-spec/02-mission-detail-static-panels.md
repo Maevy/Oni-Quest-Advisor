@@ -4,19 +4,25 @@ The read-only panels that describe a mission. They are shared unchanged across *
 mission views (solo briefing, solo tracker, hot-seat, online), which is the point: a mission
 should read identically wherever it appears. The interactive panels are documented separately
 — [03-results-panel.md](./03-results-panel.md), [04-schemes-panel.md](./04-schemes-panel.md),
-[05-command-panel.md](./05-command-panel.md).
+[05-score-and-round-controls.md](./05-score-and-round-controls.md).
 
 ## Panel order per screen
 
-| Screen                                         | Panels, top to bottom                                                                                                                            |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Mission Briefing** (solo, read-only)         | MissionTitlePanel → Mission Description → Setup → Deployment Map → Results (briefing) → Schemes (briefing) → Quest Rules                         |
-| **Mission Detail** (solo tracker)              | Description → Setup → Deployment Map → Results → Schemes → Quest Rules (+ the fixed Command Panel)                                               |
-| **Mission Detail** (hot-seat)                  | Description → Setup → Deployment Map → Results (2P) → Schemes (2P) → Quest Rules (+ the fixed Command Panel, + Countdown Overlay while swapping) |
-| **Online game view**                           | Description → Setup → Deployment Map → Results → Schemes → Quest Rules                                                                           |
-| **Online lobby preview** (`OnlineMissionView`) | Description → Setup → Deployment Map → Results (read-only) → Quest Rules — no Schemes panel                                                      |
+| Screen                                         | Panels, top to bottom                                                                                                                                                 |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mission Briefing** (solo, read-only)         | MissionTitlePanel → Mission Description → Setup → Deployment Map → Results (briefing) → Schemes (briefing) → Quest Rules                                              |
+| **Mission Detail** (solo tracker)              | three views behind a sticky tab bar — **Scoring**: score panel → Results → Schemes · **Army**: stub · **Mission**: Description → Setup → Deployment Map → Quest Rules |
+| **Mission Detail** (hot-seat)                  | Description → Setup → Deployment Map → Results (2P) → Schemes (2P) → Quest Rules (+ the fixed Command Panel drawer, + Countdown Overlay while swapping)               |
+| **Online game view**                           | Description → Setup → Deployment Map → Results → Schemes → Quest Rules                                                                                                |
+| **Online lobby preview** (`OnlineMissionView`) | Description → Setup → Deployment Map → Results (read-only) → Quest Rules — no Schemes panel                                                                           |
 
-Every panel is a `Panel` (frosted card, uppercase sky title) except `MissionTitlePanel`.
+Every panel is a `Panel` (frosted card, uppercase sky title) except `MissionTitlePanel` — and the
+tracker's score panel, which passes **no title at all**: its centred hero VP number is
+self-evident, so a heading above it would be noise.
+
+In the solo tracker those four static panels are the **whole** of the Mission view — Results and
+Schemes moved to the Scoring view, so no panel is rendered twice and the Mission view stays a pure
+reference sheet.
 
 **Collapsibility:** the online screens pass `collapsible` to Description, Setup, Deployment Map
 and Quest Rules; the local screens do not. Phone screens get crowded once both players' seats,

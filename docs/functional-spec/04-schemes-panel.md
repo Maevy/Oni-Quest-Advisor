@@ -75,7 +75,8 @@ cards whose rulebook text caps the total ("2 VP, then 1 VP"). See
 
 **Delete** clears the chosen Scheme and its box progress and returns to Step 1 — but the faction
 and intelligence inputs **stay prefilled** from `schemeDraft`, so the player only re-presses
-Draw. (A full mission **Reset** from the Command Panel does clear the draft too.)
+Draw. (A full mission **Reset** does clear the draft too — and abandoning the run deletes the
+whole record.)
 
 `OnlineSchemeSetup` is this flow **minus the increment boxes** — in the lobby there is nothing to
 score yet; boxes appear in-game.
@@ -104,7 +105,7 @@ What each displays depends on `activePlayer`:
   handover is the control. (Contrast with online, where boxes are strictly owner-only.)
 - Switching who is active is the **Swap Player** mechanic in the Command Panel, with a
   6-second countdown so the outgoing player can look away before their secret is on screen.
-  See [05-command-panel.md](./05-command-panel.md) and
+  See [05-score-and-round-controls.md](./05-score-and-round-controls.md) and
   [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 
 Results are **not** gated this way — both players tick objectives freely at all times.

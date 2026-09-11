@@ -25,10 +25,12 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   per-session details are all recorded below. Day-to-day work happens on
   `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note
   the working branch is `develop`, not `main`).
-- **Unreleased, in progress on `develop`** (ahead of the v0.6.4 tag): the second
-  iteration of the solo view — phase 1, the read-only **Mission Briefing** screen,
-  and the additive v2 Results schema (`round`/`group`) behind its per-round cards.
-  Not tagged, not deployed; details in the last session's notes below.
+- **Unreleased, in progress on `develop`** (ahead of the v0.6.4 tag): the solo view
+  iteration — the read-only **Mission Briefing**, the additive v2 Results schema
+  (`round`/`group`) behind its per-round cards, a working **Start Game**, the tracker
+  split into **Scoring / Army / Mission** views, and the **open-game** lifecycle
+  (Return abandons behind a confirmation, app start offers to resume). Not tagged, not
+  deployed; details in the session notes below.
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
   v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
   would have to create the volume first:
@@ -58,7 +60,149 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (Supply Run rescoring)
+## What was done in the last session (solo tracker: three views + the open-game lifecycle)
+
+Continuation of solo phase 2. After Start Game the tracker is no longer one long scrolling
+screen — it is **three views behind a sticky tab bar** — and a solo run became an explicit
+session with a resume/abandon lifecycle.
+
+1. **Three views.** `MissionDetail` (solo) renders a sticky bar mirroring the briefing's: red
+   **← Return** on the left, and three **Scoring / Army / Mission** buttons on the right with a
+   glowing **spotlight** that slides under whichever is active (`aria-pressed`). A started game
+   always opens on **Scoring**.
+   - **Scoring** — `ScoreSummaryPanel` (new) → Results (editable, grouped per round) → Schemes.
+   - **Army** — a stub that says so. It is the landing spot for the same "attach an army to a
+     run" feature the briefing's disabled **Upload Army** button waits on; one decision unblocks
+     both.
+   - **Mission** — the four static panels only (Description + rule popups, Setup, Deployment
+     Map, Quest Rules). Results and Schemes deliberately do **not** appear here, so nothing is
+     rendered twice.
+
+   The switcher is its own pattern rather than the army builder's segmented control: three equal
+   `grid-cols-3` buttons with a one-cell-wide glow overlay translated by the active index, so the
+   light _moves_ instead of a background repainting. (A first `flex` attempt gave the buttons
+   unequal widths — `flex-1` floors each item at its label's content width — which broke the
+   spotlight's thirds math; `grid-cols-3` makes the cells equal by definition.)
+
+   A horizontal **swipe** steps between the views too (left = next, right = previous, clamped at
+   both ends), reusing the army builder's gesture contract. It listens to touch/pen pointers only:
+   a mouse drag is a text selection on desktop, and treating it as a swipe made the browser cancel
+   the gesture and swallow the click mid-drag — the first implementation's failure mode, found by
+   instrumenting the pointer events in a browser test rather than by reading the code.
+
+   The views live in one **sliding strip** (`w-[300%]`, translated by the active index), so a
+   switch slides the outgoing view out the way the gesture came from and the incoming one in from
+   the opposite edge — the fluent swap. That made the tracker the app's **second full-height
+   screen**: a shared document scroller would strand the player below a short view after reading a
+   long one, whereas per-view scrollers also keep each view's scroll position across a switch.
+   `touch-pan-y` had to go on the scrolling panes, not just the root — a scroll container with
+   `touch-action: auto` makes Chromium reserve horizontal gestures and fire `pointercancel`, which
+   silently killed the swipe until the panes got the property.
+
+2. **The solo Command Panel drawer is gone.** Its contents — VP total, round stepper, Reset —
+   moved into `ScoreSummaryPanel`, the first panel of Scoring, with the stepper turned horizontal
+   (`[−] badge [+]`). `CommandPanel.svelte` was **deleted** (nothing else referenced it). Hot-seat
+   keeps `CommandPanelTwoPlayer` untouched, and with it the `pr-10` right-edge reservation that
+   solo no longer needs.
+3. **Open-game lifecycle** (new, solo only): `domain/openGame.ts` (`{ missionId }`) plus
+   `data/openGame.ts` under `oni-quest-advisor:open-game`.
+   - **Start Game** records the open game (`beginGame()`).
+   - **← Return** no longer navigates — it confirms _"Abandon this game? All progress will be
+     lost."_ with **Keep playing** (prominent, and the Escape branch) vs **Abandon**. Abandoning
+     deletes the open-game record **and** that mission's progress, then returns to the mission
+     list.
+   - **Reload/reopen** → `findResumableGame()` finds the record and the page prompts _"You have
+     an open game: {mission}. Abandoning it loses all progress."_ with **Resume Game** /
+     **Abandon**. Resume restores season, mission and progress and enters the tracker
+     **directly**, skipping the briefing — that decision was already made.
+   - A record whose mission the bundled content no longer has is dropped silently rather than
+     offered.
+   - The prompt is skipped when an online seat resumed instead: an online game wins, and the solo
+     record survives for a later start.
+   - Progress written before this feature has no record; it is picked up when that mission is
+     next started, so nobody loses an old run to the upgrade.
+4. **Both prompts reuse `ConfirmDialog`** instead of adding a dialog component. Its confirm
+   branch is the red destructive one and Escape takes cancel, so mapping **Resume Game → cancel**
+   makes the safe action the Escape branch by construction. Same trick for the in-game abandon
+   (**Keep playing** → cancel).
+5. **Verified in a real browser** (system Edge via Playwright's `channel`), **37 assertions**: no
+   prompt on a fresh profile; lands on Scoring; the drawer is gone; round stepper and Reset
+   present; the tab highlight follows the active view; the Army stub renders and hides scoring
+   content; the Mission view has Setup/Map/Quest Rules and **no** score panel or scheme draw;
+   VP math; Return → confirm → Escape keeps playing with progress intact; reload → prompt →
+   Escape resumes into the tracker (not the briefing) with progress intact; reload → Abandon
+   discards it (VP back to 0) and leaves no prompt; in-game Abandon returns to the mission list
+   and leaves no prompt; zero console/page errors.
+6. `npm run check` **0 errors / 0 warnings**, `npm run lint` clean, **313 tests pass**,
+   `npm run build` succeeds. No new unit tests: the open-game seam is three `localStorage`
+   wrappers and the rest is navigation, neither of which has a harness in this project — the
+   browser pass covers that behaviour instead.
+7. **Docs**: `05-command-panel.md` was **renamed** to `05-score-and-round-controls.md` (solo has
+   no Command Panel any more) and rewritten around a per-mode table; `01` gained the three-view
+   layout, the "Return means abandon" rule and a full open-game lifecycle table; `02` panel order,
+   `03` where the total and Reset live, `04`, both READMEs (glossary + screen map + open
+   questions), `technical-spec/01` (z-index and surface tables, new segmented- and
+   spotlight-switcher rows, the
+   padding reservation now hot-seat-only) and `QWEN.md` (OpenGame, the `open-game` storage key,
+   the three-view `MissionDetail`, `ScoreSummaryPanel`, the mount-time resume). The 10 links to
+   the renamed file were updated mechanically.
+
+**Follow-up tweaks to the score panel, same session:** the Total VP block was centred; the
+**"Current Score" title was removed** — the hero number is self-evident, and `Panel.title` became
+optional for exactly this case; and the number was enlarged from `text-3xl` to `text-5xl` for
+phone readability. Verified by screenshot: no heading inside the panel, the number's box 50 px
+tall, and label and value both centred on the panel's midline.
+
+## What was done earlier today (solo phase 2 — Start Game + grouped Results)
+
+Phase 2 of the solo-view iteration, and the last item from the mission-briefing TODO list that
+blocked the solo flow.
+
+1. **Start Game is live.** `navigationStore.startGame()` switches `mission-briefing` →
+   `mission-detail`, so the solo tracker is reachable by clicking for the first time since
+   phase 1. Progress is loaded once, at the mission click, so Start Game changes only the
+   screen — nothing re-initialises and any saved state for that mission is already in place.
+   `MissionBriefing` gained an `onStart` prop; `+page.svelte` wires it.
+2. **The interactive Results panel now uses the round-grouped layout.** `ResultsPanel` takes
+   `entries: ResultsEntry[]` (from `groupResults`) instead of the raw `results` array, so a
+   group renders as one card with a row per round 1–5 and **editable** boxes — the same layout
+   as the briefing, differing only in interactivity. `MissionDetail` and `+page.svelte` pass a
+   shared `resultsEntries` (renamed from `briefingEntries`, since it now feeds both panels).
+   **No progress-shape change**: each round's boxes write to that round's own objective id,
+   which the v2 schema already encodes.
+3. **Deliberately unchanged:** plain ungrouped objectives render exactly as before — a native
+   checkbox at `count: 1`, `IncrementBoxes` above it, red penalty styling on the ceasefire row.
+   Only the grouped path is new, so missions without round groups look identical.
+4. **Two small cleanups this enabled.** A grouped card's heading now strikes through once every
+   scoreable round in it is maxed, extending the existing solo completion affordance to groups.
+   And `ObjectiveRoundChip` came out of `ResultsPanel`: a plain entry can never carry a `round`,
+   because the content guard requires `round` ⇒ `group` and `groupResults` groups every grouped
+   entry, so the chip was unreachable there. It is still used by the hot-seat, online and
+   lobby-preview panels.
+5. **Verified in a real browser, not just by compiling.** Drove the running dev server through
+   the system Edge install via Playwright's `channel` option (no browser download needed) —
+   **25 assertions, all passing**: Start Game enabled while Upload Army stays disabled; the
+   briefing's 16 read-only boxes (4 rounds × 4) with Round 1 locked as _No VP_ and the Important
+   callout present; the tracker showing the same 16 boxes editable; VP math (box 2 of Round 2 →
+   4 VP, re-clicking an achieved box steps back to 2, Round 5 scores independently → 4);
+   persistence across a reload; Clue Trail still rendering its ceasefire penalty row plus four
+   grouped rows; zero console/page errors. The throwaway script lived in `.qwen/tmp/` and was
+   deleted afterwards.
+6. `npm run check` **0 errors / 0 warnings**, `npm run lint` clean, **313 tests pass**,
+   `npm run build` succeeds. No new unit tests: the layout is driven entirely by `groupResults`,
+   which `domain/results.spec.ts` already covers, and stores have no test harness in this project.
+7. **Docs updated** — `functional-spec/01` (screen map, the two-step solo flow, Screens 4a/4b),
+   `03` (both solo panels collapse groups; per-mode table; the grouped-layout open question
+   narrowed to hot-seat + online), `06` (hot-seat no longer contrasts itself against a disabled
+   button), the functional README (screen map + open questions) and `QWEN.md`'s routes bullet —
+   which also fixed a stray literal unicode escape sitting in that line where an arrow character
+   belonged.
+
+**Open decision left behind:** the tracker's **Return** still goes to the mission list, not back
+to the briefing, so solo Return now skips a level. Deliberately not changed — it is a UX call.
+Recorded in `functional-spec/01`'s open questions and in the TODO list below.
+
+## What was done earlier today (Supply Run rescoring)
 
 **Supply Run's Results were wrong**: a single `deposit-resources` objective at `count: 8` — one
 flat pool of eight 2-VP deposits — instead of per-round scoring.
@@ -273,23 +417,20 @@ Morale / Ceasefire labels) → Setup → Deployment Map → Results → Schemes 
 
 ### TODO / next
 
-- **Unify the top button bar.** Every screen currently invents its own header
-  constellation: the briefing has a sticky 3-button bar (red Return left, Upload Army +
-  Start Game right), `MissionDetail` a lone right-aligned sky "Return" pill sitting in
-  the flow, and `MissionSelect` / `SeasonSelect` / `GameModeSelect` / the online screens
-  / the army builder each place and color their buttons differently again. One shared
-  header component — title slot plus left/right action slots, consistent button
+- **Unify the top button bar.** The mission briefing and the solo tracker now share a
+  sticky bar shape (red Return left, actions right), but every other screen still invents
+  its own constellation: `MissionDetailTwoPlayer` has a lone right-aligned sky "Return"
+  pill sitting in the flow, and `MissionSelect` / `SeasonSelect` / `GameModeSelect` / the
+  online screens / the army builder each place and color their buttons differently again.
+  One shared header component — title slot plus left/right action slots, consistent button
   treatments and a decision on sticky vs. in-flow — should replace all of them.
-- **Phase 2**: wire the emerald **Start Game** to something like
-  `navigationStore.startGame()` switching to `mission-detail`, and make the interactive
-  Results panel reuse the round-grouped layout (per-round boxes writing to the per-round
-  objective ids — the progress shape already supports that unchanged).
-- **Upload Army**: the blue button's eventual purpose — attach a built or saved army to
-  a mission run.
-- **Bring the grouped Results to hot-seat and online**, so Awaiting Reinforcements stops
-  rendering 12 separate cards there.
-- **Solo `mission-detail` is currently unreachable by clicking** (Start Game is
-  disabled). Expected until phase 2 lands, but worth remembering when testing.
+- **Upload Army / the Army view**: the blue button's eventual purpose — attach a built or
+  saved army to a mission run. The tracker's stubbed **Army** tab is waiting on the same
+  decision, so one answer unblocks both.
+- **Bring the grouped Results to hot-seat and online** (solo's tracker has it now), so
+  Awaiting Reinforcements stops rendering 12 separate cards there.
+- **Three views in hot-seat?** Solo's tracker now splits Scoring / Army / Mission behind a
+  sticky tab bar; hot-seat is still one long screen with a right-edge drawer.
 - **Visual sign-off still pending** on the radial "Deployment Zone" label fit (Quarter
   War, Toxic Infestation), 4-box rows at phone width, and whether the filled `bg-red-500`
   Return is notable enough.
