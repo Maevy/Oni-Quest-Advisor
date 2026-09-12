@@ -147,7 +147,10 @@ native/platform-specific one. Used on a phone screen during a game session.
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
   = 1–5), and `pickedArmy`: a **snapshot** (`{ name, factionId, code }`) of a saved
   standard army attached from the briefing's **Pick Army** button, rendered read-only
-  in the tracker's Army view. Total VP = checked Results VP + checked Scheme increments, capped at
+  in the tracker's Army view. Each copy's live Life/stamina lives in `vitality`
+  (entry id → `{ hp, sta }`, absent = full): an Army row opens a vitality menu on
+  click that damages, heals (Life overheals to double its base, the extra hearts
+  blue) and spends stamina, committing only on Accept. Total VP = checked Results VP + checked Scheme increments, capped at
   `MAX_TOTAL_VP` = 10 (a player cannot earn more per mission); the tracker's untitled score
   panel shows the total against that cap.
 - **OpenGame** (solo) → `{ missionId }`, the marker that a run is live. Written by
