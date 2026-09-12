@@ -155,14 +155,14 @@ and points back at the briefing's Pick Army.
 Each row also carries the model's **vitality** on its right edge: red hearts for HP and yellow
 orbs for stamina, four per line before wrapping, drawn from the copy's effective stats.
 
-Hovering a row tints its border; clicking it — or pressing Enter/Space on it — opens the
-**vitality menu**: the same tracks, larger, flanked by a damage button (marker with a minus) on the
-left and a heal button (+) on the right. Life may be **overhealed up to double** its base, and the
-extra hearts render **blue**; stamina has no headroom and caps at its base. Damage shows as an
-outlined marker with a black fill at 70 % opacity. Nothing changes until **Accept**; **Cancel**,
-Escape or a backdrop click discards. Accepted values persist with the run under
-`MissionProgress.vitality`, keyed by entry id, so they survive reloads and die with the run on
-abandon. Further statuses will join this menu later; the track markup already renders any
+Hovering a row tints its border and gives it a slight glow; clicking it — or pressing Enter/Space
+on it — opens the **vitality menu**: the same tracks, larger, flanked by a damage button (marker
+with a minus) on the left and a heal button (+) on the right. Life may be **overhealed up to
+double** its base, and the extra hearts render **blue**; stamina has no headroom and caps at its
+base. Damage shows as an outlined marker with a black fill at 70 % opacity. Nothing changes until
+**Accept**; **Cancel**, Escape or a backdrop click discards. Accepted values persist with the run
+under `MissionProgress.vitality`, keyed by entry id, so they survive reloads and die with the run
+on abandon. Further statuses will join this menu later; the track markup already renders any
 current/max pair, so they need no structural change.
 
 On a phone, a **horizontal swipe** across the screen steps between the views in the same order —

@@ -36,7 +36,7 @@
 					role="button"
 					tabindex="0"
 					aria-label={'Adjust Life and stamina of ' + row.name}
-					class="cursor-pointer rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5 transition hover:border-sky-400/60"
+					class="cursor-pointer rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5 transition hover:border-sky-400/60 hover:shadow-[0_0_12px_rgba(56,189,248,0.35)]"
 					onclick={() => onOpenVitality(row)}
 					onkeydown={(event) => {
 						if (event.key === 'Enter' || event.key === ' ') {
