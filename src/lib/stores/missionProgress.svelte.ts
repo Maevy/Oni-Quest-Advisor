@@ -7,7 +7,14 @@ import {
 	saveOpenGame
 } from '$lib/data';
 import * as domain from '$lib/domain';
-import type { ArmyRosterRow, Mission, MissionProgress, PickedArmy, SchemeCard } from '$lib/domain';
+import type {
+	ArmyRosterRow,
+	Mission,
+	MissionProgress,
+	PickedArmy,
+	SchemeCard,
+	UnitVitality
+} from '$lib/domain';
 import { contentStore } from './content.svelte';
 
 class MissionProgressStore {
@@ -71,6 +78,16 @@ class MissionProgressStore {
 	clearPickedArmy(): void {
 		if (!this.progress) return;
 		this.progress = { ...this.progress, pickedArmy: null };
+		this.persist();
+	}
+
+	/** Commits a copy's Life/stamina once the vitality menu is accepted. */
+	setUnitVitality(entryId: string, vitality: UnitVitality): void {
+		if (!this.progress) return;
+		this.progress = {
+			...this.progress,
+			vitality: { ...this.progress.vitality, [entryId]: vitality }
+		};
 		this.persist();
 	}
 

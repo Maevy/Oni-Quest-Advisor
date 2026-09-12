@@ -5,7 +5,8 @@ import type {
 	ArmyRosterRow,
 	ArmyRulesSpec,
 	ArmySpellSpec,
-	ArmyStratagemSpec
+	ArmyStratagemSpec,
+	UnitVitality
 } from './army';
 
 /**
@@ -61,6 +62,8 @@ export type ArmyView = {
 	spells: ArmySpellSpec[];
 	stratagemIndex: Record<string, ArmyStratagemSpec>;
 	itemIndex: Record<string, ArmyItemSpec>;
+	/** Live Life/stamina per copy (entry id); absent entries are untouched, i.e. full. */
+	vitality: Record<string, UnitVitality>;
 };
 
 /** Groups saved armies by faction (in `factionOrder`), newest first within each group. */

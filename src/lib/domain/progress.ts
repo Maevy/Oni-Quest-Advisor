@@ -1,6 +1,7 @@
 import { getScoreableResults, type Mission } from './mission';
 import { schemeVp, type ChosenScheme, type SchemeCard } from './scheme';
 import type { PickedArmy } from './savedArmy';
+import type { UnitVitality } from './army';
 
 export type SchemeDraft = {
 	factionId: string | null;
@@ -24,6 +25,8 @@ export type MissionProgress = {
 	currentRound: number;
 	/** The army attached to this run, if the player picked one; a snapshot, not a live save. */
 	pickedArmy: PickedArmy | null;
+	/** Live Life/stamina per army copy (entry id), for copies that took damage or were healed. */
+	vitality: Record<string, UnitVitality>;
 };
 
 export function createEmptyProgress(missionId: string): MissionProgress {
@@ -33,7 +36,8 @@ export function createEmptyProgress(missionId: string): MissionProgress {
 		scheme: null,
 		schemeDraft: { factionId: null, intelligence: null },
 		currentRound: MIN_ROUND,
-		pickedArmy: null
+		pickedArmy: null,
+		vitality: {}
 	};
 }
 

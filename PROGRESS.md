@@ -60,6 +60,35 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (vitality menu: damage, heal, overheal)
+
+The Army rows became interactive, closing the loop the vitality tracks started.
+
+1. **Hover + click**: a row's border tints on hover; clicking it — or Enter/Space, since the row's
+   click target is a `role="button"` wrapper inside the `<li>` (a `<li>` cannot take an interactive
+   role, and a real `<button>` cannot contain the portrait and upgrade buttons) — opens
+   `UnitVitalityDialog`.
+2. **The menu** shows the larger tracks (`VitalityTrack large centered`) flanked by a damage button
+   (marker + minus) on the left and a heal button (+) on the right. **Life overheals to double the
+   base and the extra hearts render blue**; stamina has no headroom and caps at its base. Damage
+   renders as an outlined marker with a black fill at 70 % opacity — the style specified for the
+   later statuses. **Accept** commits, **Cancel**/Escape/backdrop discards.
+3. **State**: `MissionProgress.vitality: Record<entryId, { hp, sta }>` (new `UnitVitality` type,
+   defined in `domain/army.ts` so `progress` and `savedArmy` do not import each other). Absent
+   means full, so untouched copies cost nothing. Decoded entry ids are position-based
+   (`imported-N`), which is what makes the key stable across reloads. The values ride in the
+   `ArmyView` bundle and persist with the run.
+4. **Verified in a real browser — 17 assertions**: hover changes the computed border colour; the
+   menu opens with the bigger track; two damage clicks render two empty hearts; healing to the cap
+   reaches exactly double with that many blue hearts and disables `+`; stamina never exceeds its
+   base and its recover disables at full; Cancel discards; Accept commits both tracks to the row;
+   and the committed values survive a reload via the resume prompt.
+5. **Docs**: `functional-spec/01` describes the menu, overheal and persistence; this file records
+   the session.
+
+**Next in this iteration:** further statuses join the same menu; the track already renders any
+current/max pair, so they are additive.
+
 ## What was done in the last session (vitality tracks in the Army view)
 
 The read-only Army rows now carry the live-tracking visuals, ready for the damage and status

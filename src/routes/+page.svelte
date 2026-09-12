@@ -203,7 +203,8 @@
 			spellcraftIndex: armySpellcraftIndex,
 			spells: contentStore.armySpells,
 			stratagemIndex: armyStratagemIndex,
-			itemIndex: armyItemIndex
+			itemIndex: armyItemIndex,
+			vitality: missionProgressStore.progress?.vitality ?? {}
 		};
 	});
 
@@ -548,6 +549,7 @@
 			missionProgressStore.setSchemeChecked(checkedIncrements, chosenSchemeCard.maxIncrements)}
 		onDeleteScheme={() => missionProgressStore.deleteScheme()}
 		onSetRound={(round) => missionProgressStore.setRound(round)}
+		onSetVitality={(entryId, vitality) => missionProgressStore.setUnitVitality(entryId, vitality)}
 	/>
 {/if}
 

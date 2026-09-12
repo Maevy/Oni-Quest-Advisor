@@ -7,7 +7,8 @@
 		Mission,
 		MissionProgress,
 		ResultsEntry,
-		SchemeCard
+		SchemeCard,
+		UnitVitality
 	} from '$lib/domain';
 	import ArmyReadonlyPanel from './ArmyReadonlyPanel.svelte';
 	import ArmyUpgradeDetail from './ArmyUpgradeDetail.svelte';
@@ -21,6 +22,7 @@
 	import SchemesPanel from './SchemesPanel.svelte';
 	import SetupPanel from './SetupPanel.svelte';
 	import UnitCard from './UnitCard.svelte';
+	import UnitVitalityDialog from './UnitVitalityDialog.svelte';
 
 	type GameView = 'scoring' | 'army' | 'mission';
 
@@ -52,6 +54,7 @@
 		onSetSchemeChecked: (checkedIncrements: number) => void;
 		onDeleteScheme: () => void;
 		onSetRound: (round: number) => void;
+		onSetVitality: (entryId: string, vitality: UnitVitality) => void;
 	};
 
 	let {
@@ -72,7 +75,8 @@
 		onChooseScheme,
 		onSetSchemeChecked,
 		onDeleteScheme,
-		onSetRound
+		onSetRound,
+		onSetVitality
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -83,6 +87,7 @@
 	// would become the containing block for their fixed overlays and trap them inside a pane.
 	let armyCardRow = $state<ArmyRosterRow | null>(null);
 	let armyDetailUpgrade = $state<ArmyUpgradeSpec | null>(null);
+	let vitalityRow = $state<ArmyRosterRow | null>(null);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
@@ -203,6 +208,7 @@
 							view={armyView}
 							onShowUnit={(row) => (armyCardRow = row)}
 							onShowUpgrade={(upgrade) => (armyDetailUpgrade = upgrade)}
+							onOpenVitality={(row) => (vitalityRow = row)}
 						/>
 					{:else}
 						<Panel title="Army">
@@ -267,5 +273,19 @@
 		cost={armyDetailUpgrade.cost}
 		factionColor={armyView.faction.color}
 		onClose={() => (armyDetailUpgrade = null)}
+	/>
+{/if}
+
+{#if armyView && vitalityRow}
+	{@const row = vitalityRow}
+	{@const full = { hp: row.effectiveStats.HP ?? 0, sta: row.effectiveStats.STA ?? 0 }}
+	<UnitVitalityDialog
+		{row}
+		vitality={armyView.vitality[row.entryId] ?? full}
+		onAccept={(vitality) => {
+			onSetVitality(row.entryId, vitality);
+			vitalityRow = null;
+		}}
+		onCancel={() => (vitalityRow = null)}
 	/>
 {/if}

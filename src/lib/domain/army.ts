@@ -44,6 +44,13 @@ export type ArmyStatKey = (typeof ARMY_STAT_KEYS)[number];
 export type ArmyStats = Record<ArmyStatKey, number | null>;
 
 /**
+ * A copy's live Life and stamina during a run. Absent from the run's vitality map means
+ * untouched, i.e. full. `hp` may exceed the model's base HP (overheal, up to double the
+ * base); `sta` never exceeds its base.
+ */
+export type UnitVitality = { hp: number; sta: number };
+
+/**
  * The size ladder, smallest first. The order is rules-relevant: upgrades gate
  * on "Size Medium or smaller" and traits on "two or more Sizes larger", so
  * sizes are compared by rank rather than by name. Colossal and Epic only occur
