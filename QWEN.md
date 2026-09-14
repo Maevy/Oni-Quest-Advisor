@@ -318,16 +318,26 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.6.4** — v0.6.2 finished the army
-  builder (saved armies with the Save Army name dialog and the Load Army list
-  with delete and Standard/Roster filter, the Roster format at 125 pts with a
-  separate equipment pool and a guarded format switch, format-aware codes and
-  saves, lazy-loaded army content, resized first-screen portraits and the
-  phone-polish round), v0.6.3 migrated model size (`size_info` → a required,
-  ordered `ArmyUnitSize`; Flying Carpet's "Medium or smaller" ceiling automated;
-  a mounted model counts as its mount's size, with a confirmation before an
+  and push branch + tag. Current release: **v0.7.0** — the solo view release: the
+  read-only Mission Briefing on the additive v2 Results schema (`round`/`group`)
+  with per-round cards, a working Start Game that warns before a run begins
+  without an army, the tracker rebuilt as a Scoring / Army / Mission three-view
+  screen behind a sliding spotlight switcher with the open-game lifecycle (Return
+  abandons behind a confirmation, app start offers to resume), Pick Army
+  attaching a saved standard army as a read-only snapshot with per-copy vitality
+  tracks and the vitality menu (damage, heal with overheal to double, stamina,
+  fifteen States), the shared `ScreenHeader` top bar across four screens, the
+  leveled-grant fix (a "receives the Stealth I skill" upgrade no longer invents
+  Stealth II) and the glowing Solo entry button; v0.6.2 finished the army builder
+  (saved armies with the Save Army name dialog and the Load Army list with delete
+  and Standard/Roster filter, the Roster format at 125 pts with a separate
+  equipment pool and a guarded format switch, format-aware codes and saves,
+  lazy-loaded army content, resized first-screen portraits and the phone-polish
+  round), v0.6.3 migrated model size (`size_info` → a required, ordered
+  `ArmyUnitSize`; Flying Carpet's "Medium or smaller" ceiling automated; a
+  mounted model counts as its mount's size, with a confirmation before an
   invalidated upgrade is dropped) and fixed the builder's panel scrolling, and
-  v0.6.4 is a scoring hotfix: "Ceasefire broken" is scoreable three times at
+  v0.6.4 was a scoring hotfix: "Ceasefire broken" is scoreable three times at
   −4 VP each (red boxes) and the ceasefire missions no longer offer Round-1 VP.
   Deployed to Fly.io.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
