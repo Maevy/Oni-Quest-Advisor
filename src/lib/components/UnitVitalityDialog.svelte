@@ -1,6 +1,10 @@
 <script lang="ts">
-	import type { ArmyRosterRow, UnitVitality } from '$lib/domain';
+	import type { ArmyRosterRow, UnitStatus, UnitVitality } from '$lib/domain';
+	import { toggleUnitStatus, UNIT_STATUSES, UNIT_STATUS_LABELS } from '$lib/domain';
 	import { onEscapeKey } from './escapeKey';
+	import Panel from './Panel.svelte';
+	import StatusGlyph from './StatusGlyph.svelte';
+	import VitalityMarker from './VitalityMarker.svelte';
 	import VitalityTrack from './VitalityTrack.svelte';
 
 	type Props = {
@@ -19,6 +23,8 @@
 	let hp = $state(vitality.hp);
 	// svelte-ignore state_referenced_locally
 	let sta = $state(vitality.sta);
+	// svelte-ignore state_referenced_locally
+	let statuses = $state<UnitStatus[]>(vitality.statuses ?? []);
 
 	/** Overheal reaches double the base Life; stamina has no such headroom. */
 	let baseHp = $derived(row.effectiveStats.HP ?? 0);
@@ -27,8 +33,9 @@
 
 	$effect(() => onEscapeKey(onCancel));
 
+	/** Circular step buttons; the sign sits inside the marker glyph they carry. */
 	const stepButton =
-		'flex h-9 w-9 shrink-0 items-center justify-center gap-0.5 rounded-lg border border-slate-600/60 bg-slate-800/80 text-lg font-bold text-slate-100 transition active:bg-slate-700/80 disabled:opacity-30';
+		'flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-600/60 bg-slate-800/80 transition active:bg-slate-700/80 disabled:opacity-30';
 </script>
 
 <div
@@ -39,87 +46,101 @@
 	}}
 >
 	<div
-		class="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur"
+		class="flex max-h-[85dvh] w-full max-w-sm flex-col rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur"
 	>
-		<div class="flex items-center gap-3">
-			{#if row.icon}
-				<img
-					src={row.icon}
-					alt=""
-					class="h-12 w-12 shrink-0 rounded-lg border border-slate-700/50 object-contain"
-				/>
-			{/if}
-			<div class="min-w-0 flex-1">
-				<p class="truncate text-sm font-semibold text-slate-100">{row.name}</p>
-				<p class="text-xs text-slate-400">Life and stamina</p>
+		<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+			<div class="flex items-center gap-3">
+				{#if row.icon}
+					<img
+						src={row.icon}
+						alt=""
+						class="h-12 w-12 shrink-0 rounded-lg border border-slate-700/50 object-contain"
+					/>
+				{/if}
+				<p class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-100">{row.name}</p>
+			</div>
+
+			<div class="mt-4 flex flex-col gap-3">
+				<Panel title="Life">
+					<div class="flex items-center justify-between gap-2">
+						<button
+							type="button"
+							class={stepButton}
+							aria-label={'Deal 1 damage to ' + row.name}
+							disabled={hp <= 0}
+							onclick={() => (hp = Math.max(0, hp - 1))}
+						>
+							<VitalityMarker kind="hp" state="full" sign="minus" size="h-7 w-7" />
+						</button>
+						<div class="min-w-0 flex-1">
+							<VitalityTrack kind="hp" current={hp} max={baseHp} large centered />
+						</div>
+						<button
+							type="button"
+							class={stepButton}
+							aria-label={'Heal ' + row.name + ' by 1'}
+							disabled={hp >= hpCap}
+							onclick={() => (hp = Math.min(hpCap, hp + 1))}
+						>
+							<VitalityMarker kind="hp" state="full" sign="plus" size="h-7 w-7" />
+						</button>
+					</div>
+				</Panel>
+
+				<Panel title="Stamina">
+					<div class="flex items-center justify-between gap-2">
+						<button
+							type="button"
+							class={stepButton}
+							aria-label={'Spend 1 stamina of ' + row.name}
+							disabled={sta <= 0}
+							onclick={() => (sta = Math.max(0, sta - 1))}
+						>
+							<VitalityMarker kind="stamina" state="full" sign="minus" size="h-7 w-7" />
+						</button>
+						<div class="min-w-0 flex-1">
+							<VitalityTrack kind="stamina" current={sta} max={baseSta} large centered />
+						</div>
+						<button
+							type="button"
+							class={stepButton}
+							aria-label={'Recover 1 stamina of ' + row.name}
+							disabled={sta >= baseSta}
+							onclick={() => (sta = Math.min(baseSta, sta + 1))}
+						>
+							<VitalityMarker kind="stamina" state="full" sign="plus" size="h-7 w-7" />
+						</button>
+					</div>
+				</Panel>
+				<Panel title="Statuses">
+					<div class="flex flex-wrap justify-center gap-x-2 gap-y-3">
+						{#each UNIT_STATUSES as status (status)}
+							{@const on = statuses.includes(status)}
+							<button
+								type="button"
+								class="flex flex-col items-center gap-1"
+								aria-pressed={on}
+								aria-label={UNIT_STATUS_LABELS[status]}
+								onclick={() => (statuses = toggleUnitStatus(statuses, status))}
+							>
+								<span class="text-[10px] leading-none whitespace-nowrap text-slate-100">
+									{UNIT_STATUS_LABELS[status]}
+								</span>
+								<span
+									class="flex h-11 w-11 items-center justify-center rounded-full border transition active:bg-slate-700/80 {on
+										? 'border-slate-500/70 bg-slate-700/60'
+										: 'border-slate-600/60 bg-slate-800/80'}"
+								>
+									<StatusGlyph {status} active={on} size="h-6 w-6" />
+								</span>
+							</button>
+						{/each}
+					</div>
+				</Panel>
 			</div>
 		</div>
 
-		<div class="mt-4 flex flex-col gap-3">
-			<div class="flex items-center justify-between gap-2">
-				<button
-					type="button"
-					class={stepButton}
-					aria-label={'Deal 1 damage to ' + row.name}
-					disabled={hp <= 0}
-					onclick={() => (hp = Math.max(0, hp - 1))}
-				>
-					<svg
-						viewBox="0 0 24 24"
-						class="h-3.5 w-3.5 fill-red-500 stroke-red-500"
-						aria-hidden="true"
-					>
-						<path
-							d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-							stroke-width="1.5"
-						/>
-					</svg>
-					<span aria-hidden="true">−</span>
-				</button>
-				<div class="min-w-0 flex-1">
-					<VitalityTrack kind="hp" current={hp} max={baseHp} large centered />
-				</div>
-				<button
-					type="button"
-					class={stepButton}
-					aria-label={'Heal ' + row.name + ' by 1'}
-					disabled={hp >= hpCap}
-					onclick={() => (hp = Math.min(hpCap, hp + 1))}
-				>
-					<span aria-hidden="true">+</span>
-				</button>
-			</div>
-
-			<div class="flex items-center justify-between gap-2">
-				<button
-					type="button"
-					class={stepButton}
-					aria-label={'Spend 1 stamina of ' + row.name}
-					disabled={sta <= 0}
-					onclick={() => (sta = Math.max(0, sta - 1))}
-				>
-					<span
-						class="h-3.5 w-3.5 rounded-full border border-yellow-400 bg-yellow-400"
-						aria-hidden="true"
-					></span>
-					<span aria-hidden="true">−</span>
-				</button>
-				<div class="min-w-0 flex-1">
-					<VitalityTrack kind="stamina" current={sta} max={baseSta} large centered />
-				</div>
-				<button
-					type="button"
-					class={stepButton}
-					aria-label={'Recover 1 stamina of ' + row.name}
-					disabled={sta >= baseSta}
-					onclick={() => (sta = Math.min(baseSta, sta + 1))}
-				>
-					<span aria-hidden="true">+</span>
-				</button>
-			</div>
-		</div>
-
-		<div class="mt-5 flex justify-center gap-3">
+		<div class="mt-5 flex shrink-0 justify-center gap-3">
 			<button
 				type="button"
 				class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
@@ -130,7 +151,7 @@
 			<button
 				type="button"
 				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-6 py-2 font-semibold text-emerald-300 transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20"
-				onclick={() => onAccept({ hp, sta })}
+				onclick={() => onAccept({ hp, sta, statuses })}
 			>
 				Accept
 			</button>

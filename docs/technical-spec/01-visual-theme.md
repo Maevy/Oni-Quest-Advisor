@@ -68,10 +68,39 @@ glyph — inverted after players missed the translucent version) and the briefin
 `bg-red-500` **← Return**.
 
 Small square icon buttons (steppers, round ±, dialog close) are
-`h-9 w-9 rounded-lg border border-slate-600/60 bg-slate-800/80`, disabled at `opacity-30`.
+`h-9 w-9 rounded-lg border border-slate-600/60 bg-slate-800/80`, disabled at `opacity-30`. The
+vitality menu's step buttons are the one circular exception: `h-11 w-11 rounded-full`, each
+carrying a `VitalityMarker` glyph with the − or + drawn _inside_ the heart or orb, so the button
+reads as the action it performs. `VitalityMarker.svelte` is the single source of the heart and orb
+glyphs — the row tracks and the menu both render through it, including the depleted and overheal
+states.
 
 **Touch targets: ≥ 36 px.** The compact unit stepper was deliberately shrunk 40 → 36 px to
 free ~75 px of row width for the unit name on phones; that is the floor, not a target.
+
+### Status glyphs
+
+`StatusGlyph.svelte` owns the fifteen State markers of the vitality menu and the Army rows —
+hand-drawn 24×24 SVG, like every other glyph in the app. Off, all of them read `slate-500`; on,
+each State owns a colour. Inner cut-outs (skull eyes, poison numbers, the snail's spiral) are
+`slate-900`, so they read on any fill, grey included.
+
+| Status                      | Glyph                   | Colour when on |
+| --------------------------- | ----------------------- | -------------- |
+| Bleeding                    | blood drop              | `red-500`      |
+| Blinded                     | dashed eye              | `yellow-400`   |
+| Confused                    | stars above a head      | `orange-400`   |
+| Crippled                    | broken bone             | `orange-400`   |
+| Crouched                    | down arrow              | `purple-300`   |
+| Dead                        | skull                   | `red-500`      |
+| Flying                      | angel wing              | `cyan-400`     |
+| Fatigued                    | hunched stickman        | `orange-400`   |
+| Immobilized                 | slashed boot            | `purple-300`   |
+| Incapacitated               | head with X eyes        | `yellow-400`   |
+| Panicked                    | three exclamation marks | `orange-400`   |
+| Weak Poison / Strong Poison | numbered drop (1 / 2)   | `emerald-500`  |
+| Slowed                      | snail                   | `purple-300`   |
+| Weakened                    | shield split in half    | `slate-200`    |
 
 ## Accent systems
 
@@ -190,22 +219,24 @@ scrollers also mean each view keeps its own scroll position across a switch.
 This is load-bearing, not stylistic. With `min-h-dvh` the root grows to the length of the unit
 list, the panels' `min-h-0 flex-1 overflow-y-auto` lists never receive a height to scroll
 within, and the **document** becomes the single scroller shared by both panels — which strands
-the player far below a short panel after scrolling a long one. `overscroll-contain` is still
-needed on top of the definite height, because the document remains `100dvh + footer` tall
-(`+layout.svelte` stacks `flex-1` content and the footer in a `min-h-dvh` column), so gestures
-would otherwise chain into the page. Requires Safari 16+.
+the player far below a short panel after scrolling a long one. The layout enforces the contract
+from the outside: on these two screens `+layout.svelte` locks its column to `h-dvh
+overflow-hidden` and omits the footer, so the document is exactly the viewport, the pinned
+header can never scroll away, and the active panel is the one and only scroller.
+`overscroll-contain` on the panels still stops gestures chaining into anything else. Requires
+Safari 16+.
 
-**Every other screen scrolls the document normally.** Internal scrolling elsewhere uses a
-definite height (e.g. `max-h-[85dvh]` on the unit-card and upgrade popups). Dragging on the
-builder's header or card padding still reaches ~90 px of document scroll — that is what keeps
-the footer (artwork credit + version) reachable on that screen.
+**Every other screen scrolls the document normally**, footer included. Internal scrolling
+elsewhere uses a definite height (e.g. `max-h-[85dvh]` on the unit-card and upgrade popups).
 
 ## Footer
 
 Site-wide, in `+layout.svelte`: the fan-project disclaimer (no affiliation with FreeCompany
 d.o.o.), the artwork-credit line for Freecompany d.o.o. under a free license, and the app
 version. `text-[10px]`, centered. The version is `__APP_VERSION__`, injected by
-`vite.config.ts` from `package.json` — bump it there for a release.
+`vite.config.ts` from `package.json` — bump it there for a release. It is omitted on the two
+full-height screens, where an in-flow footer would put a second scroller above their pinned
+headers; every other screen still ends in it.
 
 ## Accessibility
 

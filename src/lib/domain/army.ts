@@ -44,11 +44,91 @@ export type ArmyStatKey = (typeof ARMY_STAT_KEYS)[number];
 export type ArmyStats = Record<ArmyStatKey, number | null>;
 
 /**
+ * The States a copy can carry during a run, tracked by hand in the vitality menu. The
+ * keys follow the trait catalog; Poison is the exception - its two strengths (the
+ * Poison trait's WEAK and STRONG levels) are two separate statuses, and Shrouded is
+ * deliberately absent because it is handled by other means.
+ */
+export const UNIT_STATUSES = [
+	'bleeding',
+	'blinded',
+	'confused',
+	'crippled',
+	'crouched',
+	'dead',
+	'flying',
+	'fatigued',
+	'immobilized',
+	'incapacitated',
+	'panicked',
+	'poison-1',
+	'poison-2',
+	'slowed',
+	'weakened'
+] as const;
+
+export type UnitStatus = (typeof UNIT_STATUSES)[number];
+
+export const UNIT_STATUS_LABELS: Record<UnitStatus, string> = {
+	bleeding: 'Bleeding',
+	blinded: 'Blinded',
+	confused: 'Confused',
+	crippled: 'Crippled',
+	crouched: 'Crouched',
+	dead: 'Dead',
+	flying: 'Flying',
+	fatigued: 'Fatigued',
+	immobilized: 'Immobilized',
+	incapacitated: 'Incapacitated',
+	panicked: 'Panicked',
+	'poison-1': 'Weak Poison',
+	'poison-2': 'Strong Poison',
+	slowed: 'Slowed',
+	weakened: 'Weakened'
+};
+
+/**
  * A copy's live Life and stamina during a run. Absent from the run's vitality map means
  * untouched, i.e. full. `hp` may exceed the model's base HP (overheal, up to double the
- * base); `sta` never exceeds its base.
+ * base); `sta` never exceeds its base. `statuses` lists the States the copy carries;
+ * absent means none, so an untouched copy costs nothing in the run's map.
  */
-export type UnitVitality = { hp: number; sta: number };
+export type UnitVitality = { hp: number; sta: number; statuses?: UnitStatus[] };
+
+/** The States a copy carries; progress saved before statuses existed has none. */
+export function unitStatuses(vitality: UnitVitality | null | undefined): UnitStatus[] {
+	return vitality?.statuses ?? [];
+}
+
+/**
+ * Flips one State on or off, keeping the catalog order. The two Poison strengths
+ * describe the same condition, so picking one drops the other.
+ */
+export function toggleUnitStatus(statuses: UnitStatus[], status: UnitStatus): UnitStatus[] {
+	const withoutRival =
+		status === 'poison-1'
+			? statuses.filter((s) => s !== 'poison-2')
+			: status === 'poison-2'
+				? statuses.filter((s) => s !== 'poison-1')
+				: statuses;
+	const toggled = withoutRival.includes(status)
+		? withoutRival.filter((s) => s !== status)
+		: [...withoutRival, status];
+	return UNIT_STATUSES.filter((s) => toggled.includes(s));
+}
+
+/**
+ * A model whose Life reaches 0 becomes Incapacitated and immediately enters the Crouched
+ * State, so a committed zero-Life vitality carries both whether or not the player lit them
+ * in the menu. Healing back up does not cancel them - that stays a manual toggle.
+ */
+export function applyZeroHpStates(vitality: UnitVitality): UnitVitality {
+	if (vitality.hp > 0) return vitality;
+	let statuses = vitality.statuses ?? [];
+	if (!statuses.includes('incapacitated')) statuses = toggleUnitStatus(statuses, 'incapacitated');
+	if (!statuses.includes('crouched')) statuses = toggleUnitStatus(statuses, 'crouched');
+	return { ...vitality, statuses };
+}
 
 /**
  * The size ladder, smallest first. The order is rules-relevant: upgrades gate

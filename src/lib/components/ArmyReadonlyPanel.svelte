@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { ArmyRosterRow, ArmyUpgradeSpec, ArmyView } from '$lib/domain';
+	import { unitStatuses } from '$lib/domain';
 	import Panel from './Panel.svelte';
+	import StatusGlyph from './StatusGlyph.svelte';
 	import VitalityTrack from './VitalityTrack.svelte';
 
 	type Props = {
@@ -66,6 +68,13 @@
 								{row.points} pts{#if row.mounted}
 									· mounted on {row.mount?.name}{/if}
 							</p>
+							{#if unitStatuses(vit).length > 0}
+								<div class="mt-1.5 flex flex-wrap gap-1.5">
+									{#each unitStatuses(vit) as status (status)}
+										<StatusGlyph {status} active size="h-6 w-6" />
+									{/each}
+								</div>
+							{/if}
 						</div>
 						<div class="flex shrink-0 flex-col items-end gap-1">
 							{#if row.effectiveStats.HP !== null && currentHp !== null}

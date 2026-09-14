@@ -86,7 +86,7 @@ class MissionProgressStore {
 		if (!this.progress) return;
 		this.progress = {
 			...this.progress,
-			vitality: { ...this.progress.vitality, [entryId]: vitality }
+			vitality: { ...this.progress.vitality, [entryId]: domain.applyZeroHpStates(vitality) }
 		};
 		this.persist();
 	}

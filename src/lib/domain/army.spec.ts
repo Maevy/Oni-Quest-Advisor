@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ARMY_UNIT_SIZES,
+	UNIT_STATUSES,
 	addArmyUnit,
 	addRosterPick,
 	affinityElements,
+	applyZeroHpStates,
 	armyCopyCounts,
 	armyPoints,
 	armyRulesTitle,
@@ -42,6 +44,7 @@ import {
 	stratagemsFor,
 	substituteArmyTemplate,
 	toggleArmyMount,
+	toggleUnitStatus,
 	traitPopupFor,
 	upgradedArmyUnit,
 	upgradeCostInArmy,
@@ -50,6 +53,7 @@ import {
 	upgradeSlotsFor,
 	upgradesForFaction,
 	unitsForFaction,
+	unitStatuses,
 	type ArmyEntry,
 	type ArmyItemSpec,
 	type ArmyRulesIndexes,
@@ -2473,5 +2477,76 @@ describe('roster picks', () => {
 			{ id: 'imported-crossbow', qty: 1 }
 		];
 		expect(rosterPickPoints(picks, UPGRADE_INDEX)).toBe(2 * 1 + 5);
+	});
+});
+
+describe('unitStatuses', () => {
+	it('reads no States from an absent or pre-statuses vitality', () => {
+		expect(unitStatuses(undefined)).toEqual([]);
+		expect(unitStatuses(null)).toEqual([]);
+		expect(unitStatuses({ hp: 4, sta: 3 })).toEqual([]);
+	});
+
+	it('reads the States a copy carries', () => {
+		expect(unitStatuses({ hp: 4, sta: 3, statuses: ['bleeding', 'slowed'] })).toEqual([
+			'bleeding',
+			'slowed'
+		]);
+	});
+});
+
+describe('toggleUnitStatus', () => {
+	it('switches a State on and off again', () => {
+		const on = toggleUnitStatus([], 'bleeding');
+		expect(on).toEqual(['bleeding']);
+		expect(toggleUnitStatus(on, 'bleeding')).toEqual([]);
+	});
+
+	it('keeps the catalog order', () => {
+		const statuses = toggleUnitStatus(toggleUnitStatus([], 'weakened'), 'bleeding');
+		expect(statuses).toEqual(['bleeding', 'weakened']);
+		expect(UNIT_STATUSES).toContain('bleeding');
+	});
+
+	it('replaces the other Poison strength', () => {
+		expect(toggleUnitStatus(['poison-1'], 'poison-2')).toEqual(['poison-2']);
+		expect(toggleUnitStatus(['poison-2'], 'poison-1')).toEqual(['poison-1']);
+	});
+
+	it('leaves unrelated States alone when swapping Poison', () => {
+		expect(toggleUnitStatus(['bleeding', 'poison-1'], 'poison-2')).toEqual([
+			'bleeding',
+			'poison-2'
+		]);
+	});
+});
+
+describe('applyZeroHpStates', () => {
+	it('adds Incapacitated and Crouched when Life reaches 0', () => {
+		expect(applyZeroHpStates({ hp: 0, sta: 2 }).statuses).toEqual(['crouched', 'incapacitated']);
+	});
+
+	it('keeps the States the copy already carried', () => {
+		expect(applyZeroHpStates({ hp: 0, sta: 0, statuses: ['bleeding'] }).statuses).toEqual([
+			'bleeding',
+			'crouched',
+			'incapacitated'
+		]);
+	});
+
+	it('does not duplicate States the player already lit', () => {
+		const fallen = applyZeroHpStates({
+			hp: 0,
+			sta: 0,
+			statuses: ['crouched', 'incapacitated']
+		});
+		expect(fallen.statuses).toEqual(['crouched', 'incapacitated']);
+	});
+
+	it('leaves a living copy untouched', () => {
+		expect(applyZeroHpStates({ hp: 3, sta: 2 })).toEqual({ hp: 3, sta: 2 });
+		expect(applyZeroHpStates({ hp: 1, sta: 0, statuses: ['bleeding'] }).statuses).toEqual([
+			'bleeding'
+		]);
 	});
 });

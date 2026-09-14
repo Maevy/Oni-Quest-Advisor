@@ -156,14 +156,31 @@ Each row also carries the model's **vitality** on its right edge: red hearts for
 orbs for stamina, four per line before wrapping, drawn from the copy's effective stats.
 
 Hovering a row tints its border and gives it a slight glow; clicking it — or pressing Enter/Space
-on it — opens the **vitality menu**: the same tracks, larger, flanked by a damage button (marker
-with a minus) on the left and a heal button (+) on the right. Life may be **overhealed up to
-double** its base, and the extra hearts render **blue**; stamina has no headroom and caps at its
-base. Damage shows as an outlined marker with a black fill at 70 % opacity. Nothing changes until
-**Accept**; **Cancel**, Escape or a backdrop click discards. Accepted values persist with the run
-under `MissionProgress.vitality`, keyed by entry id, so they survive reloads and die with the run
-on abandon. Further statuses will join this menu later; the track markup already renders any
-current/max pair, so they need no structural change.
+on it — opens the **vitality menu**: three panels. **Life** and **Stamina** each hold their track,
+larger, flanked by circular step buttons; the sign sits _inside_ the marker glyph — a heart
+carrying a − on the damage side and a + on the heal side, an orb carrying the same pair for
+stamina — so each button reads as the thing it does. Life may be **overhealed up to double** its
+base, and the extra hearts render **blue**; stamina has no headroom and caps at its base. Damage
+shows as an outlined marker with a black fill at 70 % opacity.
+
+The third panel, **Statuses**, holds one round toggle per State the run tracks: Bleeding, Blinded,
+Confused, Crippled, Crouched, Dead, Flying, Fatigued, Immobilized, Incapacitated, Panicked, Weak
+Poison, Strong Poison, Slowed and Weakened — Shrouded is deliberately absent, it is handled by
+other means. Off, every glyph is grey; a click lights it in the State's own colour and a second
+click greys it again. The two Poison strengths are one condition, so picking one drops the other.
+Each toggle carries its name in small white type above the icon, so no glyph has to be recognised
+from memory; fifteen labelled toggles no longer fit a short phone in one view, so the card scrolls
+its body and keeps Cancel/Accept pinned at the bottom.
+
+Nothing changes until **Accept**; **Cancel**, Escape or a backdrop click discards. Accepted values
+— Life, stamina and the lit States — persist with the run under `MissionProgress.vitality`, keyed
+by entry id, so they survive reloads and die with the run on abandon; progress saved before
+statuses existed simply carries none. Each row shows the States its copy carries as a wrapping
+line of coloured glyphs under the points — the same size as the menu's, so they stay readable on
+a phone — and a bleeding or poisoned model reads from the list without opening the menu.
+Accepting a copy at **0 Life** assigns **Incapacitated** and **Crouched** on its behalf — the
+rulebook's fall — whether or not the player lit them in the menu; the row then shows the empty
+hearts beside the two glyphs.
 
 On a phone, a **horizontal swipe** across the screen steps between the views in the same order —
 swipe left for the next view, right for the previous — clamped at both ends. The views live in one
@@ -269,6 +286,10 @@ breaking.
 
 ## Open questions
 
+- **Healing a fallen model does not cancel its fall.** Accepting at 0 Life assigns Incapacitated
+  and Crouched, but the rulebook also cancels Incapacitated once the model regains Life — the app
+  leaves both lit until the player toggles them off. Automatic cancellation on heal was
+  deliberately not built; is it wanted?
 - **Should the picked army influence anything beyond display?** Today it is a reference sheet in
   the Army view; nothing checks the list against the mission (points, faction, required units).
   The snapshot is already there if such a rule ever arrives.

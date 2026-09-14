@@ -60,6 +60,72 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (one scroller on the full-height screens)
+
+A player-reported layout bug: the tracker carried **two** scroll bars — the document's and the
+view's — and dragging the document's dragged the pinned top bar away with it.
+
+1. **Root cause**: `+layout.svelte` stacks the page and the site footer in a `min-h-dvh` column,
+   so on the two full-height screens (solo tracker, army builder) the document was `100dvh +
+footer` tall. Their `h-dvh overflow-hidden` roots kept the panes correct, but the document
+   itself still scrolled by the footer's height — a second scroller sitting above the pinned
+   header. The theme doc had even recorded that scroll as the price of keeping the footer
+   reachable on the builder.
+2. **Fix**: the layout derives `fullHeight` from the navigation store (`army-builder`, or
+   `mission-detail` while in solo mode) and on those two screens locks its column to `h-dvh
+overflow-hidden` and omits the footer. The document is exactly the viewport, the active panel
+   is the one and only scroller, and the header can never leave. Hot-seat `mission-detail` and
+   every other screen keep the footer and their normal document scroll.
+3. **Verified in a real browser — 11 assertions**: on the tracker the document height equals the
+   viewport; a wheel over the (short) Scoring pane moves nothing at all; a wheel over the
+   overflowing Mission pane scrolls that pane while `scrollY` stays 0 and the header stays at
+   y 0; the army builder's document is exactly the viewport too; and the mode select plus the
+   hot-seat tracker still show the footer.
+4. **Docs**: `technical-spec/01`'s scrolling-model and footer sections now describe the layout
+   enforcing the full-height contract, replacing the passage that documented the footer scroll
+   as intended.
+
+## What was done in the last session (status tracking in the vitality menu)
+
+The menu grew its third panel, and the Army rows grew the icons that make a copy's condition
+readable from the list.
+
+1. **The menu is three panels now**: Life, Stamina and **Statuses**. The first two kept the
+   round step buttons with the sign drawn inside the heart/orb glyph; the third holds one round
+   toggle per State — grey while off, lit in the State's own colour once clicked, greyed again
+   on a second click, each with its name in small white type above the icon so nothing has to be
+   recognised from memory. Fifteen labelled toggles outgrew a short phone screen, so the card
+   scrolls its body and keeps Cancel/Accept pinned. Nothing commits until **Accept**, as before.
+2. **Fifteen States**: Bleeding, Blinded, Confused, Crippled, Crouched, Dead, Flying, Fatigued,
+   Immobilized, Incapacitated, Panicked, Weak Poison, Strong Poison, Slowed, Weakened. Shrouded
+   is deliberately absent — it will be solved by other means. Poison's two icons are the Poison
+   trait's WEAK and STRONG levels (a drop carrying a 1 or a 2) and exclude each other, since they
+   are one condition at two strengths.
+3. **State model**: `UnitStatus`, `UNIT_STATUSES` and `UNIT_STATUS_LABELS` joined `domain/army.ts`,
+   and `UnitVitality` gained an optional `statuses` — progress saved before this feature carries
+   none and needs no migration, the same trick as "absent means full". `toggleUnitStatus()` owns
+   the flip and the poison exclusion; `unitStatuses()` reads past absent lists. Committing a
+   zero-Life vitality also assigns Incapacitated and Crouched (`applyZeroHpStates`, the rulebook's
+   fall); healing back up leaves them lit for a manual cancel, recorded as an open question. Ten
+   new spec cases, **323 tests**.
+4. **Glyphs**: `StatusGlyph.svelte` draws all fifteen by hand in a 24×24 viewBox — blood drop,
+   dashed eye, stars over a head, broken bone, down arrow, skull, angel wing, hunched stickman,
+   slashed boot, X-eyed head, three exclamation marks, numbered drops, snail, shield split in
+   half. Off
+   they read `slate-500`; on, each State's colour; inner cut-outs (skull eyes, poison numbers,
+   the snail's spiral) are `slate-900` so they read on any fill. The Army row renders a copy's
+   carried States as a wrapping line of glyphs under its points, at the menu's glyph size so
+   they stay readable on a phone.
+5. **Verified in a real browser**: clicking all fifteen lights fourteen (the poison exclusion),
+   reopening shows them lit again, Accept puts fourteen icons on the row and clearing greys them
+   back off, Bleeding + Strong Poison survive a reload through the resume prompt, and damaging a
+   copy to 0 Life then accepting lights Crouched + Incapacitated on the row and in the menu.
+   `check` 0 errors / 0 warnings, lint clean on `src`, 323 tests.
+6. **Docs**: `functional-spec/01` describes the three-panel menu and the row icons;
+   `technical-spec/01` gained the status glyph palette. The `QWEN.md` vitality sentence still
+   reads `{ hp, sta }` — that file is protected from agent edits, so the one-line update
+   (`{ hp, sta, statuses? }` plus the toggle/row-icon sentence) is left for a human hand.
+
 ## What was done in the last session (vitality menu: damage, heal, overheal)
 
 The Army rows became interactive, closing the loop the vitality tracks started.
