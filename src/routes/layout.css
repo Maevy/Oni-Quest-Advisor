@@ -14,9 +14,23 @@
 }
 
 @layer components {
-	/* Rotating neon border: a bright beam travels once around the element's border. */
+	/* Rotating neon border: a bright beam travels once around the element's border.
+	   The beam takes the element's accent — emerald by default, swapped by a modifier. */
 	.neon-border {
 		position: relative;
+		--neon-beam: #6ee7b7;
+		--neon-beam-bright: #ecfdf5;
+		--neon-glow: rgb(110 231 183 / 0.7);
+	}
+
+	/* Sky accent for the redesigned solo tracker, plus a resting halo so the button
+	   still reads as lit between beam passes. Must follow .neon-border to win the
+	   equal-specificity custom properties. */
+	.neon-sky {
+		--neon-beam: #7dd3fc;
+		--neon-beam-bright: #f0f9ff;
+		--neon-glow: rgb(125 211 252 / 0.75);
+		box-shadow: 0 0 20px rgb(56 189 248 / 0.28);
 	}
 
 	.neon-border::after {
@@ -29,9 +43,9 @@
 			from var(--neon-angle),
 			transparent 0%,
 			transparent 70%,
-			#6ee7b7 80%,
-			#ecfdf5 85%,
-			#6ee7b7 90%,
+			var(--neon-beam) 80%,
+			var(--neon-beam-bright) 85%,
+			var(--neon-beam) 90%,
 			transparent 100%
 		);
 		-webkit-mask:
@@ -42,7 +56,7 @@
 			linear-gradient(#fff 0 0) content-box,
 			linear-gradient(#fff 0 0);
 		mask-composite: exclude;
-		filter: drop-shadow(0 0 6px rgb(110 231 183 / 0.7));
+		filter: drop-shadow(0 0 6px var(--neon-glow));
 		pointer-events: none;
 		animation: neon-sweep 3.2s linear infinite;
 	}

@@ -32,7 +32,7 @@
 		<div class="flex w-full flex-col gap-3">
 			<button
 				type="button"
-				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-sky-100 backdrop-blur transition hover:bg-sky-500/10 active:bg-sky-500/20"
+				class="neon-border neon-sky rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-8 py-4 text-lg font-medium text-sky-100 backdrop-blur transition hover:bg-sky-500/10 active:bg-sky-500/20"
 				onclick={onSoloSelect}
 			>
 				Solo Quest Tracker

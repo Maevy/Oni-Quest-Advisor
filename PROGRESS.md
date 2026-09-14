@@ -60,6 +60,17 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (the solo tracker's entry button glows)
+
+The mode select's **Solo Quest Tracker** button now carries the app's neon treatment in its own
+sky accent, to announce the redesigned solo flow. `.neon-border`'s beam colours became three
+custom properties (`--neon-beam`, `--neon-beam-bright`, `--neon-glow`, emerald by default) with a
+`.neon-sky` modifier that swaps them and adds a resting `box-shadow` halo, so the button reads as
+lit even between beam passes. The Online button keeps its emerald beam and gains no halo; the
+other two mode buttons stay plain. Verified in a real browser (17 assertions): sky beam and halo
+on Solo, emerald unchanged on Online, both still animate and click through, and the beam stops
+under `prefers-reduced-motion` while the static halo remains.
+
 ## What was done in the last session (upgrade grants no longer invent ranks)
 
 Reported in play: Muffled movement on a Coalition of Thenion model that already has Stealth I
