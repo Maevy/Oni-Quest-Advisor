@@ -161,7 +161,8 @@ const UPGRADE_EFFECTS = {
 	// Empire of Soga
 	BUJUTSU_EXPERTISE: [
 		{ kind: 'class', classId: 'armsmaster' },
-		{ kind: 'combatArt', artId: 'fencing', level: 1 }
+		// "If the model already has the Fencing Combat Art, it gains access to the next rank."
+		{ kind: 'combatArt', artId: 'fencing', level: 1, advance: true }
 	],
 	KASSEN_BUKI_KANABOU_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'heavy-bludgeon' }],
 	KASSEN_BUKI_DAIKYUU_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'war-bow' }],
@@ -170,7 +171,8 @@ const UPGRADE_EFFECTS = {
 	TRAVELING_DUELIST: [{ kind: 'trait', traitId: 'duelist', level: 1 }],
 	KYUJUTSU_EXPERTISE: [
 		{ kind: 'class', classId: 'marksman' },
-		{ kind: 'combatArt', artId: 'archery', level: 1 }
+		// "If the model already has Archery Combat Art, it gains access to the next rank."
+		{ kind: 'combatArt', artId: 'archery', level: 1, advance: true }
 	],
 	KASSEN_BUKI_NAGAMAKI_TSUKAI: [{ kind: 'replacePrimaryWeapon', itemId: 'longhilted-sword' }],
 	// Coalition of Thenion
@@ -192,7 +194,8 @@ const UPGRADE_EFFECTS = {
 			extraIfClasses: { classIds: ['warrior', 'rogue'], changes: { OFF: 1 } }
 		}
 	],
-	POISONED_WEAPONS: [{ kind: 'trait', traitId: 'poison', level: 1 }],
+	// "If it already has Poison I trait, it gains access to the next level of the Trait."
+	POISONED_WEAPONS: [{ kind: 'trait', traitId: 'poison', level: 1, advance: true }],
 	DEVOTION_PAIMON: [
 		{ kind: 'stat', changes: { INT: 1 } },
 		{ kind: 'costReduction', amount: 1 }

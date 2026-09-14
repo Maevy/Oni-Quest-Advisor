@@ -60,6 +60,49 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (upgrade grants no longer invent ranks)
+
+Reported in play: Muffled movement on a Coalition of Thenion model that already has Stealth I
+turned it into **Stealth II**. The rulebook only says "The model receives the Stealth I skill" — no
+rank is gained. The cause was one rule for every leveled grant: `bumpLeveledRef` always did
+`level + 1`.
+
+1. **The rulebook words a grant two ways, so the effect now says which it is.** Surveying all ten
+   leveled grants showed the split: Bujutsu Expertise, Kyujutsu Expertise and Poisoned Weapons
+   explicitly say "gains access to the next rank/level of the Trait", while Muffled movement,
+   Climbing Expertise, both Seasoned Combatants, Tactical Expertise and Traveling Duelist only say
+   "receives the X". `ArmyUpgradeEffect`'s trait/skill/combatArt variants gained an optional
+   `advance` flag, set in the importer's `UPGRADE_EFFECTS` table for those three and regenerated
+   into `upgrades.json`.
+2. **New grant semantics** (`grantLeveledRef` / `grantTraitFromEffect` replacing
+   `bumpLeveledRef`): a missing reference is added at the granted level; an existing one is raised
+   by one when the effect `advance`s, otherwise the granted level acts as a **floor**
+   (`max(current, granted)`) — so Stealth I + Muffled movement stays Stealth I, Stealth II stays
+   II, and Journeyman Adventurer's "Resourceful II" still lifts Resourceful I to II but never
+   invents a Resourceful III. A no-op grant returns the reference list untouched.
+3. **Survival's environment list merges** instead of being levelled: Journeyman Adventurer used to
+   bump `survival--x-environment` to **level 2, which the catalog does not have** (Survival has
+   only level 1). A granted `dynamicValue` now joins the model's comma-separated list
+   (`Scorching` → `Scorching, Difficult`) and is skipped when already held, mirroring how
+   Elemental Lineage merges Affinity elements.
+4. **A redundant pick stays purchasable** — the player confirmed that in-game Muffled movement on a
+   Stealth I model still means it deploys Shrouded, which the app does not model, so the existing
+   `max-level` gate is unchanged and only blocks a model already at the catalog's top rank.
+5. **Verified**: 11 new domain tests pin all three wordings plus the Survival merge and the
+   per-copy advance (334 total, `check` 0/0, lint clean), and a 13-assertion browser pass drives
+   the real builder — Bladebrethren Elite + Muffled movement shows **Stealth I** with Level II
+   still greyed in the popup, Night-Temple Priestess (no Stealth) still gains **Stealth I**, and
+   Clan Champion + Bujutsu Expertise still advances **Fencing IV → V**.
+6. **Docs**: `technical-spec/05` documents the two wordings, the `advance` flag, the floor
+   semantics and the Survival merge; `functional-spec/08` describes what a pick does to a leveled
+   entry next to the gating table.
+
+**Re-running `scripts/importUnits.mjs` rewrites the content JSON unformatted** — it writes
+`JSON.stringify(..., '\t')`, while the committed files are Prettier-formatted (short arrays
+collapsed). Run `npx prettier --write src/lib/data/content/units/*.json` afterwards; the diff then
+shows only real changes. This session's regeneration produced a 480-line phantom diff across every
+unit file that collapsed to the three intended `advance` flags.
+
 ## What was done in the last session (warning before starting without an army)
 
 A player can reach the tracker without ever attaching a list, and the tracker's Army view is

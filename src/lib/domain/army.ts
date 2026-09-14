@@ -275,6 +275,12 @@ export type ArmyInventorySlot = { id: string; qty: number };
  * One mechanical upgrade effect the app applies automatically. Free choices
  * stay in the description text for the player; trait/class conditions are
  * resolved against the unit.
+ *
+ * A trait/skill/combat-art grant adds the reference when the model does not
+ * have it yet. When it does, `level` is a floor — the model keeps the higher of
+ * the two, so "receives the Stealth I skill" leaves a model that already has
+ * Stealth I alone. `advance` models the other rulebook wording, "gains access
+ * to the next rank of the art", and raises the existing reference by one.
  */
 export type ArmyUpgradeEffect =
 	| {
@@ -286,9 +292,15 @@ export type ArmyUpgradeEffect =
 			extraIfClasses?: { classIds: string[]; changes: Partial<Record<ArmyStatKey, number>> };
 	  }
 	| { kind: 'class'; classId: string }
-	| { kind: 'trait'; traitId: string; level: number; dynamicValue?: string }
-	| { kind: 'skill'; skillId: string; level: number }
-	| { kind: 'combatArt'; artId: string; level: number }
+	| {
+			kind: 'trait';
+			traitId: string;
+			level: number;
+			dynamicValue?: string;
+			advance?: boolean;
+	  }
+	| { kind: 'skill'; skillId: string; level: number; advance?: boolean }
+	| { kind: 'combatArt'; artId: string; level: number; advance?: boolean }
 	| { kind: 'item'; itemId: string }
 	| { kind: 'replacePrimaryWeapon'; itemId: string }
 	| { kind: 'pouch' }
@@ -764,16 +776,65 @@ function armyRulesMaxLevel(entry: ArmyRulesSpec | undefined): number {
 	return Math.max(...Object.keys(entry.levels).map(Number));
 }
 
-/** Adds a leveled reference, bumping an existing one to the next level. */
-function bumpLeveledRef<T extends { id: string; level: number }>(
+/**
+ * Applies a leveled grant: adds the reference when the model lacks it, otherwise
+ * raises it one rank (`advance`) or holds it at the higher of the two levels.
+ * Granting a rank the model already has is a no-op, so the reference list and
+ * its other fields are left untouched.
+ */
+function grantLeveledRef<T extends { id: string; level: number }>(
 	refs: T[] | undefined,
-	ref: T
+	ref: T,
+	advance: boolean
 ): T[] {
 	const existing = refs?.find((candidate) => candidate.id === ref.id);
 	if (!existing) return [...(refs ?? []), ref];
+	const level = advance ? existing.level + 1 : Math.max(existing.level, ref.level);
+	if (level === existing.level) return refs ?? [];
 	return (refs ?? []).map((candidate) =>
-		candidate.id === ref.id ? { ...candidate, level: candidate.level + 1 } : candidate
+		candidate.id === ref.id ? { ...candidate, level } : candidate
 	);
+}
+
+/** Adds a granted value to a comma-separated list, skipping one it already names. */
+function mergeDynamicValue(
+	current: string | undefined,
+	granted: string | undefined
+): string | undefined {
+	if (!granted) return current;
+	const held = (current ?? '')
+		.split(',')
+		.map((part) => part.trim())
+		.filter((part) => part !== '');
+	if (held.some((value) => value.toLowerCase() === granted.toLowerCase())) return current;
+	return [...held, granted].join(', ');
+}
+
+/**
+ * Grants a trait from an upgrade effect: the level follows `grantLeveledRef`, and
+ * a granted dynamic value — Survival's environment — merges into the model's
+ * existing list rather than replacing it.
+ */
+function grantTraitFromEffect(
+	traits: ArmyTraitRef[],
+	effect: { traitId: string; level: number; dynamicValue?: string; advance?: boolean }
+): ArmyTraitRef[] {
+	const existing = traits.find((candidate) => candidate.id === effect.traitId);
+	if (!existing) {
+		return [
+			...traits,
+			{ id: effect.traitId, level: effect.level, dynamicValue: effect.dynamicValue }
+		];
+	}
+	const level = effect.advance ? existing.level + 1 : Math.max(existing.level, effect.level);
+	const dynamicValue = mergeDynamicValue(existing.dynamicValue, effect.dynamicValue);
+	if (level === existing.level && dynamicValue === existing.dynamicValue) return traits;
+	return traits.map((candidate) => {
+		if (candidate.id !== effect.traitId) return candidate;
+		const next: ArmyTraitRef = { ...candidate, level };
+		if (dynamicValue !== undefined) next.dynamicValue = dynamicValue;
+		return next;
+	});
 }
 
 /** Grants a trait; dynamic elements merge into an existing reference of it. */
@@ -877,17 +938,21 @@ export function upgradedArmyUnit(
 					}
 					break;
 				case 'trait':
-					traits = bumpLeveledRef(traits, {
-						id: effect.traitId,
-						level: effect.level,
-						dynamicValue: effect.dynamicValue
-					});
+					traits = grantTraitFromEffect(traits, effect);
 					break;
 				case 'skill':
-					skills = bumpLeveledRef(skills, { id: effect.skillId, level: effect.level });
+					skills = grantLeveledRef(
+						skills,
+						{ id: effect.skillId, level: effect.level },
+						effect.advance === true
+					);
 					break;
 				case 'combatArt':
-					combatArts = bumpLeveledRef(combatArts, { id: effect.artId, level: effect.level });
+					combatArts = grantLeveledRef(
+						combatArts,
+						{ id: effect.artId, level: effect.level },
+						effect.advance === true
+					);
 					break;
 				case 'item':
 					inventory = [...(inventory ?? []), { id: effect.itemId, qty: 1 }];

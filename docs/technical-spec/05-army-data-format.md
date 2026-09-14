@@ -118,6 +118,22 @@ Effect kinds: `stat` (with optional `insteadIfTrait` / `extraIfClasses` conditio
 `spellcraftLevelUp`, `costReduction`, and `choice` (whose options carry `statChanges`,
 `inventorySpace`, `grantTrait`, `replaceAffinity` or `inscribeItem`).
 
+**Leveled grants (`trait`, `skill`, `combatArt`) follow the rulebook's two wordings.** A plain
+grant adds the reference when the model lacks it and otherwise treats `level` as a _floor_ — the
+model keeps the higher of the two, so "receives the Stealth I skill" leaves a model that already
+has Stealth I at Stealth I (it used to bump it to Stealth II, handing out a rank nobody bought).
+An effect carrying `advance: true` models the other wording, "gains access to the next rank of the
+art", and raises the existing reference by one; only Bujutsu Expertise (Fencing), Kyujutsu
+Expertise (Archery) and Poisoned Weapons (Poison) are worded that way. A grant that names a rank
+above the model's — Journeyman Adventurer's "Resourceful II" — raises it to that rank and no
+further. A granted `dynamicValue` merges into the model's comma-separated list rather than
+replacing it, so Journeyman's Survival (Difficult) turns Survival (Scorching) into
+Survival (Scorching, Difficult) and leaves a model that already survives Difficult alone.
+
+An upgrade whose leveled grant would change nothing is still purchasable — in-game Muffled
+movement on a Stealth I model means it deploys Shrouded, which the app does not model, so the
+picker only blocks a grant the model is already at the catalog's top rank of.
+
 ## Domain constants
 
 These are the ordered/curated lists the rules depend on. Changing one is a rules change.

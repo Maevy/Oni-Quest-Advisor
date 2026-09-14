@@ -1260,7 +1260,7 @@ describe('upgradedArmyUnit', () => {
 		expect(upgraded.inventory).toEqual([{ id: 'lance', qty: 1 }]);
 	});
 
-	it('grants pouch space and bumps an existing trait one level', () => {
+	it('grants pouch space and leaves an already-held trait at its rank', () => {
 		const unit: ArmyUnitSpec = {
 			...UNITS[0],
 			inventorySpace: 3,
@@ -1268,7 +1268,7 @@ describe('upgradedArmyUnit', () => {
 		};
 		const upgraded = upgradedArmyUnit(unit, [UPGRADES[3], UPGRADES[1]], UPGRADE_ITEMS);
 		expect(upgraded.inventorySpace).toBe(5);
-		expect(upgraded.traits).toEqual([{ id: 'fearless', level: 2 }]);
+		expect(upgraded.traits).toEqual([{ id: 'fearless', level: 1 }]);
 	});
 
 	it('replaces the stat change when the insteadIfTrait condition holds', () => {
@@ -1310,6 +1310,129 @@ describe('upgradedArmyUnit', () => {
 		const mage = upgradedArmyUnit(UNITS[1], [devotion], UPGRADE_ITEMS);
 		expect(mage.stats.T).toBe(9);
 		expect(mage.stats.OFF).toBe(3);
+	});
+});
+
+describe('leveled upgrade grants', () => {
+	// The rulebook words a grant two ways, and only the "next rank" one raises a
+	// level the model already has. Pinned because getting it wrong silently
+	// hands out ranks the player never bought (Stealth I -> Stealth II).
+	const receives: ArmyUpgradeSpec = {
+		id: 'muffled-movement',
+		name: 'Muffled movement',
+		cost: 2,
+		description: [],
+		effects: [{ kind: 'skill', skillId: 'stealth', level: 1 }]
+	};
+	const advances: ArmyUpgradeSpec = {
+		id: 'bujutsu-expertise',
+		name: 'Bujutsu Expertise',
+		cost: 3,
+		description: [],
+		effects: [{ kind: 'combatArt', artId: 'fencing', level: 1, advance: true }]
+	};
+	const namedRank: ArmyUpgradeSpec = {
+		id: 'journeyman-adventurer',
+		name: 'Journeyman Adventurer',
+		cost: 3,
+		description: [],
+		effects: [
+			{ kind: 'trait', traitId: 'resourceful', level: 2 },
+			{ kind: 'trait', traitId: 'survival--x-environment', level: 1, dynamicValue: 'Difficult' }
+		]
+	};
+
+	const stealthOf = (unit: ArmyUnitSpec) => (unit.skills ?? []).find((ref) => ref.id === 'stealth');
+	const fencingOf = (unit: ArmyUnitSpec) =>
+		(unit.combatArts ?? []).find((ref) => ref.id === 'fencing');
+	const traitOf = (unit: ArmyUnitSpec, id: string) =>
+		(unit.traits ?? []).find((ref) => ref.id === id);
+
+	it('adds a granted skill the model does not have', () => {
+		const upgraded = upgradedArmyUnit(UNITS[0], [receives], UPGRADE_ITEMS);
+		expect(stealthOf(upgraded)).toEqual({ id: 'stealth', level: 1 });
+	});
+
+	it('leaves a skill the model already has at its own rank', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], skills: [{ id: 'stealth', level: 1 }] };
+		expect(stealthOf(upgradedArmyUnit(unit, [receives], UPGRADE_ITEMS))?.level).toBe(1);
+	});
+
+	it('never lowers a skill the model holds above the granted rank', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], skills: [{ id: 'stealth', level: 2 }] };
+		expect(stealthOf(upgradedArmyUnit(unit, [receives], UPGRADE_ITEMS))?.level).toBe(2);
+	});
+
+	it('advances an existing combat art one rank', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], combatArts: [{ id: 'fencing', level: 3 }] };
+		expect(fencingOf(upgradedArmyUnit(unit, [advances], UPGRADE_ITEMS))?.level).toBe(4);
+	});
+
+	it('adds an advancing combat art at its granted rank when the model lacks it', () => {
+		expect(fencingOf(upgradedArmyUnit(UNITS[0], [advances], UPGRADE_ITEMS))).toEqual({
+			id: 'fencing',
+			level: 1
+		});
+	});
+
+	it('advances once per copy of the upgrade', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], combatArts: [{ id: 'fencing', level: 1 }] };
+		expect(fencingOf(upgradedArmyUnit(unit, [advances, advances], UPGRADE_ITEMS))?.level).toBe(3);
+	});
+
+	it('raises a trait to the rank the upgrade names', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], traits: [{ id: 'resourceful', level: 1 }] };
+		expect(traitOf(upgradedArmyUnit(unit, [namedRank], UPGRADE_ITEMS), 'resourceful')?.level).toBe(
+			2
+		);
+	});
+
+	it('does not raise a trait past the rank the upgrade names', () => {
+		const unit: ArmyUnitSpec = { ...UNITS[0], traits: [{ id: 'resourceful', level: 2 }] };
+		expect(traitOf(upgradedArmyUnit(unit, [namedRank], UPGRADE_ITEMS), 'resourceful')?.level).toBe(
+			2
+		);
+	});
+
+	it('merges a granted environment into the survival list the model already has', () => {
+		const unit: ArmyUnitSpec = {
+			...UNITS[0],
+			traits: [{ id: 'survival--x-environment', level: 1, dynamicValue: 'Scorching' }]
+		};
+		const survival = traitOf(
+			upgradedArmyUnit(unit, [namedRank], UPGRADE_ITEMS),
+			'survival--x-environment'
+		);
+		expect(survival).toEqual({
+			id: 'survival--x-environment',
+			level: 1,
+			dynamicValue: 'Scorching, Difficult'
+		});
+	});
+
+	it('does not duplicate an environment the model already survives', () => {
+		const unit: ArmyUnitSpec = {
+			...UNITS[0],
+			traits: [{ id: 'survival--x-environment', level: 1, dynamicValue: 'Difficult, Forest' }]
+		};
+		const survival = traitOf(
+			upgradedArmyUnit(unit, [namedRank], UPGRADE_ITEMS),
+			'survival--x-environment'
+		);
+		expect(survival?.dynamicValue).toBe('Difficult, Forest');
+		expect(survival?.level).toBe(1);
+	});
+
+	it('grants a dynamic value the model does not have the trait for yet', () => {
+		const survival = traitOf(
+			upgradedArmyUnit(UNITS[0], [namedRank], UPGRADE_ITEMS),
+			'survival--x-environment'
+		);
+		expect(survival).toEqual({
+			id: 'survival--x-environment',
+			level: 1,
+			dynamicValue: 'Difficult'
+		});
 	});
 });
 

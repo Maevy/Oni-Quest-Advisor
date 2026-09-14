@@ -93,7 +93,8 @@
 			{
 				"kind": "combatArt",
 				"artId": "fencing",
-				"level": 1
+				"level": 1,
+				"advance": true
 			}
 		]
 	},
@@ -1018,7 +1019,8 @@
 			{
 				"kind": "combatArt",
 				"artId": "archery",
-				"level": 1
+				"level": 1,
+				"advance": true
 			}
 		]
 	},
@@ -1180,7 +1182,8 @@
 			{
 				"kind": "trait",
 				"traitId": "poison",
-				"level": 1
+				"level": 1,
+				"advance": true
 			}
 		]
 	},

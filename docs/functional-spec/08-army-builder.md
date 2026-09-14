@@ -185,6 +185,14 @@ shows why, in red:
 the **effective** size, so a mounted model is gated by its mount) and a choice upgrade with no
 usable option left.
 
+**What a pick does to a leveled entry follows the rulebook's wording, not one rule.** A grant that
+says _"receives the Stealth I skill"_ adds it when the model lacks it and leaves a model that
+already has it at its own rank; one that says _"gains access to the next rank of the art"_ raises
+the model's rank by one; one that names a rank (_"Resourceful II"_) raises the model to that rank
+and no further. A pick whose grant would change nothing is still allowed — `max-level` only blocks
+a model already at the catalog's top rank. See
+[../technical-spec/05-army-data-format.md](../technical-spec/05-army-data-format.md).
+
 Some upgrades need a further decision, which opens as an extra step:
 
 - **Advance a Spellcraft** — only when more than one school could advance; a single candidate
