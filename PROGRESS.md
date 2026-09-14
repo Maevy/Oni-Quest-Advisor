@@ -60,6 +60,26 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (warning before starting without an army)
+
+A player can reach the tracker without ever attaching a list, and the tracker's Army view is
+read-only — so a run started bare stays bare for its whole life. The briefing now says so before
+it lets that happen.
+
+1. **The gate**: `MissionBriefing` keeps a `confirmNoArmy` flag; its Start Game button routes
+   through `requestStart()`, which starts directly when `pickedArmy` is set and otherwise opens
+   the shared `ConfirmDialog`: _"You are starting this game without a selected army. Do you want
+   to proceed?"_ with **Start anyway** (confirm) and **Not now** (cancel, and the Escape branch).
+   No new dialog component, no store or domain change — the gate is presentation-layer branching on
+   a prop the component already has.
+2. **Verified in a real browser — 16 assertions**: with no army the warning opens with both
+   buttons, Not now and Escape both stay on the briefing, and Start anyway enters the tracker with
+   no dialog left open; with a seeded `pickedArmy` snapshot the briefing shows the Selected Army
+   panel and Start Game goes straight to the tracker. Abandoning still lands on the mission list.
+   `check` 0 errors / 0 warnings, lint clean, 323 tests.
+3. **Docs**: `functional-spec/01` records the warning and why it exists, next to the Start Game
+   boundary paragraph.
+
 ## What was done in the last session (the shared top bar)
 
 First concrete step of the long-standing "unify the top button bar" backlog item: the season and

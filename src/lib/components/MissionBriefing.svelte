@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ArmyFactionConfig, Mission, PickedArmy, ResultsEntry } from '$lib/domain';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import MissionDescriptionPanel from './MissionDescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import MissionTitlePanel from './MissionTitlePanel.svelte';
@@ -35,6 +36,15 @@
 		onClearArmy,
 		onStart
 	}: Props = $props();
+
+	let confirmNoArmy = $state(false);
+
+	// A run fields its army for its whole life — the tracker's Army view is read-only — so
+	// starting without one is worth a warning. With an army attached, Start Game is direct.
+	function requestStart(): void {
+		if (pickedArmy) onStart();
+		else confirmNoArmy = true;
+	}
 </script>
 
 <div class="min-h-dvh pb-6">
@@ -50,7 +60,7 @@
 			<button
 				type="button"
 				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-3 py-2 text-sm font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-				onclick={onStart}
+				onclick={requestStart}
 			>
 				Start Game
 			</button>
@@ -74,3 +84,16 @@
 		<QuestRulesPanel sections={mission.questRules} />
 	</div>
 </div>
+
+{#if confirmNoArmy}
+	<ConfirmDialog
+		text="You are starting this game without a selected army. Do you want to proceed?"
+		confirmLabel="Start anyway"
+		cancelLabel="Not now"
+		onConfirm={() => {
+			confirmNoArmy = false;
+			onStart();
+		}}
+		onCancel={() => (confirmNoArmy = false)}
+	/>
+{/if}

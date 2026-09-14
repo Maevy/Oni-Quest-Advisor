@@ -132,6 +132,12 @@ a run that is already under way.
 **Start Game is the boundary between browsing and playing**: it records the mission as the **open
 game** and switches to `mission-detail`. From then on the run has a lifecycle — see below.
 
+Pressing **Start Game with no army attached** asks first: _"You are starting this game without a
+selected army. Do you want to proceed?"_ — **Start anyway** starts the run, **Not now** (and
+Escape) stays on the briefing, where Pick Army is one press away. The warning exists because the
+tracker's Army view is read-only: a run fields whatever it started with for its whole life. With
+an army attached, Start Game is direct and no dialog appears.
+
 ## Screen 4b — Mission Detail (`mission-detail`)
 
 The interactive tracker. In **solo** it is a **three-view screen** under the same shared top bar
