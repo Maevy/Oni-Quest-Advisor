@@ -14,19 +14,10 @@
 }
 
 @layer components {
-	/* Rotating neon border: a bright beam travels once around the element's border.
-	   The beam takes the element's accent — emerald by default, swapped by a modifier. */
+	/* Rotating neon border: a bright beam travels once around the element's border,
+	   with a resting halo so the button still reads as lit between passes. */
 	.neon-border {
 		position: relative;
-		--neon-beam: #6ee7b7;
-		--neon-beam-bright: #ecfdf5;
-		--neon-glow: rgb(110 231 183 / 0.7);
-	}
-
-	/* Sky accent for the redesigned solo tracker, plus a resting halo so the button
-	   still reads as lit between beam passes. Must follow .neon-border to win the
-	   equal-specificity custom properties. */
-	.neon-sky {
 		--neon-beam: #7dd3fc;
 		--neon-beam-bright: #f0f9ff;
 		--neon-glow: rgb(125 211 252 / 0.75);

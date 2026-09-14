@@ -6,31 +6,19 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.6.4** (tag on `main`) — a scoring hotfix from player
-  feedback: "Ceasefire broken" is scoreable three times at −4 VP each (red
-  boxes instead of a single checkbox) and the ceasefire missions no longer
-  offer Round-1 VP (Quarter War lost its two Round-1 objectives, Awaiting
-  Reinforcements went from 5 to 4 boxes per objective), both carrying an amber
-  `important` note that round 1 cannot score; v0.6.3 migrated model size
-  (`size_info` → a required, ordered `ArmyUnitSize`), automated Flying
-  Carpet's "Size Medium or smaller" ceiling, made a mounted model count as
-  its mount's size (confirming before an invalidated upgrade is dropped) and
-  fixed the army builder's panel scrolling; v0.6.2 added saved armies
-  (Save Army name dialog + Load Army list with delete and Standard/Roster
-  filter), the Roster format (125 pts, separate equipment pool, guarded
-  format switch, format-aware codes and saves), lazy-loaded army content,
-  resized first-screen portraits and a phone-polish round (unit-card
-  divider, compact stepper, header compaction, touch swipe, flip-tab
-  contrast, readability colors); v0.6.1 was the rules-link hotfix. The
-  per-session details are all recorded below. Day-to-day work happens on
-  `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note
-  the working branch is `develop`, not `main`).
-- **Unreleased, in progress on `develop`** (ahead of the v0.6.4 tag): the solo view
-  iteration — the read-only **Mission Briefing**, the additive v2 Results schema
-  (`round`/`group`) behind its per-round cards, a working **Start Game**, the tracker
-  split into **Scoring / Army / Mission** views, and the **open-game** lifecycle
-  (Return abandons behind a confirmation, app start offers to resume). Not tagged, not
-  deployed; details in the session notes below.
+- Latest release: **v0.7.0** (tag on `main`) — the solo view release: the read-only
+  **Mission Briefing** on the additive v2 Results schema (per-round cards), a working
+  **Start Game** that warns before a run begins without an army, the tracker rebuilt as a
+  **Scoring / Army / Mission** three-view screen with the open-game lifecycle (Return abandons
+  behind a confirmation, app start offers to resume), **Pick Army** attaching a saved standard
+  army as a read-only snapshot with per-copy vitality tracks and the vitality menu (damage,
+  heal with overheal to double, stamina, fifteen States), the shared `ScreenHeader` top bar
+  across four screens, the leveled-grant fix (a "receives the Stealth I skill" upgrade no longer
+  invents Stealth II) and the glowing Solo entry button; v0.6.4 was the ceasefire scoring
+  hotfix, v0.6.3 migrated model size, v0.6.2 added saved armies and the Roster format, v0.6.1
+  was the rules-link hotfix. The per-session details are all recorded below. Day-to-day work
+  happens on `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the
+  working branch is `develop`, not `main`).
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
   v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
   would have to create the volume first:
@@ -62,14 +50,14 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 
 ## What was done in the last session (the solo tracker's entry button glows)
 
-The mode select's **Solo Quest Tracker** button now carries the app's neon treatment in its own
-sky accent, to announce the redesigned solo flow. `.neon-border`'s beam colours became three
-custom properties (`--neon-beam`, `--neon-beam-bright`, `--neon-glow`, emerald by default) with a
-`.neon-sky` modifier that swaps them and adds a resting `box-shadow` halo, so the button reads as
-lit even between beam passes. The Online button keeps its emerald beam and gains no halo; the
-other two mode buttons stay plain. Verified in a real browser (17 assertions): sky beam and halo
-on Solo, emerald unchanged on Online, both still animate and click through, and the beam stops
-under `prefers-reduced-motion` while the static halo remains.
+The mode select's **Solo Quest Tracker** button carries the app's neon treatment in the sky
+accent, to announce the redesigned solo flow: `.neon-border` is a conic-gradient beam masked to
+the border ring plus a resting `box-shadow` halo, so the button reads as lit even between beam
+passes. The Online button carried the beam in emerald while online play was new and lost it in
+the same release once it wasn't, so the utility now has a single sky treatment and no accent
+modifier. Verified in a real browser: sky beam and halo on Solo, no beam or halo on Online, both
+still click through, and the beam stops under `prefers-reduced-motion` while the static halo
+remains.
 
 ## What was done in the last session (upgrade grants no longer invent ranks)
 

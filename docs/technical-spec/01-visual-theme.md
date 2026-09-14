@@ -140,12 +140,12 @@ negative-value row does not render as a positive achievement.
 
 `.neon-border` (`layout.css`, `@layer components`) is a conic-gradient beam masked to the border
 ring with a soft `drop-shadow`, sweeping once per `3.2s linear infinite` via the registered
-`--neon-angle` custom property. It is `pointer-events: none` and **disabled under
-`prefers-reduced-motion: reduce`**. The beam takes its accent from three custom properties —
-`--neon-beam`, `--neon-beam-bright`, `--neon-glow` — which default to emerald; `.neon-sky` swaps
-them to sky and adds a resting `box-shadow` halo. Two entry points carry it today: **Online 2
-Player Game** in emerald, and **Solo Quest Tracker** in sky to announce the redesigned solo flow.
-Reserve it for entry points that need to announce themselves; if everything glows, nothing does.
+`--neon-angle` custom property, plus a resting `box-shadow` halo so the button still reads as lit
+between passes. It is `pointer-events: none` and **disabled under `prefers-reduced-motion:
+reduce`**. It marks the mode select's **Solo Quest Tracker** in the sky accent. The Online button
+carried it in emerald while online play was the new feature and lost it once it wasn't — the
+treatment announces what is new, not what is important. Reserve it for one entry point at a time;
+if everything glows, nothing does.
 
 ## The top bar
 
