@@ -6,7 +6,11 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.7.0** (tag on `main`) — the solo view release: the read-only
+- Latest release: **v0.7.1** (tag on `main`) — a hotfix over v0.7.0: the Broken
+  Morale / Ceasefire rule cards are visible again in the tracker's Mission view
+  (the three-view strip's translateX had trapped their dialog off-screen behind
+  the backdrop), fixed by rendering `RuleCalloutDialog` at the screen root in all
+  five screens that show it. v0.7.0 was the solo view release: the read-only
   **Mission Briefing** on the additive v2 Results schema (per-round cards), a working
   **Start Game** that warns before a run begins without an army, the tracker rebuilt as a
   **Scoring / Army / Mission** three-view screen with the open-game lifecycle (Return abandons
