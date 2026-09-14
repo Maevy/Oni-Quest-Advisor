@@ -72,12 +72,13 @@ drives the automatic penalty objective and the Round-1 content guard (see
 [03-results-panel.md](./03-results-panel.md) and
 [../technical-spec/02-mission-data-format.md](../technical-spec/02-mission-data-format.md)).
 
-> **Structural rule:** the dialog must render as a **sibling of `Panel`, never inside it.**
-> A non-`none` `backdrop-filter` makes the panel the containing block for its `position: fixed`
-> descendants, so an overlay nested in a `Panel` covers only that panel and every later panel
-> paints over it. This was a real regression when the labels were extracted: hence the split
-> into `RuleLabels` (buttons, emits `onOpenRule`) + `RuleCalloutDialog` (overlay), with the
-> parent holding the open state. See `src/lib/components/CLAUDE.md`.
+> **Structural rule:** the dialog renders at the **screen root**, above every transformed or
+> backdrop-filtered ancestor. A non-`none` `backdrop-filter` _or_ `transform` makes that ancestor
+> the containing block for its `position: fixed` descendants: nested in a `Panel` the overlay
+> covers only that panel, and nested in the solo tracker's sliding strip its backdrop dims the
+> screen while the card lands off-screen. Both were real regressions, hence the split into
+> `RuleLabels` (buttons, emits `onOpenRule`) + `RuleCalloutDialog` (overlay), with the **screen**
+> holding the open state. See `src/lib/components/CLAUDE.md`.
 
 ## Setup
 

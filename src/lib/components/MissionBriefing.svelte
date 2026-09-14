@@ -1,11 +1,18 @@
 <script lang="ts">
-	import type { ArmyFactionConfig, Mission, PickedArmy, ResultsEntry } from '$lib/domain';
+	import type {
+		ArmyFactionConfig,
+		Mission,
+		PickedArmy,
+		ResultsEntry,
+		RuleCallout
+	} from '$lib/domain';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import MissionDescriptionPanel from './MissionDescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import MissionTitlePanel from './MissionTitlePanel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import ResultsBriefingPanel from './ResultsBriefingPanel.svelte';
+	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
 	import SchemesBriefingPanel from './SchemesBriefingPanel.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
 	import SelectedArmyPanel from './SelectedArmyPanel.svelte';
@@ -38,6 +45,7 @@
 	}: Props = $props();
 
 	let confirmNoArmy = $state(false);
+	let openRule = $state<RuleCallout | null>(null);
 
 	// A run fields its army for its whole life — the tracker's Army view is read-only — so
 	// starting without one is worth a warning. With an army attached, Start Game is direct.
@@ -73,6 +81,7 @@
 			description={mission.description}
 			brokenMorale={mission.brokenMorale}
 			ceasefire={mission.ceasefire}
+			onOpenRule={(rule) => (openRule = rule)}
 		/>
 		{#if pickedArmy}
 			<SelectedArmyPanel army={pickedArmy} faction={pickedArmyFaction} onRemove={onClearArmy} />
@@ -97,3 +106,5 @@
 		onCancel={() => (confirmNoArmy = false)}
 	/>
 {/if}
+
+<RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />

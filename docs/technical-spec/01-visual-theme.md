@@ -192,14 +192,16 @@ Outside-click is detected with `event.target === event.currentTarget` on the bac
 with `stopPropagation` on the card — a click handler on a `role="dialog"` div trips
 `a11y_click_events_have_key_events`.
 
-**The trap:** a `fixed inset-0` overlay must render as a **sibling of `Panel`, never inside
-it**. A non-`none` `backdrop-filter` makes the panel the containing block for its fixed
-descendants, so the overlay would cover only that panel and every later panel would paint over
-it. This was a real regression: extracting the Broken Morale / Ceasefire labels moved their
-popup inside a `Panel` and the overlay silently stopped covering the screen. Hence the split
-pattern — trigger component (`RuleLabels`, emits `onOpenRule`) + overlay component
-(`RuleCalloutDialog`), with the parent holding the open state. See
-`src/lib/components/CLAUDE.md`.
+**The trap:** a `fixed inset-0` overlay must render **above every transformed or
+backdrop-filtered ancestor**, because either makes that ancestor the containing block for the
+overlay's fixed descendants. Inside a `Panel` the overlay covers only that panel; inside the solo
+tracker's sliding strip — which carries a `translateX` for the view slide — the backdrop still
+dims the whole screen while the centred card lands off-screen, which reads as "clicking the label
+only darkens the page". Both happened for real: extracting the Broken Morale / Ceasefire labels
+first moved their popup inside a `Panel`, and the three-view strip later re-trapped it. Hence the
+split pattern — trigger component (`RuleLabels`, emits `onOpenRule`) + overlay component
+(`RuleCalloutDialog`) rendered at the **screen root**, with the screen holding the open state, the
+same place the army popups live. See `src/lib/components/CLAUDE.md`.
 
 Fixed-position overlays also need **matching padding reserved** in the surrounding layout for
 their collapsed state (`MissionDetailTwoPlayer` keeps the right edge clear with `pr-10` for the

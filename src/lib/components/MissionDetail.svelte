@@ -7,6 +7,7 @@
 		Mission,
 		MissionProgress,
 		ResultsEntry,
+		RuleCallout,
 		SchemeCard,
 		UnitVitality
 	} from '$lib/domain';
@@ -18,6 +19,7 @@
 	import Panel from './Panel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
+	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
 	import ScoreSummaryPanel from './ScoreSummaryPanel.svelte';
 	import SchemesPanel from './SchemesPanel.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
@@ -88,6 +90,7 @@
 	// would become the containing block for their fixed overlays and trap them inside a pane.
 	let armyCardRow = $state<ArmyRosterRow | null>(null);
 	let armyDetailUpgrade = $state<ArmyUpgradeSpec | null>(null);
+	let openRule = $state<RuleCallout | null>(null);
 	let vitalityRow = $state<ArmyRosterRow | null>(null);
 
 	/** Which of the three view buttons the spotlight sits under. */
@@ -221,6 +224,7 @@
 						description={mission.description}
 						brokenMorale={mission.brokenMorale}
 						ceasefire={mission.ceasefire}
+						onOpenRule={(rule) => (openRule = rule)}
 					/>
 					<SetupPanel setup={mission.setup} />
 					<MissionMap map={mission.map} />
@@ -283,3 +287,5 @@
 		onCancel={() => (vitalityRow = null)}
 	/>
 {/if}
+
+<RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />

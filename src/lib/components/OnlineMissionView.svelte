@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { CEASEFIRE_OBJECTIVE_ID, type Mission, type ResultObjectiveDef } from '$lib/domain';
+	import type { RuleCallout } from '$lib/domain';
 	import DescriptionPanel from './DescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import ObjectiveRoundChip from './ObjectiveRoundChip.svelte';
 	import Panel from './Panel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
+	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
 	import SetupPanel from './SetupPanel.svelte';
 
 	type Props = {
@@ -14,6 +16,8 @@
 	};
 
 	let { mission, results }: Props = $props();
+
+	let openRule = $state<RuleCallout | null>(null);
 </script>
 
 <div class="flex flex-col gap-3">
@@ -23,6 +27,7 @@
 		brokenMorale={mission.brokenMorale}
 		ceasefire={mission.ceasefire}
 		collapsible
+		onOpenRule={(rule) => (openRule = rule)}
 	/>
 	<SetupPanel setup={mission.setup} collapsible />
 	<MissionMap map={mission.map} collapsible />
@@ -61,3 +66,5 @@
 	</Panel>
 	<QuestRulesPanel sections={mission.questRules} collapsible />
 </div>
+
+<RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />

@@ -15,13 +15,15 @@
   right padding clear for the closed tab; the expanded panel intentionally
   overlays content. Solo no longer has a drawer: its score, round and reset live inline in
   `ScoreSummaryPanel`, the first panel of the tracker's Scoring view.
-- Overlays (`fixed inset-0`) must render as a **sibling of `Panel`, never inside it**: a
-  non-`none` `backdrop-filter` makes the panel the containing block for its fixed
-  descendants, so the overlay would cover only that panel and every later panel would
-  paint over it. Split trigger from overlay and let the parent hold the open state —
-  `RuleLabels` (buttons, emits `onOpenRule`) + `RuleCalloutDialog` (overlay), wired in
-  `DescriptionPanel`. Dialogs use `z-50`; the `CommandPanelTwoPlayer` tab is `z-40` and the
-  sticky headers (mission briefing, solo tracker) are `z-30`.
+- Overlays (`fixed inset-0`) must render **above every transformed or backdrop-filtered
+  ancestor**: a non-`none` `backdrop-filter` _or_ `transform` makes that ancestor the containing
+  block for the overlay's fixed descendants. Inside a `Panel` the overlay would cover only that
+  panel; inside the solo tracker's sliding strip (which carries a translate) its backdrop still
+  covers the screen while the centred card lands off-screen — the "only the darkening shows" bug.
+  Split trigger from overlay and let the **screen** hold the open state — `RuleLabels` (buttons,
+  emits `onOpenRule`) + `RuleCalloutDialog` (overlay) rendered at the screen root, the way the
+  army popups already are. Dialogs use `z-50`; the `CommandPanelTwoPlayer` tab is `z-40` and the
+  sticky top bar (`ScreenHeader`) is `z-30`.
 - **Escape goes through `escapeKey.ts`, never an element `onkeydown`.** Register it from
   the overlay's script with `$effect(() => onEscapeKey(close))`. A backdrop `div` is not
   focusable, so an `onkeydown` on it only fires while focus happens to sit inside the

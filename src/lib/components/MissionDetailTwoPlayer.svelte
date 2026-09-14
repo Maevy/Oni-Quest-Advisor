@@ -4,6 +4,7 @@
 		Mission,
 		PlayerKey,
 		ResultObjectiveDef,
+		RuleCallout,
 		SchemeCard,
 		TwoPlayerMissionProgress
 	} from '$lib/domain';
@@ -15,6 +16,7 @@
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import CommandPanelTwoPlayer from './CommandPanelTwoPlayer.svelte';
 	import CountdownOverlay from './CountdownOverlay.svelte';
+	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
 
 	type Props = {
 		mission: Mission;
@@ -74,6 +76,7 @@
 	}: Props = $props();
 
 	let isSwapping = $state(false);
+	let openRule = $state<RuleCallout | null>(null);
 
 	function handleSwap(): void {
 		isSwapping = true;
@@ -122,6 +125,7 @@
 				description={mission.description}
 				brokenMorale={mission.brokenMorale}
 				ceasefire={mission.ceasefire}
+				onOpenRule={(rule) => (openRule = rule)}
 			/>
 			<SetupPanel setup={mission.setup} />
 			<MissionMap map={mission.map} />
@@ -160,3 +164,5 @@
 		</div>
 	</div>
 </div>
+
+<RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />

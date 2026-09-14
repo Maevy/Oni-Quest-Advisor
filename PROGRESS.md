@@ -48,6 +48,28 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (rule callouts visible again in the Mission view)
+
+First bug report against v0.7.0: clicking **Broken Morale** / **Ceasefire** in the solo tracker's
+Mission view dimmed the screen but showed no card. The dialog was correct — its _position_ was
+not: `DescriptionPanel` rendered `RuleCalloutDialog` as a sibling of `Panel`, which escaped the
+panel's backdrop-blur but not the three-view **sliding strip**, whose `translateX` makes it the
+containing block for fixed descendants. The backdrop (`inset-0` of a 300%-wide translated strip)
+still covered the viewport while the centred card sat off-screen in the strip's middle.
+
+1. **The overlay moved to the screen root.** `DescriptionPanel` and `MissionDescriptionPanel` now
+   only emit `onOpenRule`; the five screens that use them (`MissionDetail`,
+   `MissionDetailTwoPlayer`, `OnlineGameView`, `OnlineMissionView`, `MissionBriefing`) hold the
+   `openRule` state and render `RuleCalloutDialog` at their root — the same place the army popups
+   already live for exactly this reason.
+2. **The rule was widened and recorded**: any transformed _or_ backdrop-filtered ancestor traps a
+   fixed overlay (`components/CLAUDE.md`, `technical-spec/01`, `functional-spec/02`), with both
+   regressions named so the next person extracting a popup knows what to check.
+3. **Verified in a real browser (11 assertions)**: on the tracker's Mission view both cards now
+   render fully inside the viewport with their rule text, Escape and backdrop-click close them,
+   the briefing path is unchanged, and the view switcher still works afterwards. `check` 0/0,
+   lint clean, 334 tests.
+
 ## What was done in the last session (the solo tracker's entry button glows)
 
 The mode select's **Solo Quest Tracker** button carries the app's neon treatment in the sky

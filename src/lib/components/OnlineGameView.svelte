@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { MAX_ROUND, MAX_TOTAL_VP } from '$lib/domain';
-	import type { Mission, OnlineGameView, ResultObjectiveDef, SchemeCard } from '$lib/domain';
+	import type {
+		Mission,
+		OnlineGameView,
+		ResultObjectiveDef,
+		RuleCallout,
+		SchemeCard
+	} from '$lib/domain';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import DescriptionPanel from './DescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import OnlineResultsPanel from './OnlineResultsPanel.svelte';
 	import OnlineSchemesPanel from './OnlineSchemesPanel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
+	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
 	import SetupPanel from './SetupPanel.svelte';
 
 	type Props = {
@@ -45,6 +52,7 @@
 
 	let confirmingClose = $state(false);
 	let acting = $state(false);
+	let openRule = $state<RuleCallout | null>(null);
 
 	let isReveal = $derived(view.phase === 'reveal');
 	let isFinalScoring = $derived(!isReveal && view.currentRound === MAX_ROUND);
@@ -108,6 +116,7 @@
 		brokenMorale={mission.brokenMorale}
 		ceasefire={mission.ceasefire}
 		collapsible
+		onOpenRule={(rule) => (openRule = rule)}
 	/>
 	<SetupPanel setup={mission.setup} collapsible />
 	<MissionMap map={mission.map} collapsible />
@@ -183,3 +192,5 @@
 		onCancel={() => (confirmingClose = false)}
 	/>
 {/if}
+
+<RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />
