@@ -134,8 +134,9 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
 Each document ends with its own **Open questions** section — keep them updated as decisions get
 made, and treat them as the backlog of behavioural gaps. The cross-cutting ones:
 
-- **The shared header component.** Every screen invents its own button constellation; one header
-  (title slot + left/right action slots) should replace them all. Tracked in
+- **The shared header component is half done.** `ScreenHeader` now renders the season and mission
+  selects, the briefing and the solo tracker; the mode select, hot-seat, online screens and army
+  builder still invent their own constellations. Tracked in
   [../technical-spec/01-visual-theme.md](../technical-spec/01-visual-theme.md).
 - **The picked army is display-only.** The Army view is a reference sheet; nothing validates the
   list against the mission (points, faction, required units). Whether it ever should is an open

@@ -60,6 +60,47 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
+## What was done in the last session (the shared top bar)
+
+First concrete step of the long-standing "unify the top button bar" backlog item: the season and
+mission selects now carry the same bar as the solo tracker, and the bar itself moved into one
+component so all four screens share a single source.
+
+1. **`ScreenHeader.svelte`** (new): `sticky top-0 z-30` over
+   `border-b border-slate-700/40 bg-slate-950/80 backdrop-blur`, its row centred in the same
+   `max-w-xl px-4` column as the page body. An optional `onBack` renders the red inverted
+   **← Return**, an optional `title` renders as the page's `h1`, and an `actions` snippet holds
+   whatever the screen puts on the right. Sticky is a no-op on the two full-height screens (their
+   layout pins the bar already) and keeps Return in reach while a mission list scrolls.
+2. **Four screens moved onto it**: the season select (Return only — its hero block keeps the
+   screen's name), the mission select (Return, the season as the bar's title, and **Random** in
+   the outlined orange recipe instead of the old solid pill), the briefing (Return + Pick Army +
+   Start Game) and the solo tracker (Return + the spotlight view switcher, which lost its own
+   `ml-auto` to the header's actions wrapper). The season select's odd `fixed top-4 left-4` sky
+   "← Back" pill is gone; its root became a `flex min-h-dvh flex-col` so the bar sits above the
+   centred hero instead of floating over it.
+3. **One height everywhere**: the row carries `min-h-16`. Without it the bar followed its tallest
+   control — a lone border-less Return measured 57 px against the tracker's 63 — so the four bars
+   would have differed by up to 6 px. The value has to clear the tallest control _plus_ the row's
+   `py-2.5`, because `border-box` measures min-height on the padded box; a first `min-h-11`
+   attempt silently did nothing and the browser pass caught it.
+4. **Verified in a real browser — 51 assertions**: the bar's computed chrome (position, top,
+   z-index, border, backdrop, height, inner max-width/padding/gap, and the Return button's
+   background, colour, radius, font and padding) is identical across all four screens; the season
+   name is the mission select's only `h1`; Random matches the documented outlined-orange recipe
+   (compared against a live probe, since Tailwind 4 reports `oklab()`); Return navigates back on
+   the selects and opens the abandon confirmation on the tracker; the spotlight still starts under
+   Scoring and follows a view switch; the single-scroller contract from the previous commit
+   survives (document height equals the viewport, a wheel over the Mission pane leaves `scrollY`
+   at 0 and the header at y 0); and no bar overflows at 320 px.
+5. **Docs**: `technical-spec/01` gained a "The top bar" section and its z-index row now names
+   `ScreenHeader`; `functional-spec/01` describes the bar on screens 2, 3, 4a and 4b; both
+   READMEs' open question now lists the screens still to move (mode select, hot-seat, online,
+   army builder).
+
+**Left for the next pass:** the remaining screens' constellations, and whether the button recipes
+themselves should become shared classes.
+
 ## What was done in the last session (one scroller on the full-height screens)
 
 A player-reported layout bug: the tracker carried **two** scroll bars — the document's and the
@@ -567,13 +608,10 @@ Morale / Ceasefire labels) → Setup → Deployment Map → Results → Schemes 
 
 ### TODO / next
 
-- **Unify the top button bar.** The mission briefing and the solo tracker now share a
-  sticky bar shape (red Return left, actions right), but every other screen still invents
-  its own constellation: `MissionDetailTwoPlayer` has a lone right-aligned sky "Return"
-  pill sitting in the flow, and `MissionSelect` / `SeasonSelect` / `GameModeSelect` / the
-  online screens / the army builder each place and color their buttons differently again.
-  One shared header component — title slot plus left/right action slots, consistent button
-  treatments and a decision on sticky vs. in-flow — should replace all of them.
+- **Finish unifying the top button bar.** `ScreenHeader` now renders the season and mission
+  selects, the briefing and the solo tracker; the mode select, `MissionDetailTwoPlayer` (a lone
+  right-aligned sky "Return" pill sitting in the flow), the online screens and the army builder
+  each still place and color their buttons differently and should move onto it.
 - **The picked army is display-only**: nothing validates the attached list against the
   mission (points, faction, required units), and Roster saves cannot be picked at all.
   Both are deliberate for now; revisit if the army should matter beyond reference.

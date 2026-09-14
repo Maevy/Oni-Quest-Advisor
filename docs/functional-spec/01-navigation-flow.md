@@ -81,14 +81,17 @@ server-authoritative state.
 ## Screen 2 — Season Select (`season-select`)
 
 One button per season, derived from the bundled missions (`getSeasons()` — distinct `season`
-values). Old seasons stay clickable even when outdated; nothing is hidden or disabled.
+values). Old seasons stay clickable even when outdated; nothing is hidden or disabled. The screen
+opens under the shared top bar (`ScreenHeader`): a red **← Return** (→ `returnToGameMode()`) and
+nothing else — the hero title block below keeps the screen's name.
 
 Selecting a season → `selectSeason(season)`: stores `selectedSeason`, goes to `mission-select`.
 
 ## Screen 3 — Mission Select (`mission-select`)
 
-The selected season's missions as a grid of clickable tiles
-(`getMissionsForSeason()`), plus two controls:
+The selected season's missions as a grid of clickable tiles (`getMissionsForSeason()`), under the
+same shared top bar: red **← Return** on the left, the season's name as the bar's title, and
+**Random** on the right. The two controls:
 
 - **Return** → `returnToSeasonSelect()`: back to `season-select`, clearing `selectedSeason` and
   `selectedMissionId`.
@@ -115,8 +118,8 @@ skips the briefing entirely and goes straight to `mission-detail`.
 
 A read-only walkthrough of the mission: no scheme selection, no VP scoring, no score panel. See
 [02-mission-detail-static-panels.md](./02-mission-detail-static-panels.md) for the panel stack.
-Its sticky top bar carries **← Return** (→ `returnToMissionSelect()`), **Pick Army** and
-**Start Game** (→ `startGame()`).
+It carries the shared top bar: red **← Return** (→ `returnToMissionSelect()`) on the left, and
+**Pick Army** and **Start Game** (→ `startGame()`) on the right.
 
 **Pick Army** opens a picker listing the device's saved **standard**-format armies (Roster saves
 are excluded — a mission run fields a standard list). With none saved it instead asks _"It seems
@@ -131,8 +134,8 @@ game** and switches to `mission-detail`. From then on the run has a lifecycle �
 
 ## Screen 4b — Mission Detail (`mission-detail`)
 
-The interactive tracker. In **solo** it is a **three-view screen** under a sticky top bar that
-mirrors the briefing's: red **← Return** on the left, and three **Scoring / Army / Mission**
+The interactive tracker. In **solo** it is a **three-view screen** under the same shared top bar
+as the briefing: red **← Return** on the left, and three **Scoring / Army / Mission**
 buttons on the right with a glowing **spotlight** that slides under whichever is active
 (`aria-pressed` marks it for assistive tech). A started game always
 opens on **Scoring**; the other two are reference views the player can switch to at any time.

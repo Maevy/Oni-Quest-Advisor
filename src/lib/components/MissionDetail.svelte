@@ -20,6 +20,7 @@
 	import ResultsPanel from './ResultsPanel.svelte';
 	import ScoreSummaryPanel from './ScoreSummaryPanel.svelte';
 	import SchemesPanel from './SchemesPanel.svelte';
+	import ScreenHeader from './ScreenHeader.svelte';
 	import SetupPanel from './SetupPanel.svelte';
 	import UnitCard from './UnitCard.svelte';
 	import UnitVitalityDialog from './UnitVitalityDialog.svelte';
@@ -133,17 +134,10 @@
 	onpointerup={onPointerUp}
 	onpointercancel={onPointerCancel}
 >
-	<header class="border-b border-slate-700/40 bg-slate-950/80 backdrop-blur">
-		<div class="mx-auto flex w-full max-w-xl items-center gap-2 px-4 py-2.5">
-			<button
-				type="button"
-				class="rounded-xl bg-red-500 px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-red-400 active:bg-red-400"
-				onclick={() => (confirmAbandon = true)}
-			>
-				<span aria-hidden="true">←</span> Return
-			</button>
+	<ScreenHeader onBack={() => (confirmAbandon = true)}>
+		{#snippet actions()}
 			<div
-				class="relative ml-auto grid grid-cols-3 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5"
+				class="relative grid grid-cols-3 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5"
 				aria-label="Game views"
 			>
 				<!-- The spotlight: one cell wide, slides to whichever view is active. -->
@@ -166,8 +160,8 @@
 					</button>
 				{/each}
 			</div>
-		</div>
-	</header>
+		{/snippet}
+	</ScreenHeader>
 
 	<!-- One strip, three panes side by side: switching views slides the whole surface, so the
 	     outgoing view leaves the way the gesture came from. Each pane scrolls itself, otherwise

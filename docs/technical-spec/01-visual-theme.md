@@ -145,13 +145,34 @@ registered `--neon-angle` custom property. It is `pointer-events: none` and **di
 `prefers-reduced-motion: reduce`**. Reserve this treatment for the single entry point it marks;
 if everything glows, nothing does.
 
+## The top bar
+
+`ScreenHeader.svelte` is the one bar four screens share — season select, mission select, the
+mission briefing and the solo tracker. Chrome: `sticky top-0 z-30` over a
+`border-b border-slate-700/40 bg-slate-950/80 backdrop-blur` strip, its row centred in the same
+`max-w-xl px-4` column as the page body. Left: the red inverted **← Return** — the one filled
+navigation button, the treatment the briefing established. Middle: an optional `title`, rendered
+as the page's `h1` (the mission select's season name; screens that title themselves below, like
+the season select's hero block, pass none). Right: an `actions` snippet — plain outlined buttons
+on the selects and briefing, the tracker's spotlight view switcher on the tracker.
+
+Sticky is a harmless no-op on the two full-height screens, whose layout pins the bar already, and
+is what keeps Return in reach while a long mission list scrolls. The row carries `min-h-16` so the
+bar is the same height on every screen: without it the height follows the tallest control, and a
+lone border-less Return sits 6 px lower than the tracker's bordered switcher. The min-height has
+to clear that control _plus_ the row's `py-2.5`, because `border-box` measures it on the padded
+box — an earlier `min-h-11` silently did nothing for exactly that reason.
+
+The mode select, the hot-seat tracker, the online screens and the army builder still carry their
+own constellations; see Open questions.
+
 ## Overlays, stacking and the backdrop-filter trap
 
 | Layer                                                 | z-index |
 | ----------------------------------------------------- | ------- |
 | Dialogs and rule popups                               | `z-50`  |
 | Command Panel tab (hot-seat, fixed to the right edge) | `z-40`  |
-| Sticky header (mission briefing)                      | `z-30`  |
+| Sticky top bar (`ScreenHeader`)                       | `z-30`  |
 
 Backdrop is `bg-slate-950/70 backdrop-blur-sm` for informational popups (rule callouts, the unit
 card, the upgrade picker and its detail view) and the heavier `bg-slate-950/90` for dialogs that
@@ -247,12 +268,10 @@ honour `prefers-reduced-motion`, and mark decorative glyphs `aria-hidden`.
 
 ## Open questions
 
-- **No shared header component.** Every screen currently invents its own header
-  constellation: the briefing has a sticky 3-button bar, `MissionDetail` a lone right-aligned
-  sky "Return" pill sitting in the flow, and the mode/season/mission selects, online screens and
-  army builder each place and colour their buttons differently again. One shared header (title
-  slot + left/right action slots, consistent button treatments, a decision on sticky vs in-flow)
-  should replace all of them — this is the largest remaining inconsistency in the visual layer.
+- **The shared top bar covers four screens.** `ScreenHeader` now renders the season and mission
+  selects, the briefing and the solo tracker. The mode select, the hot-seat tracker (a lone
+  right-aligned sky "Return" pill sitting in the flow), the online screens and the army builder
+  still invent their own constellations and should move onto it.
 - Should the button recipes above become real shared components/classes? They are currently
   copy-pasted Tailwind strings, which is why the disabled treatment drifted between screens.
 - The palette has no semantic names (`--color-danger` etc.), so "red means destructive" is
