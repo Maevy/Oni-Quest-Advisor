@@ -6,7 +6,18 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 ## Where things stand
 
 - Live at https://oni-quest-advisor.fly.dev/
-- Latest release: **v0.7.1** (tag on `main`) — a hotfix over v0.7.0: the Broken
+- Latest release: **v0.8.0** (tag on `main`) — the hot-seat parity release: the
+  2-player tracker now matches the solo one. Both local modes go through the read-only
+  **Mission Briefing**, whose army slots are per seat in hot-seat (**Pick P1 Army** /
+  **Pick P2 Army**, seat-coloured panels, a warning when either seat starts without a
+  list); the tracker is a four-view **Scoring / P1 Army / P2 Army / Mission** sliding
+  strip opening on an **Active Player** panel and an inline score panel (two
+  **Player 1/2 Total VP** blocks, a round stepper only Player 1 may move, and a violet
+  neon **Swap Player** — hot-seat's Reset is gone, a fresh play is Return → Abandon);
+  Results binds to the active seat and so gains the grouped per-round cards, each army
+  pane is editable for its own seat and frozen for the other, and the open-game
+  lifecycle (Return abandons behind a confirmation, app start offers to resume) now
+  covers hot-seat via a `mode` on the record. v0.7.1 was the rules-link hotfix — the Broken
   Morale / Ceasefire rule cards are visible again in the tracker's Mission view
   (the three-view strip's translateX had trapped their dialog off-screen behind
   the backdrop), fixed by rendering `RuleCalloutDialog` at the screen root in all
@@ -52,7 +63,51 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (rule callouts visible again in the Mission view)
+## What was done in the last session (hot-seat gets the solo treatment)
+
+The 2-player tracker was still the v0.1.0-era single scrolling screen with a right-edge drawer;
+this session brought it up to the solo tracker's level and unified the top bar along the way.
+
+1. **A briefing for hot-seat.** `selectMission()` in two-player mode now lands on the read-only
+   `MissionBriefing` like solo. The briefing became slot-based: solo brings one army slot,
+   hot-seat brings one per seat, so the header shows **Pick P1 Army** (sky) and **Pick P2 Army**
+   (orange) and each attached list renders as its own seat-coloured panel. Start Game with any
+   seat empty warns _"It is strongly recommended to start a game with both players having an
+   army."_ — with both filled it goes straight in.
+2. **The four-view tracker.** `MissionDetailTwoPlayer` is now the same sliding-strip full-height
+   screen as solo, with **Scoring / P1 Army / P2 Army / Mission** behind the spotlight switcher
+   (and swipe). Scoring opens with a new `ActivePlayerPanel` ("Player 1 is the active Player" in
+   the seat colour, army name under it) and a new `ScoreSummaryPanelTwoPlayer`: two VP blocks
+   renamed **Player 1/2 Total VP**, the round stepper which only Player 1 may move, and a shiny
+   violet **Swap Player** (`.neon-violet`, a four-line modifier over `.neon-border`'s custom
+   properties). **Reset is gone** from hot-seat — a fresh play is Return → Abandon → re-pick.
+3. **Per-seat scoring and armies.** Results is now the solo `ResultsPanel` bound to the active
+   seat (so hot-seat gets the grouped per-round cards too, closing that backlog item), and each
+   army pane is the shared `ArmyReadonlyPanel` with a seat title/colour and a frozen mode: the
+   inactive seat's rows keep their portraits, pills, Life/stamina tracks and State glyphs but
+   carry no click target. Vitality maps are per seat, so two seats fielding the same save keep
+   their damage apart.
+4. **The open-game lifecycle covers hot-seat.** `OpenGame` gained `mode`; records without one read
+   as solo. Return asks _"Abandon this game? Both players' progress will be lost."_, abandoning
+   deletes the record and both seats' progress, and a reload offers to resume into the right
+   tracker. `PlayerProgress` gained `pickedArmy` + `vitality`, hydrated per seat so old saves get
+   their defaults; online's seats moved to a new shared `SeatProgress` base so the online protocol
+   never carries army state.
+5. **Deleted** `CommandPanelTwoPlayer` and `ResultsPanelTwoPlayer` (both unreferenced after the
+   rewrite). `ScreenHeader`'s actions container now wraps, which is what lets the briefing's four
+   buttons and the tracker's four-up switcher fit a 320 px phone.
+6. **Verified in a real browser (73 assertions)**: the whole journey — build and save an army,
+   briefing picks and warnings for both seats, all four views, per-seat scoring and vitality,
+   swap + countdown, frozen panes, abandon/keep-playing, reload → resume, 320 px overflow — plus a
+   solo regression pass. `check` 0/0, lint clean, 344 tests (10 new domain tests for the seat
+   fields and hydration).
+7. **Docs caught up**: functional 01/02/03/05/06/07/08 + README, technical 01, and
+   `components/CLAUDE.md`. The open questions that this work closed (grouped Results in hot-seat,
+   three views in hot-seat, ScreenHeader on hot-seat) are gone from the backlog; the ones it
+   sharpened (`activePlayer` not persisted now matters more, hot-seat has no fresh-play shortcut)
+   are recorded in their place.
+
+## What was done in the session before (rule callouts visible again in the Mission view)
 
 First bug report against v0.7.0: clicking **Broken Morale** / **Ceasefire** in the solo tracker's
 Mission view dimmed the screen but showed no card. The dialog was correct — its _position_ was
@@ -697,16 +752,17 @@ Morale / Ceasefire labels) → Setup → Deployment Map → Results → Schemes 
 ### TODO / next
 
 - **Finish unifying the top button bar.** `ScreenHeader` now renders the season and mission
-  selects, the briefing and the solo tracker; the mode select, `MissionDetailTwoPlayer` (a lone
-  right-aligned sky "Return" pill sitting in the flow), the online screens and the army builder
-  each still place and color their buttons differently and should move onto it.
+  selects, the briefing in both local modes and both local trackers; the mode select, the online
+  screens and the army builder each still place and color their buttons differently and should
+  move onto it.
 - **The picked army is display-only**: nothing validates the attached list against the
   mission (points, faction, required units), and Roster saves cannot be picked at all.
   Both are deliberate for now; revisit if the army should matter beyond reference.
-- **Bring the grouped Results to hot-seat and online** (solo's tracker has it now), so
-  Awaiting Reinforcements stops rendering 12 separate cards there.
-- **Three views in hot-seat?** Solo's tracker now splits Scoring / Army / Mission behind a
-  sticky tab bar; hot-seat is still one long screen with a right-edge drawer.
+- **Bring the grouped Results to online** (both local modes have it now), so Awaiting
+  Reinforcements stops rendering 12 separate cards there.
+- **`activePlayer` is not persisted**, and now that a reload resumes a hot-seat run through the
+  open-game prompt, the hole is one accidental refresh wide: whoever holds the phone after the
+  reload sees Player 1's hidden scheme. Persist it, or force a countdown on load.
 - **Visual sign-off still pending** on the radial "Deployment Zone" label fit (Quarter
   War, Toxic Infestation), 4-box rows at phone width, and whether the filled `bg-red-500`
   Return is notable enough.

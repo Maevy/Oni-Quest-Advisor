@@ -33,14 +33,14 @@ online-create | online-join | online-game
                          │                                       │
                          ▼                                       ▼
                   mission-select                           online-join
-                    │           │                                │
-             (solo) │           │ (two-player)                    ▼
-                    ▼           ▼                            online-game
-          mission-briefing   mission-detail
-                    │        (all panels + the Command Panel drawer)
+                         │                                       │
+                         ▼                                       ▼
+                  mission-briefing                          online-game
+              (one army slot solo, one per seat hot-seat)
                     │ "Start Game" — records the open game
                     ▼
-             mission-detail  ══▶  [ Scoring | Army | Mission ]  (Scoring is the default)
+             mission-detail  ══▶  solo:   [ Scoring | Army | Mission ]
+                                  hot-seat: [ Scoring | P1 Army | P2 Army | Mission ]
                     │
                     │ "← Return" → confirm "Abandon this game?"
                     ├── Keep playing ─▶ stays put
@@ -101,42 +101,59 @@ same shared top bar: red **← Return** on the left, the season's name as the ba
   missions. The RNG is injected (`domain.Rng`, defaulting to `Math.random`) so the pick is
   testable.
 
-Clicking a mission → `selectMission(missionId)`, which **branches on `gameMode`**:
+Clicking a mission → `selectMission(missionId)`, which **branches on `gameMode`** only in
+_which progress store_ it loads:
 
 | Mode         | Loads progress into                         | Goes to            |
 | ------------ | ------------------------------------------- | ------------------ |
-| `two-player` | `twoPlayerProgressStore.loadForMission(id)` | `mission-detail`   |
+| `two-player` | `twoPlayerProgressStore.loadForMission(id)` | `mission-briefing` |
 | `solo`       | `missionProgressStore.loadForMission(id)`   | `mission-briefing` |
 
-Solo therefore reaches the tracker in **two steps**: the mission click opens the read-only
-**Mission Briefing**, and its **Start Game** button (`startGame()`) switches to `mission-detail`.
-Progress is loaded once, at the mission click, so Start Game changes only the screen — nothing is
-re-initialised, and any previously saved state for that mission is already in place. Hot-seat
-skips the briefing entirely and goes straight to `mission-detail`.
+Both modes therefore reach their tracker in **two steps**: the mission click opens the read-only
+**Mission Briefing**, and its **Start Game** button (`startGame()`) switches to `mission-detail`
+and records the open game. Progress is loaded once, at the mission click, so Start Game changes
+only the screen — nothing is re-initialised, and any previously saved state for that mission is
+already in place. The briefing is mode-aware: solo shows one army slot, hot-seat shows one per
+seat (see below).
 
-## Screen 4a — Mission Briefing (`mission-briefing`, solo only)
+## Screen 4a — Mission Briefing (`mission-briefing`, both local modes)
 
 A read-only walkthrough of the mission: no scheme selection, no VP scoring, no score panel. See
 [02-mission-detail-static-panels.md](./02-mission-detail-static-panels.md) for the panel stack.
-It carries the shared top bar: red **← Return** (→ `returnToMissionSelect()`) on the left, and
-**Pick Army** and **Start Game** (→ `startGame()`) on the right.
+It carries the shared top bar: red **← Return** (→ `returnToMissionSelect()`) on the left, and the
+army slots plus **Start Game** (→ `startGame()`) on the right.
 
-**Pick Army** opens a picker listing the device's saved **standard**-format armies (Roster saves
-are excluded — a mission run fields a standard list). With none saved it instead asks _"It seems
-you don't have any saved armies. Do you want to create one?"_ — **Create one** jumps to the army
-builder, **Not now** closes. Picking attaches a **snapshot** (`PickedArmy`: name, faction, code)
-to the run, shown as a **Selected Army** panel between the Description and Setup panels with an
-**✕** that detaches it again. The snapshot means later edits or deletion of the save cannot change
-a run that is already under way.
+The briefing takes a list of **army slots** and is otherwise mode-agnostic — solo brings one,
+hot-seat brings one per seat:
+
+| Mode       | Header buttons                                                    | Attached-army panels                                |
+| ---------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| solo       | **Pick Army** (sky), **Start Game**                               | **Selected Army** (sky heading)                     |
+| two-player | **Pick P1 Army** (sky), **Pick P2 Army** (orange), **Start Game** | **Player 1 Army** (sky), **Player 2 Army** (orange) |
+
+Each slot's button opens the same saved-army picker, and each attached army renders as its own
+panel between the Description and Setup panels with an **✕** that detaches just that seat. The
+picker lists the device's saved **standard**-format armies (Roster saves are excluded — a mission
+run fields a standard list). With none saved it instead asks _"It seems you don't have any saved
+armies. Do you want to create one?"_ — **Create one** jumps to the army builder, **Not now**
+closes. Picking attaches a **snapshot** (`PickedArmy`: name, faction, code) to that seat, so later
+edits or deletion of the save cannot change a run that is already under way. Two seats may attach
+the same save; their vitality maps stay separate.
 
 **Start Game is the boundary between browsing and playing**: it records the mission as the **open
-game** and switches to `mission-detail`. From then on the run has a lifecycle — see below.
+game** (with the mode, so a reload resumes into the right tracker) and switches to
+`mission-detail`. From then on the run has a lifecycle — see below.
 
-Pressing **Start Game with no army attached** asks first: _"You are starting this game without a
-selected army. Do you want to proceed?"_ — **Start anyway** starts the run, **Not now** (and
-Escape) stays on the briefing, where Pick Army is one press away. The warning exists because the
-tracker's Army view is read-only: a run fields whatever it started with for its whole life. With
-an army attached, Start Game is direct and no dialog appears.
+Pressing **Start Game with a gap in the army slots** asks first, because the tracker's Army views
+are read-only and a run fields whatever it started with for its whole life:
+
+| Slots                    | Warning                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| solo, none attached      | _"You are starting this game without a selected army. Do you want to proceed?"_                          |
+| hot-seat, any seat empty | _"It is strongly recommended to start a game with both players having an army. Do you want to proceed?"_ |
+
+**Start anyway** starts the run, **Not now** (and Escape) stays on the briefing, where the pick
+buttons are one press away. With every slot filled, Start Game is direct and no dialog appears.
 
 ## Screen 4b — Mission Detail (`mission-detail`)
 
@@ -198,23 +215,38 @@ incoming one arrives from the opposite edge; the header's spotlight slides along
 view keeps its own scroll position. A mostly-vertical drag scrolls instead and cancels the swipe.
 The three buttons remain the accessible path; the swipe is a shortcut, never the only way.
 
-In **hot-seat** the same screen id renders `MissionDetailTwoPlayer` instead — one long scrolling
-screen with every panel, plus the right-edge Command Panel drawer and the swap countdown. It has no
-view switcher. See [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
+In **hot-seat** the same screen id renders `MissionDetailTwoPlayer` — the same sliding-strip
+tracker with **four** views, because each seat fields its own army:
 
-### Return means abandon (solo)
+| View        | Contents                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Scoring** | Active Player panel → score panel (both seats' VP, round, Swap Player) → Results (**active seat only**) → Schemes (both seats) |
+| **P1 Army** | Player 1's army — editable while Player 1 is the active player, frozen for reference otherwise                                 |
+| **P2 Army** | Player 2's army — editable while Player 2 is the active player, frozen for reference otherwise                                 |
+| **Mission** | the static panels only: Description (with its rule-label popups) → Setup → Deployment Map → Quest Rules                        |
+
+The two army panes are the same component as solo's Army view, with a seat title and colour and a
+frozen mode: the inactive seat's rows keep their portraits, upgrade pills, Life/stamina tracks and
+State glyphs, but carry no click target and say in one line why they are read-only. Swapping
+players is what hands an army pane over — the panes themselves never change owner. See
+[06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
+
+### Return means abandon
 
 The tracker's **← Return** does not navigate directly — it asks _"Abandon this game? All progress
-will be lost."_ with **Keep playing** (the prominent branch, and what Escape takes) and **Abandon**.
-Confirming calls `abandonGame()`, which deletes the open-game record **and** that mission's saved
-progress, then returns to `mission-select`. There is deliberately no path back to the briefing from
-the tracker, because leaving the tracker ends the run.
+will be lost."_ in solo and _"Abandon this game? Both players' progress will be lost."_ in
+hot-seat, with **Keep playing** (the prominent branch, and what Escape takes) and **Abandon**.
+Confirming calls `abandonGame()`, which deletes the open-game record **and** the run's saved
+progress (that mission's solo record, or both seats' hot-seat record), then returns to
+`mission-select`. There is deliberately no path back to the briefing from the tracker, because
+leaving the tracker ends the run.
 
-## Open game lifecycle (solo)
+## Open game lifecycle (solo and hot-seat)
 
-A solo run is an explicit session, not "whatever progress happens to be saved for this mission".
+A local run is an explicit session, not "whatever progress happens to be saved for this mission".
 One game can be open at a time, recorded under `oni-quest-advisor:open-game`
-(`lib/data/openGame.ts`).
+(`lib/data/openGame.ts`) as `{ missionId, mode }` — records written before hot-seat joined the
+lifecycle carry no mode and are read as solo.
 
 | Event                             | Effect                                                                                                                                         |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -236,8 +268,7 @@ A record pointing at a mission the bundled content no longer has is **stale**:
 Progress written before this feature existed has no open-game record. It is not discarded — it is
 picked up when that mission is next started, so no one loses an old run to the upgrade.
 
-Hot-seat and online have no open-game record: hot-seat progress simply persists per mission, and
-online state lives on the server.
+Online has no open-game record: its state lives on the server and its seat resumes itself.
 
 ## Army builder flow
 
@@ -266,14 +297,16 @@ Menu".
 
 ## State on navigation
 
-- **Solo progress belongs to the open game.** Ticking a box writes
-  `oni-quest-advisor:mission-progress:{missionId}`; abandoning deletes it together with the
-  `oni-quest-advisor:open-game` record. Merely viewing the briefing writes nothing — a progress
-  record only appears once the run actually mutates.
-- **Hot-seat progress is not session-scoped.** `returnToMissionSelect()` clears only the
-  _selection_; checked objectives, schemes and the round stay under
-  `oni-quest-advisor:2p-progress:{missionId}` and are restored on re-entry. Hot-seat has no
-  abandon flow and no resume prompt.
+- **Local progress belongs to the open game.** Ticking a box writes
+  `oni-quest-advisor:mission-progress:{missionId}` (solo) or
+  `oni-quest-advisor:2p-progress:{missionId}` (hot-seat); abandoning deletes the record together
+  with the `oni-quest-advisor:open-game` entry. Merely viewing the briefing writes nothing — a
+  progress record only appears once the run actually mutates.
+- **Hot-seat is session-scoped like solo.** Its run is an open game too: Return abandons it, a
+  reload offers to resume it, and the record's `mode` sends the resume into the hot-seat tracker
+  with both seats' state restored. `activePlayer` is still in-memory only, so a resumed run hands
+  the device back to Player 1 — see
+  [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 - The scheme **draft** (faction + intelligence inputs) is part of that persisted progress and
   survives a scheme delete/reset, so the player only re-presses Draw.
 - Online state lives on the **server**; the seat (game code + seat + token) is in `localStorage`
@@ -302,9 +335,6 @@ breaking.
 - **Should the picked army influence anything beyond display?** Today it is a reference sheet in
   the Army view; nothing checks the list against the mission (points, faction, required units).
   The snapshot is already there if such a rule ever arrives.
-- **Should hot-seat get the three-view layout too?** Solo now splits Scoring / Army / Mission
-  behind a sticky bar; hot-seat is still one long scrolling screen with a drawer. See
-  [05-score-and-round-controls.md](./05-score-and-round-controls.md).
 - **Only one open game can exist**, and nothing enforces it — `beginGame()` simply overwrites the
   record. Unreachable by clicking today (the tracker's Return abandons before the mission list is
   reachable again), but a deep link or a "switch mission" control would need a rule.

@@ -44,20 +44,21 @@ each `src/lib/` folder.
 - **Mission progress** (solo) — checked objective counts, the chosen Scheme, the Scheme draft
   (faction + intelligence) and the current round, persisted per mission in `localStorage`.
 - **Two-player progress** (hot-seat) — a `PlayerProgress` per seat (checked objectives, scheme,
-  draft, `schemeRevealed`) plus a shared round, persisted under a separate key prefix.
-- **Active player** (hot-seat only) — whose secret is currently showable. In memory only;
-  switched by the Swap Player countdown.
+  draft, `schemeRevealed`, the seat's picked army and its vitality) plus a shared round, persisted
+  under a separate key prefix.
+- **Active player** (hot-seat only) — whose sheet, schemes and army are currently editable. In
+  memory only; switched by the Swap Player countdown.
 - **Reveal** — making a hidden Scheme visible. Permanent and one-press in hot-seat; online it is
   a **toggleable intent** during the Reveal phase, committed when the leader advances to Scoring,
   and a hidden scheme **cannot be scored at all**.
 - **Total VP** — Results VP + Scheme VP, capped at 10, not floored at 0 (ceasefire penalties can
   push a party negative).
-- **Open game** (solo) — a run started from the briefing and not yet abandoned, recorded under
-  `oni-quest-advisor:open-game`. Its existence is what makes the app offer to resume on the next
-  launch; abandoning deletes it together with that mission's progress.
-- **Game view** (solo tracker) — one of the three tabs the tracker splits into: **Scoring** (the
-  default, holding the score panel, Results and Schemes), **Army** and **Mission** (the static
-  reference panels).
+- **Open game** — a local run started from the briefing and not yet abandoned, recorded under
+  `oni-quest-advisor:open-game` with its mode. Its existence is what makes the app offer to resume
+  on the next launch; abandoning deletes it together with that mission's progress.
+- **Game view** — one of the tabs a tracker splits into: solo has **Scoring** (the default, holding
+  the score panel, Results and Schemes), **Army** and **Mission**; hot-seat adds a second army tab
+  for the other seat (**Scoring / P1 Army / P2 Army / Mission**).
 
 ### Online
 
@@ -120,10 +121,10 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
 4. [04-schemes-panel.md](./04-schemes-panel.md) — faction/intelligence/draw/select/track, the draw
    brackets, hidden vs revealed in each mode.
 5. [05-score-and-round-controls.md](./05-score-and-round-controls.md) — where the running score,
-   round stepper and reset live: an inline panel in solo's Scoring view, a right-edge drawer in
-   hot-seat (with its swap mechanic), and nothing at all in online.
+   round stepper and reset live: an inline panel at the top of each local tracker's Scoring view
+   (hot-seat's adds the Active Player line and the swap), and nothing at all in online.
 6. [06-two-player-hot-seat.md](./06-two-player-hot-seat.md) — one device, two secrets: state
-   model, seat colours, the swap countdown, and how it differs from online.
+   model, seat colours, the four-view tracker, the swap countdown, and how it differs from online.
 7. [07-online-two-player.md](./07-online-two-player.md) — the online player journey: create,
    invite, join, setup, rounds and phases, finish and statistics, reconnection, closing.
 8. [08-army-builder.md](./08-army-builder.md) — faction select, the builder, unit cards, mounts,
@@ -135,15 +136,11 @@ Each document ends with its own **Open questions** section — keep them updated
 made, and treat them as the backlog of behavioural gaps. The cross-cutting ones:
 
 - **The shared header component is half done.** `ScreenHeader` now renders the season and mission
-  selects, the briefing and the solo tracker; the mode select, hot-seat, online screens and army
-  builder still invent their own constellations. Tracked in
+  selects, the briefing (both modes) and both local trackers; the mode select, online screens and
+  army builder still invent their own constellations. Tracked in
   [../technical-spec/01-visual-theme.md](../technical-spec/01-visual-theme.md).
-- **The picked army is display-only.** The Army view is a reference sheet; nothing validates the
+- **The picked army is display-only.** The Army views are reference sheets; nothing validates a
   list against the mission (points, faction, required units). Whether it ever should is an open
   question in [01-navigation-flow.md](./01-navigation-flow.md).
-- **Grouped Results in hot-seat and online.** Solo renders per-round cards in both the briefing
-  and the tracker; the other two modes still show one card per round-entry (Awaiting
-  Reinforcements: 12 cards).
-- **Three views in hot-seat?** Solo's tracker now splits into Scoring / Army / Mission behind a
-  sticky tab bar; hot-seat is still one long scrolling screen with a right-edge drawer — see
-  [05-score-and-round-controls.md](./05-score-and-round-controls.md).
+- **Grouped Results in online.** Both local modes render per-round cards in the briefing and the
+  tracker; online still shows one card per round-entry (Awaiting Reinforcements: 12 cards).

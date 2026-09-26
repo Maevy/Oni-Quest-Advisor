@@ -8,21 +8,23 @@ should read identically wherever it appears. The interactive panels are document
 
 ## Panel order per screen
 
-| Screen                                         | Panels, top to bottom                                                                                                                                                                      |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Mission Briefing** (solo, read-only)         | MissionTitlePanel → Mission Description → Selected Army (only when an army is picked) → Setup → Deployment Map → Results (briefing) → Schemes (briefing) → Quest Rules                     |
-| **Mission Detail** (solo tracker)              | three views behind a sticky tab bar — **Scoring**: score panel → Results → Schemes · **Army**: the picked army read-only · **Mission**: Description → Setup → Deployment Map → Quest Rules |
-| **Mission Detail** (hot-seat)                  | Description → Setup → Deployment Map → Results (2P) → Schemes (2P) → Quest Rules (+ the fixed Command Panel drawer, + Countdown Overlay while swapping)                                    |
-| **Online game view**                           | Description → Setup → Deployment Map → Results → Schemes → Quest Rules                                                                                                                     |
-| **Online lobby preview** (`OnlineMissionView`) | Description → Setup → Deployment Map → Results (read-only) → Quest Rules — no Schemes panel                                                                                                |
+| Screen                                         | Panels, top to bottom                                                                                                                                                                                                                        |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mission Briefing** (both local modes)        | MissionTitlePanel → Mission Description → one Selected Army panel per army slot (only for slots that picked one) → Setup → Deployment Map → Results (briefing) → Schemes (briefing) → Quest Rules                                            |
+| **Mission Detail** (solo tracker)              | three views behind a sticky tab bar — **Scoring**: score panel → Results → Schemes · **Army**: the picked army read-only · **Mission**: Description → Setup → Deployment Map → Quest Rules                                                   |
+| **Mission Detail** (hot-seat)                  | four views behind a sticky tab bar — **Scoring**: Active Player → score panel → Results (active seat) → Schemes (both seats) · **P1 Army** / **P2 Army**: each seat's army · **Mission**: Description → Setup → Deployment Map → Quest Rules |
+| **Online game view**                           | Description → Setup → Deployment Map → Results → Schemes → Quest Rules                                                                                                                                                                       |
+| **Online lobby preview** (`OnlineMissionView`) | Description → Setup → Deployment Map → Results (read-only) → Quest Rules — no Schemes panel                                                                                                                                                  |
 
-Every panel is a `Panel` (frosted card, uppercase sky title) except `MissionTitlePanel` — and the
-tracker's score panel, which passes **no title at all**: its centred hero VP number is
-self-evident, so a heading above it would be noise.
+Every panel is a `Panel` (frosted card, uppercase title) except `MissionTitlePanel` — and the
+trackers' score panels, which pass **no title at all**: their centred hero VP numbers are
+self-evident, so a heading above them would be noise. The title's colour is sky by default and
+takes a seat accent where a panel belongs to one seat — hot-seat's **Player 2 Army** heading is
+orange, its **Player 1 Army** sky.
 
-In the solo tracker those four static panels are the **whole** of the Mission view — Results and
-Schemes moved to the Scoring view, so no panel is rendered twice and the Mission view stays a pure
-reference sheet.
+In both local trackers those four static panels are the **whole** of the Mission view — Results
+and Schemes moved to the Scoring view, so no panel is rendered twice and the Mission view stays a
+pure reference sheet.
 
 **Collapsibility:** the online screens pass `collapsible` to Description, Setup, Deployment Map
 and Quest Rules; the local screens do not. Phone screens get crowded once both players' seats,

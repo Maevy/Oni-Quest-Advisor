@@ -4,8 +4,9 @@ A standalone list-building tool, separate from the mission flow. The player pick
 builds an army under a format's point cap, inspecting every rule a unit carries along the way.
 
 It is reached from the main menu's **Army Builder** button (violet) and never sets a game mode.
-What it saves does reach the mission flow, though: the Mission Briefing's **Pick Army** button
-lists saved **standard**-format armies and attaches one to the run as a read-only snapshot — see
+What it saves does reach the mission flow, though: the Mission Briefing's army pick buttons list
+saved **standard**-format armies and attach one to the run as a read-only snapshot — one button in
+solo, one per seat in hot-seat — see
 [01-navigation-flow.md](./01-navigation-flow.md).
 
 The builder is **in-memory only**. Leaving it discards the list; army codes and saved armies are

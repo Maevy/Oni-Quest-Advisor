@@ -180,8 +180,9 @@ add-on:
 | Reveal                  | toggleable intent, committed on phase change | permanent, one press          |
 | Hidden scheme scoring   | impossible                                   | possible                      |
 | Revealed scheme's boxes | owner only                                   | either player                 |
-| Objectives              | own column, Scoring phase only               | both players, always          |
-| Round                   | server phase engine, leader-driven           | manual stepper                |
+| Objectives              | own column, Scoring phase only               | active seat's own sheet       |
+| Round                   | server phase engine, leader-driven           | manual, Player 1 only         |
+| Armies                  | none                                         | one per seat, tracked live    |
 | Finish / statistics     | yes                                          | none                          |
 
 ## Open questions

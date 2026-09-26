@@ -135,7 +135,9 @@ native/platform-specific one. Used on a phone screen during a game session.
   and deletes them via a per-row ✕ behind a Yes/No confirmation. Saved
   **standard**-format armies also feed the mission flow: the briefing's
   "Pick Army" button attaches one to the run as a `pickedArmy` snapshot,
-  shown read-only in the tracker's Army view.
+  shown read-only in the tracker's Army view. Hot-seat has one pick button
+  and one Army view **per seat** ("Pick P1 Army" / "Pick P2 Army"), and two
+  seats may attach the same save — their vitality maps stay separate.
 - **GameMode** → `'solo' | 'two-player'`, set by `GameModeSelect` and tracked in
   `navigationStore.gameMode`. Solo is the original single-player tracker; two-player
   is a hot-seat mode where both players share one device. The third
@@ -153,25 +155,32 @@ native/platform-specific one. Used on a phone screen during a game session.
   blue) and spends stamina, committing only on Accept. Total VP = checked Results VP + checked Scheme increments, capped at
   `MAX_TOTAL_VP` = 10 (a player cannot earn more per mission); the tracker's untitled score
   panel shows the total against that cap.
-- **OpenGame** (solo) → `{ missionId }`, the marker that a run is live. Written by
-  `startGame()`, and the reason the app can offer to resume on the next launch.
-  Abandoning deletes it **and** that mission's saved progress, so a run either
-  resumes whole or is gone — Reset restarts the mission, abandoning ends it.
-  Hot-seat and online have no equivalent (hot-seat progress just persists per
-  mission; online state lives on the server).
-- **TwoPlayerMissionProgress** → 2-player equivalent: per-player `PlayerProgress`
-  (checked objectives, scheme, schemeDraft, `schemeRevealed` flag) for `player1` and
-  `player2`, plus a shared `currentRound`. Objectives are independently tracked per
-  player; both can toggle freely. Schemes are gated by `activePlayer` — only the
+- **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local
+  run is live. Written by `startGame()`, and the reason the app can offer to resume on
+  the next launch — the stored `mode` decides which progress store and which tracker
+  the resume lands in (records written before hot-seat joined the lifecycle carry no
+  mode and read as solo). Abandoning deletes it **and** that run's saved progress, so
+  a run either resumes whole or is gone — solo's Reset restarts the mission,
+  abandoning ends it. Online has no equivalent (its state lives on the server).
+- **TwoPlayerMissionProgress** → 2-player equivalent: a `PlayerProgress` per seat for
+  `player1` and `player2`, plus a shared `currentRound`. Each `PlayerProgress` is the
+  shared `SeatProgress` (checked objectives, scheme, schemeDraft, `schemeRevealed` —
+  the same shape online's seats use) plus two local-only fields: `pickedArmy` and
+  `vitality`. Loaded through `hydrateTwoPlayerProgress()`, which merges **each seat**
+  onto its own empty defaults — a shallow spread would leave a field added later as
+  `undefined`. Objectives are tracked **per active seat**, not on one shared sheet:
+  the Results panel binds to `activePlayer` and the swap hands the sheet over, so
+  nobody edits a sheet that is not theirs. Schemes are gated the same way — only the
   active player sees/interacts with their scheme; the other sees "Hidden" (chosen but
-  unrevealed) or "No schemes" (not yet chosen). "Reveal" is permanent. The "Swap
-  Player" button (in the Command Panel) triggers a 6-second countdown overlay, then
-  flips `activePlayer`. The Command Panel tab always shows the active player (P1
-  sky-blue / P2 orange). Per-player VP is calculated independently via
-  `calculateTwoPlayerVP`; each is capped at `MAX_TOTAL_VP`.
+  unrevealed) or "No schemes" (not yet chosen). "Reveal" is permanent. The round is
+  one counter for the table and **only Player 1 may move it**. The score panel's
+  violet **Swap Player** button triggers a 6-second countdown overlay, then flips
+  `activePlayer`; it is hot-seat's only game-level action — there is no Reset, a
+  fresh play is Return → Abandon → re-pick the mission. Per-seat VP is calculated
+  independently via `calculateTwoPlayerVP`; each is capped at `MAX_TOTAL_VP`.
 - **OnlineGameState** (online 2-player, server-authoritative; `domain/online.ts`) →
   statuses `lobby`/`active`/`finished`/`closed`; two seats (nickname, seat-token
-  hash, a `PlayerProgress`, `revealIntent`, private `drawnSchemeIds`); `pendingJoin`;
+  hash, a `SeatProgress`, `revealIntent`, private `drawnSchemeIds`); `pendingJoin`;
   season/mission; round × phase (`reveal`/`scoring`); round VP snapshots; winner.
   Scheme boxes are scoreable **only once revealed** (hidden schemes earn no scheme
   VP); `finishGame` auto-reveals everything and writes a `resultSummary` (winner,
@@ -210,8 +219,8 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `data-import/`; progress persists to
   `localStorage` under the `oni-quest-advisor:mission-progress:` prefix (solo) and
   `oni-quest-advisor:2p-progress:` prefix (two-player), keyed by mission ID;
-  `openGame.ts` holds the single `oni-quest-advisor:open-game` marker saying a solo run
-  is live, read on app start to offer a resume. Online
+  `openGame.ts` holds the single `oni-quest-advisor:open-game` marker saying a local run
+  is live (with the mode), read on app start to offer a resume. Online
   mode adds the remote seam: `onlineApi.ts` (fetch wrapper for `/api/games/...`) and
   `onlineSession.ts` (seat session under `oni-quest-advisor:online-session`), plus
   `notices.ts` (one-time acknowledgements for the privacy notice and the online
@@ -225,19 +234,22 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   server-driven: it sends intents to the API and refetches the visibility-filtered
   game view (SSE change notifications trigger refetches) — it never mutates game
   state locally. Persisted progress is loaded by merging it onto
-  `domain.createEmptyProgress()` / `domain.createEmptyTwoPlayerProgress()`, so fields
-  added later get their defaults — keep this pattern when extending either progress
-  type. `navigationStore` tracks `gameMode`, routes `selectMission()` to the correct
-  progress store, and gates the one-time notices (privacy banner on first visit,
+  `domain.createEmptyProgress()` (solo — a shallow spread suffices, the fields are
+  top-level) or `domain.hydrateTwoPlayerProgress()` (hot-seat — it merges **each
+  seat** onto its own defaults, since the new fields live inside `player1`/`player2`).
+  Keep this pattern when extending either progress type. `navigationStore` tracks
+  `gameMode`, routes `selectMission()` to the correct progress store, and gates the
+  one-time notices (privacy banner on first visit,
   online intro before first entering the online mode).
 - `routes` (`+page.svelte`) switches screens on `navigationStore.screen` and wires
   store state/methods to component props/callbacks: the local flow
-  (`game-mode` → `season-select` → `mission-select`, then solo through the read-only
-  `mission-briefing` and its **Start Game** button, hot-seat straight to `mission-detail` —
-  rendering `MissionDetail` or `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
+  (`game-mode` → `season-select` → `mission-select`, then both modes through the
+  read-only `mission-briefing` and its **Start Game** button — which records the open
+  game and enters `mission-detail`, rendering `MissionDetail` or
+  `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
   (`online-create` → `online-join` → `online-game`). On mount it resumes a
-  stored online seat, and otherwise offers to resume an open solo game.
+  stored online seat, and otherwise offers to resume an open local game.
   `api/games/**/+server.ts` are the online-mode
   endpoints (thin handlers over `lib/server`), `api/health/` is the
   unauthenticated ops probe, and `join/[code]/` is the invite-link entry point.
@@ -250,31 +262,37 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   the one-time `PrivacyNotice`.
 - `components` are presentational: `$props()` in, callbacks up. Avoid importing
   stores directly — the page wires them. Domain _types_ are fine for prop typing,
-  domain _logic_ is not. Fixed-position overlays (e.g. the `CommandPanelTwoPlayer`
-  tab pinned to the right edge) need matching padding reserved in the page layout for
-  their collapsed state; expanded overlays intentionally sit on top of content. Solo's
-  `MissionDetail` is a **three-view screen** — Scoring / Army / Mission behind a sticky
-  tab bar — with `ScoreSummaryPanel` (VP total, round stepper, Reset) inline at the top
-  of Scoring rather than in a drawer, and a ← Return that abandons the run behind a
-  `ConfirmDialog`. 2-player
-  mode has dedicated component variants (`ResultsPanelTwoPlayer`,
-  `SchemesPanelTwoPlayer`, `CommandPanelTwoPlayer`, `MissionDetailTwoPlayer`) plus a
-  `CountdownOverlay` for the swap transition; they reuse shared panels
-  (`DescriptionPanel`, `SetupPanel`, `MissionMap`, `QuestRulesPanel`, `Panel`,
-  `IncrementBoxes`) unchanged. Online mode has its own set (`OnlineCreate`,
+  domain _logic_ is not. The trackers' **view switcher** (Scoring / Army / Mission)
+  is a glowing spotlight sliding under a `grid-cols-{n}` of equal buttons — 3 in
+  solo, 4 in hot-seat — and swiping left/right steps views. Solo's `MissionDetail`
+  keeps `ScoreSummaryPanel` (VP total, round stepper, Reset) inline at the top of
+  Scoring and a ← Return that abandons the run behind a `ConfirmDialog`.
+  2-player mode has dedicated variants only where the seat model changes a panel
+  (`SchemesPanelTwoPlayer`, `ScoreSummaryPanelTwoPlayer`, `ActivePlayerPanel`,
+  `MissionDetailTwoPlayer`) plus a `CountdownOverlay` for the swap transition;
+  it reuses the shared ones unchanged (`ResultsPanel` bound to the active seat,
+  `ArmyReadonlyPanel` with a seat title/colour and a frozen mode,
+  `DescriptionPanel`, `SetupPanel`, `MissionMap`, `QuestRulesPanel`, `Panel`,
+  `IncrementBoxes`). Seat colours (P1 sky / P2 orange) come from
+  `playerAccent.ts` as literal class strings — never build them by interpolation,
+  Tailwind only sees whole names. Online mode has its own set (`OnlineCreate`,
   `OnlineJoin`, `OnlineLobby`, `OnlineGameView`, `OnlineStats`, `OnlineSchemeSetup`,
   `OnlineMissionView`, `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`,
   plus the one-time `OnlineIntroNotice` shown before first entry), also reusing the
   shared panels (collapsible there via `Panel`'s `collapsible` prop). The army
   builder adds `ArmyFactionSelect`, `ArmyBuilderView` (sliding panels, swipe,
-  mount toggles) and the `UnitCard` statline popup. `ArmyBuilderView` and the
-  solo tracker (`MissionDetail`, whose three views sit in one sliding strip) are
-  the app's two **full-height screens**: an `h-dvh overflow-hidden` root with a
+  mount toggles) and the `UnitCard` statline popup. `ArmyBuilderView` and the two
+  local trackers (`MissionDetail`, `MissionDetailTwoPlayer` — each of whose views
+  sits in one sliding strip) are the app's three **full-height screens**: an
+  `h-dvh overflow-hidden` root with a
   pinned header and per-panel `overflow-y-auto overscroll-contain` lists. Going
   back to `min-h-dvh` lets the root grow to the length of the longest panel, which
   makes the document the one scroller shared by all panels and strands the
   player far below a short panel after scrolling a long one; every other screen
-  scrolls the document normally.
+  scrolls the document normally. `ScreenHeader` is the shared top bar those six
+  screens use (season/mission select, briefing ×2, tracker ×2); its actions
+  container wraps so the briefing's four buttons and the four-up switcher fit a
+  320 px phone.
 
 Each layer folder has its own `CLAUDE.md` with the specific rules for that layer —
 read it before adding files there.
@@ -283,17 +301,20 @@ read it before adding files there.
 
 - TypeScript strict, no `any`. Domain types in `lib/domain` are the single source of
   truth — don't redefine
-  `Mission`/`SchemeCard`/`MissionProgress`/`TwoPlayerMissionProgress`/`PlayerProgress`
-  shapes elsewhere.
+  `Mission`/`SchemeCard`/`MissionProgress`/`TwoPlayerMissionProgress`/`SeatProgress`/
+  `PlayerProgress` shapes elsewhere.
 - Svelte 5 runes only (`$state`, `$derived`, `$props`) — no legacy
   `writable`/`export let` style.
 - Mobile-first, touch-friendly layouts, large touch targets. Visual theme: dark,
   cold, blueish; outlined buttons; translucent "frosted glass" panels (see
   `docs/technical-spec/01-visual-theme.md`). In 2-player mode, Player 1 uses the
-  standard sky-blue accent and Player 2 uses orange (`border-orange-500/40`,
-  `text-orange-300`/`text-orange-400`). The online-mode entry button carries a
-  rotating neon border (`.neon-border` utility in `layout.css`, reduced-motion
-  aware).
+  standard sky-blue accent and Player 2 uses orange — the pair is defined once in
+  `components/playerAccent.ts` (`SEAT_ACCENTS`, `PLAYER_SEATS`) and every component
+  that shows a seat reads its recipe from there. The `.neon-border` utility in
+  `layout.css` (reduced-motion aware, `prefers-reduced-motion` falls back to a static
+  glow) marks **one** entry point at a time — currently the Solo button on the mode
+  select, in sky; `.neon-violet` re-colours the beam for the hot-seat Swap Player
+  button, violet being the swap mechanic's hue.
 - Prefer pure functions in `domain` over logic in components/stores/routes. Game
   rules (draw counts, clamping, VP math, unique draws) belong there, covered by a
   colocated `*.spec.ts`.
@@ -318,7 +339,24 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.7.0** — the solo view release: the
+  and push branch + tag. Current release: **v0.8.0** — the hot-seat parity
+  release: the 2-player tracker now matches the solo one. Both local modes go
+  through the Mission Briefing, whose army slots are per seat in hot-seat ("Pick
+  P1 Army" / "Pick P2 Army", seat-coloured panels, and a warning when either seat
+  starts without a list); the tracker is a four-view **Scoring / P1 Army /
+  P2 Army / Mission** sliding strip opening on an Active Player panel and an
+  inline score panel (two **Player 1/2 Total VP** blocks, a round stepper only
+  Player 1 may move, and a violet neon **Swap Player** — hot-seat's Reset is
+  gone, a fresh play is Return → Abandon); Results binds to the active seat and
+  so gains the grouped per-round cards, each army pane is editable for its own
+  seat and frozen for the other, and the open-game lifecycle (Return abandons
+  behind a confirmation, app start offers to resume) now covers hot-seat via a
+  `mode` on the record. v0.7.1 was the rules-link hotfix — the Broken Morale /
+  Ceasefire rule cards are visible again in the tracker's Mission view (the
+  sliding strip's `translateX` had become the containing block for the dialog's
+  `fixed` positioning, so the backdrop dimmed the screen while the centred card
+  landed off-screen; the panels now emit `onOpenRule` and all five screens render
+  `RuleCalloutDialog` at their root); v0.7.0 was the solo view release: the
   read-only Mission Briefing on the additive v2 Results schema (`round`/`group`)
   with per-round cards, a working Start Game that warns before a run begins
   without an army, the tracker rebuilt as a Scoring / Army / Mission three-view
