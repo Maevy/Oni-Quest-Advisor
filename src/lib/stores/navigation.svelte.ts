@@ -9,6 +9,7 @@ import {
 import { armyBuilderStore } from './armyBuilder.svelte';
 import { contentStore } from './content.svelte';
 import { missionProgressStore } from './missionProgress.svelte';
+import { tournamentStore } from './tournament.svelte';
 import { twoPlayerProgressStore } from './twoPlayerProgress.svelte';
 
 export type Screen =
@@ -21,7 +22,8 @@ export type Screen =
 	| 'mission-detail'
 	| 'online-create'
 	| 'online-join'
-	| 'online-game';
+	| 'online-game'
+	| 'tournament-setup';
 
 class NavigationStore {
 	screen = $state<Screen>('game-mode');
@@ -110,6 +112,17 @@ class NavigationStore {
 
 	leaveArmyBuilder(): void {
 		armyBuilderStore.leave();
+		this.screen = 'game-mode';
+	}
+
+	/** Opens the tournament configuration wizard on a clean draft. */
+	selectTournament(): void {
+		tournamentStore.start();
+		this.screen = 'tournament-setup';
+	}
+
+	leaveTournament(): void {
+		tournamentStore.leave();
 		this.screen = 'game-mode';
 	}
 

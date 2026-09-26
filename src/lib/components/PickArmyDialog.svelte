@@ -3,14 +3,22 @@
 	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
-		/** Saved standard-format armies, newest first. */
+		/** Saved armies of whichever format the caller lists, newest first. */
 		armies: SavedArmy[];
 		factions: ArmyFactionConfig[];
+		/** One line under the heading — what attaching the list means here. */
+		note?: string;
 		onPick: (army: SavedArmy) => void;
 		onCancel: () => void;
 	};
 
-	let { armies, factions, onPick, onCancel }: Props = $props();
+	let {
+		armies,
+		factions,
+		note = 'The army is attached to this run as it is now.',
+		onPick,
+		onCancel
+	}: Props = $props();
 
 	$effect(() => onEscapeKey(onCancel));
 
@@ -34,7 +42,7 @@
 		class="max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur"
 	>
 		<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Pick Army</h2>
-		<p class="mt-1 text-xs text-slate-400">The army is attached to this run as it is now.</p>
+		<p class="mt-1 text-xs text-slate-400">{note}</p>
 		<ul class="mt-3 flex flex-col gap-2">
 			{#each armies as army (army.id)}
 				<li>

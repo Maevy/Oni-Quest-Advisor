@@ -24,6 +24,7 @@
 		missionProgressStore,
 		navigationStore,
 		onlineGameStore,
+		tournamentStore,
 		twoPlayerProgressStore
 	} from '$lib/stores';
 	import GameModeSelect from '$lib/components/GameModeSelect.svelte';
@@ -44,6 +45,7 @@
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
 	import PickArmyDialog from '$lib/components/PickArmyDialog.svelte';
+	import TournamentSetup from '$lib/components/TournamentSetup.svelte';
 	import type { BriefingArmy } from '$lib/components/briefingArmy';
 
 	contentStore.load();
@@ -246,25 +248,37 @@
 		}
 	});
 
+	// The organizer's picked army resolved for display in the wizard's seat row.
+	let organizerArmyFaction = $derived.by(() => {
+		const army = tournamentStore.draft.organizerArmy;
+		return army
+			? contentStore.armyFactions.find((faction) => faction.id === army.factionId)
+			: undefined;
+	});
+
 	// Pick Army dialog
 	let showPickArmy = $state(false);
 	let showCreateArmyPrompt = $state(false);
 	let pickArmies = $state<SavedArmy[]>([]);
-	/** Which briefing slot the picker is choosing for. */
+	/** Which slot the picker is choosing for: a briefing seat, or the tournament organizer. */
 	let pickTarget = $state<string | null>(null);
+
+	/** Mission runs field standard lists; a playing organizer brings a Roster one. */
+	function pickFormatFor(slotId: string | null): ArmyFormat {
+		return slotId === 'tournament' ? 'tournament' : 'standard';
+	}
 
 	async function openPickArmy(slotId: string): Promise<void> {
 		await contentStore.loadArmy();
 		armyBuilderStore.refreshSavedArmies();
-		const standard = armyBuilderStore.savedArmies.filter(
-			(army) => savedArmyFormat(army) === 'standard'
-		);
-		if (standard.length === 0) {
+		const format = pickFormatFor(slotId);
+		const listed = armyBuilderStore.savedArmies.filter((army) => savedArmyFormat(army) === format);
+		if (listed.length === 0) {
 			showCreateArmyPrompt = true;
 			return;
 		}
 		pickTarget = slotId;
-		pickArmies = standard;
+		pickArmies = listed;
 		showPickArmy = true;
 	}
 
@@ -278,13 +292,15 @@
 			factionId: army.factionId,
 			code: army.code
 		};
-		if (isSeatSlot(pickTarget)) twoPlayerProgressStore.pickArmy(pickTarget, picked);
+		if (pickTarget === 'tournament') tournamentStore.setOrganizerArmy(picked);
+		else if (isSeatSlot(pickTarget)) twoPlayerProgressStore.pickArmy(pickTarget, picked);
 		else missionProgressStore.pickArmy(picked);
 		showPickArmy = false;
 	}
 
 	function clearPickedArmy(slotId: string): void {
-		if (isSeatSlot(slotId)) twoPlayerProgressStore.clearPickedArmy(slotId);
+		if (slotId === 'tournament') tournamentStore.clearOrganizerArmy();
+		else if (isSeatSlot(slotId)) twoPlayerProgressStore.clearPickedArmy(slotId);
 		else missionProgressStore.clearPickedArmy();
 	}
 
@@ -348,6 +364,7 @@
 		onSoloSelect={() => navigationStore.selectSoloMode()}
 		onTwoPlayerSelect={() => navigationStore.selectTwoPlayerMode()}
 		onOnlineSelect={() => navigationStore.selectOnlineMode()}
+		onTournamentSelect={() => navigationStore.selectTournament()}
 		onArmyBuilderSelect={() => {
 			void contentStore.loadArmy();
 			navigationStore.selectArmyBuilder();
@@ -512,6 +529,34 @@
 			</button>
 		{/if}
 	</div>
+{:else if navigationStore.screen === 'tournament-setup'}
+	<TournamentSetup
+		draft={tournamentStore.draft}
+		step={tournamentStore.step}
+		canContinue={tournamentStore.canContinue}
+		externalLinkInvalid={tournamentStore.externalLinkInvalid}
+		organizerFaction={organizerArmyFaction}
+		onNameChange={(name) => tournamentStore.setName(name)}
+		onExternalLinkChange={(link) => tournamentStore.setExternalLink(link)}
+		onOrganizerNameChange={(name) => tournamentStore.setOrganizerName(name)}
+		onOrganizerPlaysChange={(plays) => tournamentStore.setOrganizerPlays(plays)}
+		onParticipantStep={(pairs) => tournamentStore.stepParticipants(pairs)}
+		onManualPairingChange={(manual) => tournamentStore.setManualPairing(manual)}
+		onPickArmy={() => void openPickArmy('tournament')}
+		onClearArmy={() => clearPickedArmy('tournament')}
+		{seasons}
+		missions={contentStore.missions}
+		canCreate={tournamentStore.canCreate}
+		onAddMission={(missionId) => tournamentStore.addMission(missionId)}
+		onRemoveMission={(missionId) => tournamentStore.removeMission(missionId)}
+		onTableNameChange={(index, name) => tournamentStore.setTableName(index, name)}
+		onCreate={() => tournamentStore.createTournament()}
+		onBack={() =>
+			tournamentStore.step === 'basics'
+				? navigationStore.leaveTournament()
+				: tournamentStore.backToBasics()}
+		onContinue={() => tournamentStore.continueSetup()}
+	/>
 {:else if navigationStore.screen === 'season-select'}
 	<SeasonSelect
 		{seasons}
@@ -679,6 +724,9 @@
 	<PickArmyDialog
 		armies={pickArmies}
 		factions={contentStore.armyFactions}
+		note={pickTarget === 'tournament'
+			? 'Roster-format armies (125 points). The list is attached to the tournament as it is now.'
+			: undefined}
 		onPick={selectPickedArmy}
 		onCancel={() => (showPickArmy = false)}
 	/>
