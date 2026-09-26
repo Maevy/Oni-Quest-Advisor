@@ -188,6 +188,23 @@ native/platform-specific one. Used on a phone screen during a game session.
   Pure transition functions with `can*` guards plus the per-seat visibility filter
   (`viewForSeat` — the opponent's unrevealed scheme never leaves the server). The
   full player journey and phase model live in `MULTIPLAYER_PLAN.md` (local-only).
+- **Tournament** (under construction) → an event run by a Tournament Organizer
+  (TO): players join, are paired round by round at tables, and the event
+  concludes with a victor. Reached from the mode select's red **Organize
+  Tournament** button; configuration is a local two-step wizard on a
+  `TournamentDraft` (`domain/tournament.ts`): name, optional **external link**
+  (normalized to an http(s) URL, unusable input blocks Continue), organizer
+  name, and a "TO also plays" tick that reveals a **Roster**-format army pick
+  (the saved-army picker filtered to 125-point lists; giving up the seat drops
+  the army). The field is 4–32 stepping **in pairs** — an even field needs no
+  bye rule — and a playing TO holds one of those seats rather than adding to
+  them. Step 2 collects an ordered, deduplicated mission list through an **Add
+  Quest** popup (season dropdown + clickable missions) and one editable name
+  per table, the table count derived as half the field so custom names stay
+  with their table number. Nothing is persisted or sent while configuring;
+  **Create Tournament** enables at one mission and is currently a validated
+  seam — the server side (invites via link/QR, pairings, overwatch, conclusion)
+  is the next iteration. Spec: `docs/functional-spec/09-tournament.md`.
 
 ## Architecture
 
@@ -226,7 +243,8 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `notices.ts` (one-time acknowledgements for the privacy notice and the online
   intro, under `oni-quest-advisor:notice:`).
 - `stores` are classes in `.svelte.ts` files (`armyBuilderStore`, `contentStore`, `navigationStore`,
-  `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`), exported as
+  `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`,
+  `tournamentStore`), exported as
   singletons from `stores/index.ts`. They orchestrate — decisions live in `domain`,
   side effects in `data` — and expose purposeful methods (`selectSeason()`,
   `rollRandomMission()`, `startGame()`, `findResumableGame()`, `drawSchemes()`,
@@ -248,7 +266,8 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   game and enters `mission-detail`, rendering `MissionDetail` or
   `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
-  (`online-create` → `online-join` → `online-game`). On mount it resumes a
+  (`online-create` → `online-join` → `online-game`) and the tournament wizard
+  (`tournament-setup`, both steps on one screen id). On mount it resumes a
   stored online seat, and otherwise offers to resume an open local game.
   `api/games/**/+server.ts` are the online-mode
   endpoints (thin handlers over `lib/server`), `api/health/` is the
@@ -281,7 +300,9 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   plus the one-time `OnlineIntroNotice` shown before first entry), also reusing the
   shared panels (collapsible there via `Panel`'s `collapsible` prop). The army
   builder adds `ArmyFactionSelect`, `ArmyBuilderView` (sliding panels, swipe,
-  mount toggles) and the `UnitCard` statline popup. `ArmyBuilderView` and the two
+  mount toggles) and the `UnitCard` statline popup; the tournament wizard adds
+  `TournamentSetup` (both steps, with the Add Quest popup inside it).
+  `ArmyBuilderView` and the two
   local trackers (`MissionDetail`, `MissionDetailTwoPlayer` — each of whose views
   sits in one sliding strip) are the app's three **full-height screens**: an
   `h-dvh overflow-hidden` root with a

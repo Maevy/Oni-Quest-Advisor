@@ -3,8 +3,8 @@
 - Owns runtime state: loaded content (missions/factions/schemes), the current screen
   - selections, and the per-mission play progress.
 - Class-based singletons in `.svelte.ts` files (`contentStore`, `navigationStore`,
-  `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`), re-exported
-  from `index.ts`. Built on Svelte 5 runes (`$state`/`$derived`) and exposed via
+  `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`, `armyBuilderStore`,
+  `tournamentStore`), re-exported from `index.ts`. Built on Svelte 5 runes (`$state`/`$derived`) and exposed via
   small purposeful methods (e.g. `selectSeason()`, `rollRandomMission()`,
   `drawSchemes()`, `setRound()`) — not as raw mutable state exported wholesale for
   callers to mutate directly.

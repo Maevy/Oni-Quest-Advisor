@@ -56,21 +56,32 @@ online-create | online-join | online-game
                                 Import Army code ───────────────────────┘
                                         │                          "Main Menu"
                                         └──────────────────────────────┘
+
+  game-mode ──"Organize Tournament"──▶ tournament-setup
+                                        │  step 1: name, link, organizer, seat, field, pairing
+                                        │  step 2: missions (Add Quest) + table names
+                                        │  "Create Tournament" — server-side, next iteration
+                                        │
+                                        │ "← Return" (step 1) ─▶ game-mode (draft discarded)
+                                        └─ "← Return" (step 2) ─▶ step 1 (draft kept)
 ```
 
 ## Screen 1 — Game Mode (`game-mode`)
 
 The entry screen, shown on every app start. `navigationStore.screen` initialises to
-`'game-mode'`. Three mode buttons plus the army builder:
+`'game-mode'`. Four way-to-play buttons plus the army builder:
 
-- **Solo** → `selectSoloMode()`: sets `gameMode = 'solo'`, goes to `season-select`.
+- **Solo** → `selectSoloMode()`: sets `gameMode = 'solo'`, goes to `season-select`. Carries the
+  rotating neon border — the treatment announces what is new, and solo's rebuilt flow is it.
 - **Two-player (hot seat)** → `selectTwoPlayerMode()`: sets `gameMode = 'two-player'`, goes to
   `season-select`.
-- **Online 2 Player Game** → `selectOnlineMode()`. This is the headline feature and carries the
-  rotating neon border. On the **first** press it shows the one-time `OnlineIntroNotice` modal
-  (an experimental-feature heads-up) instead of navigating: **Continue** persists the
-  acknowledgement and proceeds to `online-create`, **Back** returns here. Afterwards it goes
-  straight to `online-create`.
+- **Online 2 Player Game** → `selectOnlineMode()`. On the **first** press it shows the one-time
+  `OnlineIntroNotice` modal (an experimental-feature heads-up) instead of navigating: **Continue**
+  persists the acknowledgement and proceeds to `online-create`, **Back** returns here. Afterwards
+  it goes straight to `online-create`.
+- **Organize Tournament** → `selectTournament()`: resets the tournament draft and goes to
+  `tournament-setup`. Red, like everything else about the feature's entry point; see
+  [09-tournament.md](./09-tournament.md).
 - **Army Builder** → `selectArmyBuilder()`: goes to `army-faction-select`. The army builder is a
   standalone feature — it does not set `gameMode` and never enters the mission flow.
 
@@ -282,6 +293,22 @@ Online has no open-game record: its state lives on the server and its seat resum
 The builder is in-memory only, so leaving it always loses the unsaved list — saves and army
 codes are the persistence mechanism. See [08-army-builder.md](./08-army-builder.md).
 
+## Tournament flow
+
+`game-mode` → **Organize Tournament** → `tournament-setup`, a two-step wizard on one screen id
+(`selectTournament()` resets the draft first, so the wizard always opens clean):
+
+- **Step 1** — tournament name, optional external link, organizer name, the "I am also a
+  participant" tick (which reveals the Roster-army pick), the 4–32 pair stepper and the
+  manual-pairing tick. **Continue** is gated on the names and a usable link.
+- **Step 2** — the mission list (Add Quest popup), the table names, and **Create Tournament**,
+  gated on at least one mission. Creation itself is the next iteration's server work.
+
+**Return** steps back from step 2 to step 1 keeping the draft, and leaves the wizard from step 1,
+discarding it — like the army builder, the draft is in-memory only and the wizard has no
+persistence and no open-game record. Full detail in
+[09-tournament.md](./09-tournament.md).
+
 ## Online flow
 
 `online-create` (nickname → lobby) → `online-join` (invite code + nickname → request →
@@ -312,6 +339,8 @@ Menu".
 - Online state lives on the **server**; the seat (game code + seat + token) is in `localStorage`
   under `oni-quest-advisor:online-session`, and the page resumes it on mount.
 - The army builder list is **not** persisted at all.
+- The tournament draft is **not** persisted at all, either — leaving the wizard discards it, and
+  re-entering starts from a clean sheet. Persistence arrives with the server-side creation.
 
 ## One-time notices
 

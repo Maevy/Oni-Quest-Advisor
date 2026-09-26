@@ -91,13 +91,26 @@ each `src/lib/` folder.
 - **Saved army** — a named army code in `localStorage`, listed and loadable from the faction
   select.
 
+### Tournament
+
+- **Tournament** — an event run by a Tournament Organizer: a named field of players paired round
+  by round at tables, concluding with a victor. Under construction; today only the configuration
+  wizard's first step exists. See [09-tournament.md](./09-tournament.md).
+- **Tournament Organizer (TO)** — creates, configures, pairs and concludes a tournament and
+  overwatches its tables. May also take one of the seats.
+- **Field** — the tournament's participant count: an even number from 4 to 32, one seat per
+  pairing slot. A playing TO holds one of those seats rather than adding to them.
+- **Pairing mode** — automatic (a Swiss system pairs each round) or manual (the TO assigns each
+  round's tables by hand).
+
 ## Screen map
 
 ```
-game-mode ──┬── Solo ────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
-            ├── 2 Player ────────▶ season-select ▶ mission-select ▶ mission-detail
-            ├── Online 2 Player ─▶ [intro notice] ▶ online-create ▶ online-join ▶ online-game
-            └── Army Builder ────▶ army-faction-select ▶ army-builder
+game-mode ──┬── Solo ────────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
+            ├── 2 Player ────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
+            ├── Online 2 Player ─────▶ [intro notice] ▶ online-create ▶ online-join ▶ online-game
+            ├── Organize Tournament ─▶ tournament-setup (wizard; step 2 onward under construction)
+            └── Army Builder ────────▶ army-faction-select ▶ army-builder
 ```
 
 `/join/[code]` is the invite-link entry point; it hands the code to navigation and continues in
@@ -129,6 +142,9 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
    invite, join, setup, rounds and phases, finish and statistics, reconnection, closing.
 8. [08-army-builder.md](./08-army-builder.md) — faction select, the builder, unit cards, mounts,
    upgrades, the Roster equipment pool, army codes and saved armies.
+9. [09-tournament.md](./09-tournament.md) — the Tournament Organizer's event: configuration
+   wizard (step 1 built), then invites, pairings, overwatch and the conclusion. Under
+   construction; grows step by step.
 
 ## Open questions
 

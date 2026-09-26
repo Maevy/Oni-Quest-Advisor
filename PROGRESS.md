@@ -63,7 +63,63 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (hot-seat gets the solo treatment)
+## What was done in the last session (Tournament: entry point and configuration step 1)
+
+The next big feature is **Tournament**: a Tournament Organizer (TO) creates an event, configures
+it, invites players via link/QR, assigns pairings, overwatches the tables and concludes with a
+victor. It is being built step by step; this session delivered the entry point and the first step
+of the configuration wizard, and opened `docs/functional-spec/09-tournament.md` to carry the plan
+and its open decisions.
+
+1. **Entry point.** The mode select gained a fifth button, **Organize Tournament**, in the red
+   outlined recipe, placed with the play modes above the Army Builder tool. It carries no neon
+   treatment — the beam stays the Solo button's, one entry point at a time.
+2. **The wizard.** New `tournament-setup` screen on the shared `ScreenHeader`: a **Tournament**
+   panel (name, organizer name, "I am also a participant") and a **Participants & Pairing** panel
+   (−/+ stepper over the field, "I assign the pairings myself each round"), then **Continue**.
+   Continue is disabled until both names are non-blank.
+3. **Decisions taken (with the user):** the field **steps in pairs, 4–32** (an even field needs no
+   bye rule, so odd counts are unreachable rather than handled); a playing TO **holds one of the
+   configured seats** rather than adding to them (the panel says so while the tick is on); the
+   configuration is **local and in-memory** — nothing is persisted or sent until the tournament is
+   actually created at the end of configuration, at which point the backend takes over.
+4. **Step 2 exists as a seam.** Continue moves to a **Missions & Tables** pane that shows a
+   one-line summary of the draft and says what comes next; Return from there goes back to step 1
+   with the draft intact, from step 1 it leaves and discards. That pane is what the next
+   iteration replaces.
+5. **Layering.** `domain/tournament.ts` holds the draft type, the 4–32/pairs constants, the clamp
+   and step functions and the Continue gate, with 19 colocated tests; `stores/tournament.svelte.ts`
+   holds the in-memory draft and the wizard step; `TournamentSetup.svelte` is presentational and
+   the page wires it. `TournamentSetupStep` lives in domain, not stores, so components keep their
+   dependency direction.
+6. **Verified:** `check` 0/0, lint clean, 363 tests (19 new), and a 46-assertion browser pass over
+   the whole wizard (entry button colour and position, both panels, the name gate incl.
+   whitespace, the stepper's bounds and pair stepping, both tickboxes and the seat note, step 2
+   summary and back-navigation, discard-on-leave, 320 px).
+7. **Found while writing the glossary:** the army builder's 125-point Roster format is internally
+   `'tournament'` and that string is baked into the army-code wire format — so "tournament" now
+   means two unrelated things in the code. Recorded as an open question in 09-tournament.md
+   rather than renamed now (the wire format is shipped).
+8. **Second pass on step 1, same session:** an optional **External Link** field between the two
+   names (normalized to an http(s) URL, bare addresses gain `https://`, anything unusable blocks
+   Continue and marks the field red), and ticking "I am also a participant" now reveals a **Pick
+   Roster Army** button — the saved-army picker filtered to Roster-format lists — whose pick
+   becomes a name/faction/✕ row. Giving up the seat drops the army. `PickArmyDialog` gained a
+   `note` prop so the mission flow's copy stays and the tournament's says what it lists.
+9. **Browser-found bug worth remembering:** Chromium's `URL` accepts `https://not a link`
+   (percent-encoding the spaces into the host) where Node throws, so link validation that only
+   parses is engine-dependent. The domain now rejects whitespace before parsing; the unit test
+   pins it for both engines.
+10. **Step 2 of the wizard, same session:** **Missions & Tables**. An **Add Quest** popup (season
+    dropdown + that season's missions as clickable rows; Escape/Cancel/backdrop close without
+    adding, already-added missions are disabled and marked) fills an ordered, deduplicated mission
+    list with per-row ✕. Below it the **Tables** panel: one editable name per table, the count
+    derived as half the participants, defaults materialized as "Table n", and custom names staying
+    with their table number when the field changes on step 1. **Create Tournament** enables at one
+    mission and is tonight only the seam — server-side creation is the next session. 14 more
+    domain tests (49 in `tournament.spec.ts`) and a 34-assertion browser pass over step 2.
+
+## What was done in the session before (hot-seat gets the solo treatment)
 
 The 2-player tracker was still the v0.1.0-era single scrolling screen with a right-edge drawer;
 this session brought it up to the solo tracker's level and unified the top bar along the way.
