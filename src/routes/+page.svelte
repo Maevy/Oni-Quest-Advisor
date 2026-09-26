@@ -12,8 +12,10 @@
 		resolveArmyEntries,
 		savedArmyFormat,
 		type ArmyFormat,
-		type ArmyView,
 		type Mission,
+		type OpenGame,
+		type PickedArmy,
+		type PlayerKey,
 		type SavedArmy
 	} from '$lib/domain';
 	import {
@@ -42,32 +44,35 @@
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
 	import PickArmyDialog from '$lib/components/PickArmyDialog.svelte';
+	import type { BriefingArmy } from '$lib/components/briefingArmy';
 
 	contentStore.load();
 
-	/** A solo game left open by a previous visit, awaiting the resume-or-abandon choice. */
-	let resumableMission = $state<Mission | null>(null);
+	/** A local game left open by a previous visit, awaiting the resume-or-abandon choice. */
+	let resumableGame = $state<{ game: OpenGame; mission: Mission } | null>(null);
 
-	// Resume an online seat from a previous visit if any; otherwise offer the open solo game.
+	// Resume an online seat from a previous visit if any; otherwise offer the open local game.
 	onMount(() => {
 		void onlineGameStore.resumeSession().then((resumed) => {
 			if (resumed) {
 				navigationStore.enterOnlineGame();
 				return;
 			}
-			resumableMission = navigationStore.findResumableGame();
+			resumableGame = navigationStore.findResumableGame();
 		});
 	});
 
 	function resumeOpenGame(): void {
-		if (resumableMission) navigationStore.resumeOpenGame(resumableMission);
-		resumableMission = null;
+		if (resumableGame) navigationStore.resumeOpenGame(resumableGame.game, resumableGame.mission);
+		resumableGame = null;
 	}
 
 	/** The startup prompt's destructive branch — discards the run and stays on the main menu. */
 	function abandonResumableGame(): void {
-		missionProgressStore.abandonGame();
-		resumableMission = null;
+		// The mode says which progress record the open game belongs to.
+		if (resumableGame?.game.mode === 'two-player') twoPlayerProgressStore.abandonGame();
+		else missionProgressStore.abandonGame();
+		resumableGame = null;
 	}
 
 	let inviteUrl = $derived(
@@ -179,38 +184,64 @@
 	let armyStratagemIndex = $derived(indexArmyRules(contentStore.armyStratagems));
 	let armyItemIndex = $derived(indexArmyRules(contentStore.armyItems));
 
-	// The army attached to the current run, resolved for the read-only Army view.
-	let pickedArmyRows = $derived(missionProgressStore.pickedArmyRows());
-	let pickedArmyFaction = $derived.by(() => {
-		const picked = missionProgressStore.progress?.pickedArmy;
-		return picked
-			? contentStore.armyFactions.find((faction) => faction.id === picked.factionId)
+	// The armies attached to the current run, resolved for the read-only Army views.
+	let armyView = $derived(missionProgressStore.armyView());
+	let armyViewP1 = $derived(twoPlayerProgressStore.armyView('player1'));
+	let armyViewP2 = $derived(twoPlayerProgressStore.armyView('player2'));
+
+	function factionOf(army: PickedArmy | null) {
+		return army
+			? contentStore.armyFactions.find((faction) => faction.id === army.factionId)
 			: undefined;
-	});
-	let armyView = $derived.by((): ArmyView | null => {
-		const picked = missionProgressStore.progress?.pickedArmy;
-		const rows = pickedArmyRows;
-		const faction = pickedArmyFaction;
-		if (!picked || !rows || !faction) return null;
-		return {
-			army: picked,
-			rows,
-			faction,
-			classIndex: armyClassIndex,
-			skillIndex: armySkillIndex,
-			traitIndex: armyTraitIndex,
-			combatArtIndex: armyCombatArtIndex,
-			spellcraftIndex: armySpellcraftIndex,
-			spells: contentStore.armySpells,
-			stratagemIndex: armyStratagemIndex,
-			itemIndex: armyItemIndex,
-			vitality: missionProgressStore.progress?.vitality ?? {}
-		};
+	}
+
+	/**
+	 * The briefing's army slots: one for solo, one per seat in hot-seat. Each carries its own
+	 * button label, panel heading and colour, so the briefing itself stays mode-agnostic.
+	 */
+	let briefingArmies = $derived.by((): BriefingArmy[] => {
+		if (!isTwoPlayer) {
+			const picked = missionProgressStore.progress?.pickedArmy ?? null;
+			return [
+				{
+					id: 'solo',
+					pickLabel: 'Pick Army',
+					panelTitle: 'Selected Army',
+					hue: 'sky',
+					army: picked,
+					faction: factionOf(picked)
+				}
+			];
+		}
+		const pickedP1 = twoPlayerProgressStore.progress?.player1.pickedArmy ?? null;
+		const pickedP2 = twoPlayerProgressStore.progress?.player2.pickedArmy ?? null;
+		return [
+			{
+				id: 'player1',
+				pickLabel: 'Pick P1 Army',
+				panelTitle: 'Player 1 Army',
+				hue: 'sky',
+				army: pickedP1,
+				faction: factionOf(pickedP1)
+			},
+			{
+				id: 'player2',
+				pickLabel: 'Pick P2 Army',
+				panelTitle: 'Player 2 Army',
+				hue: 'orange',
+				army: pickedP2,
+				faction: factionOf(pickedP2)
+			}
+		];
 	});
 
-	// A resumed run may carry an army whose catalogs are not loaded yet.
+	// A resumed run may carry armies whose catalogs are not loaded yet.
 	$effect(() => {
-		if (missionProgressStore.progress?.pickedArmy && !contentStore.armyLoaded) {
+		const attached =
+			missionProgressStore.progress?.pickedArmy ??
+			twoPlayerProgressStore.progress?.player1.pickedArmy ??
+			twoPlayerProgressStore.progress?.player2.pickedArmy;
+		if (attached && !contentStore.armyLoaded) {
 			void contentStore.loadArmy();
 		}
 	});
@@ -219,8 +250,10 @@
 	let showPickArmy = $state(false);
 	let showCreateArmyPrompt = $state(false);
 	let pickArmies = $state<SavedArmy[]>([]);
+	/** Which briefing slot the picker is choosing for. */
+	let pickTarget = $state<string | null>(null);
 
-	async function openPickArmy(): Promise<void> {
+	async function openPickArmy(slotId: string): Promise<void> {
 		await contentStore.loadArmy();
 		armyBuilderStore.refreshSavedArmies();
 		const standard = armyBuilderStore.savedArmies.filter(
@@ -230,17 +263,29 @@
 			showCreateArmyPrompt = true;
 			return;
 		}
+		pickTarget = slotId;
 		pickArmies = standard;
 		showPickArmy = true;
 	}
 
+	function isSeatSlot(slotId: string | null): slotId is PlayerKey {
+		return slotId === 'player1' || slotId === 'player2';
+	}
+
 	function selectPickedArmy(army: SavedArmy): void {
-		missionProgressStore.pickArmy({
+		const picked: PickedArmy = {
 			name: army.name,
 			factionId: army.factionId,
 			code: army.code
-		});
+		};
+		if (isSeatSlot(pickTarget)) twoPlayerProgressStore.pickArmy(pickTarget, picked);
+		else missionProgressStore.pickArmy(picked);
 		showPickArmy = false;
+	}
+
+	function clearPickedArmy(slotId: string): void {
+		if (isSeatSlot(slotId)) twoPlayerProgressStore.clearPickedArmy(slotId);
+		else missionProgressStore.clearPickedArmy();
 	}
 
 	// Save/Load Army dialogs
@@ -485,17 +530,16 @@
 	<MissionBriefing
 		mission={selectedMission}
 		entries={resultsEntries}
-		pickedArmy={missionProgressStore.progress?.pickedArmy ?? null}
-		{pickedArmyFaction}
+		armies={briefingArmies}
 		onReturn={() => navigationStore.returnToMissionSelect()}
-		onPickArmy={() => void openPickArmy()}
-		onClearArmy={() => missionProgressStore.clearPickedArmy()}
+		onPickArmy={(slotId) => void openPickArmy(slotId)}
+		onClearArmy={clearPickedArmy}
 		onStart={() => navigationStore.startGame()}
 	/>
 {:else if isTwoPlayer && selectedMission && twoPlayerProgressStore.progress}
 	<MissionDetailTwoPlayer
 		mission={selectedMission}
-		results={resultsForMission}
+		entries={resultsEntries}
 		progress={twoPlayerProgressStore.progress}
 		{totalVPP1}
 		{totalVPP2}
@@ -505,8 +549,9 @@
 		{chosenCardP1}
 		{chosenCardP2}
 		activePlayer={twoPlayerProgressStore.activePlayer}
-		onReturn={() => navigationStore.returnToMissionSelect()}
-		onReset={() => twoPlayerProgressStore.resetMission()}
+		{armyViewP1}
+		{armyViewP2}
+		onAbandon={() => navigationStore.abandonGame()}
 		onSetObjectiveChecked={(player, objectiveId, checkedCount, maxCount) =>
 			twoPlayerProgressStore.setObjectiveChecked(player, objectiveId, checkedCount, maxCount)}
 		onSetDraftFaction={(player, factionId) =>
@@ -523,6 +568,8 @@
 		onDeleteScheme={(player) => twoPlayerProgressStore.deleteScheme(player)}
 		onRevealScheme={(player) => twoPlayerProgressStore.revealScheme(player)}
 		onSetRound={(round) => twoPlayerProgressStore.setRound(round)}
+		onSetVitality={(player, entryId, vitality) =>
+			twoPlayerProgressStore.setUnitVitality(player, entryId, vitality)}
 		onSwap={() => twoPlayerProgressStore.swapPlayer()}
 	/>
 {:else if selectedMission && missionProgressStore.progress}
@@ -554,9 +601,11 @@
 {/if}
 
 <!-- Escape and the prominent button both resume: abandoning a run is never the accidental choice. -->
-{#if resumableMission}
+{#if resumableGame}
 	<ConfirmDialog
-		text={'You have an open game: ' + resumableMission.name + '. Abandoning it loses all progress.'}
+		text={'You have an open game: ' +
+			resumableGame.mission.name +
+			'. Abandoning it loses all progress.'}
 		confirmLabel="Abandon"
 		cancelLabel="Resume Game"
 		onConfirm={abandonResumableGame}

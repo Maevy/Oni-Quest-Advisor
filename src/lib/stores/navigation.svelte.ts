@@ -128,39 +128,40 @@ class NavigationStore {
 		this.selectedMissionId = missionId;
 		if (this.gameMode === 'two-player') {
 			twoPlayerProgressStore.loadForMission(missionId);
-			this.screen = 'mission-detail';
-			return;
+		} else {
+			missionProgressStore.loadForMission(missionId);
 		}
-		missionProgressStore.loadForMission(missionId);
-		// Solo lands on the read-only briefing; Start Game moves on to the tracker.
+		// Both local modes land on the read-only briefing; Start Game moves on to the tracker.
 		this.screen = 'mission-briefing';
 	}
 
-	/** Leaves the solo briefing for the interactive tracker and marks the run as the open game. */
+	/** Leaves the briefing for the interactive tracker and marks the run as the open game. */
 	startGame(): void {
-		missionProgressStore.beginGame();
+		if (this.gameMode === 'two-player') twoPlayerProgressStore.beginGame();
+		else missionProgressStore.beginGame();
 		this.screen = 'mission-detail';
 	}
 
 	/**
 	 * Re-enters the open game found at app start, straight into the tracker — the briefing is for
-	 * deciding whether to play, and that decision was already made. Solo only, since an open game
-	 * is a solo run.
+	 * deciding whether to play, and that decision was already made. The record's mode decides
+	 * which progress store and which tracker the run resumes into.
 	 */
-	resumeOpenGame(mission: domain.Mission): void {
-		this.gameMode = 'solo';
+	resumeOpenGame(game: domain.OpenGame, mission: domain.Mission): void {
+		this.gameMode = game.mode;
 		this.selectedSeason = mission.season;
 		this.selectedMissionId = mission.id;
-		missionProgressStore.loadForMission(mission.id);
+		if (game.mode === 'two-player') twoPlayerProgressStore.loadForMission(mission.id);
+		else missionProgressStore.loadForMission(mission.id);
 		this.screen = 'mission-detail';
 	}
 
 	/**
-	 * App start: returns the mission of a solo game left open, so the page can offer to resume it.
-	 * A record pointing at a mission the bundled content no longer has is stale, and is dropped
-	 * here rather than offered.
+	 * App start: returns the local game left open, so the page can offer to resume it. A record
+	 * pointing at a mission the bundled content no longer has is stale, and is dropped here
+	 * rather than offered.
 	 */
-	findResumableGame(): domain.Mission | null {
+	findResumableGame(): { game: domain.OpenGame; mission: domain.Mission } | null {
 		const open = loadOpenGame();
 		if (!open) return null;
 		const mission = contentStore.missions.find((candidate) => candidate.id === open.missionId);
@@ -168,12 +169,13 @@ class NavigationStore {
 			clearOpenGame();
 			return null;
 		}
-		return mission;
+		return { game: open, mission };
 	}
 
-	/** Solo: the tracker's Return, once confirmed. Discards the run and goes back to the list. */
+	/** The tracker's Return, once confirmed. Discards the run and goes back to the list. */
 	abandonGame(): void {
-		missionProgressStore.abandonGame();
+		if (this.gameMode === 'two-player') twoPlayerProgressStore.abandonGame();
+		else missionProgressStore.abandonGame();
 		this.returnToMissionSelect();
 	}
 

@@ -4,14 +4,18 @@ import {
 	chooseTwoPlayerScheme,
 	clearTwoPlayerScheme,
 	createEmptyTwoPlayerProgress,
+	hydrateTwoPlayerProgress,
 	revealTwoPlayerScheme,
 	setTwoPlayerObjectiveChecked,
+	setTwoPlayerPickedArmy,
 	setTwoPlayerRound,
 	setTwoPlayerSchemeChecked,
-	setTwoPlayerSchemeDraft
+	setTwoPlayerSchemeDraft,
+	setTwoPlayerVitality
 } from './twoPlayer';
 import { CEASEFIRE_OBJECTIVE, CEASEFIRE_OBJECTIVE_ID, type Mission } from './mission';
 import { MAX_TOTAL_VP, MIN_ROUND, MAX_ROUND } from './progress';
+import type { PickedArmy } from './savedArmy';
 import { type SchemeCard } from './scheme';
 
 const mission: Mission = {
@@ -53,6 +57,135 @@ describe('createEmptyTwoPlayerProgress', () => {
 		expect(progress.player2.checkedObjectiveCounts).toEqual({});
 		expect(progress.player2.scheme).toBeNull();
 		expect(progress.player2.schemeRevealed).toBe(false);
+		expect(progress.player1.pickedArmy).toBeNull();
+		expect(progress.player1.vitality).toEqual({});
+		expect(progress.player2.pickedArmy).toBeNull();
+		expect(progress.player2.vitality).toEqual({});
+	});
+});
+
+describe('hydrateTwoPlayerProgress', () => {
+	it('keeps everything a saved record carries', () => {
+		const saved = createEmptyTwoPlayerProgress(mission.id);
+		saved.currentRound = 4;
+		saved.player1.schemeRevealed = true;
+		saved.player2.checkedObjectiveCounts = { 'unlock-cache': 1 };
+
+		const hydrated = hydrateTwoPlayerProgress(mission.id, saved);
+
+		expect(hydrated.currentRound).toBe(4);
+		expect(hydrated.player1.schemeRevealed).toBe(true);
+		expect(hydrated.player2.checkedObjectiveCounts).toEqual({ 'unlock-cache': 1 });
+	});
+
+	it('gives each seat the fields a save written before them lacks', () => {
+		// A record persisted before the armies existed: spreading it over the empty record
+		// would replace both seats whole and leave pickedArmy/vitality undefined.
+		const legacy = {
+			missionId: mission.id,
+			gameMode: 'two-player' as const,
+			currentRound: 2,
+			player1: {
+				checkedObjectiveCounts: {},
+				scheme: null,
+				schemeDraft: { factionId: 'helian-league', intelligence: 14 },
+				schemeRevealed: false
+			},
+			player2: {
+				checkedObjectiveCounts: {},
+				scheme: null,
+				schemeDraft: { factionId: null, intelligence: null },
+				schemeRevealed: false
+			}
+		};
+
+		const hydrated = hydrateTwoPlayerProgress(mission.id, legacy);
+
+		expect(hydrated.player1.pickedArmy).toBeNull();
+		expect(hydrated.player1.vitality).toEqual({});
+		expect(hydrated.player2.pickedArmy).toBeNull();
+		expect(hydrated.player2.vitality).toEqual({});
+		// ...without dropping what the legacy seat did carry.
+		expect(hydrated.player1.schemeDraft).toEqual({ factionId: 'helian-league', intelligence: 14 });
+	});
+
+	it('clamps a persisted round into range', () => {
+		expect(hydrateTwoPlayerProgress(mission.id, { currentRound: 9 }).currentRound).toBe(MAX_ROUND);
+		expect(hydrateTwoPlayerProgress(mission.id, { currentRound: 0 }).currentRound).toBe(MIN_ROUND);
+		expect(hydrateTwoPlayerProgress(mission.id, {}).currentRound).toBe(MIN_ROUND);
+	});
+
+	it('pins the mission id and mode to the record being loaded', () => {
+		const hydrated = hydrateTwoPlayerProgress('other-mission', {
+			missionId: mission.id,
+			gameMode: 'solo'
+		});
+
+		expect(hydrated.missionId).toBe('other-mission');
+		expect(hydrated.gameMode).toBe('two-player');
+	});
+});
+
+describe('setTwoPlayerPickedArmy', () => {
+	const army: PickedArmy = { name: 'Oni Clans', factionId: 'oni-clans', code: 'A1' };
+
+	it('attaches an army to one seat only', () => {
+		let progress = createEmptyTwoPlayerProgress(mission.id);
+		progress = setTwoPlayerPickedArmy(progress, 'player1', army);
+
+		expect(progress.player1.pickedArmy).toEqual(army);
+		expect(progress.player2.pickedArmy).toBeNull();
+	});
+
+	it('detaches again when handed null', () => {
+		let progress = setTwoPlayerPickedArmy(
+			createEmptyTwoPlayerProgress(mission.id),
+			'player2',
+			army
+		);
+		progress = setTwoPlayerPickedArmy(progress, 'player2', null);
+
+		expect(progress.player2.pickedArmy).toBeNull();
+	});
+
+	it("leaves the seat's scoring state alone", () => {
+		let progress = createEmptyTwoPlayerProgress(mission.id);
+		progress = setTwoPlayerObjectiveChecked(progress, 'player1', 'unlock-cache', 1, 1);
+		progress = setTwoPlayerPickedArmy(progress, 'player1', army);
+
+		expect(progress.player1.checkedObjectiveCounts).toEqual({ 'unlock-cache': 1 });
+	});
+});
+
+describe('setTwoPlayerVitality', () => {
+	it("records one copy's vitality for one seat only", () => {
+		let progress = createEmptyTwoPlayerProgress(mission.id);
+		progress = setTwoPlayerVitality(progress, 'player1', 'imported-0', { hp: 2, sta: 1 });
+
+		expect(progress.player1.vitality).toEqual({ 'imported-0': { hp: 2, sta: 1 } });
+		expect(progress.player2.vitality).toEqual({});
+	});
+
+	it("keeps the two seats' same-numbered copies apart", () => {
+		// Decoded entry ids are position-based, so both armies have an `imported-0`.
+		let progress = createEmptyTwoPlayerProgress(mission.id);
+		progress = setTwoPlayerVitality(progress, 'player1', 'imported-0', { hp: 1, sta: 0 });
+		progress = setTwoPlayerVitality(progress, 'player2', 'imported-0', { hp: 3, sta: 2 });
+
+		expect(progress.player1.vitality['imported-0']).toEqual({ hp: 1, sta: 0 });
+		expect(progress.player2.vitality['imported-0']).toEqual({ hp: 3, sta: 2 });
+	});
+
+	it("overwrites a copy's earlier vitality rather than merging into it", () => {
+		let progress = createEmptyTwoPlayerProgress(mission.id);
+		progress = setTwoPlayerVitality(progress, 'player1', 'imported-0', {
+			hp: 1,
+			sta: 1,
+			statuses: ['bleeding']
+		});
+		progress = setTwoPlayerVitality(progress, 'player1', 'imported-0', { hp: 2, sta: 1 });
+
+		expect(progress.player1.vitality['imported-0']).toEqual({ hp: 2, sta: 1 });
 	});
 });
 

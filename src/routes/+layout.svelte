@@ -8,12 +8,12 @@
 
 	let { children } = $props();
 
-	// The solo tracker and the army builder own the whole viewport and scroll inside their
-	// panes. An in-flow footer would make the document a second scroller on top of them -
-	// one that drags their pinned headers away - so it steps aside on those two screens.
+	// The trackers and the army builder own the whole viewport and scroll inside their panes.
+	// An in-flow footer would make the document a second scroller on top of them - one that
+	// drags their pinned headers away - so it steps aside on those screens. Both local trackers
+	// qualify: solo and hot-seat are the same four-pane sliding-strip layout.
 	let fullHeight = $derived(
-		navigationStore.screen === 'army-builder' ||
-			(navigationStore.screen === 'mission-detail' && navigationStore.gameMode === 'solo')
+		navigationStore.screen === 'army-builder' || navigationStore.screen === 'mission-detail'
 	);
 
 	onMount(() => {

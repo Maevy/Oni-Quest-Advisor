@@ -8,7 +8,7 @@ import {
 } from '$lib/data';
 import * as domain from '$lib/domain';
 import type {
-	ArmyRosterRow,
+	ArmyView,
 	Mission,
 	MissionProgress,
 	PickedArmy,
@@ -37,7 +37,7 @@ class MissionProgressStore {
 	/** Marks the loaded mission as the one open solo game — called when Start Game is pressed. */
 	beginGame(): void {
 		if (!this.progress) return;
-		saveOpenGame({ missionId: this.progress.missionId });
+		saveOpenGame({ missionId: this.progress.missionId, mode: 'solo' });
 	}
 
 	/**
@@ -95,24 +95,8 @@ class MissionProgressStore {
 	 * The attached army resolved for display; null when nothing is picked, the catalogs are
 	 * still loading, or the snapshot no longer decodes against the current roster.
 	 */
-	pickedArmyRows(): ArmyRosterRow[] | null {
-		const picked = this.progress?.pickedArmy;
-		if (!picked || !contentStore.armyLoaded) return null;
-		const decoded = domain.decodeArmy(picked.code, {
-			factions: contentStore.armyFactions,
-			units: contentStore.armyUnits,
-			upgrades: contentStore.armyUpgrades,
-			spellcrafts: contentStore.armySpellcrafts,
-			items: contentStore.armyItems
-		});
-		if (!decoded.ok) return null;
-		return domain.resolveArmyEntries(
-			decoded.list.entries,
-			domain.unitsForFaction(decoded.list.factionId, contentStore.armyUnits),
-			contentStore.armyUnits.mounts,
-			domain.indexArmyRules(contentStore.armyUpgrades),
-			domain.indexArmyRules(contentStore.armyItems)
-		);
+	armyView(): ArmyView | null {
+		return contentStore.armyView(this.progress?.pickedArmy ?? null, this.progress?.vitality ?? {});
 	}
 
 	setDraftFaction(factionId: string | null): void {

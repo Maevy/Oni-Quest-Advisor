@@ -51,6 +51,15 @@
 		pointer-events: none;
 		animation: neon-sweep 3.2s linear infinite;
 	}
+
+	/* Violet beam: the swap mechanic's hue, which belongs to neither seat. Declared after
+	   .neon-border so it wins the custom properties and the resting halo at equal specificity. */
+	.neon-violet {
+		--neon-beam: #c4b5fd;
+		--neon-beam-bright: #f5f3ff;
+		--neon-glow: rgb(196 181 253 / 0.75);
+		box-shadow: 0 0 20px rgb(167 139 250 / 0.3);
+	}
 }
 
 @keyframes neon-sweep {

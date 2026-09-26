@@ -1,6 +1,6 @@
 import { MAX_ROUND, MIN_ROUND, type SchemeDraft } from './progress';
 import { chooseScheme, setSchemeChecked, type ChosenScheme } from './scheme';
-import type { PlayerKey, PlayerProgress } from './twoPlayer';
+import type { PlayerKey, SeatProgress } from './twoPlayer';
 
 export type OnlineGameStatus = 'lobby' | 'active' | 'finished' | 'closed';
 export type OnlineGamePhase = 'reveal' | 'scoring';
@@ -12,7 +12,7 @@ export type OnlineSeatState = {
 	nickname: string;
 	/** SHA-256 of the seat token; the plain token only lives on the client. */
 	tokenHash: string;
-	progress: PlayerProgress;
+	progress: SeatProgress;
 	/** Toggleable intent during a Reveal phase — committed when the leader advances to Scoring. */
 	revealIntent: boolean;
 	/** Ids of the drawn scheme cards; private to this seat, persisted for reconnects. */
@@ -108,7 +108,7 @@ export function normalizeNickname(raw: string): string | null {
 	return trimmed;
 }
 
-function createEmptyProgress(): PlayerProgress {
+function createEmptyProgress(): SeatProgress {
 	return {
 		checkedObjectiveCounts: {},
 		scheme: null,

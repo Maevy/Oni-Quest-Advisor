@@ -1,6 +1,11 @@
-import type { OpenGame } from '$lib/domain';
+import type { GameMode, OpenGame } from '$lib/domain';
 
 const OPEN_GAME_KEY = 'oni-quest-advisor:open-game';
+
+/** Records written before hot-seat joined the lifecycle carry no mode and are solo runs. */
+function parseMode(value: unknown): GameMode {
+	return value === 'two-player' ? 'two-player' : 'solo';
+}
 
 /**
  * The open game is read on app start, so unavailable or corrupt storage must degrade to "no open
@@ -12,7 +17,7 @@ export function loadOpenGame(): OpenGame | null {
 		if (!raw) return null;
 		const parsed = JSON.parse(raw) as Partial<OpenGame> | null;
 		return typeof parsed?.missionId === 'string' && parsed.missionId !== ''
-			? { missionId: parsed.missionId }
+			? { missionId: parsed.missionId, mode: parseMode(parsed.mode) }
 			: null;
 	} catch {
 		return null;

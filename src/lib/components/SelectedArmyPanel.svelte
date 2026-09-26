@@ -1,17 +1,24 @@
 <script lang="ts">
 	import type { ArmyFactionConfig, PickedArmy } from '$lib/domain';
 	import Panel from './Panel.svelte';
+	import { seatAccent, type SeatHue } from './playerAccent';
 
 	type Props = {
 		army: PickedArmy;
 		faction: ArmyFactionConfig | undefined;
+		/** Panel heading — hot-seat names the seat the army belongs to. */
+		title?: string;
+		/** Heading colour; Player 2's panel is orange. */
+		hue?: SeatHue;
 		onRemove: () => void;
 	};
 
-	let { army, faction, onRemove }: Props = $props();
+	let { army, faction, title = 'Selected Army', hue = 'sky', onRemove }: Props = $props();
+
+	let accent = $derived(seatAccent(hue));
 </script>
 
-<Panel title="Selected Army">
+<Panel {title} titleClass={accent.text}>
 	<div class="flex items-center gap-3">
 		<div class="min-w-0 flex-1">
 			<p class="truncate text-sm font-semibold text-slate-100">{army.name}</p>

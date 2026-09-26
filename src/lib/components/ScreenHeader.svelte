@@ -34,7 +34,10 @@
 			<h1 class="min-w-0 truncate text-base font-semibold text-slate-100">{title}</h1>
 		{/if}
 		{#if actions}
-			<div class="ml-auto flex items-center gap-2">{@render actions()}</div>
+			<!-- Wrapping: the hot-seat briefing (Return + two army picks + Start) and the hot-seat
+			     tracker (Return + a four-up view switcher) do not fit a 320 px row. min-h-16 is a
+			     minimum, so a wrapped bar simply grows taller. -->
+			<div class="ml-auto flex flex-wrap items-center justify-end gap-2">{@render actions()}</div>
 		{/if}
 	</div>
 </header>

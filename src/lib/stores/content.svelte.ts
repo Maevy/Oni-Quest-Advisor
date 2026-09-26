@@ -14,17 +14,24 @@ import {
 	loadMissions,
 	loadSchemes
 } from '$lib/data';
-import type {
-	ArmyFactionConfig,
-	ArmyItemSpec,
-	ArmyRulesSpec,
-	ArmySpellSpec,
-	ArmyStratagemSpec,
-	ArmyUnitContent,
-	ArmyUpgradeSpec,
-	Faction,
-	Mission,
-	SchemeCard
+import {
+	decodeArmy,
+	indexArmyRules,
+	resolveArmyEntries,
+	unitsForFaction,
+	type ArmyFactionConfig,
+	type ArmyItemSpec,
+	type ArmyRulesSpec,
+	type ArmySpellSpec,
+	type ArmyStratagemSpec,
+	type ArmyUnitContent,
+	type ArmyUpgradeSpec,
+	type ArmyView,
+	type Faction,
+	type Mission,
+	type PickedArmy,
+	type SchemeCard,
+	type UnitVitality
 } from '$lib/domain';
 
 class ContentStore {
@@ -99,6 +106,46 @@ class ContentStore {
 			this.armyLoaded = true;
 		})();
 		return this.armyLoading;
+	}
+
+	/**
+	 * Resolves a run's attached-army snapshot into everything the read-only Army view renders.
+	 * Null when nothing is picked, the catalogs are still loading, or the snapshot no longer
+	 * decodes against the current roster — a code from before a content update must refuse to
+	 * render rather than resolve the wrong units.
+	 */
+	armyView(picked: PickedArmy | null, vitality: Record<string, UnitVitality>): ArmyView | null {
+		if (!picked || !this.armyLoaded) return null;
+		const decoded = decodeArmy(picked.code, {
+			factions: this.armyFactions,
+			units: this.armyUnits,
+			upgrades: this.armyUpgrades,
+			spellcrafts: this.armySpellcrafts,
+			items: this.armyItems
+		});
+		if (!decoded.ok) return null;
+		const faction = this.armyFactions.find((candidate) => candidate.id === decoded.list.factionId);
+		if (!faction) return null;
+		return {
+			army: picked,
+			rows: resolveArmyEntries(
+				decoded.list.entries,
+				unitsForFaction(decoded.list.factionId, this.armyUnits),
+				this.armyUnits.mounts,
+				indexArmyRules(this.armyUpgrades),
+				indexArmyRules(this.armyItems)
+			),
+			faction,
+			classIndex: indexArmyRules(this.armyClasses),
+			skillIndex: indexArmyRules(this.armySkills),
+			traitIndex: indexArmyRules(this.armyTraits),
+			combatArtIndex: indexArmyRules(this.armyCombatArts),
+			spellcraftIndex: indexArmyRules(this.armySpellcrafts),
+			spells: this.armySpells,
+			stratagemIndex: indexArmyRules(this.armyStratagems),
+			itemIndex: indexArmyRules(this.armyItems),
+			vitality
+		};
 	}
 }
 

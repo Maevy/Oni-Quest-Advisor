@@ -1,9 +1,9 @@
 import {
 	calculateTwoPlayerVP,
 	type OnlineGameState,
-	type PlayerProgress,
 	type RoundSnapshot,
-	type SchemeCard
+	type SchemeCard,
+	type SeatProgress
 } from '$lib/domain';
 import { findMission, getSchemes } from './content';
 
@@ -15,7 +15,7 @@ import { findMission, getSchemes } from './content';
 export function computeRoundVp(game: OnlineGameState): RoundSnapshot | null {
 	const mission = game.missionId ? findMission(game.missionId) : undefined;
 	if (!mission) return null;
-	const cardFor = (progress: PlayerProgress): SchemeCard | null =>
+	const cardFor = (progress: SeatProgress): SchemeCard | null =>
 		progress.scheme
 			? (getSchemes().find((card) => card.id === progress.scheme?.schemeId) ?? null)
 			: null;

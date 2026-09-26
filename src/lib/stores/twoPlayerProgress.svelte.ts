@@ -1,6 +1,22 @@
-import { loadTwoPlayerProgress, saveTwoPlayerProgress } from '$lib/data';
+import {
+	clearOpenGame,
+	clearTwoPlayerProgress,
+	loadOpenGame,
+	loadTwoPlayerProgress,
+	saveOpenGame,
+	saveTwoPlayerProgress
+} from '$lib/data';
 import * as domain from '$lib/domain';
-import type { Mission, PlayerKey, SchemeCard, TwoPlayerMissionProgress } from '$lib/domain';
+import type {
+	ArmyView,
+	Mission,
+	PlayerKey,
+	PickedArmy,
+	SchemeCard,
+	TwoPlayerMissionProgress,
+	UnitVitality
+} from '$lib/domain';
+import { contentStore } from './content.svelte';
 
 class TwoPlayerProgressStore {
 	progress = $state<TwoPlayerMissionProgress | null>(null);
@@ -10,9 +26,9 @@ class TwoPlayerProgressStore {
 
 	loadForMission(missionId: string): void {
 		const loaded = loadTwoPlayerProgress(missionId);
-		this.progress = loaded
-			? { ...domain.createEmptyTwoPlayerProgress(missionId), ...loaded }
-			: domain.createEmptyTwoPlayerProgress(missionId);
+		// Hydrated per seat, not spread over the record: a save from before the army or its
+		// vitality existed would otherwise carry `undefined` into the nested player objects.
+		this.progress = domain.hydrateTwoPlayerProgress(missionId, loaded ?? {});
 		this.drawnSchemesP1 = [];
 		this.drawnSchemesP2 = [];
 		this.activePlayer = 'player1';
@@ -34,6 +50,26 @@ class TwoPlayerProgressStore {
 		}
 	}
 
+	/** Marks the loaded mission as the open hot-seat game — called when Start Game is pressed. */
+	beginGame(): void {
+		if (!this.progress) return;
+		saveOpenGame({ missionId: this.progress.missionId, mode: 'two-player' });
+	}
+
+	/**
+	 * Abandons the open game. The record and that mission's saved progress both go, so the run
+	 * cannot be resumed later and its boxes cannot score again.
+	 */
+	abandonGame(): void {
+		const open = loadOpenGame();
+		clearOpenGame();
+		if (open) clearTwoPlayerProgress(open.missionId);
+		this.progress = null;
+		this.drawnSchemesP1 = [];
+		this.drawnSchemesP2 = [];
+		this.activePlayer = 'player1';
+	}
+
 	setObjectiveChecked(
 		player: PlayerKey,
 		objectiveId: string,
@@ -49,6 +85,40 @@ class TwoPlayerProgressStore {
 			maxCount
 		);
 		this.persist();
+	}
+
+	/** Attaches a saved army to one seat as a snapshot; later edits to the save cannot leak in. */
+	pickArmy(player: PlayerKey, army: PickedArmy): void {
+		if (!this.progress) return;
+		this.progress = domain.setTwoPlayerPickedArmy(this.progress, player, army);
+		this.persist();
+	}
+
+	clearPickedArmy(player: PlayerKey): void {
+		if (!this.progress) return;
+		this.progress = domain.setTwoPlayerPickedArmy(this.progress, player, null);
+		this.persist();
+	}
+
+	/** Commits a copy's Life/stamina/States once that seat's vitality menu is accepted. */
+	setUnitVitality(player: PlayerKey, entryId: string, vitality: UnitVitality): void {
+		if (!this.progress) return;
+		this.progress = domain.setTwoPlayerVitality(
+			this.progress,
+			player,
+			entryId,
+			domain.applyZeroHpStates(vitality)
+		);
+		this.persist();
+	}
+
+	/**
+	 * One seat's attached army resolved for display; null when that seat picked nothing, the
+	 * catalogs are still loading, or the snapshot no longer decodes against the current roster.
+	 */
+	armyView(player: PlayerKey): ArmyView | null {
+		const seat = this.progress?.[player];
+		return contentStore.armyView(seat?.pickedArmy ?? null, seat?.vitality ?? {});
 	}
 
 	setDraftFaction(player: PlayerKey, factionId: string | null): void {
@@ -116,15 +186,6 @@ class TwoPlayerProgressStore {
 	setRound(round: number): void {
 		if (!this.progress) return;
 		this.progress = domain.setTwoPlayerRound(this.progress, round);
-		this.persist();
-	}
-
-	resetMission(): void {
-		if (!this.progress) return;
-		this.progress = domain.createEmptyTwoPlayerProgress(this.progress.missionId);
-		this.drawnSchemesP1 = [];
-		this.drawnSchemesP2 = [];
-		this.activePlayer = 'player1';
 		this.persist();
 	}
 
