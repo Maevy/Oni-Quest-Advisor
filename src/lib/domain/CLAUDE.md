@@ -11,3 +11,7 @@
   inline, so it stays a pure, unit-testable function.
 - No side effects, no UI concerns. Every function here should be testable with plain
   inputs and outputs, no mocking required — covered by the colocated `*.spec.ts` files.
+- Pure algorithms that are not game rules belong here too when the server shares them:
+  `qr.ts` (the in-app QR encoder) is the example — it is pure, unit-tested and rendered
+  by a component, so it has no better home. Anything with I/O stays in `lib/data` or
+  `lib/server`.

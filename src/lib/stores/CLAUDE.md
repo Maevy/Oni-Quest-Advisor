@@ -4,13 +4,16 @@
   - selections, and the per-mission play progress.
 - Class-based singletons in `.svelte.ts` files (`contentStore`, `navigationStore`,
   `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`, `armyBuilderStore`,
-  `tournamentStore`), re-exported from `index.ts`. Built on Svelte 5 runes (`$state`/`$derived`) and exposed via
+  `tournamentStore`, `tournamentEventStore`), re-exported from `index.ts`. Built on Svelte 5 runes
+  (`$state`/`$derived`) and exposed via
   small purposeful methods (e.g. `selectSeason()`, `rollRandomMission()`,
   `drawSchemes()`, `setRound()`) — not as raw mutable state exported wholesale for
   callers to mutate directly.
-- `onlineGameStore` is server-driven: it holds the visibility-filtered game view,
-  sends intents to the API and refetches state (SSE notifications trigger refetches).
-  No local mutation of game state — the server is the source of truth.
+- `onlineGameStore` and `tournamentEventStore` are server-driven: they hold the
+  visibility-filtered view, send intents to the API and refetch state (SSE notifications
+  trigger refetches). No local mutation of game state — the server is the source of truth.
+  `tournamentStore` is the opposite: a purely local, in-memory wizard draft that is discarded
+  on leave.
 - Orchestrates, doesn't decide: calls into `lib/domain` for any rule/decision logic
   (random draws, clamping, VP math) and into `lib/data` for loading/persistence.
   The store itself shouldn't implement that logic.

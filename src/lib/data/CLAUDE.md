@@ -16,6 +16,9 @@
   selection belongs in `lib/domain`, not here.
 - The static dataset is loaded here so the source can be swapped later (e.g. for a
   real backend) without touching domain, stores, or components.
-- Online mode seam: `onlineApi.ts` (fetch wrapper for `/api/games/...`, no business
+- Server seams: `onlineApi.ts` (fetch wrapper for `/api/games/...`, no business
   logic beyond request/response mapping) and `onlineSession.ts` (the seat's
-  game-id/seat/token triple in `localStorage` under the same key-prefix convention).
+  game-id/seat/token triple in `localStorage` under the same key-prefix convention);
+  `tournamentApi.ts` (`/api/tournaments/...`, including the unauthenticated peek the
+  join screen uses) and `tournamentSession.ts` (code/role/token/seat) are the same
+  pair for tournaments.
