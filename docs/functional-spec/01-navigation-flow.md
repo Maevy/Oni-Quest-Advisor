@@ -304,11 +304,27 @@ codes are the persistence mechanism. See [08-army-builder.md](./08-army-builder.
 - **Step 2** — the mission list (Add Quest popup) and the table names. **Overview**, gated on at
   least one mission, opens the last pane.
 - **Step 3** — the read-only overview of everything configured, and **Create Tournament** on the
-  same one-mission gate. Creation itself — behind a notice that the data is kept 48 hours for
-  report generation — is the next iteration's server work.
+  same one-mission gate. That button opens the retention notice (the data is kept 48 hours after
+  the tournament concludes, for report generation); its **Create** is the first server contact and
+  lands the organizer on `tournament-lobby`.
 
-**Return** steps back one pane at a time keeping the draft, and leaves the wizard from step 1,
-discarding it — like the army builder, the draft is in-memory only and the wizard has no
+`tournament-lobby` is the tournament's shared screen: the event's name, external link, organizer,
+pairing mode, join code, missions and tables, plus one row per seat — a registered player (with
+their army's name and faction, `you` on the viewer's own row) or an empty one. The organizer also
+gets the **Invite Players** panel (**Share Link** copies `/tournament-join/<code>`, **QR Code**
+shows it as a scannable symbol) and a **Start Tournament** button that stays disabled until the
+odd-field BYE rule exists; players see the same lobby read-only. Joins reach every open lobby live
+over SSE.
+
+`/tournament-join/<code>` — the invite link or its QR code — hands the code to `tournament-join`,
+where a player enters a name and picks a **Roster** army; **Join** seats them in the first free
+slot and opens the lobby. A seat session is stored per device, so a reload resumes straight back
+into the lobby, and an already-seated device opening its own link again goes to the lobby instead
+of taking a second seat. **Return** from either screen leaves locally only; the server-side
+tournament stays as it is.
+
+**Return** in the wizard steps back one pane at a time keeping the draft, and leaves it from step
+1, discarding it — like the army builder, the draft is in-memory only and the wizard has no
 persistence and no open-game record. Full detail in
 [09-tournament.md](./09-tournament.md).
 

@@ -8,6 +8,10 @@ import { computeRoundVp } from './vp';
 const LOBBY_RETENTION_DAYS = 7;
 const ACTIVE_RETENTION_DAYS = 30;
 const FINISHED_RETENTION_DAYS = 90;
+const TOURNAMENT_LOBBY_RETENTION_DAYS = 7;
+const TOURNAMENT_ACTIVE_RETENTION_DAYS = 30;
+/** The report window: a concluded tournament stays queryable for 48 hours, then goes. */
+const TOURNAMENT_REPORT_RETENTION_HOURS = 48;
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export type CleanupSummary = { deleted: number; autoFinished: number };
@@ -32,6 +36,42 @@ async function deleteGames(db: Client, ids: string[]): Promise<void> {
 		{ sql: `DELETE FROM game_events WHERE game_id IN (${placeholders})`, args: ids },
 		{ sql: `DELETE FROM games WHERE id IN (${placeholders})`, args: ids }
 	]);
+}
+
+async function staleTournamentIds(
+	db: Client,
+	statuses: string[],
+	cutoff: string
+): Promise<string[]> {
+	const placeholders = statuses.map(() => '?').join(', ');
+	const result = await db.execute({
+		sql: `SELECT id FROM tournaments WHERE status IN (${placeholders}) AND updated_at < ?`,
+		args: [...statuses, cutoff]
+	});
+	return result.rows.map((row) => String(row[0]));
+}
+
+/**
+ * Tournament retention: an abandoned lobby is a dropped invite (7 days), a tournament abandoned
+ * mid-play is deleted (30 days), and a concluded one lives exactly as long as the report window
+ * the creation notice promises — 48 hours — before it goes.
+ */
+export async function cleanupStaleTournaments(db: Client): Promise<number> {
+	const reportCutoff = new Date(
+		Date.now() - TOURNAMENT_REPORT_RETENTION_HOURS * 60 * 60 * 1000
+	).toISOString();
+	const ids = [
+		...(await staleTournamentIds(db, ['lobby'], cutoffIso(TOURNAMENT_LOBBY_RETENTION_DAYS))),
+		...(await staleTournamentIds(db, ['active'], cutoffIso(TOURNAMENT_ACTIVE_RETENTION_DAYS))),
+		...(await staleTournamentIds(db, ['concluded', 'closed'], reportCutoff))
+	];
+	if (ids.length === 0) return 0;
+	const placeholders = ids.map(() => '?').join(', ');
+	await db.batch([
+		{ sql: `DELETE FROM tournament_events WHERE tournament_id IN (${placeholders})`, args: ids },
+		{ sql: `DELETE FROM tournaments WHERE id IN (${placeholders})`, args: ids }
+	]);
+	return ids.length;
 }
 
 /**
@@ -116,13 +156,15 @@ export async function cleanupStaleGames(db: Client): Promise<CleanupSummary> {
 /** Runs cleanup once on startup, then daily. Failures never take the server down. */
 export function startCleanupSchedule(db: Client): void {
 	const run = () =>
-		cleanupStaleGames(db)
-			.then(({ deleted, autoFinished }) => {
-				if (deleted > 0 || autoFinished > 0) {
-					console.log(`Game cleanup: deleted ${deleted}, auto-finished ${autoFinished}`);
+		Promise.all([cleanupStaleGames(db), cleanupStaleTournaments(db)])
+			.then(([games, tournaments]) => {
+				if (games.deleted > 0 || games.autoFinished > 0 || tournaments > 0) {
+					console.log(
+						`Cleanup: deleted ${games.deleted} games, auto-finished ${games.autoFinished}, deleted ${tournaments} tournaments`
+					);
 				}
 			})
-			.catch((error) => console.error('Game cleanup failed', error));
+			.catch((error) => console.error('Cleanup failed', error));
 	run();
 	const timer = setInterval(run, CLEANUP_INTERVAL_MS);
 	timer.unref();

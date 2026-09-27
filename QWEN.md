@@ -11,8 +11,9 @@ native/platform-specific one. Used on a phone screen during a game session.
 - Tailwind CSS 4 (`@tailwindcss/vite`, forms plugin); Prettier sorts Tailwind classes
   automatically against `src/routes/layout.css`
 - Vitest for unit tests (node environment, no browser)
-- No backend: runs entirely client-side. Game data ships as static JSON bundled with
-  the app; session state persists via `localStorage`.
+- The local modes run entirely client-side: game data ships as static JSON bundled with
+  the app and session state persists via `localStorage`. Online games and tournaments are
+  server-backed through `/api/**` (libsql on the Fly volume, SSE change notifications).
 - Deploys to Fly.io: `@sveltejs/adapter-node` builds a standalone Node server
   (`build/index.js`), packaged by the root `Dockerfile` and configured via `fly.toml`.
 
@@ -205,10 +206,31 @@ native/platform-specific one. Used on a phone screen during a game session.
   names stay with their table number; its **Overview** button — enabled at one
   mission — opens the third pane, a read-only review of the whole draft in
   four panels. Nothing is persisted or sent while configuring; **Create
-  Tournament** lives on the overview under the same one-mission gate and is
-  currently a validated seam — the next step wraps it in a notice that the
-  tournament's data is kept 48 hours for report generation, then the server
-  side (invites via link/QR, pairings, overwatch, conclusion) follows. Spec:
+  Tournament** (same one-mission gate) first shows the retention notice — the
+  data is kept 48 hours _after the tournament concludes_ so a report can be
+  generated — and only then makes the first server call.
+- **TournamentState** (`domain/tournamentEvent.ts`) → the server-authoritative
+  event behind the lobby: status `lobby`/`active`/`concluded`/`closed`, the
+  whole configuration, and one seat per pairing slot (a playing TO fills seat 0
+  at creation). Pure `createTournamentEvent`/`joinTournament` transitions with
+  `can*` guards plus the visibility filters — `viewForTournamentToken` for the
+  organizer and seated players (army **names and factions**, never codes or
+  tokens) and `peekTournament` for what the join screen may show before
+  joining. The **lobby** (`tournament-lobby`) is shared by both roles: the
+  event, one row per seat (name + army, `you`/`organizer` marks, or _Empty
+  seat_), and for the organizer **Share Link** (clipboard, with the URL shown
+  inline when copying is blocked), **QR Code** and a **Start Tournament** button
+  that stays disabled until the odd-field BYE rule exists. Players arrive
+  through `/tournament-join/[code]` (link or QR): a name plus a **Roster** army
+  unlocks **Join**, which takes the first free seat — a full field refuses
+  joins, there is no waitlist and no per-join approval — stores a seat session
+  (`oni-quest-advisor:tournament-session`: code, role, token) and lands in the
+  same lobby read-only; joins reach every open lobby live over SSE. Server
+  tables `tournaments`/`tournament_events`, endpoints `/api/tournaments/**`,
+  retention (lobby 7 days, abandoned 30, concluded exactly the 48-hour report
+  window). The **QR symbol is encoded in-app** (`domain/qr.ts`: byte mode, EC
+  level M, versions 1–6, mask 0, rendered as SVG) — no third-party generator,
+  because the link is the credential to join. Spec:
   `docs/functional-spec/09-tournament.md`.
 
 ## Architecture
@@ -218,12 +240,12 @@ Layered structure. Dependencies only point downward — never sideways, never up
 ```
 src/
   routes/          → presentation: the page(s), just wire stores to components
-                      (+ api/games/** endpoints for online mode)
+                      (+ api/games/** and api/tournaments/** endpoints)
   lib/
     components/    → presentation: reusable UI pieces (props in, callbacks out)
     stores/        → application/state layer (class-based singletons)
     server/        → server-only: SQLite persistence, SSE, auth, rate limiting
-                      (online mode)
+                      (online games and tournaments)
     domain/         → domain: types + pure logic functions (shared client/server)
     data/            → infrastructure: content loading + localStorage/API wrappers
 ```
@@ -246,17 +268,21 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   mode adds the remote seam: `onlineApi.ts` (fetch wrapper for `/api/games/...`) and
   `onlineSession.ts` (seat session under `oni-quest-advisor:online-session`), plus
   `notices.ts` (one-time acknowledgements for the privacy notice and the online
-  intro, under `oni-quest-advisor:notice:`).
+  intro, under `oni-quest-advisor:notice:`). Tournaments add the same pair:
+  `tournamentApi.ts` (`/api/tournaments/...`, including the unauthenticated peek
+  the join screen uses) and `tournamentSession.ts` (`oni-quest-advisor:tournament-session`).
 - `stores` are classes in `.svelte.ts` files (`armyBuilderStore`, `contentStore`, `navigationStore`,
   `missionProgressStore`, `twoPlayerProgressStore`, `onlineGameStore`,
-  `tournamentStore`), exported as
+  `tournamentStore`, `tournamentEventStore`), exported as
   singletons from `stores/index.ts`. They orchestrate — decisions live in `domain`,
   side effects in `data` — and expose purposeful methods (`selectSeason()`,
   `rollRandomMission()`, `startGame()`, `findResumableGame()`, `drawSchemes()`,
   `setRound()`, `swapPlayer()`, `revealScheme()`, ...), not raw mutable state. `onlineGameStore` is
   server-driven: it sends intents to the API and refetches the visibility-filtered
   game view (SSE change notifications trigger refetches) — it never mutates game
-  state locally. Persisted progress is loaded by merging it onto
+  state locally. `tournamentEventStore` is the same shape for a live tournament
+  (`create()`, `join()`, `loadPeek()`, `resumeSession()`, `leave()`, `cancelJoin()`),
+  while `tournamentStore` stays the local wizard draft. Persisted progress is loaded by merging it onto
   `domain.createEmptyProgress()` (solo — a shallow spread suffices, the fields are
   top-level) or `domain.hydrateTwoPlayerProgress()` (hot-seat — it merges **each
   seat** onto its own defaults, since the new fields live inside `player1`/`player2`).
@@ -271,12 +297,15 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   game and enters `mission-detail`, rendering `MissionDetail` or
   `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
-  (`online-create` → `online-join` → `online-game`) and the tournament wizard
-  (`tournament-setup`, all three panes on one screen id). On mount it resumes a
-  stored online seat, and otherwise offers to resume an open local game.
-  `api/games/**/+server.ts` are the online-mode
-  endpoints (thin handlers over `lib/server`), `api/health/` is the
-  unauthenticated ops probe, and `join/[code]/` is the invite-link entry point.
+  (`online-create` → `online-join` → `online-game`) and the tournament flow
+  (`tournament-setup`, all three panes on one screen id → `tournament-lobby`,
+  with `tournament-join` reached from an invite link or QR code). On mount it
+  resumes a stored online seat, then a stored tournament seat, and otherwise
+  offers to resume an open local game.
+  `api/games/**/+server.ts` and `api/tournaments/**/+server.ts` are the
+  server-backed endpoints (thin handlers over `lib/server`), `api/health/` is the
+  unauthenticated ops probe, and `join/[code]/` plus `tournament-join/[code]/`
+  are the invite-link entry points.
   No business logic, no direct `fetch`/`localStorage`, no new type definitions.
   Cross-cutting API concerns (body cap, rate limits, request logging) live in
   `src/hooks.server.ts`. `+layout.svelte` renders the fixed background (official
@@ -306,8 +335,10 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   shared panels (collapsible there via `Panel`'s `collapsible` prop). The army
   builder adds `ArmyFactionSelect`, `ArmyBuilderView` (sliding panels, swipe,
   mount toggles) and the `UnitCard` statline popup; the tournament wizard adds
-  `TournamentSetup` (all three panes, with the Add Quest popup inside it) and
-  the read-only `TournamentOverview` it renders on the last one.
+  `TournamentSetup` (all three panes, with the Add Quest popup and the retention
+  notice inside it), the read-only `TournamentOverview` it renders on the last
+  one, the shared `TournamentLobby` (organizer and players), `TournamentJoin`
+  and `QrCode` (the in-app encoder's SVG).
   `ArmyBuilderView` and the two
   local trackers (`MissionDetail`, `MissionDetailTwoPlayer` — each of whose views
   sits in one sliding strip) are the app's three **full-height screens**: an

@@ -23,7 +23,9 @@ export type Screen =
 	| 'online-create'
 	| 'online-join'
 	| 'online-game'
-	| 'tournament-setup';
+	| 'tournament-setup'
+	| 'tournament-lobby'
+	| 'tournament-join';
 
 class NavigationStore {
 	screen = $state<Screen>('game-mode');
@@ -32,6 +34,8 @@ class NavigationStore {
 	gameMode = $state<domain.GameMode>('solo');
 	/** Game code from an invite link, consumed by the online-join screen. */
 	onlineJoinCode = $state<string | null>(null);
+	/** Tournament code from an invite link or QR scan, consumed by the tournament-join screen. */
+	tournamentJoinCode = $state<string | null>(null);
 	/** One-time local-storage/privacy notice, dismissed permanently per device. */
 	showPrivacyNotice = $state(false);
 	/** One-time heads-up shown before first entering the experimental online mode. */
@@ -123,6 +127,22 @@ class NavigationStore {
 
 	leaveTournament(): void {
 		tournamentStore.leave();
+		this.screen = 'game-mode';
+	}
+
+	/** The lobby a created or resumed tournament lives on, for the organizer and players alike. */
+	enterTournamentLobby(): void {
+		this.screen = 'tournament-lobby';
+	}
+
+	/** Invite-link / QR entry point: hand the code to the join screen. */
+	prepareTournamentJoin(code: string): void {
+		this.tournamentJoinCode = code;
+		this.screen = 'tournament-join';
+	}
+
+	leaveTournamentLobby(): void {
+		this.tournamentJoinCode = null;
 		this.screen = 'game-mode';
 	}
 

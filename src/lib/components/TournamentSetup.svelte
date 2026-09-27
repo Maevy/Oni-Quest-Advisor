@@ -14,6 +14,7 @@
 	import Panel from './Panel.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
 	import TournamentOverview from './TournamentOverview.svelte';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
@@ -31,6 +32,10 @@
 		missions: Mission[];
 		/** At least one mission on the list — opens the overview, and creates from there. */
 		canCreate: boolean;
+		/** The creation attempt is on its way to the server. */
+		creating: boolean;
+		/** Why the last creation attempt failed, if any. */
+		createError: string | null;
 		onNameChange: (name: string) => void;
 		onExternalLinkChange: (link: string) => void;
 		onOrganizerNameChange: (name: string) => void;
@@ -60,6 +65,8 @@
 		seasons,
 		missions,
 		canCreate,
+		creating,
+		createError,
 		onNameChange,
 		onExternalLinkChange,
 		onOrganizerNameChange,
@@ -89,6 +96,8 @@
 	// Add Quest popup: which season its mission list shows. Null means the first season.
 	let showAddQuest = $state(false);
 	let addSeason = $state<string | null>(null);
+	// The 48-hour retention notice in front of the first server contact.
+	let confirmCreate = $state(false);
 
 	$effect(() => {
 		if (showAddQuest) return onEscapeKey(() => (showAddQuest = false));
@@ -378,9 +387,17 @@
 		{:else}
 			<TournamentOverview {draft} {missions} {organizerFaction} />
 
-			<button type="button" class={advanceButton} disabled={!canCreate} onclick={onCreate}>
+			<button
+				type="button"
+				class={advanceButton}
+				disabled={!canCreate || creating}
+				onclick={() => (confirmCreate = true)}
+			>
 				Create Tournament
 			</button>
+			{#if createError}
+				<p class="-mt-2 text-center text-xs text-red-400">{createError}</p>
+			{/if}
 		{/if}
 	</div>
 </div>
@@ -438,4 +455,17 @@
 			</button>
 		</div>
 	</div>
+{/if}
+
+{#if confirmCreate}
+	<ConfirmDialog
+		text="Create this tournament? Its data — players, tables and results — is kept on the server for 48 hours after the tournament concludes so a report can be generated, and deleted afterwards."
+		confirmLabel="Create"
+		cancelLabel="Not yet"
+		onConfirm={() => {
+			confirmCreate = false;
+			onCreate();
+		}}
+		onCancel={() => (confirmCreate = false)}
+	/>
 {/if}

@@ -24,6 +24,7 @@
 		missionProgressStore,
 		navigationStore,
 		onlineGameStore,
+		tournamentEventStore,
 		tournamentStore,
 		twoPlayerProgressStore
 	} from '$lib/stores';
@@ -46,6 +47,8 @@
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
 	import PickArmyDialog from '$lib/components/PickArmyDialog.svelte';
 	import TournamentSetup from '$lib/components/TournamentSetup.svelte';
+	import TournamentLobby from '$lib/components/TournamentLobby.svelte';
+	import TournamentJoin from '$lib/components/TournamentJoin.svelte';
 	import type { BriefingArmy } from '$lib/components/briefingArmy';
 
 	contentStore.load();
@@ -53,14 +56,21 @@
 	/** A local game left open by a previous visit, awaiting the resume-or-abandon choice. */
 	let resumableGame = $state<{ game: OpenGame; mission: Mission } | null>(null);
 
-	// Resume an online seat from a previous visit if any; otherwise offer the open local game.
+	// Resume an online seat from a previous visit if any, then a tournament seat, and only
+	// then offer the open local game.
 	onMount(() => {
 		void onlineGameStore.resumeSession().then((resumed) => {
 			if (resumed) {
 				navigationStore.enterOnlineGame();
 				return;
 			}
-			resumableGame = navigationStore.findResumableGame();
+			void tournamentEventStore.resumeSession().then((resumedTournament) => {
+				if (resumedTournament) {
+					navigationStore.enterTournamentLobby();
+					return;
+				}
+				resumableGame = navigationStore.findResumableGame();
+			});
 		});
 	});
 
@@ -256,6 +266,66 @@
 			: undefined;
 	});
 
+	// --- tournament creation and join ---
+	let creatingTournament = $state(false);
+
+	/** The overview's Create, behind the 48-hour retention notice: the first server contact. */
+	async function createTournamentFromWizard(): Promise<void> {
+		const draft = tournamentStore.draft;
+		creatingTournament = true;
+		const created = await tournamentEventStore.create({
+			name: draft.name.trim(),
+			externalLink: draft.externalLink.trim(),
+			organizerName: draft.organizerName.trim(),
+			organizerPlays: draft.organizerPlays,
+			organizerArmy: draft.organizerArmy,
+			participantCount: draft.participantCount,
+			manualPairing: draft.manualPairing,
+			missionIds: draft.missionIds,
+			tableNames: draft.tableNames
+		});
+		creatingTournament = false;
+		if (created) {
+			tournamentStore.leave();
+			navigationStore.enterTournamentLobby();
+		}
+	}
+
+	let joinName = $state('');
+	let joinArmy = $state<PickedArmy | null>(null);
+	let joinArmyFaction = $derived.by(() =>
+		joinArmy
+			? contentStore.armyFactions.find((faction) => faction.id === joinArmy?.factionId)
+			: undefined
+	);
+	let joinReady = $derived(
+		tournamentEventStore.peek?.canJoin === true && joinName.trim() !== '' && joinArmy !== null
+	);
+
+	// Entering the join screen: a device that already holds a seat goes to the lobby, everyone
+	// else gets the pre-join look at the tournament the code points at.
+	$effect(() => {
+		if (navigationStore.screen !== 'tournament-join') return;
+		const code = navigationStore.tournamentJoinCode;
+		if (!code) return;
+		if (tournamentEventStore.code === code && tournamentEventStore.view) {
+			navigationStore.enterTournamentLobby();
+			return;
+		}
+		void tournamentEventStore.loadPeek(code);
+	});
+
+	async function joinTournamentFromInvite(): Promise<void> {
+		const code = navigationStore.tournamentJoinCode;
+		if (!code || !joinArmy) return;
+		const joined = await tournamentEventStore.join(code, joinName.trim(), joinArmy);
+		if (joined) {
+			joinName = '';
+			joinArmy = null;
+			navigationStore.enterTournamentLobby();
+		}
+	}
+
 	// Pick Army dialog
 	let showPickArmy = $state(false);
 	let showCreateArmyPrompt = $state(false);
@@ -263,9 +333,9 @@
 	/** Which slot the picker is choosing for: a briefing seat, or the tournament organizer. */
 	let pickTarget = $state<string | null>(null);
 
-	/** Mission runs field standard lists; a playing organizer brings a Roster one. */
+	/** Mission runs field standard lists; a playing organizer and a joiner bring a Roster one. */
 	function pickFormatFor(slotId: string | null): ArmyFormat {
-		return slotId === 'tournament' ? 'tournament' : 'standard';
+		return slotId === 'tournament' || slotId === 'tournament-join' ? 'tournament' : 'standard';
 	}
 
 	async function openPickArmy(slotId: string): Promise<void> {
@@ -293,6 +363,7 @@
 			code: army.code
 		};
 		if (pickTarget === 'tournament') tournamentStore.setOrganizerArmy(picked);
+		else if (pickTarget === 'tournament-join') joinArmy = picked;
 		else if (isSeatSlot(pickTarget)) twoPlayerProgressStore.pickArmy(pickTarget, picked);
 		else missionProgressStore.pickArmy(picked);
 		showPickArmy = false;
@@ -300,6 +371,7 @@
 
 	function clearPickedArmy(slotId: string): void {
 		if (slotId === 'tournament') tournamentStore.clearOrganizerArmy();
+		else if (slotId === 'tournament-join') joinArmy = null;
 		else if (isSeatSlot(slotId)) twoPlayerProgressStore.clearPickedArmy(slotId);
 		else missionProgressStore.clearPickedArmy();
 	}
@@ -548,16 +620,47 @@
 		{seasons}
 		missions={contentStore.missions}
 		canCreate={tournamentStore.canCreate}
+		creating={creatingTournament}
+		createError={tournamentEventStore.error}
 		onAddMission={(missionId) => tournamentStore.addMission(missionId)}
 		onRemoveMission={(missionId) => tournamentStore.removeMission(missionId)}
 		onTableNameChange={(index, name) => tournamentStore.setTableName(index, name)}
-		onCreate={() => tournamentStore.createTournament()}
+		onCreate={() => void createTournamentFromWizard()}
 		onBack={() =>
 			tournamentStore.step === 'basics'
 				? navigationStore.leaveTournament()
 				: tournamentStore.back()}
 		onContinue={() => tournamentStore.continueSetup()}
 		onReview={() => tournamentStore.reviewTournament()}
+	/>
+{:else if navigationStore.screen === 'tournament-lobby'}
+	{#if tournamentEventStore.view}
+		<TournamentLobby
+			view={tournamentEventStore.view}
+			missions={contentStore.missions}
+			factions={contentStore.armyFactions}
+			onLeave={() => {
+				tournamentEventStore.leave();
+				navigationStore.leaveTournamentLobby();
+			}}
+		/>
+	{/if}
+{:else if navigationStore.screen === 'tournament-join'}
+	<TournamentJoin
+		peek={tournamentEventStore.peek}
+		error={tournamentEventStore.error}
+		name={joinName}
+		army={joinArmy}
+		armyFaction={joinArmyFaction}
+		canJoin={joinReady}
+		onNameChange={(value) => (joinName = value)}
+		onPickArmy={() => void openPickArmy('tournament-join')}
+		onClearArmy={() => clearPickedArmy('tournament-join')}
+		onJoin={() => void joinTournamentFromInvite()}
+		onLeave={() => {
+			tournamentEventStore.cancelJoin();
+			navigationStore.leaveTournamentLobby();
+		}}
 	/>
 {:else if navigationStore.screen === 'season-select'}
 	<SeasonSelect
@@ -726,8 +829,8 @@
 	<PickArmyDialog
 		armies={pickArmies}
 		factions={contentStore.armyFactions}
-		note={pickTarget === 'tournament'
-			? 'Roster-format armies (125 points). The list is attached to the tournament as it is now.'
+		note={pickTarget === 'tournament' || pickTarget === 'tournament-join'
+			? 'Roster-format armies (125 points). The list is attached as it is now.'
 			: undefined}
 		onPick={selectPickedArmy}
 		onCancel={() => (showPickArmy = false)}

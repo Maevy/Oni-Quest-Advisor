@@ -63,7 +63,58 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (Tournament: the overview pane)
+## What was done in the last session (Tournament: creation, the lobby and joining)
+
+The feature left the client: **Create Tournament** on the overview now talks to the server, and
+the tournament lives in a shared **lobby** the organizer and every player see.
+
+1. **The retention notice.** **Create Tournament** first opens a confirmation naming the reason:
+   the tournament's data is kept 48 hours _after it concludes_ so a report can be generated (a
+   printable report is a later step), then deleted. Only its **Create** is the first server
+   contact; **Not yet** stays on the overview with the draft untouched.
+2. **Domain `tournamentEvent.ts`.** The server-authoritative `TournamentState` (code, status
+   `lobby`/`active`/`concluded`/`closed`, configuration, and one seat per pairing slot) with pure
+   `createTournamentEvent` / `joinTournament` / `canJoinTournament` guards, `seatIndexForTokenHash`
+   and the visibility filters: `viewForTournamentToken` (organizer or seated player — army names and
+   factions, never codes or tokens) and `peekTournament` (what the join page may see before
+   joining). 28 tests.
+3. **Server.** `tournaments` + `tournament_events` tables; `tournamentRepository.ts` mirrors the
+   games repository (one write transaction per mutation behind its own FIFO queue, so concurrent
+   joins cannot double-book a seat); `payload.ts` parses the registered-army snapshot with length
+   caps; `sse.ts` became a registry factory (games + tournaments, 40 subscribers per tournament);
+   `POST /api/tournaments` (re-validates the whole configuration), `GET .../state`, `GET .../peek`,
+   `POST .../join`, `GET .../events`; the creation rate limit now covers both creation endpoints;
+   `/api/health` reports tournaments; cleanup keeps lobbies 7 days, abandoned events 30 and
+   concluded ones exactly the 48-hour report window. 8 repository tests + 3 retention tests.
+4. **QR.** `npm install` is blocked on this machine, so the symbol is encoded in-app: `domain/qr.ts`
+   is a byte-mode, EC-level-M, versions 1–6, mask-0 QR encoder (GF log/exp tables, block
+   interleaving, format BCH) rendered by `QrCode.svelte` as an SVG — nothing about a join link goes
+   to a third-party generator. Verified two ways: an in-spec independent reader (jsQR's own
+   function-mask and zigzag, de-interleaved) round-trips v1/v3/v4/v6 payloads, and jsQR decodes the
+   rendered symbol in Edge; its codewords were also diffed against a third-party encoder's for the
+   same payload and matched byte for byte. Two encoder bugs found that way: the timing pattern was
+   drawn over the finder rings, and the RS generator multiplied by x in the wrong direction.
+5. **Client.** `tournamentApi`/`tournamentSession` wrappers, `tournamentEvent.svelte.ts`
+   (create/join/leave/cancelJoin, SSE-triggered refetches like `onlineGameStore`), screens
+   `tournament-lobby` and `tournament-join` (route `/tournament-join/[code]`), the lobby and join
+   components, app-start resume into the lobby, and the join picker reusing the saved-army dialog
+   filtered to Roster lists.
+6. **The lobby.** Name, external link, organizer, pairing mode, join code, missions, tables and one
+   row per seat (registered name + army name/faction, `you`/`organizer` marks, or _Empty seat_);
+   organizers also get **Share Link** (clipboard, with the URL shown inline when copying is
+   blocked) and **QR Code**, plus a **Start Tournament** button that is deliberately disabled until
+   the odd-field BYE rule exists. Players see the same lobby read-only.
+7. **Verified:** `check` 0/0, lint clean, 450 tests (49 new), a 19-assertion API pass (create,
+   peek, both views, join, duplicate-token and missing-army refusals, 401s, SSE, invalid
+   configuration, health) and a 17-assertion two-context browser pass (notice → lobby → share →
+   QR decoded with jsQR → second device joins → organizer's lobby updates live → reload resumes →
+   leaving returns home).
+8. **Next (agreed, not built):** **Start Tournament** with an odd number of registered players
+   shows an info panel that the missing spot will be filled with a **BYE** — an imaginary player
+   who takes a seat but is never played against, so that player sits the round out and takes the
+   win. Open: who takes the BYE, and what a BYE win is worth in points.
+
+## What was done in the session before (Tournament: the overview pane)
 
 The wizard grew its third pane: the **Overview**, a read-only review of everything configured
 before the tournament is created. Step 2's **Create Tournament** button became **Overview** (same

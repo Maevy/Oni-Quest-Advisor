@@ -25,7 +25,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// all such traffic shares one bucket, the conservative direction.
 		}
 		const allowed =
-			event.url.pathname === '/api/games'
+			event.url.pathname === '/api/games' || event.url.pathname === '/api/tournaments'
 				? checkRateLimit(`create:${ip}`, GAME_CREATION_LIMIT_PER_HOUR, 60 * 60 * 1000)
 				: checkRateLimit(`action:${ip}`, ACTION_LIMIT_PER_MINUTE, 60 * 1000);
 		if (!allowed) return json({ error: 'Too many requests' }, { status: 429 });

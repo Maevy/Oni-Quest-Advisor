@@ -14,3 +14,5 @@ export * from './army';
 export * from './armyCode';
 export * from './savedArmy';
 export * from './tournament';
+export * from './tournamentEvent';
+export * from './qr';

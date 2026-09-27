@@ -6,7 +6,8 @@ way to play and its first multi-table one — everything before it was a single 
 sides.
 
 > **Under construction.** This document grows with the feature, step by step. What exists today is
-> the entry point and the configuration wizard's three panes; everything from creation onward is
+> the entry point, the configuration wizard's three panes, creation behind the retention notice,
+> the lobby with its link and QR invites, and joining; pairing, overwatch and the conclusion are
 > planned, and the plan's undecided parts are listed at the end.
 
 ## The shape of the feature (planned)
@@ -105,20 +106,101 @@ this pane edits the draft — a change means stepping back — so the organizer 
 be created.
 
 **Create Tournament** — enabled once at least one mission is on the list, the same gate that
-opened this pane. As of this iteration it is the seam only: pressing it validates and stops,
-because creating the tournament on the server is the next step of the feature.
+opened this pane. It does not create anything yet: the retention notice below comes first, and
+only its **Create** talks to the server.
 
 Decisions taken here:
 
 - **The overview is the only review.** Step 2's summary panel of step 1 is gone: every fact it
   repeated is reviewable here, in full, right before creation.
-- **Creation will ask before it happens.** The next step wraps **Create Tournament** in a notice
-  that the tournament's data is kept for 48 hours afterwards for report generation — a printable
-  tournament report is planned — and only a proceed from that notice touches the server.
 
 Navigation within the wizard: **Return** steps back one pane at a time — overview to missions &
 tables, missions & tables to basics — keeping the whole draft intact; on step 1 it leaves the
 wizard and discards it.
+
+## Creation — the retention notice
+
+Pressing **Create Tournament** opens a confirmation first: _"Create this tournament? Its data —
+players, tables and results — is kept on the server for 48 hours after the tournament concludes so
+a report can be generated, and deleted afterwards."_ **Create** performs the first server contact
+and opens the lobby; **Not yet** stays on the overview with the draft untouched.
+
+Decisions taken here:
+
+- **The notice is the TO's consent to retention**, and it names the reason: a printable tournament
+  report is a later step of this feature, and a report needs the data to outlive the event.
+- **The 48 hours run from the conclusion**, not from creation — an event that runs long is never
+  deleted mid-play. An abandoned lobby goes after 7 days and a tournament abandoned mid-play after
+  30, the windows online games already use.
+- **The server re-validates everything.** Names, optional link, field size, mission list and table
+  list are checked again on `POST /api/tournaments`; the wizard's gates are a courtesy, not a
+  boundary. A playing organizer without an army is refused there too.
+
+## The lobby (the initial tournament screen)
+
+The screen both the TO and every player land on after creating or joining. It shows the whole
+event: the name, the external link (openable), the organizer, the pairing mode, the join code, the
+mission list, the table names, and the **participants panel** — one row per pairing slot, either a
+name with their registered army's name and faction colour (marked `you` on the viewer's own row and
+`organizer` on the TO's) or _Empty seat_. A playing TO's seat is filled from creation.
+
+The organizer additionally gets the **Invite Players** panel: **Share Link** copies the join URL to
+the clipboard with a "copied" confirmation — and shows the URL inline for manual copying when the
+clipboard is unavailable — and **QR Code** opens the same URL as a scannable symbol. At the bottom
+the **Start Tournament** button moves everyone on to match setup; it is present but disabled until
+the odd-field rule below exists.
+
+Decisions taken here:
+
+- **One screen for both roles.** A player sees exactly what the TO sees minus the invite controls
+  and the start button, so nobody has to ask who is in or what is being played.
+- **The lobby updates live.** Joins reach every open lobby over the same SSE change-notification
+  mechanism online games use: a notification triggers a refetch of the viewer's filtered view.
+- **Army codes and seat tokens never leave the server.** The lobby shows a registered army's name
+  and faction; the code stays with its owner, so nobody can import somebody else's list from the
+  participants panel.
+- **A device that already holds a seat goes straight to the lobby** when it opens its own invite
+  link again, instead of being offered a second seat.
+- **The QR symbol is encoded in the app** (a small byte-mode, level-M, versions 1–6 encoder in
+  `domain/qr.ts`, rendered as an SVG). Nothing is sent to a third-party generator, because the link
+  _is_ the credential to join.
+
+## Joining a tournament
+
+The invite link (`/tournament-join/<code>`, reached by link or by scanning the QR code) hands the
+code to the app and opens a join screen: what the tournament is (name, organizer, how many of the
+field's seats are taken) and the joiner's registration — a name and a **Roster** army from their
+own saved lists, with **Join** unlocking only when both are given and a seat is free. On success
+the device stores a seat session (`oni-quest-advisor:tournament-session`: code, role, token) and
+lands in the lobby, read only; a reload resumes straight back into it.
+
+Decisions taken here:
+
+- **A joiner must bring a Roster list**, exactly like a playing TO: the same saved-army picker
+  filtered to 125-point lists, and the same offer to build one when the device has none.
+- **Seats fill first-come-first-served and the field refuses overflow.** Once every slot is taken the
+  join screen says so and further joins are refused — no waitlist and no per-join approval, so the
+  TO does not have to babysit the door.
+- **The joiner's token is generated on their own device** and only its SHA-256 hash is stored, the
+  pattern online seats already use; one token holds one seat, so a replayed join is refused.
+
+## Next — the odd field and the BYE
+
+**Start Tournament** stays disabled until this exists. Pressing it with an odd number of registered
+players shows an info panel: you are about to start with an odd field, and proceeding fills the
+missing spot with a **BYE** — an imaginary player who takes a seat but is never played against. A
+player paired against the BYE sits that round out and takes it as a win.
+
+Decided so far:
+
+- **A BYE is a seat, not a skipped round.** It occupies one of the field's slots for pairing
+  purposes, which keeps every pairing round uniform and keeps the table count meaningful.
+- **It is announced before it happens**, so the TO can still go back and wait for one more player
+  instead of starting an odd field by accident.
+
+Still open (see Open questions): who takes the BYE when the field is odd — lowest score, the player
+who has had it least, or the TO's choice — and whether a BYE win carries the same tournament points
+as a played win.
 
 ## Open questions
 
@@ -135,17 +217,19 @@ wizard and discards it.
   win/draw/loss is worth in tournament points.
 - **Manual pairing.** What the TO sees and does when pairing by hand — a drag between player
   cards, a row of dropdowns, something else — and whether manual mode still scores Swiss-style.
-- **The organizer's army is a display snapshot today**, exactly like a mission run's picked army.
-  Whether a playing TO's list is ever enforced (Roster cap, faction) — and whether the other
-  players' armies arrive with their join, so tables can show both lists — is open.
+- **Registered armies are snapshots, not validated lists.** The TO's and every joiner's Roster list
+  arrives as a `{ name, factionId, code }` snapshot and is shown by name and faction; the server
+  never decodes the code, so nothing enforces the 125-point cap yet. Whether creation and join
+  should verify it (the code is self-describing) is open.
+- **Who takes the BYE**, and what a BYE win is worth in tournament points — see the BYE section.
 - **Where do the tables' games actually run?** Presumably each table is a normal match on the
   players' own devices through the online machinery, with the tournament server overwatching;
   whether a table may instead be hot-seat on one device is open.
 - **Concluding.** What decides the victor — tournament points, match wins, tie-breaks — and what
   the final screen shows.
-- **Persistence and identity.** The tournament will need server state (like online games) and the
-  TO a session; whether the TO's device doubles as a player's device when they tick the box is
-  part of that.
+- **Identity beyond the seat token.** A device holds exactly one tournament seat session; whether a
+  name can be reused across tournaments, whether a TO can hand their seat over, or whether players
+  ever get an account, is open.
 - **Naming collision.** The army builder's 125-point Roster format is internally `'tournament'`
   (`ArmyFormat`), and that string is baked into the army-code wire format and saved-army JSON —
   so "tournament" currently means two unrelated things in the codebase. Worth renaming the

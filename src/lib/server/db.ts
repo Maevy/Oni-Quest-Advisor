@@ -20,6 +20,22 @@ const SCHEMA = [
 		payload TEXT NOT NULL,
 		created_at TEXT NOT NULL,
 		PRIMARY KEY (game_id, seq)
+	)`,
+	`CREATE TABLE IF NOT EXISTS tournaments (
+		id TEXT PRIMARY KEY,
+		status TEXT NOT NULL,
+		state TEXT NOT NULL,
+		created_at TEXT NOT NULL,
+		updated_at TEXT NOT NULL
+	)`,
+	`CREATE TABLE IF NOT EXISTS tournament_events (
+		tournament_id TEXT NOT NULL REFERENCES tournaments(id),
+		seq INTEGER NOT NULL,
+		type TEXT NOT NULL,
+		actor TEXT,
+		payload TEXT NOT NULL,
+		created_at TEXT NOT NULL,
+		PRIMARY KEY (tournament_id, seq)
 	)`
 ];
 

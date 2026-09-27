@@ -96,15 +96,6 @@ class TournamentStore {
 		this.draft = domain.setTournamentTableName(this.draft, index, name);
 	}
 
-	/**
-	 * Creates the tournament on the server and hands the organizer their session — the first
-	 * contact with the backend, reached from the overview pane. The server side is the next
-	 * iteration; until then this guard is all of it, and the button is the seam.
-	 */
-	createTournament(): void {
-		if (!this.canCreate) return;
-	}
-
 	/** Basics → missions & tables, once both names are given and the optional link is usable. */
 	continueSetup(): void {
 		if (!this.canContinue) return;

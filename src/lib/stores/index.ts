@@ -5,3 +5,4 @@ export * from './twoPlayerProgress.svelte';
 export * from './onlineGame.svelte';
 export * from './armyBuilder.svelte';
 export * from './tournament.svelte';
+export * from './tournamentEvent.svelte';

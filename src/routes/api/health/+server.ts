@@ -13,6 +13,12 @@ export const GET = async () => {
 	const games: Record<string, number> = {};
 	for (const row of result.rows) games[String(row[0])] = Number(row[1]);
 
+	const tournamentResult = await db.execute(
+		'SELECT status, COUNT(*) AS count FROM tournaments GROUP BY status'
+	);
+	const tournaments: Record<string, number> = {};
+	for (const row of tournamentResult.rows) tournaments[String(row[0])] = Number(row[1]);
+
 	let dbBytes = 0;
 	try {
 		dbBytes = statSync(dbFilePath()).size;
@@ -20,5 +26,5 @@ export const GET = async () => {
 		// Not created yet (no request touched the database so far).
 	}
 
-	return json({ ok: true, games, dbBytes, sseStreams: openStreamCount() });
+	return json({ ok: true, games, tournaments, dbBytes, sseStreams: openStreamCount() });
 };

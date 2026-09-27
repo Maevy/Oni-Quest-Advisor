@@ -9,6 +9,7 @@ import {
 	chooseSeatScheme,
 	closeGame,
 	createOnlineGame,
+	createTournamentEvent,
 	finishGame,
 	requestJoin,
 	selectMission,
@@ -19,10 +20,11 @@ import {
 	startGame,
 	toggleRevealIntent
 } from '$lib/domain';
-import { cleanupStaleGames } from './cleanup';
+import { cleanupStaleGames, cleanupStaleTournaments } from './cleanup';
 import { getDb } from './db';
 import { getGame, insertGame } from './gameRepository';
 import { generateGameCode, generateSeatToken, hashToken } from './ids';
+import { getTournament, insertTournament } from './tournamentRepository';
 
 // Point the file database at a throwaway directory before the lazy DB opens.
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), 'oni-quest-advisor-cleanup-test-'));
@@ -187,5 +189,53 @@ describe('cleanupStaleGames', () => {
 		const game = await getGame(id);
 		expect(game?.status).toBe('active');
 		expect(game?.currentRound).toBe(MAX_ROUND);
+	});
+});
+
+describe('cleanupStaleTournaments', () => {
+	/** A tournament of the given status whose snapshot row is `ageInHours` old. */
+	async function seedTournament(status: 'lobby' | 'active' | 'concluded', ageInHours: number) {
+		const code = generateGameCode();
+		const state = createTournamentEvent({
+			code,
+			name: 'Cup',
+			externalLink: null,
+			organizerName: 'Marta',
+			organizerTokenHash: hashToken(generateSeatToken()),
+			organizerPlays: false,
+			organizerArmy: null,
+			participantCount: 4,
+			manualPairing: false,
+			missionIds: [MISSION_ID],
+			tableNames: ['Table 1', 'Table 2'],
+			now: new Date(Date.now() - ageInHours * 60 * 60 * 1000).toISOString()
+		});
+		await insertTournament(
+			{ ...state, status },
+			{ type: 'tournament-created', actor: 'organizer' }
+		);
+		return code;
+	}
+
+	it('keeps a concluded tournament for exactly the 48-hour report window', async () => {
+		const fresh = await seedTournament('concluded', 47);
+		const stale = await seedTournament('concluded', 49);
+		expect(await cleanupStaleTournaments(await getDb())).toBe(1);
+		expect((await getTournament(fresh))?.code).toBe(fresh);
+		expect(await getTournament(stale)).toBeNull();
+	});
+
+	it('drops abandoned lobbies after a week', async () => {
+		const fresh = await seedTournament('lobby', 24);
+		const stale = await seedTournament('lobby', 24 * 8);
+		expect(await cleanupStaleTournaments(await getDb())).toBe(1);
+		expect((await getTournament(fresh))?.code).toBe(fresh);
+		expect(await getTournament(stale)).toBeNull();
+	});
+
+	it('leaves a tournament that is still running alone', async () => {
+		const active = await seedTournament('active', 24 * 20);
+		expect(await cleanupStaleTournaments(await getDb())).toBe(0);
+		expect((await getTournament(active))?.status).toBe('active');
 	});
 });
