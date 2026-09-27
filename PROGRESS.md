@@ -89,6 +89,12 @@ place the whole draft is reviewed.
    the whole wizard (step 2 without the summary panel, the Overview gate, the overview's four
    panels and every fact on them, read-only-ness, back through all three panes with the draft
    intact, manual pairing reading through, Create still the seam, discard-on-leave).
+5. **A held seat must come with a list (same session, user rule):** ticking "I am also a
+   participant" now blocks **Continue** until a Roster army is attached — domain
+   `organizerSeatNeedsArmy` joins the Continue gate, the store exposes `organizerArmyMissing`, and
+   the pane marks the Pick button red with the reason beside it and again under the disabled
+   Continue. Giving the seat up drops the army and unblocks the wizard again. 4 more domain tests
+   (57 in `tournament.spec.ts`) and an 8-assertion browser pass over the gate.
 
 ## What was done in the session before (Tournament: entry point and configuration step 1)
 

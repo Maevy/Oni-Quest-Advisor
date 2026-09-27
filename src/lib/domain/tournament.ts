@@ -153,12 +153,24 @@ export function setTournamentOrganizerArmy(
 	return { ...draft, organizerArmy: army };
 }
 
-/** The wizard advances only once the names are given and the optional link is usable. */
+/**
+ * A seat the organizer holds has to come with a list: without an army they cannot participate,
+ * so the wizard will not advance past the first pane while the tick is on and the pick is empty.
+ */
+export function organizerSeatNeedsArmy(draft: TournamentDraft): boolean {
+	return draft.organizerPlays && draft.organizerArmy === null;
+}
+
+/**
+ * The wizard advances only once the names are given, the optional link is usable and — when the
+ * organizer takes a seat — that seat has an army to bring.
+ */
 export function canContinueTournamentSetup(draft: TournamentDraft): boolean {
 	return (
 		draft.name.trim().length > 0 &&
 		draft.organizerName.trim().length > 0 &&
-		checkExternalLink(draft.externalLink).ok
+		checkExternalLink(draft.externalLink).ok &&
+		!organizerSeatNeedsArmy(draft)
 	);
 }
 

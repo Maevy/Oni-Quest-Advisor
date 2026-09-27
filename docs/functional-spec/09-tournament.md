@@ -51,6 +51,10 @@ Decisions taken so far:
   slots; the organizer's tick does not add a ninth. The panel says so while the tick is on: _"You
   hold one of these 8 seats."_ Giving the seat up again drops the picked army — a seat not held
   has no list to bring, and re-ticking does not resurrect it.
+- **A held seat must come with a list.** Continue stays blocked while the tick is on and no army
+  is attached: without a list the organizer cannot participate. The pick is marked red with the
+  reason beside it, and the line under the disabled Continue repeats it. Giving the seat up drops
+  the army and unblocks the wizard again.
 - **The external link is optional but, once typed, must be usable.** It is normalized to an
   http(s) URL (a bare `tabletop.events/x` gains `https://`), and anything else — spaces, foreign
   schemes, a scheme with no host — blocks Continue and marks the field red with a hint. Whitespace

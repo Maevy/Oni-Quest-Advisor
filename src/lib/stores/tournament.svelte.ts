@@ -22,6 +22,14 @@ class TournamentStore {
 	}
 
 	/**
+	 * True while the organizer holds a seat without an army for it — a seat without a list
+	 * cannot participate, so this blocks Continue and is shown as the reason why.
+	 */
+	get organizerArmyMissing(): boolean {
+		return domain.organizerSeatNeedsArmy(this.draft);
+	}
+
+	/**
 	 * Whether the tournament may be created: at least one mission on the list. The same gate
 	 * opens the overview pane, which is where creation happens.
 	 */

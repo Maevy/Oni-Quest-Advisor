@@ -11,6 +11,7 @@ import {
 	clampTournamentPlayers,
 	createEmptyTournamentDraft,
 	defaultTableName,
+	organizerSeatNeedsArmy,
 	previousTournamentStep,
 	removeTournamentMission,
 	setTournamentOrganizerArmy,
@@ -129,6 +130,7 @@ describe('canContinueTournamentSetup', () => {
 			canContinueTournamentSetup({
 				...named,
 				organizerPlays: true,
+				organizerArmy: army,
 				manualPairing: true,
 				participantCount: MAX_TOURNAMENT_PLAYERS
 			})
@@ -161,6 +163,23 @@ describe('canContinueTournamentSetup', () => {
 
 	it('blocks while the external link is not a usable address', () => {
 		expect(canContinueTournamentSetup({ ...named, externalLink: 'not a link' })).toBe(false);
+	});
+
+	it('blocks while a playing organizer has no army for their seat', () => {
+		expect(canContinueTournamentSetup({ ...named, organizerPlays: true })).toBe(false);
+	});
+
+	it('lets a playing organizer through once the seat has a list', () => {
+		expect(
+			canContinueTournamentSetup({ ...named, organizerPlays: true, organizerArmy: army })
+		).toBe(true);
+	});
+
+	it('unblocks when the seat is given up again — a non-player needs no list', () => {
+		const draft = setTournamentOrganizerPlays({ ...named, organizerPlays: true }, false);
+
+		expect(draft.organizerArmy).toBeNull();
+		expect(canContinueTournamentSetup(draft)).toBe(true);
 	});
 });
 
@@ -258,6 +277,25 @@ describe('the organizer seat', () => {
 
 		expect(played.name).toBe('Eldfall Cup');
 		expect(played.participantCount).toBe(12);
+	});
+});
+
+describe('organizerSeatNeedsArmy', () => {
+	it('is true only for a held seat without a list', () => {
+		expect(organizerSeatNeedsArmy(createEmptyTournamentDraft())).toBe(false);
+		expect(organizerSeatNeedsArmy({ ...createEmptyTournamentDraft(), organizerArmy: army })).toBe(
+			false
+		);
+		expect(organizerSeatNeedsArmy({ ...createEmptyTournamentDraft(), organizerPlays: true })).toBe(
+			true
+		);
+		expect(
+			organizerSeatNeedsArmy({
+				...createEmptyTournamentDraft(),
+				organizerPlays: true,
+				organizerArmy: army
+			})
+		).toBe(false);
 	});
 });
 

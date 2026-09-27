@@ -197,7 +197,7 @@ native/platform-specific one. Used on a phone screen during a game session.
   (normalized to an http(s) URL, unusable input blocks Continue), organizer
   name, and a "TO also plays" tick that reveals a **Roster**-format army pick
   (the saved-army picker filtered to 125-point lists; giving up the seat drops
-  the army). The field is 4–32 stepping **in pairs** — an even field needs no
+  the army, and a playing TO must attach one to continue). The field is 4–32 stepping **in pairs** — an even field needs no
   bye rule — and a playing TO holds one of those seats rather than adding to
   them. The second pane collects an ordered, deduplicated mission list through
   an **Add Quest** popup (season dropdown + clickable missions) and one

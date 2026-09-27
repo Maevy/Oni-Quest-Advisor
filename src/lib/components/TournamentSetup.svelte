@@ -22,6 +22,8 @@
 		canContinue: boolean;
 		/** A link was typed but is not a usable http(s) URL. */
 		externalLinkInvalid: boolean;
+		/** The organizer holds a seat but no army for it — a seat without a list cannot play. */
+		organizerArmyMissing: boolean;
 		/** The organizer's picked army resolved for display, when there is one. */
 		organizerFaction: ArmyFactionConfig | undefined;
 		/** Everything the Add Quest popup can offer; the popup groups it by season. */
@@ -53,6 +55,7 @@
 		step,
 		canContinue,
 		externalLinkInvalid,
+		organizerArmyMissing,
 		organizerFaction,
 		seasons,
 		missions,
@@ -180,7 +183,8 @@
 									I am also a participant
 								</span>
 								<span class="mt-0.5 block text-xs text-slate-400">
-									You take one of the seats below and are paired in like everyone else.
+									You take one of the seats below, are paired in like everyone else and field the
+									Roster army you pick.
 								</span>
 							</span>
 						</label>
@@ -219,11 +223,14 @@
 							{:else}
 								<button
 									type="button"
-									class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2 text-sm font-medium text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20"
+									class="rounded-xl border-2 border-red-500/60 bg-slate-900/60 px-3 py-2 text-sm font-medium text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20"
 									onclick={onPickArmy}
 								>
 									Pick Roster Army
 								</button>
+								<p class="text-xs text-red-400">
+									A seat needs a list — pick the Roster army you will field to continue.
+								</p>
 							{/if}
 						{/if}
 					</div>
@@ -291,7 +298,13 @@
 			<button type="button" class={advanceButton} disabled={!canContinue} onclick={onContinue}>
 				Continue
 			</button>
-			<p class="-mt-2 text-center text-xs text-slate-400">Next: missions and tables.</p>
+			{#if organizerArmyMissing}
+				<p class="-mt-2 text-center text-xs text-red-400">
+					Pick a Roster army for your seat to continue.
+				</p>
+			{:else}
+				<p class="-mt-2 text-center text-xs text-slate-400">Next: missions and tables.</p>
+			{/if}
 		{:else if step === 'missions'}
 			<Panel title="Missions">
 				{#if draft.missionIds.length > 0}

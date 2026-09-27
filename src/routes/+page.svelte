@@ -535,6 +535,7 @@
 		step={tournamentStore.step}
 		canContinue={tournamentStore.canContinue}
 		externalLinkInvalid={tournamentStore.externalLinkInvalid}
+		organizerArmyMissing={tournamentStore.organizerArmyMissing}
 		organizerFaction={organizerArmyFaction}
 		onNameChange={(name) => tournamentStore.setName(name)}
 		onExternalLinkChange={(link) => tournamentStore.setExternalLink(link)}
