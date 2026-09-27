@@ -554,8 +554,9 @@
 		onBack={() =>
 			tournamentStore.step === 'basics'
 				? navigationStore.leaveTournament()
-				: tournamentStore.backToBasics()}
+				: tournamentStore.back()}
 		onContinue={() => tournamentStore.continueSetup()}
+		onReview={() => tournamentStore.reviewTournament()}
 	/>
 {:else if navigationStore.screen === 'season-select'}
 	<SeasonSelect

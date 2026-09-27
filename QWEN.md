@@ -191,20 +191,25 @@ native/platform-specific one. Used on a phone screen during a game session.
 - **Tournament** (under construction) → an event run by a Tournament Organizer
   (TO): players join, are paired round by round at tables, and the event
   concludes with a victor. Reached from the mode select's red **Organize
-  Tournament** button; configuration is a local two-step wizard on a
-  `TournamentDraft` (`domain/tournament.ts`): name, optional **external link**
+  Tournament** button; configuration is a local three-pane wizard on a
+  `TournamentDraft` (`domain/tournament.ts`, the panes in
+  `TOURNAMENT_SETUP_STEPS`): name, optional **external link**
   (normalized to an http(s) URL, unusable input blocks Continue), organizer
   name, and a "TO also plays" tick that reveals a **Roster**-format army pick
   (the saved-army picker filtered to 125-point lists; giving up the seat drops
   the army). The field is 4–32 stepping **in pairs** — an even field needs no
   bye rule — and a playing TO holds one of those seats rather than adding to
-  them. Step 2 collects an ordered, deduplicated mission list through an **Add
-  Quest** popup (season dropdown + clickable missions) and one editable name
-  per table, the table count derived as half the field so custom names stay
-  with their table number. Nothing is persisted or sent while configuring;
-  **Create Tournament** enables at one mission and is currently a validated
-  seam — the server side (invites via link/QR, pairings, overwatch, conclusion)
-  is the next iteration. Spec: `docs/functional-spec/09-tournament.md`.
+  them. The second pane collects an ordered, deduplicated mission list through
+  an **Add Quest** popup (season dropdown + clickable missions) and one
+  editable name per table, the table count derived as half the field so custom
+  names stay with their table number; its **Overview** button — enabled at one
+  mission — opens the third pane, a read-only review of the whole draft in
+  four panels. Nothing is persisted or sent while configuring; **Create
+  Tournament** lives on the overview under the same one-mission gate and is
+  currently a validated seam — the next step wraps it in a notice that the
+  tournament's data is kept 48 hours for report generation, then the server
+  side (invites via link/QR, pairings, overwatch, conclusion) follows. Spec:
+  `docs/functional-spec/09-tournament.md`.
 
 ## Architecture
 
@@ -267,7 +272,7 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
   (`online-create` → `online-join` → `online-game`) and the tournament wizard
-  (`tournament-setup`, both steps on one screen id). On mount it resumes a
+  (`tournament-setup`, all three panes on one screen id). On mount it resumes a
   stored online seat, and otherwise offers to resume an open local game.
   `api/games/**/+server.ts` are the online-mode
   endpoints (thin handlers over `lib/server`), `api/health/` is the
@@ -301,7 +306,8 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   shared panels (collapsible there via `Panel`'s `collapsible` prop). The army
   builder adds `ArmyFactionSelect`, `ArmyBuilderView` (sliding panels, swipe,
   mount toggles) and the `UnitCard` statline popup; the tournament wizard adds
-  `TournamentSetup` (both steps, with the Add Quest popup inside it).
+  `TournamentSetup` (all three panes, with the Add Quest popup inside it) and
+  the read-only `TournamentOverview` it renders on the last one.
   `ArmyBuilderView` and the two
   local trackers (`MissionDetail`, `MissionDetailTwoPlayer` — each of whose views
   sits in one sliding strip) are the app's three **full-height screens**: an

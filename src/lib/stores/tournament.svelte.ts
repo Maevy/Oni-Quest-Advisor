@@ -21,7 +21,10 @@ class TournamentStore {
 		return raw.length > 0 && !domain.checkExternalLink(raw).ok;
 	}
 
-	/** Whether the tournament may be created: at least one mission on the list. */
+	/**
+	 * Whether the tournament may be created: at least one mission on the list. The same gate
+	 * opens the overview pane, which is where creation happens.
+	 */
 	get canCreate(): boolean {
 		return domain.canCreateTournament(this.draft);
 	}
@@ -86,20 +89,30 @@ class TournamentStore {
 	}
 
 	/**
-	 * Creates the tournament on the server and hands the organizer their session. The server
-	 * side is the next iteration; until then this guard is all of it, and the button is the seam.
+	 * Creates the tournament on the server and hands the organizer their session — the first
+	 * contact with the backend, reached from the overview pane. The server side is the next
+	 * iteration; until then this guard is all of it, and the button is the seam.
 	 */
 	createTournament(): void {
 		if (!this.canCreate) return;
 	}
 
+	/** Basics → missions & tables, once both names are given and the optional link is usable. */
 	continueSetup(): void {
 		if (!this.canContinue) return;
 		this.step = 'missions';
 	}
 
-	backToBasics(): void {
-		this.step = 'basics';
+	/** Missions & tables → the read-only overview, once at least one mission is on the list. */
+	reviewTournament(): void {
+		if (!this.canCreate) return;
+		this.step = 'overview';
+	}
+
+	/** One pane back. The first pane has nowhere to go back to — leaving is the page's call. */
+	back(): void {
+		const previous = domain.previousTournamentStep(this.step);
+		if (previous) this.step = previous;
 	}
 }
 

@@ -95,7 +95,7 @@ each `src/lib/` folder.
 
 - **Tournament** — an event run by a Tournament Organizer: a named field of players paired round
   by round at tables, concluding with a victor. Under construction; today only the configuration
-  wizard's first step exists. See [09-tournament.md](./09-tournament.md).
+  wizard's three panes exist. See [09-tournament.md](./09-tournament.md).
 - **Tournament Organizer (TO)** — creates, configures, pairs and concludes a tournament and
   overwatches its tables. May also take one of the seats.
 - **Field** — the tournament's participant count: an even number from 4 to 32, one seat per
@@ -109,7 +109,7 @@ each `src/lib/` folder.
 game-mode ──┬── Solo ────────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── 2 Player ────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── Online 2 Player ─────▶ [intro notice] ▶ online-create ▶ online-join ▶ online-game
-            ├── Organize Tournament ─▶ tournament-setup (wizard; step 2 onward under construction)
+            ├── Organize Tournament ─▶ tournament-setup (wizard; creation onward under construction)
             └── Army Builder ────────▶ army-faction-select ▶ army-builder
 ```
 
@@ -143,7 +143,7 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
 8. [08-army-builder.md](./08-army-builder.md) — faction select, the builder, unit cards, mounts,
    upgrades, the Roster equipment pool, army codes and saved armies.
 9. [09-tournament.md](./09-tournament.md) — the Tournament Organizer's event: configuration
-   wizard (step 1 built), then invites, pairings, overwatch and the conclusion. Under
+   wizard (all three panes built), then invites, pairings, overwatch and the conclusion. Under
    construction; grows step by step.
 
 ## Open questions

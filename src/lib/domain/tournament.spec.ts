@@ -3,6 +3,7 @@ import {
 	MAX_TOURNAMENT_PLAYERS,
 	MIN_TOURNAMENT_PLAYERS,
 	TOURNAMENT_PLAYER_STEP,
+	TOURNAMENT_SETUP_STEPS,
 	addTournamentMission,
 	canContinueTournamentSetup,
 	canCreateTournament,
@@ -10,6 +11,7 @@ import {
 	clampTournamentPlayers,
 	createEmptyTournamentDraft,
 	defaultTableName,
+	previousTournamentStep,
 	removeTournamentMission,
 	setTournamentOrganizerArmy,
 	setTournamentOrganizerPlays,
@@ -356,5 +358,32 @@ describe('canCreateTournament', () => {
 		);
 
 		expect(canCreateTournament(draft)).toBe(false);
+	});
+
+	it('asks for nothing the earlier panes already settled', () => {
+		// The overview — and creation from it — is gated by the mission list alone: names and
+		// the link were checked leaving the first pane, the field size and the tickboxes are
+		// always legal, and an army or a renamed table is optional.
+		const draft = addTournamentMission(
+			{ ...createEmptyTournamentDraft(), name: '', organizerName: '', externalLink: 'nope' },
+			'treasure-hunt'
+		);
+
+		expect(canCreateTournament(draft)).toBe(true);
+	});
+});
+
+describe('the wizard panes', () => {
+	it('walks basics, then missions & tables, then the overview', () => {
+		expect(TOURNAMENT_SETUP_STEPS).toEqual(['basics', 'missions', 'overview']);
+	});
+
+	it('steps back exactly one pane at a time', () => {
+		expect(previousTournamentStep('overview')).toBe('missions');
+		expect(previousTournamentStep('missions')).toBe('basics');
+	});
+
+	it('has nowhere to step back to from the first pane — leaving the wizard is the page’s call', () => {
+		expect(previousTournamentStep('basics')).toBeNull();
 	});
 });

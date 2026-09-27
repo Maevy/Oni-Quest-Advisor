@@ -1,7 +1,23 @@
 import type { PickedArmy } from './savedArmy';
 
+/**
+ * The panes of the configuration wizard, in the order the organizer walks through them. The
+ * last one is the overview: a read-only review of everything configured before the tournament
+ * is actually created.
+ */
+export const TOURNAMENT_SETUP_STEPS = ['basics', 'missions', 'overview'] as const;
+
 /** Which pane of the configuration wizard the organizer is on. */
-export type TournamentSetupStep = 'basics' | 'missions';
+export type TournamentSetupStep = (typeof TOURNAMENT_SETUP_STEPS)[number];
+
+/**
+ * The pane one ← press returns to, or null on the first one — where leaving the wizard (and
+ * discarding the draft) is the page's business, not the wizard's.
+ */
+export function previousTournamentStep(step: TournamentSetupStep): TournamentSetupStep | null {
+	const index = TOURNAMENT_SETUP_STEPS.indexOf(step);
+	return index > 0 ? TOURNAMENT_SETUP_STEPS[index - 1] : null;
+}
 
 /**
  * The Tournament Organizer's configuration draft.
@@ -191,7 +207,12 @@ export function setTournamentTableName(
 	return { ...draft, tableNames };
 }
 
-/** The tournament can be created once at least one mission is on the list. */
+/**
+ * At least one mission on the list — the gate for leaving the missions pane for the overview
+ * and for creating the tournament from there. Everything else the wizard collects is either
+ * always legal (the field size, the tickboxes) or already checked on the way out of the first
+ * pane (both names, the optional link).
+ */
 export function canCreateTournament(draft: TournamentDraft): boolean {
 	return draft.missionIds.length > 0;
 }

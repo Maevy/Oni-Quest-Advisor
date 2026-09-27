@@ -63,7 +63,34 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (Tournament: entry point and configuration step 1)
+## What was done in the last session (Tournament: the overview pane)
+
+The wizard grew its third pane: the **Overview**, a read-only review of everything configured
+before the tournament is created. Step 2's **Create Tournament** button became **Overview** (same
+one-mission gate), and the step-1 summary panel it repeated is gone — the overview is now the only
+place the whole draft is reviewed.
+
+1. **The overview pane.** New `TournamentOverview.svelte`: four read-only panels — **Tournament**
+   (name, external link, organizer, the playing tick and the army picked for the seat, or "None
+   picked"), **Participants & Pairing** (field size, Swiss or by hand, plus the seat note while the
+   TO plays), **Missions** (the list in the order added, name + season) and **Tables** (numbered
+   names, "unnamed" for a cleared one). No inputs and no ✕ — a change means stepping back.
+2. **Three panes in domain.** `TournamentSetupStep` is now derived from a
+   `TOURNAMENT_SETUP_STEPS` tuple (`basics` → `missions` → `overview`) and
+   `previousTournamentStep()` is the only back rule; the store's `back()` walks it and
+   `reviewTournament()` opens the overview behind the same `canCreateTournament` gate that enables
+   **Create Tournament** on the last pane. The page still decides that ← on the first pane leaves
+   the wizard and discards the draft.
+3. **Decided for the next step (not built):** pressing **Create Tournament** will first show a
+   notice that the tournament's data is kept for **48 hours** afterwards for report generation (a
+   printable tournament report is planned), and only a proceed from that notice makes the first
+   server call. Recorded in 09-tournament.md so the seam stays honest until then.
+4. **Verified:** `check` 0/0, lint clean, 397 tests (4 new), and a 35-assertion browser pass over
+   the whole wizard (step 2 without the summary panel, the Overview gate, the overview's four
+   panels and every fact on them, read-only-ness, back through all three panes with the draft
+   intact, manual pairing reading through, Create still the seam, discard-on-leave).
+
+## What was done in the session before (Tournament: entry point and configuration step 1)
 
 The next big feature is **Tournament**: a Tournament Organizer (TO) creates an event, configures
 it, invites players via link/QR, assigns pairings, overwatches the tables and concludes with a

@@ -6,7 +6,7 @@ way to play and its first multi-table one — everything before it was a single 
 sides.
 
 > **Under construction.** This document grows with the feature, step by step. What exists today is
-> the entry point and the first step of the configuration wizard; everything after that is
+> the entry point and the configuration wizard's three panes; everything from creation onward is
 > planned, and the plan's undecided parts are listed at the end.
 
 ## The shape of the feature (planned)
@@ -65,7 +65,7 @@ Decisions taken so far:
 
 ## Step 2 — missions & tables
 
-Reached by **Continue** from step 1. A summary panel of step 1, then:
+Reached by **Continue** from step 1.
 
 **Missions** — the added missions in the order they were added, each a row with its name, its
 season and a ✕; and an **Add Quest** button. Add Quest opens a popup with a **Season** dropdown
@@ -79,9 +79,8 @@ count is derived, not configured: **half the participants**, so every round seat
 at once. Growing the field on step 1 appends default-named tables, shrinking drops the surplus —
 a custom name therefore always stays with its table number.
 
-**Create Tournament** — enabled once at least one mission is on the list. As of this iteration it
-is the seam only: pressing it validates and stops, because creating the tournament on the server
-is the next step of the feature.
+**Overview** — enabled once at least one mission is on the list; it opens step 3. This is the last
+pane that edits the draft.
 
 Decisions taken here:
 
@@ -92,8 +91,30 @@ Decisions taken here:
 - **The popup groups by season** rather than listing every mission at once, because the mission
   list will only grow and a flat list of everything would bury the current season.
 
-Navigation within the wizard: **Return** on step 2 goes back to step 1 with the whole draft
-intact; on step 1 it leaves the wizard and discards it.
+## Step 3 — the overview
+
+Reached by **Overview** from step 2. A read-only review of everything configured so far, in four
+panels: **Tournament** (the name, the external link, the organizer, whether they play and the army
+picked for their seat), **Participants & Pairing** (the field size and who pairs each round),
+**Missions** (the list in the order it was added) and **Tables** (the numbered names). Nothing on
+this pane edits the draft — a change means stepping back — so the organizer sees exactly what will
+be created.
+
+**Create Tournament** — enabled once at least one mission is on the list, the same gate that
+opened this pane. As of this iteration it is the seam only: pressing it validates and stops,
+because creating the tournament on the server is the next step of the feature.
+
+Decisions taken here:
+
+- **The overview is the only review.** Step 2's summary panel of step 1 is gone: every fact it
+  repeated is reviewable here, in full, right before creation.
+- **Creation will ask before it happens.** The next step wraps **Create Tournament** in a notice
+  that the tournament's data is kept for 48 hours afterwards for report generation — a printable
+  tournament report is planned — and only a proceed from that notice touches the server.
+
+Navigation within the wizard: **Return** steps back one pane at a time — overview to missions &
+tables, missions & tables to basics — keeping the whole draft intact; on step 1 it leaves the
+wizard and discards it.
 
 ## Open questions
 

@@ -295,16 +295,19 @@ codes are the persistence mechanism. See [08-army-builder.md](./08-army-builder.
 
 ## Tournament flow
 
-`game-mode` → **Organize Tournament** → `tournament-setup`, a two-step wizard on one screen id
+`game-mode` → **Organize Tournament** → `tournament-setup`, a three-pane wizard on one screen id
 (`selectTournament()` resets the draft first, so the wizard always opens clean):
 
 - **Step 1** — tournament name, optional external link, organizer name, the "I am also a
   participant" tick (which reveals the Roster-army pick), the 4–32 pair stepper and the
   manual-pairing tick. **Continue** is gated on the names and a usable link.
-- **Step 2** — the mission list (Add Quest popup), the table names, and **Create Tournament**,
-  gated on at least one mission. Creation itself is the next iteration's server work.
+- **Step 2** — the mission list (Add Quest popup) and the table names. **Overview**, gated on at
+  least one mission, opens the last pane.
+- **Step 3** — the read-only overview of everything configured, and **Create Tournament** on the
+  same one-mission gate. Creation itself — behind a notice that the data is kept 48 hours for
+  report generation — is the next iteration's server work.
 
-**Return** steps back from step 2 to step 1 keeping the draft, and leaves the wizard from step 1,
+**Return** steps back one pane at a time keeping the draft, and leaves the wizard from step 1,
 discarding it — like the army builder, the draft is in-memory only and the wizard has no
 persistence and no open-game record. Full detail in
 [09-tournament.md](./09-tournament.md).

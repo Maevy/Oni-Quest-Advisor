@@ -13,6 +13,7 @@
 	} from '$lib/domain';
 	import Panel from './Panel.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
+	import TournamentOverview from './TournamentOverview.svelte';
 	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
@@ -26,6 +27,7 @@
 		/** Everything the Add Quest popup can offer; the popup groups it by season. */
 		seasons: string[];
 		missions: Mission[];
+		/** At least one mission on the list — opens the overview, and creates from there. */
 		canCreate: boolean;
 		onNameChange: (name: string) => void;
 		onExternalLinkChange: (link: string) => void;
@@ -42,6 +44,8 @@
 		onCreate: () => void;
 		onBack: () => void;
 		onContinue: () => void;
+		/** Missions & tables → the read-only overview. */
+		onReview: () => void;
 	};
 
 	let {
@@ -66,7 +70,8 @@
 		onTableNameChange,
 		onCreate,
 		onBack,
-		onContinue
+		onContinue,
+		onReview
 	}: Props = $props();
 
 	const label = 'text-sm font-semibold tracking-wide text-sky-300 uppercase';
@@ -99,25 +104,18 @@
 		showAddQuest = false;
 	}
 
-	let summary = $derived.by(() => {
-		const parts = [
-			draft.name.trim(),
-			'organized by ' + draft.organizerName.trim(),
-			draft.participantCount + ' participants',
-			draft.manualPairing ? 'pairings by hand' : 'automatic Swiss pairings'
-		];
-		if (draft.externalLink.trim() !== '') parts.push(draft.externalLink.trim());
-		if (draft.organizerPlays) {
-			parts.push(
-				draft.organizerArmy ? 'playing with ' + draft.organizerArmy.name : 'playing, no army picked'
-			);
-		}
-		return parts.join(' · ');
-	});
+	const stepTitles: Record<TournamentSetupStep, string> = {
+		basics: 'Organize Tournament',
+		missions: 'Missions & Tables',
+		overview: 'Overview'
+	};
+
+	const advanceButton =
+		'rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600';
 </script>
 
 <div class="min-h-dvh pb-6">
-	<ScreenHeader title={step === 'basics' ? 'Organize Tournament' : 'Missions & Tables'} {onBack} />
+	<ScreenHeader title={stepTitles[step]} {onBack} />
 
 	<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
 		{#if step === 'basics'}
@@ -290,20 +288,11 @@
 				</div>
 			</Panel>
 
-			<button
-				type="button"
-				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-				disabled={!canContinue}
-				onclick={onContinue}
-			>
+			<button type="button" class={advanceButton} disabled={!canContinue} onclick={onContinue}>
 				Continue
 			</button>
 			<p class="-mt-2 text-center text-xs text-slate-400">Next: missions and tables.</p>
-		{:else}
-			<Panel title="Tournament">
-				<p class="text-sm text-slate-300">{summary}</p>
-			</Panel>
-
+		{:else if step === 'missions'}
 			<Panel title="Missions">
 				{#if draft.missionIds.length > 0}
 					<ul class="flex flex-col gap-2">
@@ -367,12 +356,16 @@
 				</ul>
 			</Panel>
 
-			<button
-				type="button"
-				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-				disabled={!canCreate}
-				onclick={onCreate}
-			>
+			<button type="button" class={advanceButton} disabled={!canCreate} onclick={onReview}>
+				Overview
+			</button>
+			<p class="-mt-2 text-center text-xs text-slate-400">
+				Next: review the whole tournament, then create it.
+			</p>
+		{:else}
+			<TournamentOverview {draft} {missions} {organizerFaction} />
+
+			<button type="button" class={advanceButton} disabled={!canCreate} onclick={onCreate}>
 				Create Tournament
 			</button>
 		{/if}
