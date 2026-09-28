@@ -220,7 +220,8 @@ native/platform-specific one. Used on a phone screen during a game session.
   by both roles: the event, one row per seat (name + army, `you`/`organizer`
   marks, or _Empty seat_), and for the organizer **Share Link** (clipboard,
   with the URL shown inline when copying is blocked), **QR Code** and a **Start
-  Tournament** button that stays disabled until the odd-field BYE rule exists.
+  Tournament** button that unlocks at two registered players, with an odd field
+  told about the BYE before it starts.
   Players arrive through `/tournament-join/[code]` (link or QR): a name plus a
   **Roster** army unlocks **Join**, which takes the first free seat — a full
   field refuses joins, there is no waitlist and no per-join approval — stores a
@@ -239,6 +240,32 @@ native/platform-specific one. Used on a phone screen during a game session.
   seat, and a failed abandon keeps the dialog open rather than clearing the
   session. Players may not leave once the event is `active` (a seat in a
   pairing needs a forfeit rule first); the organizer may still cancel it.
+  **Starting it** (`/start`, organizer-only, ≥ 2 registered players and at most
+  one seat empty — the configured tables must all get a pairing, and one empty
+  seat is exactly the BYE's case) flips lobby → `active`, closes joining and
+  leaving for good and opens round 1 on the first configured mission as a
+  `TournamentRound` (number, missionId, **phase**, one occupant list per table,
+  per-seat victory points, `hydrateTournamentState` giving rows written before
+  it a null — and a phaseless round its `setup`). An **occupant** is
+  `{ kind: 'seat', seatIndex }` or `{ kind: 'bye' }` — the BYE being the
+  imaginary player an odd registered field needs, assigned by the organizer
+  like anyone else, and whoever it lands with sits the round out. Every device
+  follows the **status** onto `tournament-round`: the **Progress roadmap**,
+  Round Control (round, mission, the VP standing at zero), **Start Round** and
+  the Table Assignment board (a pool plus a card per table, moved by
+  pointer-drag or by tap-then-"Place here", organizer-only, every drop an
+  `/assign` mutation echoed to all devices over SSE, nothing patched locally).
+  The assignment gate: the pool empty, BYE included, **and** no table holding a
+  single occupant — 2/2/1/1 assigns everybody and still strands two of them
+  without an opponent. **A round walks `setup` → `game` → `scoring`**
+  (`TOURNAMENT_ROUND_PHASES`), and the phase is server state: **Start Round**
+  (`/start-round`, organizer-only, gated on a complete pairing) moves it to
+  `game`, which **locks the tables** for everybody — a pairing cannot change
+  under a match being played, and there is no way back to `setup`. The roadmap
+  (`tournamentRoadmap`, derived not stored) is three steps per configured
+  mission plus a final Tournament Conclusion, with `currentIndex` pointing at
+  the step the event is on; players see the same board read-only and no Start
+  Round button at all.
   Server tables `tournaments`/`tournament_events`, endpoints
   `/api/tournaments/**`, retention (lobby 7 days, abandoned 30, concluded
   exactly the 48-hour report window, cancelled 24 hours). The **QR symbol is
@@ -314,8 +341,11 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
   (`online-create` → `online-join` → `online-game`) and the tournament flow
-  (`tournament-setup`, all three panes on one screen id → `tournament-lobby`,
-  with `tournament-join` reached from an invite link or QR code). On mount it
+  (`tournament-setup`, all three panes on one screen id → `tournament-lobby` →
+  `tournament-round` once the event is active, with `tournament-join` reached
+  from an invite link or QR code; which of lobby/round shows follows the fetched
+  event **status** through an effect, not a click, so starting the event moves
+  every participant). On mount it
   resumes a stored online seat, then a stored tournament seat, and otherwise
   offers to resume an open local game.
   `api/games/**/+server.ts` and `api/tournaments/**/+server.ts` are the
@@ -353,7 +383,11 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   mount toggles) and the `UnitCard` statline popup; the tournament wizard adds
   `TournamentSetup` (all three panes, with the Add Quest popup and the retention
   notice inside it), the read-only `TournamentOverview` it renders on the last
-  one, the shared `TournamentLobby` (organizer and players), `TournamentJoin`
+  one, the shared `TournamentLobby` (organizer and players), `TournamentJoin`,
+  `TournamentRoundPrep` (the match-prep board: pointer-drag **and** tap-to-place,
+  because a phone needs both and only the second is keyboard-reachable),
+  `TournamentRoadmap` (the glowing step strip, scrollable and self-centring),
+  `TournamentUnavailable` (the retry-or-abandon panel when a session has no view)
   and `QrCode` (the in-app encoder's SVG).
   `ArmyBuilderView` and the two
   local trackers (`MissionDetail`, `MissionDetailTwoPlayer` — each of whose views

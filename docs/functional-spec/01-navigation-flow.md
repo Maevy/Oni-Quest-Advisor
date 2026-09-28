@@ -72,8 +72,13 @@ online-create | online-join | online-game
                                         │ "← Return" (step 1) ─▶ game-mode (draft discarded)
                                         └─ "← Return" (steps 2-3) ─▶ the pane before (draft kept)
 
+  tournament-lobby ──"Start Tournament" (organizer, ≥ 2 players)──▶ tournament-round
+                     an odd field gets the BYE info panel first        (every device follows
+                                                                        the event status here,
+                                                                        not a click)
+
   tournament-lobby ──"← Return"──▶ the same "You are participating in {name}" prompt
-                                   ├── Return ──▶ stays in the lobby
+  tournament-round                 ├── Return ──▶ back onto the screen the status says
                                    └── Abandon ─▶ game-mode (seat freed / event cancelled)
 ```
 
@@ -347,6 +352,15 @@ lobby instead of taking a second seat.
 1, discarding it — like the army builder, the draft is in-memory only and the wizard has no
 persistence and no open-game record. **Return** in the lobby is a different matter: it asks first,
 and abandoning tells the server (a participant frees their seat, the organizer cancels the event).
+
+`tournament-round` is the match-preparation screen a started event lives on: the progress roadmap,
+the round and its mission, the victory-point standing, the **Start Round** button (the organizer's
+alone, gated on a complete pairing) and the table assignment board, which locks once the round
+moves from `setup` to `game`. **Which of the two screens a device shows is driven by the event's
+status, not by a click** — the organizer's **Start Tournament** moves every participant from the
+lobby to the round over the change notification, and the page only follows that status while a
+tournament screen is already up, so a device that walked away to the menu is never pulled back into
+the event. The startup prompt's **Return** lands on whichever of the two the fetched status names.
 Full detail in [09-tournament.md](./09-tournament.md).
 
 ## Online flow

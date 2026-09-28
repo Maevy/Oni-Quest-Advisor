@@ -103,6 +103,18 @@ each `src/lib/` folder.
   pairing slot. A playing TO holds one of those seats rather than adding to them.
 - **Pairing mode** — automatic (a Swiss system pairs each round) or manual (the TO assigns each
   round's tables by hand).
+- **Round** — one pass through the field: its number, the mission it plays (mission _n_ of the
+  configured list), the table assignments and the victory-point standing. Round 1 opens when the
+  TO starts the event.
+- **BYE** — the imaginary player an odd registered field adds so that every table can still be
+  paired. It is an occupant the TO assigns like any player, and whoever it lands with sits that
+  round out and takes it as a win.
+- **Occupant** — what a table holds in the round being prepared: a registered player's seat, or
+  the BYE. At most two per table, and no table may hold one alone.
+- **Round phase** — `setup` (tables are being assigned), `game` (the matches are played, tables
+  locked) or `scoring` (results become victory points). Server state, so every device agrees.
+- **Roadmap** — the event's progress as a line of glowing steps: three phases per round, then the
+  conclusion. Derived from the round and phase, never stored.
 - **Seat session** — the per-device record (code, role, token) a created or joined tournament
   leaves behind, and the reason a reload offers to return to the lobby. Abandoning deletes it _and_
   tells the server: a participant frees their seat for the next joiner, the TO cancels the event
@@ -114,7 +126,7 @@ each `src/lib/` folder.
 game-mode ──┬── Solo ────────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── 2 Player ────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── Online 2 Player ─────▶ [intro notice] ▶ online-create ▶ online-join ▶ online-game
-            ├── Organize Tournament ─▶ tournament-setup (wizard) ▶ tournament-lobby (pairings onward under construction)
+            ├── Organize Tournament ─▶ tournament-setup (wizard) ▶ tournament-lobby ▶ tournament-round (starting the round onward under construction)
             └── Army Builder ────────▶ army-faction-select ▶ army-builder
 ```
 

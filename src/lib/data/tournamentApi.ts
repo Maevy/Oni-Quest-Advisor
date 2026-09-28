@@ -1,4 +1,9 @@
-import type { PickedArmy, TournamentEventView, TournamentPeek } from '$lib/domain';
+import type {
+	PickedArmy,
+	TournamentEventView,
+	TournamentOccupant,
+	TournamentPeek
+} from '$lib/domain';
 
 const BASE = '/api/tournaments';
 
@@ -99,6 +104,39 @@ export async function leaveTournament(code: string, token: string): Promise<void
 /** The organizer cancels the event — it closes for every device in the lobby. */
 export async function cancelTournament(code: string, token: string): Promise<void> {
 	const response = await fetch(`${BASE}/${code}/cancel`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/** The organizer starts the event: the lobby closes and round 1 opens for assignment. */
+export async function startTournament(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/start`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/** Moves one occupant (a seat or the BYE) to a table, or back to the pool when null. */
+export async function assignTournamentOccupant(
+	code: string,
+	token: string,
+	occupant: TournamentOccupant,
+	tableIndex: number | null
+): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/assign`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+		body: JSON.stringify({ occupant, tableIndex })
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/** The organizer starts the round: setup becomes game and the tables lock. */
+export async function startTournamentRound(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/start-round`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
 	});

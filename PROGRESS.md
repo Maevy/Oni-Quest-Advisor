@@ -63,7 +63,115 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (Tournament: returning to a seat, and abandoning it)
+## What was done in the last session (Tournament: starting the event, the match-prep screen and its roadmap)
+
+The tournament left the lobby. **Start Tournament** works, and behind it is a new screen every
+device shares: the round, the mission, the victory-point standing and the table assignment board.
+
+1. **Starting.** The organizer's **Start Tournament** unlocks at two registered players **with at
+   most one seat still empty** — the configured tables are the tables that will play, so two empty
+   seats would leave one dark while exactly one is what the BYE fills — and the lobby names
+   whichever gate is missing (_"2 of 4 seats are still empty — at most one may stay open, or a table
+   would go unplayed."_), with the server refusing the same start with a 409. Starting moves the
+   event `lobby` → `active`, which closes joining _and_ leaving for good. An odd registered field
+   gets the agreed announcement first — _"Start with 3 players? The field is odd, so the missing
+   spot is filled with a BYE … Whoever you assign the BYE to sits this round out and takes it as a
+   win."_ (**Start** / **Not yet**); an even field starts straight away.
+2. **The round model.** `TournamentState` gained `round: TournamentRound | null` — number,
+   `missionId` (round _n_ plays mission _n_ of the configured list), one occupant list per table
+   and per-seat victory points — with `hydrateTournamentState()` giving rows written before the
+   field existed their `null` (the repository hydrates on both read paths, so an old lobby row
+   never hands a component `undefined`). An **occupant** is `{ kind: 'seat', seatIndex }` or
+   `{ kind: 'bye' }`: the BYE is a first-class occupant the TO assigns like a player, which settles
+   the long-open "who takes the BYE" question as _the organizer's choice_.
+3. **Domain.** `registeredSeatIndexes`, `fieldNeedsBye`, `sameOccupant`,
+   `canStartTournament`/`startTournament`/`createTournamentRound`,
+   `canAssignOccupants`/`assignOccupant` (one call covers a drop on another table, a drop back into
+   the pool and a drop on its own table, because the occupant is lifted out first),
+   `unassignedOccupants` and `isRoundReady` — plus `MIN_PLAYERS_TO_START`/`MAX_TABLE_OCCUPANTS`
+   (the latter also travels in the view as `maxOccupants`, so no component hardcodes the pairing
+   rule). 31 new tests, including the one that matters most: **the gate is not just "everybody
+   assigned"** — with four tables and six players, 2/2/1/1 assigns everybody and still strands two
+   of them without an opponent, so a table holding a single occupant blocks Start Round.
+4. **Server.** `POST /api/tournaments/[id]/start` (organizer-only, 409 when it cannot start,
+   `tournament-started` in the history) and `/assign` (organizer-only, `{ occupant, tableIndex }`
+   with `tableIndex: null` meaning "back to the pool"; 400 for a malformed occupant/table, 409 for
+   a full table, an unregistered seat, a BYE the field does not need or an event that is not
+   preparing a round), both through the existing FIFO-serialized organizer mutation and both
+   announcing themselves over SSE. `payload.ts` grew `parseTournamentOccupant`/`parseTableIndex`.
+5. **Client.** `tournamentEventStore.start()`/`assign()` (server-authoritative: the board that
+   comes back is the server's, never a locally patched copy, and the board freezes while a move is
+   in flight so drops cannot overtake each other), the `tournament-round` screen id, and a page
+   effect that follows the event **status** rather than a click — the organizer pressing Start
+   moves every participant to the round screen with no reload, and the effect only acts while a
+   tournament screen is already up, so nobody is yanked back from the menu. The startup prompt's
+   **Return** now lands on whichever screen the fetched status names.
+6. **The screen** (`TournamentRoundPrep`), in four parts: **Progress** (the roadmap, item 7), Round
+   Control (round, mission + season, the standing at 0 VP with `(you)` marked), the big green gated
+   **Start Round** with a hint naming whichever half of the gate is missing, and Table Assignment —
+   the pool (players in seat order, then the BYE) above one card per table (name, `n/2`, chips in
+   their army's faction colour, the BYE in amber, and a sit-out line where it lands). **Two ways to
+   move an occupant**, because HTML5 drag-and-drop does not exist on touch: pointer-event dragging
+   (ghost chip, highlighted container, `touch-action: none` so scrolling does not steal it) _and_
+   tap-a-chip-then-"Place here", which is also the only keyboard/screen-reader path and the one that
+   works when the pool and the target table are not on screen at once. Players see the identical
+   board read-only with plain chips. The lobby's dead Start button and its "arrives with the next
+   step" line are gone, and the shared retry-or-abandon panel became `TournamentUnavailable`.
+7. **Round phases and the roadmap.** A round walks **setup → game → scoring** as server state
+   (`TOURNAMENT_ROUND_PHASES`), and `tournamentRoadmap()` derives the event's whole progression from
+   it — three steps per configured mission plus a final _Tournament Conclusion_ (3_n_ + 1 of them),
+   with `currentIndex` on the step the event is on. `TournamentRoadmap` renders it as a line of dots
+   glowing green out of grey: reached steps and the connector leading to them are green, the current
+   one pulses (`motion-safe:animate-ping`, so reduced motion gets a static glow), the rest stay
+   grey, and a caption names the current step and its state (_· now_ / _· done_ / _· upcoming_) —
+   tapping any dot names that one instead, and tapping it again returns to the current. The strip
+   scrolls horizontally and centres itself on the current step, so a nine-mission tournament's 28
+   dots still fit a 320 px phone without the page overflowing. Visually it sits in the shared
+   `Panel`'s new darker `tone="dark"` variant (slate-900 at 80% instead of the frosted slate-800 at
+   40%) with a centred title, and the strip itself is centred in the panel — an inner
+   `w-max min-w-full justify-center` row, because `justify-center` on the scroller would clip the
+   steps before the current one when the strip overflows. Verified by a 14-assertion visual pass
+   (computed background alpha 0.8 vs 0.4 on the neighbouring panels, centred title and strip with
+   equal left/right gaps, and at 320 px the strip scrolling with both ends reachable).
+8. **Start Round is the organizer's, and it does something.** A player never sees the button, only
+   _"The organizer starts the round once every player is paired."_ For the TO it is gated on a
+   complete pairing and calls `POST /api/tournaments/[id]/start-round`, which moves the phase to
+   `game` — the roadmap advances on every device at once and **the tables lock** for everybody,
+   because a pairing must not change underneath a match being played (undoing it is a new open
+   question; a mistake means cancelling the event). `canAssignOccupants` now requires the setup
+   phase and the assign endpoint says _"The tables are locked — this round is under way"_ instead of
+   the generic refusal. A phaseless round written earlier hydrates to `setup`.
+9. **Verified:** `check` 0/0, lint clean, 514 tests (48 new: 47 domain, 1 repository), a
+   46-assertion API pass for start/assign (the start gate and its 403/401, the round it opens, the
+   closed lobby, every assign refusal, the BYE, the ready flag, moving and unassigning, both SSE
+   notifications, cancelling a running event) plus a 16-assertion one for start-round (the phase and
+   roadmap index it writes, the unpaired 409, a player's 403, a stranger's 401, starting twice, the
+   locked tables and their message, the pairings surviving the lock, cancelling a running round), a
+   60-assertion browser pass over two contexts (wizard → lobby → the BYE announcement → both devices
+   on the round screen → a real pointer drag → tap-to-place → move-back → the gate unlocking → 320 px
+   → both reloads returning _to the round_ with the pairings intact → abandoning from it) and a
+   46-assertion one for the roadmap (seven dots for two missions, the panel sitting above Round
+   Control, the organizer-only button, the phase change reaching the player's device live, the
+   connector lighting up behind it, the lock, tapping dots, both reloads keeping the step, and the
+   strip scrolling instead of overflowing at 320 px).
+10. **Two bugs the passes caught.** `payload.tableIndex ?? undefined` collapsed the explicit `null`
+    ("back to the pool") into "missing", so unassigning 400'd — a `null` that carries meaning must
+    not go through `??`. And Svelte eats the whitespace at an inline `{#if}` boundary:
+    `every player{#if odd} and the BYE{/if}` rendered as "playerand the BYE" (recorded in
+    `components/CLAUDE.md`, with the two ways around it). A third trap for verification scripts:
+    `innerText` is CSS-uppercased, so `waitForFunction` needles must be compared case-blind — and
+    the Add Quest popup closes after every pick, so a two-mission wizard run reopens it.
+11. **Docs:** 09-tournament gained "Starting the tournament", "The match-preparation screen" with
+    its round-phase table, and a new "Next — playing and scoring the round"; its open questions were
+    narrowed (missions→rounds is decided for the round being prepared, what a table holds is
+    answered for prep, manual pairing now asks about _later_ rounds, only the BYE's _worth_ is left
+    open, and undoing a started round is new). The navigation flow records the new screen and the
+    status-driven switching, the functional README gained Round/BYE/Occupant/Round phase/Roadmap
+    glossary entries and the screen-map step, and QWEN.md the whole model.
+12. **Next (agreed, not built):** the `game` and `scoring` phases — what the tables actually play,
+    how a result is reported, how the standing is fed and how the next round opens.
+
+## What was done in the session before (Tournament: returning to a seat, and abandoning it)
 
 Polish on the shipped lobby: until now a reload dropped a device straight back into the lobby
 without asking, and the only way out — the lobby's ← Return — cleared `localStorage` while the

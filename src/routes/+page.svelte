@@ -49,6 +49,8 @@
 	import TournamentSetup from '$lib/components/TournamentSetup.svelte';
 	import TournamentLobby from '$lib/components/TournamentLobby.svelte';
 	import TournamentJoin from '$lib/components/TournamentJoin.svelte';
+	import TournamentRoundPrep from '$lib/components/TournamentRoundPrep.svelte';
+	import TournamentUnavailable from '$lib/components/TournamentUnavailable.svelte';
 	import type { BriefingArmy } from '$lib/components/briefingArmy';
 
 	contentStore.load();
@@ -81,12 +83,35 @@
 		});
 	});
 
-	/** A cancelled tournament has no lobby left — leave it and let the menu say what happened. */
+	/** The two screens a live tournament shows, which its status switches between. */
+	function onTournamentScreen(): boolean {
+		return (
+			navigationStore.screen === 'tournament-lobby' || navigationStore.screen === 'tournament-round'
+		);
+	}
+
+	/** A cancelled tournament has no screen left — go home and let the menu say what happened. */
 	$effect(() => {
-		if (tournamentEventStore.notice && navigationStore.screen === 'tournament-lobby') {
+		if (tournamentEventStore.notice && onTournamentScreen()) {
 			resumableTournament = false;
 			abandoningFromLobby = false;
 			navigationStore.leaveTournamentLobby();
+		}
+	});
+
+	/**
+	 * The event's status decides which screen a device shows, not a click: the organizer pressing
+	 * Start Tournament moves every participant to the round over the change notification. Only
+	 * followed while a tournament screen is up, so a device that walked away to the menu is never
+	 * yanked back into the event.
+	 */
+	$effect(() => {
+		const status = tournamentEventStore.view?.status;
+		if (!status || !onTournamentScreen()) return;
+		if (status === 'active') {
+			if (navigationStore.screen !== 'tournament-round') navigationStore.enterTournamentRound();
+		} else if (navigationStore.screen !== 'tournament-lobby') {
+			navigationStore.enterTournamentLobby();
 		}
 	});
 
@@ -99,11 +124,14 @@
 			: `You are participating in ${what}. Abandoning it gives up your seat.`;
 	});
 
-	/** The prompt's safe branch — back into the lobby, which resynchronizes itself over SSE. */
+	/** The prompt's safe branch — back onto the screen the event is on, which resynchronizes. */
 	function returnToTournament(): void {
 		resumableTournament = false;
 		abandoningFromLobby = false;
-		navigationStore.enterTournamentLobby();
+		// Without a view (the resume fetch failed) the lobby's retry panel is the honest landing
+		// spot; the status effect above moves on from there once a view arrives.
+		if (tournamentEventStore.view?.status === 'active') navigationStore.enterTournamentRound();
+		else navigationStore.enterTournamentLobby();
 	}
 
 	/**
@@ -689,39 +717,34 @@
 			missions={contentStore.missions}
 			factions={contentStore.armyFactions}
 			error={tournamentEventStore.error}
+			onStart={() => void tournamentEventStore.start()}
 			onLeave={() => (abandoningFromLobby = true)}
 		/>
 	{:else}
-		<!--
-			The seat is ours but no view arrived — the resume fetch did not get through. Offer a
-			retry and the way out instead of an empty screen.
-		-->
-		<div class="flex min-h-dvh flex-col items-center justify-center px-6">
-			<div
-				class="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-800/60 p-5 text-center backdrop-blur"
-			>
-				<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Tournament</h2>
-				<p class="mt-3 text-sm text-slate-300">
-					{tournamentEventStore.error ?? 'Loading the tournament…'}
-				</p>
-				<div class="mt-4 flex flex-col gap-3">
-					<button
-						type="button"
-						class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
-						onclick={() => void tournamentEventStore.retry()}
-					>
-						Try Again
-					</button>
-					<button
-						type="button"
-						class="rounded-xl border-2 border-red-500/50 bg-slate-900/60 px-6 py-2 font-semibold text-red-300 transition enabled:hover:bg-red-500/10 enabled:active:bg-red-500/20"
-						onclick={() => (abandoningFromLobby = true)}
-					>
-						Abandon
-					</button>
-				</div>
-			</div>
-		</div>
+		<TournamentUnavailable
+			error={tournamentEventStore.error}
+			onRetry={() => void tournamentEventStore.retry()}
+			onAbandon={() => (abandoningFromLobby = true)}
+		/>
+	{/if}
+{:else if navigationStore.screen === 'tournament-round'}
+	{#if tournamentEventStore.view?.round}
+		<TournamentRoundPrep
+			view={tournamentEventStore.view}
+			round={tournamentEventStore.view.round}
+			missions={contentStore.missions}
+			factions={contentStore.armyFactions}
+			error={tournamentEventStore.error}
+			onAssign={(occupant, tableIndex) => void tournamentEventStore.assign(occupant, tableIndex)}
+			onStartRound={() => void tournamentEventStore.startRound()}
+			onLeave={() => (abandoningFromLobby = true)}
+		/>
+	{:else}
+		<TournamentUnavailable
+			error={tournamentEventStore.error}
+			onRetry={() => void tournamentEventStore.retry()}
+			onAbandon={() => (abandoningFromLobby = true)}
+		/>
 	{/if}
 {:else if navigationStore.screen === 'tournament-join'}
 	<TournamentJoin

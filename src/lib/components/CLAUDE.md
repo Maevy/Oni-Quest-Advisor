@@ -24,6 +24,11 @@
   Split trigger from overlay and let the **screen** hold the open state — `RuleLabels` (buttons,
   emits `onOpenRule`) + `RuleCalloutDialog` (overlay) rendered at the screen root, the way the
   army popups already are. Dialogs use `z-50`; the sticky top bar (`ScreenHeader`) is `z-30`.
+- **An inline `{#if}` inside a sentence eats the space at its boundary.**
+  `Assign every player{#if odd} and the BYE{/if} to a table` renders as "playerand the BYE", and
+  Prettier then re-wraps the block so the missing space is easy to miss in review. Write the whole
+  sentence in each `{#if}`/`{:else}` branch, or build the string in an expression
+  (`{needsBye ? 'Players & Bye' : 'Players'}`) — both are what `TournamentRoundPrep` does.
 - **Escape goes through `escapeKey.ts`, never an element `onkeydown`.** Register it from
   the overlay's script with `$effect(() => onEscapeKey(close))`. A backdrop `div` is not
   focusable, so an `onkeydown` on it only fires while focus happens to sit inside the

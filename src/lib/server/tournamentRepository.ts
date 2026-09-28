@@ -1,4 +1,4 @@
-import { seatIndexForTokenHash, type TournamentState } from '$lib/domain';
+import { hydrateTournamentState, seatIndexForTokenHash, type TournamentState } from '$lib/domain';
 import { ApiError } from './errors';
 import { getDb } from './db';
 import { hashToken } from './ids';
@@ -28,7 +28,8 @@ export async function getTournament(id: string): Promise<TournamentState | null>
 		args: [id]
 	});
 	if (result.rows.length === 0) return null;
-	return JSON.parse(String(result.rows[0][0])) as TournamentState;
+	// Hydrated, because rows written before a field existed (the round) carry no value for it.
+	return hydrateTournamentState(JSON.parse(String(result.rows[0][0])) as TournamentState);
 }
 
 export async function insertTournament(
@@ -89,7 +90,9 @@ async function executeMutation(
 			args: [id]
 		});
 		if (result.rows.length === 0) throw new ApiError(404, 'Unknown tournament');
-		const tournament = JSON.parse(String(result.rows[0][0])) as TournamentState;
+		const tournament = hydrateTournamentState(
+			JSON.parse(String(result.rows[0][0])) as TournamentState
+		);
 
 		let viewer: TournamentViewer = { kind: 'open' };
 		if (token !== null) {

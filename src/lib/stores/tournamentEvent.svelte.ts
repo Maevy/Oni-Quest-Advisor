@@ -1,4 +1,5 @@
 import {
+	assignTournamentOccupant as apiAssignOccupant,
 	cancelTournament as apiCancelTournament,
 	createTournament as apiCreateTournament,
 	fetchTournamentPeek,
@@ -6,6 +7,8 @@ import {
 	generateTournamentToken,
 	joinTournament as apiJoinTournament,
 	leaveTournament as apiLeaveTournament,
+	startTournament as apiStartTournament,
+	startTournamentRound as apiStartRound,
 	tournamentEventsUrl,
 	TournamentApiError,
 	type TournamentConfiguration
@@ -16,7 +19,12 @@ import {
 	saveTournamentSession,
 	type TournamentSession
 } from '$lib/data/tournamentSession';
-import type { PickedArmy, TournamentEventView, TournamentPeek } from '$lib/domain';
+import type {
+	PickedArmy,
+	TournamentEventView,
+	TournamentOccupant,
+	TournamentPeek
+} from '$lib/domain';
 
 function messageOf(error: unknown): string {
 	if (error instanceof TournamentApiError) return error.message;
@@ -154,6 +162,58 @@ class TournamentEventStore {
 			this.peek = null;
 			await this.refreshState();
 			this.subscribeToEvents();
+			return true;
+		} catch (error) {
+			this.error = messageOf(error);
+			return false;
+		}
+	}
+
+	/**
+	 * The organizer starts the event. The lobby closes with it — nobody joins or leaves a running
+	 * round — and round 1 opens with every table empty, waiting to be assigned.
+	 */
+	async start(): Promise<boolean> {
+		if (!this.session) return false;
+		this.error = null;
+		try {
+			await apiStartTournament(this.session.code, this.session.token);
+			await this.refreshState();
+			return true;
+		} catch (error) {
+			this.error = messageOf(error);
+			return false;
+		}
+	}
+
+	/**
+	 * The organizer moves one occupant — a player's seat or the BYE — to a table, or back to the
+	 * pool when `tableIndex` is null. Server-authoritative like everything else: the board the
+	 * players see is the refetched one, never a locally patched copy.
+	 */
+	async assign(occupant: TournamentOccupant, tableIndex: number | null): Promise<boolean> {
+		if (!this.session) return false;
+		this.error = null;
+		try {
+			await apiAssignOccupant(this.session.code, this.session.token, occupant, tableIndex);
+			await this.refreshState();
+			return true;
+		} catch (error) {
+			this.error = messageOf(error);
+			return false;
+		}
+	}
+
+	/**
+	 * The organizer starts the round. The roadmap moves a step on for every device and the tables
+	 * lock — the pairing a match is played from cannot change while it is being played.
+	 */
+	async startRound(): Promise<boolean> {
+		if (!this.session) return false;
+		this.error = null;
+		try {
+			await apiStartRound(this.session.code, this.session.token);
+			await this.refreshState();
 			return true;
 		} catch (error) {
 			this.error = messageOf(error);

@@ -7,9 +7,11 @@ sides.
 
 > **Under construction.** This document grows with the feature, step by step. What exists today is
 > the entry point, the configuration wizard's three panes, creation behind the retention notice,
-> the lobby with its link and QR invites, joining, and returning to a held seat after a reload —
-> including abandoning it again; pairing, overwatch and the conclusion are planned, and the plan's
-> undecided parts are listed at the end.
+> the lobby with its link and QR invites, joining, returning to a held seat after a reload —
+> including abandoning it again — starting the event (with the BYE announcement for an odd field),
+> the match-preparation screen with its table assignment and progress roadmap, and starting a round
+> (which locks its tables); playing and scoring a round, overwatch and the conclusion are planned,
+> and the plan's undecided parts are listed at the end.
 
 ## The shape of the feature (planned)
 
@@ -17,9 +19,11 @@ sides.
    play, sets the field size and who pairs each round; then configures missions and tables.
 2. **Invite** — a link and a QR code bring the players in.
 3. **Pair** — each round the field is paired, automatically by a Swiss system or by the TO by
-   hand.
-4. **Overwatch** — the TO watches the tables' games as they run.
-5. **Conclude** — the tournament ends with its victor.
+   hand. Manual pairing exists for the round being prepared; the Swiss system does not yet.
+4. **Overwatch** — the TO watches the tables' games as they run. The round reaches its `game`
+   phase; what happens there does not exist yet.
+5. **Conclude** — the tournament ends with its victor. It is the roadmap's last step and nothing
+   more today.
 
 ## Entry point
 
@@ -148,8 +152,8 @@ name with their registered army's name and faction colour (marked `you` on the v
 The organizer additionally gets the **Invite Players** panel: **Share Link** copies the join URL to
 the clipboard with a "copied" confirmation — and shows the URL inline for manual copying when the
 clipboard is unavailable — and **QR Code** opens the same URL as a scannable symbol. At the bottom
-the **Start Tournament** button moves everyone on to match setup; it is present but disabled until
-the odd-field rule below exists.
+the **Start Tournament** button moves everyone on to the match-preparation screen; it unlocks at
+two registered players and says why it is locked below itself (see Starting the tournament).
 
 Decisions taken here:
 
@@ -238,44 +242,159 @@ on a retry panel (the failure, **Try Again**, **Abandon**) rather than an empty 
 successful retry both refetches the view and re-opens the change stream, so the lobby is live again
 without a reload.
 
-## Next — the odd field and the BYE
+## Starting the tournament
 
-**Start Tournament** stays disabled until this exists. Pressing it with an odd number of registered
-players shows an info panel: you are about to start with an odd field, and proceeding fills the
-missing spot with a **BYE** — an imaginary player who takes a seat but is never played against. A
-player paired against the BYE sits that round out and takes it as a win.
+**Start Tournament** is the organizer's, and it needs at least **two registered players** with **at
+most one seat still empty**: the configured tables are the tables that will play — one per pair of
+seats — so two empty seats would leave a table with nobody at it, while exactly one is what the BYE
+fills. The lobby names whichever gate is missing (_"2 of 4 seats are still empty — at most one may
+stay open, or a table would go unplayed."_), and an event that cannot start has to wait for joiners
+or be cancelled and recreated smaller, because the field is fixed at creation. Pressing it moves the
+event from `lobby` to `active` (`POST /api/tournaments/<code>/start`), which closes the door for
+good — joining and leaving are both refused from here on — and opens round 1 on the **first mission
+of the configured list**.
 
-Decided so far:
+With an **odd number of registered players** an info panel comes first:
 
-- **A BYE is a seat, not a skipped round.** It occupies one of the field's slots for pairing
-  purposes, which keeps every pairing round uniform and keeps the table count meaningful.
+> _"Start with 3 players? The field is odd, so the missing spot is filled with a BYE — an imaginary
+> player who takes a seat but is never played against. Whoever you assign the BYE to sits this round
+> out and takes it as a win."_ — **Start** / **Not yet**
+
+An even field starts straight away. Every device in the lobby is moved to the match-preparation
+screen by the change notification, without a reload and without a click.
+
+Decisions taken here:
+
+- **At most one seat may stay empty.** The table count is configured up front and shown to everyone
+  in the lobby, so a round that leaves a table dark would break the promise the configuration made.
+  One empty seat is exactly the BYE's case, zero is a full field; two or more means the event was
+  sized wrong, and the honest fix is a new, smaller one.
+- **A BYE is an occupant, not a skipped round.** It sits in the pool and is assigned to a table
+  exactly like a player, which keeps every pairing round uniform and keeps the table count
+  meaningful. A table holding one player and the BYE says so in place: _"The BYE sits at this
+  table: its player sits this round out and takes it as a win."_
+- **The organizer chooses who takes the BYE.** Not the lowest score and not a rotation — the TO
+  drags it wherever they like, which is the manual-pairing mode's whole point. (What that win is
+  worth in points is still open.)
 - **It is announced before it happens**, so the TO can still go back and wait for one more player
   instead of starting an odd field by accident.
+- **Round n plays mission n.** The wizard's ordered mission list is the round order; a round with
+  no mission left cannot be created. Whether a tournament outlives its mission list is open.
 
-Still open (see Open questions): who takes the BYE when the field is odd — lowest score, the player
-who has had it least, or the TO's choice — and whether a BYE win carries the same tournament points
-as a played win.
+## The match-preparation screen
+
+`tournament-round`, one screen for both roles, in four parts:
+
+1. **Progress** — the event's **roadmap**: a line of dots, one per step, that glows green from grey
+   as the tournament advances. The steps are the three phases of every round — _Round 1 Setup_,
+   _Round 1 Game_, _Round 1 Scoring_, then _Round 2 Setup_ … — and a final _Tournament Conclusion_,
+   so a tournament with _n_ missions has 3*n* + 1 of them. Reached steps and the connector leading
+   to them are green, the current one pulses (reduced-motion aware), the rest stay grey. A caption
+   under the strip names the current step and its state (_· now_, _· done_, _· upcoming_); tapping
+   any dot names that one instead, and tapping it again returns to the current. The strip is
+   centred in its panel and scrolls horizontally when it does not fit, centring itself on the
+   current step, so a nine-mission tournament's 28 dots still fit a 320 px phone without the page
+   overflowing. The panel is the shared `Panel`'s darker `tone="dark"` variant — slate-900 at 80%
+   instead of the frosted slate-800 at 40% — with a centred title, because thin grey dots over the
+   translucent key-art background were the least readable thing on the screen.
+2. **Round Control** — the round number (**Round 1**), the mission it plays (name and season), and
+   the **Victory Points** standing: one row per registered player, in seat order, all at 0 until
+   matches are scored. The viewer's own row is marked `(you)`.
+3. **Start Round** — a big green button, **the organizer's alone**: a player does not see it, only
+   _"The organizer starts the round once every player is paired."_ It is locked until the
+   assignment gate below is met, and pressing it moves the round from **setup** to **game**
+   (`POST /api/tournaments/<code>/start-round`): the roadmap advances one step on every device at
+   once and the tables lock.
+4. **Table Assignment** — the **pool** of everybody without a table (the registered players in seat
+   order, then the BYE when the field is odd) and one card per configured table showing its name,
+   its occupant count out of two, and its occupants as chips in their army's faction colour (the
+   BYE in amber).
+
+Only the organizer assigns; a player sees the identical board read-only — plain text chips, no
+placement controls — and the line _"The organizer assigns the tables."_ Every move is a server
+mutation (`POST /api/tournaments/<code>/assign`, organizer-only), so each drop reaches every device
+over the change notification: the players watch the TO fill the tables live.
+
+Two ways to move an occupant, because the app is used on a phone:
+
+- **Drag** — pointer events (so a finger works as well as a mouse), a floating ghost chip under the
+  pointer, the container under it highlighted, and `touch-action: none` on the chips so the drag is
+  not stolen by page scrolling. Dropping on a table seats the occupant there, dropping on the pool
+  sends a seated one back, dropping nowhere leaves it where it was.
+- **Tap to place** — tap a chip to select it, then tap **Place {name} here** under any table that
+  has room (or **Move {name} back here** in the pool). This is the path for a long list, where the
+  pool and the target table are not on screen at once, and the only one a keyboard or screen reader
+  can use.
+
+The board is frozen while a move is in flight, so drops cannot overtake each other, and the view
+that comes back is the server's — nothing is patched locally.
+
+**The gate:** Start Round unlocks when the pool is empty — the BYE included — **and** no table
+holds a single occupant. The second half matters: with four tables and six players, 2/2/1/1 assigns
+everybody and still strands two of them without an opponent. The hint under the button names
+whichever half is missing.
+
+A refused move (a full table, a seat nobody holds, an unknown table, a BYE the field does not need)
+comes back as an error line at the top of the screen; the board simply stays as it was.
+
+### Round phases
+
+A round walks through **setup → game → scoring**, and the phase is server state, so every device
+shows the same step of the roadmap and the same screen affordances:
+
+| Phase     | The board                                                                       | Start Round                                        |
+| --------- | ------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `setup`   | the organizer may assign, players watch                                         | shown to the organizer, gated on the pairing       |
+| `game`    | **locked** for everybody — _"The tables are locked — this round is under way."_ | gone; the screen says _"Round n is being played."_ |
+| `scoring` | locked                                                                          | gone; _"Round n is being scored."_                 |
+
+Locking at the start of the game phase is deliberate: a pairing must not change underneath a match
+that is already being played. A mistake means cancelling the event — undoing a started round is not
+offered. Rows written before the phase model existed hydrate to `setup`, which was all a round
+could be then.
+
+## Next — playing and scoring the round
+
+The round reaches `game` and stops there. The next step gives the phase content: the tables' matches
+begin (presumably each table is a normal match on the players' own devices, with the tournament
+server overwatching), the results are reported, `scoring` turns them into victory points in the
+standing, and the round after it opens on the next mission — which is what moves the roadmap from
+_Round 1 Scoring_ to _Round 2 Setup_.
 
 ## Open questions
 
-- **How do missions map onto rounds?** The list added here is ordered, but nothing yet says what
-  the order means: one mission per round for every table in list order, a pool the TO assigns per
-  round or per table in a later step, or something else entirely.
+- **How do missions map onto rounds?** Round _n_ plays mission _n_ of the configured list, for every
+  table at once — decided for the round being prepared. Still open: what happens when a tournament
+  outlives its mission list (stop, repeat, or let the TO pick), and whether a table may ever play
+  something else than the round's mission.
 - **Mixing mission kinds needs a scoring story.** Ceasefire missions carry the automatic −4 VP
   penalty and forbid round-1 scoring, and Broken Morale changes how a game ends; a tournament
   that mixes them into one points table has to say how.
-- **What does a table hold?** Two players and a mission is the obvious shape; whether a table also
-  carries its own round counter, or the tournament runs all tables in lockstep, is undecided.
+- **What does a table hold?** For the round being prepared: up to two occupants, either two players
+  or one player and the BYE, and nothing else — no mission of its own (it plays the round's) and no
+  score of its own yet. Whether a table carries its own round counter once matches run, or the
+  tournament runs all tables in lockstep, is undecided.
 - **Swiss details.** Pairing rules (score groups, first-player balance, rematch avoidance), how a
   table's result is reported (by the players' own devices, or entered by the TO), and what a
   win/draw/loss is worth in tournament points.
-- **Manual pairing.** What the TO sees and does when pairing by hand — a drag between player
-  cards, a row of dropdowns, something else — and whether manual mode still scores Swiss-style.
+- **Manual pairing beyond the first round.** The assignment board exists (drag, or tap to place),
+  and it is what the manual tick always meant for round 1. Open: whether the TO re-assigns by hand
+  every round on the same board, whether manual mode still scores Swiss-style, and whether an
+  automatic pairing should ever be offered as a suggestion the TO can adjust.
 - **Registered armies are snapshots, not validated lists.** The TO's and every joiner's Roster list
   arrives as a `{ name, factionId, code }` snapshot and is shown by name and faction; the server
   never decodes the code, so nothing enforces the 125-point cap yet. Whether creation and join
   should verify it (the code is self-describing) is open.
-- **Who takes the BYE**, and what a BYE win is worth in tournament points — see the BYE section.
+- **What a BYE win is worth.** Who takes it is decided — the organizer assigns it like any other
+  occupant — but not what the sit-out scores: the same tournament points as a played win, fewer, or
+  a separate marker that tie-breaks treat differently.
+- **A field that cannot fill cannot shrink.** With at most one empty seat allowed, two no-shows
+  make the event unstartable and the only way out is cancelling it and recreating a smaller one.
+  Whether the organizer may shrink the field of a lobby that has not started — and whether the
+  table list shrinks with it — is open.
+- **Undoing a started round.** Starting it locks the tables and there is no way back to `setup`, so
+  a mis-pairing discovered a moment too late means cancelling the event. Whether the organizer
+  should get an unlock (and until when — before any table reports a result?) is open.
 - **Leaving a running tournament.** A player's abandon is refused once the event is `active`:
   releasing a seat mid-pairing needs a forfeit rule first (what the opponent at that table scores,
   whether the table is dissolved, whether the field goes odd and a BYE appears). The organizer can

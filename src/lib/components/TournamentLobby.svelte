@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { type ArmyFactionConfig, type Mission, type TournamentEventView } from '$lib/domain';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import Panel from './Panel.svelte';
 	import QrCode from './QrCode.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
@@ -13,10 +14,12 @@
 		factions: ArmyFactionConfig[];
 		/** A refetch that did not get through — the lobby may be showing a stale copy. */
 		error?: string | null;
+		/** Organizer only: starts the event and moves everyone to the round. */
+		onStart: () => Promise<void> | void;
 		onLeave: () => void;
 	};
 
-	let { view, missions, factions, error = null, onLeave }: Props = $props();
+	let { view, missions, factions, error = null, onStart, onLeave }: Props = $props();
 
 	const label = 'shrink-0 text-xs tracking-wide text-slate-400 uppercase';
 	const value = 'min-w-0 text-right text-sm break-words text-slate-100';
@@ -27,14 +30,25 @@
 	let copied = $state(false);
 	/** The clipboard is unavailable (permissions, non-secure context) — show the link instead. */
 	let clipboardFailed = $state(false);
+	/** The odd-field announcement in front of starting; an even field starts straight away. */
+	let confirmBye = $state(false);
+	let starting = $state(false);
 
 	$effect(() => {
 		if (showQr) return onEscapeKey(() => (showQr = false));
 	});
 
+	async function start(): Promise<void> {
+		starting = true;
+		await onStart();
+		starting = false;
+	}
+
 	let inviteUrl = $derived(
 		typeof window === 'undefined' ? '' : `${window.location.origin}/tournament-join/${view.code}`
 	);
+	/** Seats nobody took — more than one of them and a configured table would go unplayed. */
+	const emptySeats = $derived(view.seats.filter((seat) => seat.name === null).length);
 
 	async function shareLink(): Promise<void> {
 		copied = false;
@@ -188,13 +202,26 @@
 		{#if view.role === 'organizer'}
 			<button
 				type="button"
-				class="cursor-not-allowed rounded-xl border-2 border-slate-600/30 bg-slate-900/60 px-8 py-3 text-lg font-medium text-slate-600 backdrop-blur"
-				disabled
+				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+				disabled={!view.canStart || starting}
+				onclick={() => {
+					if (view.needsBye) confirmBye = true;
+					else void start();
+				}}
 			>
 				Start Tournament
 			</button>
 			<p class="-mt-2 text-center text-xs text-slate-400">
-				Pairings and match setup arrive with the next step.
+				{#if view.joinedCount < 2}
+					At least two players must be in before the tournament can start.
+				{:else if emptySeats > 1}
+					{emptySeats} of {view.seats.length} seats are still empty — at most one may stay open, or a
+					table would go unplayed.
+				{:else if view.needsBye}
+					{view.joinedCount} players — an odd field, so the BYE takes the missing spot.
+				{:else}
+					{view.joinedCount} players are in. Starting closes the lobby to new joiners.
+				{/if}
 			</p>
 		{:else}
 			<p class="text-center text-xs text-slate-400">
@@ -229,4 +256,18 @@
 			</button>
 		</div>
 	</div>
+{/if}
+
+{#if confirmBye}
+	<ConfirmDialog
+		text={`Start with ${view.joinedCount} players? The field is odd, so the missing spot is filled with a BYE — an imaginary player who takes a seat but is never played against. Whoever you assign the BYE to sits this round out and takes it as a win.`}
+		confirmLabel="Start"
+		cancelLabel="Not yet"
+		confirming={starting}
+		onConfirm={() => {
+			confirmBye = false;
+			void start();
+		}}
+		onCancel={() => (confirmBye = false)}
+	/>
 {/if}

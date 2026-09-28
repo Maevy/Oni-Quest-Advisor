@@ -1,4 +1,4 @@
-import type { ArmyFactionId, PickedArmy } from '$lib/domain';
+import type { ArmyFactionId, PickedArmy, TournamentOccupant } from '$lib/domain';
 
 const MAX_ARMY_NAME_LENGTH = 60;
 const MAX_FACTION_ID_LENGTH = 40;
@@ -37,4 +37,28 @@ export function parseStringArray(value: unknown, maxLength: number): string[] | 
 		entries.push(entry);
 	}
 	return entries;
+}
+
+/**
+ * Parses a table occupant out of a request body: a seat index or the BYE. The wire shape is the
+ * one the view already hands the client, so an assignment round-trips without translation.
+ */
+export function parseTournamentOccupant(value: unknown): TournamentOccupant | null {
+	if (typeof value !== 'object' || value === null) return null;
+	const record = value as Record<string, unknown>;
+	if (record.kind === 'bye') return { kind: 'bye' };
+	if (record.kind !== 'seat') return null;
+	const seatIndex = record.seatIndex;
+	if (typeof seatIndex !== 'number' || !Number.isInteger(seatIndex) || seatIndex < 0) return null;
+	return { kind: 'seat', seatIndex };
+}
+
+/**
+ * Parses an assignment target: a table index, or null for the pool of unassigned occupants.
+ * Undefined means the field was not a valid target at all.
+ */
+export function parseTableIndex(value: unknown): number | null | undefined {
+	if (value === null) return null;
+	if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) return undefined;
+	return value;
 }

@@ -9,7 +9,9 @@ import {
 	joinTournament,
 	leaveTournament,
 	seatIndexForTokenHash,
-	type PickedArmy
+	startTournament,
+	type PickedArmy,
+	type TournamentState
 } from '$lib/domain';
 import { getDb } from './db';
 import { ApiError } from './errors';
@@ -30,11 +32,15 @@ const army: PickedArmy = { name: 'List', factionId: 'helian-league', code: 'CODE
 
 type Fixture = { code: string; organizerToken: string; playerToken: string };
 
-/** A lobby with a playing organizer in seat 0 and one joined player in seat 1. */
-async function createSeededTournament(field = 4): Promise<Fixture> {
+/**
+ * A lobby with a playing organizer in seat 0 and `players` joined players after it. Two players
+ * is the default because it leaves exactly one seat empty — the most the start rule allows.
+ */
+async function createSeededTournament(field = 4, players = 2): Promise<Fixture> {
 	const code = generateGameCode();
 	const organizerToken = generateSeatToken();
 	const playerToken = generateSeatToken();
+	const secondPlayerToken = generateSeatToken();
 	const now = new Date().toISOString();
 	const state = createTournamentEvent({
 		code,
@@ -55,6 +61,13 @@ async function createSeededTournament(field = 4): Promise<Fixture> {
 		next: joinTournament(tournament, 'Ana', army, hashToken(playerToken), now),
 		events: { type: 'player-joined', actor: 'player', payload: { name: 'Ana' } }
 	}));
+	// A second player, so at most one seat stays empty — the most the start rule allows.
+	if (players >= 2) {
+		await mutateOpenTournament(code, (tournament) => ({
+			next: joinTournament(tournament, 'Ben', army, hashToken(secondPlayerToken), now),
+			events: { type: 'player-joined', actor: 'player', payload: { name: 'Ben' } }
+		}));
+	}
 	return { code, organizerToken, playerToken };
 }
 
@@ -96,7 +109,7 @@ describe('tournamentRepository', () => {
 	it('records the history alongside the state', async () => {
 		const { code } = await createSeededTournament();
 
-		expect(await eventCount(code)).toBe(2); // created + joined
+		expect(await eventCount(code)).toBe(3); // created + two joins
 	});
 
 	it('lets an unauthenticated joiner take a free seat', async () => {
@@ -165,7 +178,7 @@ describe('tournamentRepository', () => {
 		const stored = await getTournament(code);
 		expect(stored?.seats[1].participant).toBeNull();
 		expect(stored?.seats[0].participant?.name).toBe('Marta');
-		expect(await eventCount(code)).toBe(3); // created + joined + left
+		expect(await eventCount(code)).toBe(4); // created + two joins + left
 	});
 
 	it('closes the tournament for everyone when the organizer cancels', async () => {
@@ -183,8 +196,47 @@ describe('tournamentRepository', () => {
 		expect(seatIndexForTokenHash(stored!, hashToken(playerToken))).toBe(1);
 	});
 
+	it('stores the round and hydrates a row written before the round existed', async () => {
+		const { code, organizerToken } = await createSeededTournament();
+		await mutateAsTournamentOrganizer(code, organizerToken, (tournament) => ({
+			next: startTournament(tournament, new Date().toISOString()),
+			events: { type: 'tournament-started', actor: 'organizer' }
+		}));
+
+		const stored = await getTournament(code);
+		expect(stored?.status).toBe('active');
+		expect(stored?.round?.number).toBe(1);
+		expect(stored?.round?.missionId).toBe('treasure-hunt');
+		expect(stored?.round?.tables).toEqual([[], []]);
+
+		// A lobby created before the round model existed carries no key at all.
+		const legacyCode = generateGameCode();
+		const legacy = JSON.parse(
+			JSON.stringify(
+				createTournamentEvent({
+					code: legacyCode,
+					name: 'Old Cup',
+					externalLink: null,
+					organizerName: 'Marta',
+					organizerTokenHash: hashToken(generateSeatToken()),
+					organizerPlays: false,
+					organizerArmy: null,
+					participantCount: 4,
+					manualPairing: true,
+					missionIds: ['treasure-hunt'],
+					tableNames: ['Table 1', 'Table 2'],
+					now: new Date().toISOString()
+				})
+			)
+		) as TournamentState;
+		delete (legacy as Partial<TournamentState>).round;
+		await insertTournament(legacy, { type: 'tournament-created', actor: 'organizer' });
+
+		expect((await getTournament(legacyCode))?.round).toBeNull();
+	});
+
 	it('serializes concurrent joins so no seat is booked twice', async () => {
-		const { code } = await createSeededTournament(4); // seats 0 and 1 are taken, two free
+		const { code } = await createSeededTournament(4, 1); // seats 0 and 1 are taken, two free
 		const results = await Promise.all(
 			['Ben', 'Cem', 'Dee'].map((name) => {
 				const token = generateSeatToken();

@@ -25,6 +25,7 @@ export type Screen =
 	| 'online-game'
 	| 'tournament-setup'
 	| 'tournament-lobby'
+	| 'tournament-round'
 	| 'tournament-join';
 
 class NavigationStore {
@@ -135,12 +136,22 @@ class NavigationStore {
 		this.screen = 'tournament-lobby';
 	}
 
+	/**
+	 * The match-preparation screen a started event lives on. Which of the two a device shows is
+	 * driven by the fetched event status, not by a click — the organizer starting the event moves
+	 * every participant here over SSE.
+	 */
+	enterTournamentRound(): void {
+		this.screen = 'tournament-round';
+	}
+
 	/** Invite-link / QR entry point: hand the code to the join screen. */
 	prepareTournamentJoin(code: string): void {
 		this.tournamentJoinCode = code;
 		this.screen = 'tournament-join';
 	}
 
+	/** Leaves the live tournament screens — the lobby, the round and the join screen alike. */
 	leaveTournamentLobby(): void {
 		this.tournamentJoinCode = null;
 		this.screen = 'game-mode';
