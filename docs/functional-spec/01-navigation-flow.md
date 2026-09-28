@@ -72,7 +72,7 @@ online-create | online-join | online-game
                                         │ "← Return" (step 1) ─▶ game-mode (draft discarded)
                                         └─ "← Return" (steps 2-3) ─▶ the pane before (draft kept)
 
-  tournament-lobby ──"Start Tournament" (organizer, ≥ 2 players)──▶ tournament-round
+  tournament-lobby ──"Start Tournament" (organizer, ≥ 2 players, ≤ 1 empty seat)──▶ tournament-round
                      an odd field gets the BYE info panel first        (every device follows
                                                                         the event status here,
                                                                         not a click)

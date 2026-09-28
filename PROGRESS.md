@@ -141,7 +141,7 @@ device shares: the round, the mission, the victory-point standing and the table 
    question; a mistake means cancelling the event). `canAssignOccupants` now requires the setup
    phase and the assign endpoint says _"The tables are locked — this round is under way"_ instead of
    the generic refusal. A phaseless round written earlier hydrates to `setup`.
-9. **Verified:** `check` 0/0, lint clean, 514 tests (48 new: 47 domain, 1 repository), a
+9. **Verified:** `check` 0/0, lint clean, 515 tests (49 new: 48 domain, 1 repository), a
    46-assertion API pass for start/assign (the start gate and its 403/401, the round it opens, the
    closed lobby, every assign refusal, the BYE, the ready flag, moving and unassigning, both SSE
    notifications, cancelling a running event) plus a 16-assertion one for start-round (the phase and
@@ -149,11 +149,14 @@ device shares: the round, the mission, the victory-point standing and the table 
    locked tables and their message, the pairings surviving the lock, cancelling a running round), a
    60-assertion browser pass over two contexts (wizard → lobby → the BYE announcement → both devices
    on the round screen → a real pointer drag → tap-to-place → move-back → the gate unlocking → 320 px
-   → both reloads returning _to the round_ with the pairings intact → abandoning from it) and a
+   → both reloads returning _to the round_ with the pairings intact → abandoning from it), a
    46-assertion one for the roadmap (seven dots for two missions, the panel sitting above Round
    Control, the organizer-only button, the phase change reaching the player's device live, the
    connector lighting up behind it, the lock, tapping dots, both reloads keeping the step, and the
-   strip scrolling instead of overflowing at 320 px).
+   strip scrolling instead of overflowing at 320 px) and a 12-assertion one for the empty-seat rule
+   (two of four seats: the button locked with the reason and a 409 from the API; a third joiner
+   unlocking it with the BYE announcement; the round then opening with the BYE in the pool and both
+   devices on it).
 10. **Two bugs the passes caught.** `payload.tableIndex ?? undefined` collapsed the explicit `null`
     ("back to the pool") into "missing", so unassigning 400'd — a `null` that carries meaning must
     not go through `??`. And Svelte eats the whitespace at an inline `{#if}` boundary:

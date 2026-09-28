@@ -220,8 +220,8 @@ native/platform-specific one. Used on a phone screen during a game session.
   by both roles: the event, one row per seat (name + army, `you`/`organizer`
   marks, or _Empty seat_), and for the organizer **Share Link** (clipboard,
   with the URL shown inline when copying is blocked), **QR Code** and a **Start
-  Tournament** button that unlocks at two registered players, with an odd field
-  told about the BYE before it starts.
+  Tournament** button that unlocks at two registered players with at most one
+  seat still empty, an odd field told about the BYE before it starts.
   Players arrive through `/tournament-join/[code]` (link or QR): a name plus a
   **Roster** army unlocks **Join**, which takes the first free seat — a full
   field refuses joins, there is no waitlist and no per-join approval — stores a
@@ -321,8 +321,9 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   server-driven: it sends intents to the API and refetches the visibility-filtered
   game view (SSE change notifications trigger refetches) — it never mutates game
   state locally. `tournamentEventStore` is the same shape for a live tournament
-  (`create()`, `join()`, `loadPeek()`, `resumeSession()`, `retry()`,
-  `abandon()`, `cancelJoin()`, `dismissNotice()` — `abandon()` is the only way
+  (`create()`, `join()`, `loadPeek()`, `resumeSession()`, `retry()`, `start()`,
+  `startRound()`, `assign()`, `abandon()`, `cancelJoin()`, `dismissNotice()` —
+  `abandon()` is the only way
   out and always calls the server, and a `notice` survives the teardown that
   follows a remote cancellation so the page can say why the lobby is gone),
   while `tournamentStore` stays the local wizard draft. Persisted progress is loaded by merging it onto
