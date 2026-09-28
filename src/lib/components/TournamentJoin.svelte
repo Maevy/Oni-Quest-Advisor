@@ -75,7 +75,9 @@
 						</dd>
 					</div>
 				</dl>
-				{#if peek.full}
+				{#if peek.status === 'closed'}
+					<p class="mt-3 text-xs text-red-400">This tournament was cancelled by its organizer.</p>
+				{:else if peek.full}
 					<p class="mt-3 text-xs text-red-400">This tournament is full — every seat is taken.</p>
 				{/if}
 			</Panel>
@@ -149,7 +151,9 @@
 			>
 				Join
 			</button>
-			{#if peek.full}
+			{#if peek.status === 'closed'}
+				<p class="-mt-2 text-center text-xs text-red-400">This tournament is no longer running.</p>
+			{:else if peek.full}
 				<p class="-mt-2 text-center text-xs text-red-400">Every seat is taken.</p>
 			{:else if army === null}
 				<p class="-mt-2 text-center text-xs text-slate-400">Pick a Roster army to join.</p>

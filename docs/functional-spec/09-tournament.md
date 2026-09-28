@@ -7,8 +7,9 @@ sides.
 
 > **Under construction.** This document grows with the feature, step by step. What exists today is
 > the entry point, the configuration wizard's three panes, creation behind the retention notice,
-> the lobby with its link and QR invites, and joining; pairing, overwatch and the conclusion are
-> planned, and the plan's undecided parts are listed at the end.
+> the lobby with its link and QR invites, joining, and returning to a held seat after a reload —
+> including abandoning it again; pairing, overwatch and the conclusion are planned, and the plan's
+> undecided parts are listed at the end.
 
 ## The shape of the feature (planned)
 
@@ -184,6 +185,59 @@ Decisions taken here:
 - **The joiner's token is generated on their own device** and only its SHA-256 hash is stored, the
   pattern online seats already use; one token holds one seat, so a replayed join is refused.
 
+## Returning to a tournament, and abandoning it
+
+A device that holds a seat session (`oni-quest-advisor:tournament-session`) is offered it back on
+every app start, the same way an open local game is: the app fetches the current view first, so the
+prompt can name the tournament, and then asks.
+
+> _"You are participating in "Eldfall Cup". Abandoning it gives up your seat."_ — **Return** /
+> **Abandon**
+
+**Return** (the prominent button, and the Escape branch — walking away is never the accidental
+choice) enters `tournament-lobby`, which resynchronizes itself from the fetched view and then stays
+current over SSE: a player who reloads mid-lobby sees the seats as they are now, not as they were
+when the app closed. **Abandon** is the only way out of a tournament, and it always reaches the
+server — what it does depends on the role:
+
+- **A participant** gives up their seat (`POST /api/tournaments/<code>/leave`): the row goes back to
+  _Empty seat_, the count drops, every other lobby sees it live, and the seat is open to the next
+  joiner again.
+- **The organizer** cancels the event (`POST /api/tournaments/<code>/cancel`): its status becomes
+  `closed`, and every device in the lobby is taken back to the main menu with a dismissible banner
+  reading _"The organizer cancelled this tournament."_ The invite link answers with _"This
+  tournament was cancelled by its organizer"_ and refuses further joins.
+
+The lobby's own **← Return** opens exactly the same prompt with exactly the same consequences —
+there is no local-only way to walk out of a tournament, because that would strand a seat nobody can
+take (or an event nobody can start) on the server.
+
+Decisions taken here:
+
+- **The prompt is the resynchronization point.** The view is fetched before the prompt appears, so
+  "Return" never lands in a stale lobby and a tournament that ended while the app was shut is
+  reported instead of offered.
+- **Abandoning is a server call, and a failure keeps the dialog open** with the reason. Silently
+  clearing the session locally would free the player while the server still counts them in — so a
+  device that cannot reach the server stays where it is and can retry.
+- **A cancelled event keeps its seats.** Deleting the rows at once would leave every open device
+  with a bare 404 and no way to tell a cancellation from a retention cleanup or a mistyped code;
+  `closed` plus a change notification lets each of them say what actually happened. Retention then
+  deletes a cancelled event after 24 hours — it has no report to keep, unlike a concluded one's 48.
+- **A cancelled or deleted tournament is not offered on app start.** The dead session is dropped,
+  the reason is shown as a banner on the main menu, and the normal startup order carries on (an open
+  local game is offered next).
+- **Leaving is a lobby-only rule for players.** Once the event runs, a seat is part of a pairing;
+  releasing it mid-round needs a forfeit rule that does not exist yet, so `leave` refuses with a
+  clear message. The organizer may cancel a running event — a broken one has to be killable — but
+  never a concluded one.
+
+When the server cannot be reached at all, the session is kept and the prompt still appears — it
+just cannot name the tournament ("this tournament") and carries the reason. **Return** then lands
+on a retry panel (the failure, **Try Again**, **Abandon**) rather than an empty screen, and a
+successful retry both refetches the view and re-opens the change stream, so the lobby is live again
+without a reload.
+
 ## Next — the odd field and the BYE
 
 **Start Tournament** stays disabled until this exists. Pressing it with an odd number of registered
@@ -222,6 +276,10 @@ as a played win.
   never decodes the code, so nothing enforces the 125-point cap yet. Whether creation and join
   should verify it (the code is self-describing) is open.
 - **Who takes the BYE**, and what a BYE win is worth in tournament points — see the BYE section.
+- **Leaving a running tournament.** A player's abandon is refused once the event is `active`:
+  releasing a seat mid-pairing needs a forfeit rule first (what the opponent at that table scores,
+  whether the table is dissolved, whether the field goes odd and a BYE appears). The organizer can
+  cancel a running event, so a broken one is killable today.
 - **Where do the tables' games actually run?** Presumably each table is a normal match on the
   players' own devices through the online machinery, with the tournament server overwatching;
   whether a table may instead be hot-seat on one device is open.

@@ -50,6 +50,12 @@ online-create | online-join | online-game
                                    ├── Resume Game ─▶ mission-detail (progress restored)
                                    └── Abandon ─────▶ stays on game-mode (progress deleted)
 
+  app start ──tournament session found──▶ "You are participating in {name}"
+                                          (organizer: "You are the organizer of {name}")
+                                   ├── Return ──▶ tournament-lobby (refetched, then live over SSE)
+                                   └── Abandon ─▶ stays on game-mode — participant: seat freed
+                                                                   organizer: event cancelled
+
 
   game-mode ──"Army Builder"──▶ army-faction-select ──pick faction──▶ army-builder
                                         │  ▲                             │
@@ -60,10 +66,15 @@ online-create | online-join | online-game
   game-mode ──"Organize Tournament"──▶ tournament-setup
                                         │  step 1: name, link, organizer, seat, field, pairing
                                         │  step 2: missions (Add Quest) + table names
-                                        │  "Create Tournament" — server-side, next iteration
+                                        │  step 3: overview ─"Create Tournament"─▶ retention notice
+                                        │                                          └─ Create ─▶ tournament-lobby
                                         │
                                         │ "← Return" (step 1) ─▶ game-mode (draft discarded)
-                                        └─ "← Return" (step 2) ─▶ step 1 (draft kept)
+                                        └─ "← Return" (steps 2-3) ─▶ the pane before (draft kept)
+
+  tournament-lobby ──"← Return"──▶ the same "You are participating in {name}" prompt
+                                   ├── Return ──▶ stays in the lobby
+                                   └── Abandon ─▶ game-mode (seat freed / event cancelled)
 ```
 
 ## Screen 1 — Game Mode (`game-mode`)
@@ -270,8 +281,9 @@ lifecycle carry no mode and are read as solo.
 
 The prompt reads _"You have an open game: {mission name}. Abandoning it loses all progress."_ and
 deliberately makes **Resume Game** the prominent button _and_ the Escape branch — losing a run is
-never the accidental choice. It is skipped when an online seat resumed instead, so an online game
-wins; the solo record survives and is offered on a later start.
+never the accidental choice. It is the last of the three startup claims: an online seat resumes
+first, a held tournament seat next (into its own prompt, below), and only when neither exists is the
+local game offered. The solo record survives a skipped prompt and is offered on a later start.
 
 A record pointing at a mission the bundled content no longer has is **stale**:
 `findResumableGame()` drops it silently rather than offering a game that cannot render.
@@ -279,7 +291,16 @@ A record pointing at a mission the bundled content no longer has is **stale**:
 Progress written before this feature existed has no open-game record. It is not discarded — it is
 picked up when that mission is next started, so no one loses an old run to the upgrade.
 
-Online has no open-game record: its state lives on the server and its seat resumes itself.
+Online has no open-game record: its state lives on the server and its seat resumes itself, straight
+into the game screen with no prompt. A tournament seat does prompt — _"You are participating in
+{name}. Abandoning it gives up your seat."_ (the organizer gets _"You are the organizer of {name}.
+Abandoning it cancels the tournament and deletes it for everyone."_) — because unlike a local run,
+abandoning it changes something on the server: a participant frees their seat for the next joiner,
+the organizer cancels the event for every device in the lobby. **Return** is the prominent button
+and the Escape branch, and enters `tournament-lobby` with the freshly fetched view; the lobby's own
+**← Return** opens the same prompt, so there is no local-only way out. A tournament that was
+cancelled while the app was shut is not offered — the session is dropped and a dismissible banner on
+the main menu says why. See [09-tournament.md](./09-tournament.md).
 
 ## Army builder flow
 
@@ -318,15 +339,15 @@ over SSE.
 
 `/tournament-join/<code>` — the invite link or its QR code — hands the code to `tournament-join`,
 where a player enters a name and picks a **Roster** army; **Join** seats them in the first free
-slot and opens the lobby. A seat session is stored per device, so a reload resumes straight back
-into the lobby, and an already-seated device opening its own link again goes to the lobby instead
-of taking a second seat. **Return** from either screen leaves locally only; the server-side
-tournament stays as it is.
+slot and opens the lobby. A seat session is stored per device, so a reload offers to return to the
+lobby (and resynchronizes it), and an already-seated device opening its own link again goes to the
+lobby instead of taking a second seat.
 
 **Return** in the wizard steps back one pane at a time keeping the draft, and leaves it from step
 1, discarding it — like the army builder, the draft is in-memory only and the wizard has no
-persistence and no open-game record. Full detail in
-[09-tournament.md](./09-tournament.md).
+persistence and no open-game record. **Return** in the lobby is a different matter: it asks first,
+and abandoning tells the server (a participant frees their seat, the organizer cancels the event).
+Full detail in [09-tournament.md](./09-tournament.md).
 
 ## Online flow
 
@@ -358,8 +379,11 @@ Menu".
 - Online state lives on the **server**; the seat (game code + seat + token) is in `localStorage`
   under `oni-quest-advisor:online-session`, and the page resumes it on mount.
 - The army builder list is **not** persisted at all.
-- The tournament draft is **not** persisted at all, either — leaving the wizard discards it, and
-  re-entering starts from a clean sheet. Persistence arrives with the server-side creation.
+- The tournament draft is **not** persisted at all — leaving the wizard discards it, and
+  re-entering starts from a clean sheet. Once the tournament exists, its state lives on the
+  **server** and only the seat (code, role, token) is stored per device under
+  `oni-quest-advisor:tournament-session`; abandoning deletes that entry _and_ tells the server,
+  which is what frees the seat or cancels the event.
 
 ## One-time notices
 

@@ -103,6 +103,10 @@ each `src/lib/` folder.
   pairing slot. A playing TO holds one of those seats rather than adding to them.
 - **Pairing mode** — automatic (a Swiss system pairs each round) or manual (the TO assigns each
   round's tables by hand).
+- **Seat session** — the per-device record (code, role, token) a created or joined tournament
+  leaves behind, and the reason a reload offers to return to the lobby. Abandoning deletes it _and_
+  tells the server: a participant frees their seat for the next joiner, the TO cancels the event
+  for everyone.
 
 ## Screen map
 

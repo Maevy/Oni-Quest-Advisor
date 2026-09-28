@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+	canCancelTournament,
 	canJoinTournament,
+	canLeaveTournament,
+	cancelTournament,
 	createTournamentEvent,
 	isTournamentFull,
 	joinTournament,
 	joinedCount,
+	leaveTournament,
 	peekTournament,
 	seatIndexForTokenHash,
 	viewForTournamentToken,
@@ -290,5 +294,126 @@ describe('peekTournament', () => {
 
 		expect(peekTournament(event).full).toBe(true);
 		expect(peekTournament(event).canJoin).toBe(false);
+	});
+});
+
+describe('leaveTournament', () => {
+	it('frees the leaving player’s seat', () => {
+		let event = joinTournament(state(), 'Ana', playerArmy, 'a', LATER);
+		event = joinTournament(event, 'Ben', playerArmy, 'b', LATER);
+
+		const left = leaveTournament(event, 'a', LATER);
+
+		expect(left.seats.map((seat) => seat.participant?.name ?? null)).toEqual([
+			null,
+			'Ben',
+			null,
+			null
+		]);
+		expect(joinedCount(left)).toBe(1);
+		expect(left.updatedAt).toBe(LATER);
+	});
+
+	it('opens the freed seat to the next joiner', () => {
+		let event = state({ participantCount: 4 });
+		for (const token of ['a', 'b', 'c', 'd']) {
+			event = joinTournament(event, token, playerArmy, token, LATER);
+		}
+		expect(canJoinTournament(event)).toBe(false);
+
+		const left = leaveTournament(event, 'b', LATER);
+		const rejoined = joinTournament(left, 'Eve', playerArmy, 'e', LATER);
+
+		expect(canJoinTournament(left)).toBe(true);
+		expect(seatIndexForTokenHash(rejoined, 'e')).toBe(1);
+		expect(seatIndexForTokenHash(rejoined, 'b')).toBeNull();
+	});
+
+	it('keeps the organizer’s own seat when a player leaves', () => {
+		let event = state({ organizerPlays: true, organizerArmy });
+		event = joinTournament(event, 'Ana', playerArmy, 'a', LATER);
+
+		const left = leaveTournament(event, 'a', LATER);
+
+		expect(left.seats[0].participant?.name).toBe('Marta');
+		expect(left.seats[0].organizer).toBe(true);
+	});
+
+	it('refuses to leave once the event is running', () => {
+		const event = joinTournament(state(), 'Ana', playerArmy, 'a', LATER);
+
+		expect(canLeaveTournament({ ...event, status: 'active' })).toBe(false);
+		expect(() => leaveTournament({ ...event, status: 'active' }, 'a', LATER)).toThrow(
+			'cannot be left'
+		);
+	});
+
+	it('refuses the organizer, who cancels instead of leaving', () => {
+		const event = state({ organizerPlays: true, organizerArmy });
+
+		expect(() => leaveTournament(event, 'org-hash', LATER)).toThrow('cancels the tournament');
+	});
+
+	it('refuses a token that holds no seat', () => {
+		expect(() => leaveTournament(state(), 'stranger', LATER)).toThrow('holds no seat');
+	});
+
+	it('leaves the original untouched', () => {
+		const event = joinTournament(state(), 'Ana', playerArmy, 'a', LATER);
+		leaveTournament(event, 'a', LATER);
+
+		expect(joinedCount(event)).toBe(1);
+	});
+});
+
+describe('cancelTournament', () => {
+	it('closes a lobby', () => {
+		const cancelled = cancelTournament(state(), LATER);
+
+		expect(cancelled.status).toBe('closed');
+		expect(cancelled.updatedAt).toBe(LATER);
+	});
+
+	it('closes an event that is already running', () => {
+		const event: TournamentState = { ...state(), status: 'active' };
+
+		expect(canCancelTournament(event)).toBe(true);
+		expect(cancelTournament(event, LATER).status).toBe('closed');
+	});
+
+	it('refuses an event that already ended', () => {
+		expect(canCancelTournament({ ...state(), status: 'concluded' })).toBe(false);
+		expect(() => cancelTournament({ ...state(), status: 'concluded' }, LATER)).toThrow(
+			'already ended'
+		);
+		expect(() => cancelTournament({ ...state(), status: 'closed' }, LATER)).toThrow();
+	});
+
+	it('keeps the seats, so an open device is told it was cancelled rather than meeting a 404', () => {
+		let event = state({ organizerPlays: true, organizerArmy });
+		event = joinTournament(event, 'Ana', playerArmy, 'a', LATER);
+
+		const cancelled = cancelTournament(event, LATER);
+		const view = viewForTournamentToken(cancelled, 'a');
+
+		expect(view?.status).toBe('closed');
+		expect(view?.seats.map((seat) => seat.name)).toEqual(['Marta', 'Ana', null, null]);
+	});
+
+	it('closes the door on joining and on the invite link', () => {
+		const cancelled = cancelTournament(state(), LATER);
+		const peek = peekTournament(cancelled);
+
+		expect(canJoinTournament(cancelled)).toBe(false);
+		expect(peek.canJoin).toBe(false);
+		expect(peek.status).toBe('closed');
+		expect(() => joinTournament(cancelled, 'Ana', playerArmy, 'a', LATER)).toThrow();
+	});
+
+	it('leaves the original untouched', () => {
+		const event = state();
+		cancelTournament(event, LATER);
+
+		expect(event.status).toBe('lobby');
 	});
 });

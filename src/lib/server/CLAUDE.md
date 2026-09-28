@@ -34,6 +34,8 @@
   `/api/tournaments`) share the stricter hourly bucket.
 - `cleanup.ts` owns retention: games (lobby 7 days, abandoned 30, finished/closed 90, with a final
   round auto-finished instead of deleted) and tournaments (lobby 7 days, abandoned 30, concluded
-  exactly the 48-hour report window the creation notice promises).
+  exactly the 48-hour report window the creation notice promises, cancelled 24 hours — a cancelled
+  event has no report, but its rows must outlive the cancellation so the open lobbies can still be
+  told what happened instead of meeting a 404).
 - All game rules live in `lib/domain` (`online.ts`, `tournamentEvent.ts`) — this layer only
   persists, authenticates and transports. Validation of actions = domain `can*` guards.

@@ -194,7 +194,10 @@ describe('cleanupStaleGames', () => {
 
 describe('cleanupStaleTournaments', () => {
 	/** A tournament of the given status whose snapshot row is `ageInHours` old. */
-	async function seedTournament(status: 'lobby' | 'active' | 'concluded', ageInHours: number) {
+	async function seedTournament(
+		status: 'lobby' | 'active' | 'concluded' | 'closed',
+		ageInHours: number
+	) {
 		const code = generateGameCode();
 		const state = createTournamentEvent({
 			code,
@@ -230,6 +233,14 @@ describe('cleanupStaleTournaments', () => {
 		const stale = await seedTournament('lobby', 24 * 8);
 		expect(await cleanupStaleTournaments(await getDb())).toBe(1);
 		expect((await getTournament(fresh))?.code).toBe(fresh);
+		expect(await getTournament(stale)).toBeNull();
+	});
+
+	it('keeps a cancelled tournament only long enough for the open lobbies to be told', async () => {
+		const fresh = await seedTournament('closed', 23);
+		const stale = await seedTournament('closed', 25);
+		expect(await cleanupStaleTournaments(await getDb())).toBe(1);
+		expect((await getTournament(fresh))?.status).toBe('closed');
 		expect(await getTournament(stale)).toBeNull();
 	});
 

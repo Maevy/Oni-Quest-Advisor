@@ -11,10 +11,12 @@
 		missions: Mission[];
 		/** Faction colours and names for the registered armies. */
 		factions: ArmyFactionConfig[];
+		/** A refetch that did not get through — the lobby may be showing a stale copy. */
+		error?: string | null;
 		onLeave: () => void;
 	};
 
-	let { view, missions, factions, onLeave }: Props = $props();
+	let { view, missions, factions, error = null, onLeave }: Props = $props();
 
 	const label = 'shrink-0 text-xs tracking-wide text-slate-400 uppercase';
 	const value = 'min-w-0 text-right text-sm break-words text-slate-100';
@@ -50,6 +52,14 @@
 	<ScreenHeader title={view.name} onBack={onLeave} />
 
 	<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
+		{#if error}
+			<div
+				class="rounded-xl border border-red-500/40 bg-slate-800/40 p-3 text-sm text-red-300 backdrop-blur"
+			>
+				{error}
+			</div>
+		{/if}
+
 		{#if view.role === 'organizer'}
 			<Panel title="Invite Players">
 				<div class="flex flex-wrap gap-3">

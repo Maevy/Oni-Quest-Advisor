@@ -12,12 +12,21 @@ const TOURNAMENT_LOBBY_RETENTION_DAYS = 7;
 const TOURNAMENT_ACTIVE_RETENTION_DAYS = 30;
 /** The report window: a concluded tournament stays queryable for 48 hours, then goes. */
 const TOURNAMENT_REPORT_RETENTION_HOURS = 48;
+/**
+ * A cancelled event has no report to keep, but its rows must outlive the moment of cancellation
+ * so every open lobby can still be told what happened instead of meeting a 404.
+ */
+const TOURNAMENT_CANCELLED_RETENTION_HOURS = 24;
 const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export type CleanupSummary = { deleted: number; autoFinished: number };
 
 function cutoffIso(days: number): string {
 	return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function cutoffHours(hours: number): string {
+	return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 }
 
 async function staleIds(db: Client, statuses: string[], cutoff: string): Promise<string[]> {
@@ -53,17 +62,20 @@ async function staleTournamentIds(
 
 /**
  * Tournament retention: an abandoned lobby is a dropped invite (7 days), a tournament abandoned
- * mid-play is deleted (30 days), and a concluded one lives exactly as long as the report window
- * the creation notice promises — 48 hours — before it goes.
+ * mid-play is deleted (30 days), a concluded one lives exactly as long as the report window the
+ * creation notice promises — 48 hours — and a cancelled one only long enough for the open
+ * lobbies to be told (24 hours) before it goes.
  */
 export async function cleanupStaleTournaments(db: Client): Promise<number> {
-	const reportCutoff = new Date(
-		Date.now() - TOURNAMENT_REPORT_RETENTION_HOURS * 60 * 60 * 1000
-	).toISOString();
 	const ids = [
 		...(await staleTournamentIds(db, ['lobby'], cutoffIso(TOURNAMENT_LOBBY_RETENTION_DAYS))),
 		...(await staleTournamentIds(db, ['active'], cutoffIso(TOURNAMENT_ACTIVE_RETENTION_DAYS))),
-		...(await staleTournamentIds(db, ['concluded', 'closed'], reportCutoff))
+		...(await staleTournamentIds(
+			db,
+			['concluded'],
+			cutoffHours(TOURNAMENT_REPORT_RETENTION_HOURS)
+		)),
+		...(await staleTournamentIds(db, ['closed'], cutoffHours(TOURNAMENT_CANCELLED_RETENTION_HOURS)))
 	];
 	if (ids.length === 0) return 0;
 	const placeholders = ids.map(() => '?').join(', ');

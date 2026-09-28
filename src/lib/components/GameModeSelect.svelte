@@ -3,6 +3,9 @@
 	import rasetsu from '$lib/assets/Rasetsu.png';
 
 	type Props = {
+		/** A one-line heads-up about something that ended server-side, dismissible. */
+		notice?: string | null;
+		onDismissNotice?: () => void;
 		onSoloSelect: () => void;
 		onTwoPlayerSelect: () => void;
 		onOnlineSelect: () => void;
@@ -11,6 +14,8 @@
 	};
 
 	let {
+		notice = null,
+		onDismissNotice,
 		onSoloSelect,
 		onTwoPlayerSelect,
 		onOnlineSelect,
@@ -35,6 +40,23 @@
 			</div>
 			<p class="text-slate-100">Select Game Mode</p>
 		</div>
+
+		{#if notice}
+			<div
+				class="flex w-full items-center gap-3 rounded-xl border border-red-500/40 bg-slate-800/40 px-3 py-2.5 text-left backdrop-blur"
+				role="status"
+			>
+				<p class="min-w-0 flex-1 text-sm text-red-300">{notice}</p>
+				<button
+					type="button"
+					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-600/60 bg-slate-900/60 text-sm font-bold text-slate-300 transition hover:bg-slate-800/60"
+					aria-label="Dismiss"
+					onclick={onDismissNotice}
+				>
+					<span aria-hidden="true">✕</span>
+				</button>
+			</div>
+		{/if}
 
 		<div class="flex w-full flex-col gap-3">
 			<button

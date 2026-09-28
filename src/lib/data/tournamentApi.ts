@@ -87,6 +87,24 @@ export function tournamentEventsUrl(code: string, token: string): string {
 	return `${BASE}/${code}/events?token=${encodeURIComponent(token)}`;
 }
 
+/** A seated player gives up their seat; the lobby shows it as empty again. */
+export async function leaveTournament(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/leave`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/** The organizer cancels the event — it closes for every device in the lobby. */
+export async function cancelTournament(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/cancel`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
 /** Seat tokens are generated client-side; only their hash reaches the server. */
 export function generateTournamentToken(): string {
 	const bytes = crypto.getRandomValues(new Uint8Array(32));

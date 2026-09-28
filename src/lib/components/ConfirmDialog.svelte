@@ -6,6 +6,8 @@
 		confirmLabel: string;
 		cancelLabel?: string;
 		confirming?: boolean;
+		/** Why the last confirm failed — keeps the dialog open with the reason beside the buttons. */
+		errorText?: string | null;
 		onConfirm: () => void;
 		onCancel: () => void;
 	};
@@ -15,6 +17,7 @@
 		confirmLabel,
 		cancelLabel = 'Cancel',
 		confirming = false,
+		errorText = null,
 		onConfirm,
 		onCancel
 	}: Props = $props();
@@ -30,6 +33,9 @@
 		class="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 text-center backdrop-blur"
 	>
 		<p class="text-lg text-slate-100">{text}</p>
+		{#if errorText}
+			<p class="mt-3 text-sm text-red-400">{errorText}</p>
+		{/if}
 		<div class="mt-4 flex justify-center gap-3">
 			<button
 				type="button"

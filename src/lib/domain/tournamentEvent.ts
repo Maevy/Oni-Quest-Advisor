@@ -13,7 +13,7 @@ export type TournamentEventStatus =
 	| 'active'
 	/** The event concluded; its data lives on for the report window. */
 	| 'concluded'
-	/** Deleted-to-be: the TO cancelled it before it started. */
+	/** Cancelled by the organizer — deleted-to-be, and unreachable for joining. */
 	| 'closed';
 
 export type TournamentParticipant = {
@@ -153,6 +153,52 @@ export function joinTournament(
 		index === target ? { ...seat, participant: { name, army, tokenHash } } : seat
 	);
 	return { ...state, seats, updatedAt: now };
+}
+
+/**
+ * A seated player may give up their seat while the event is still a lobby. Once it runs, a seat
+ * is part of the pairing — releasing it needs a forfeit rule that does not exist yet.
+ */
+export function canLeaveTournament(state: TournamentState): boolean {
+	return state.status === 'lobby';
+}
+
+/**
+ * Frees the caller's seat, so the lobby shows it as empty again and the next joiner takes it.
+ * The organizer never leaves: abandoning as the TO cancels the whole event instead, and there is
+ * no handover of an event mid-flight.
+ */
+export function leaveTournament(
+	state: TournamentState,
+	tokenHash: string,
+	now: string
+): TournamentState {
+	if (!canLeaveTournament(state)) {
+		throw new Error('A running tournament cannot be left');
+	}
+	if (tokenHash === state.organizerTokenHash) {
+		throw new Error('The organizer cancels the tournament instead of leaving it');
+	}
+	const seatIndex = seatIndexForTokenHash(state, tokenHash);
+	if (seatIndex === null) throw new Error('This token holds no seat');
+	const seats = state.seats.map((seat, index) =>
+		index === seatIndex ? { ...seat, participant: null } : seat
+	);
+	return { ...state, seats, updatedAt: now };
+}
+
+/** The organizer may kill the event while it is a lobby or mid-play, never once it concluded. */
+export function canCancelTournament(state: TournamentState): boolean {
+	return state.status === 'lobby' || state.status === 'active';
+}
+
+/**
+ * Cancels the event: status `closed`, seats left as they were so every open device still
+ * authenticates and can be told what happened rather than meeting a bare 404.
+ */
+export function cancelTournament(state: TournamentState, now: string): TournamentState {
+	if (!canCancelTournament(state)) throw new Error('This tournament has already ended');
+	return { ...state, status: 'closed', updatedAt: now };
 }
 
 /** What the lobby shows for one seat: never the army code, so nobody imports nobody's list. */

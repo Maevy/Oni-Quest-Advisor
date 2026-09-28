@@ -212,26 +212,39 @@ native/platform-specific one. Used on a phone screen during a game session.
 - **TournamentState** (`domain/tournamentEvent.ts`) → the server-authoritative
   event behind the lobby: status `lobby`/`active`/`concluded`/`closed`, the
   whole configuration, and one seat per pairing slot (a playing TO fills seat 0
-  at creation). Pure `createTournamentEvent`/`joinTournament` transitions with
-  `can*` guards plus the visibility filters — `viewForTournamentToken` for the
-  organizer and seated players (army **names and factions**, never codes or
-  tokens) and `peekTournament` for what the join screen may show before
-  joining. The **lobby** (`tournament-lobby`) is shared by both roles: the
-  event, one row per seat (name + army, `you`/`organizer` marks, or _Empty
-  seat_), and for the organizer **Share Link** (clipboard, with the URL shown
-  inline when copying is blocked), **QR Code** and a **Start Tournament** button
-  that stays disabled until the odd-field BYE rule exists. Players arrive
-  through `/tournament-join/[code]` (link or QR): a name plus a **Roster** army
-  unlocks **Join**, which takes the first free seat — a full field refuses
-  joins, there is no waitlist and no per-join approval — stores a seat session
-  (`oni-quest-advisor:tournament-session`: code, role, token) and lands in the
-  same lobby read-only; joins reach every open lobby live over SSE. Server
-  tables `tournaments`/`tournament_events`, endpoints `/api/tournaments/**`,
-  retention (lobby 7 days, abandoned 30, concluded exactly the 48-hour report
-  window). The **QR symbol is encoded in-app** (`domain/qr.ts`: byte mode, EC
-  level M, versions 1–6, mask 0, rendered as SVG) — no third-party generator,
-  because the link is the credential to join. Spec:
-  `docs/functional-spec/09-tournament.md`.
+  at creation). Pure `createTournamentEvent`/`joinTournament`/`leaveTournament`/
+  `cancelTournament` transitions with `can*` guards plus the visibility filters
+  — `viewForTournamentToken` for the organizer and seated players (army **names
+  and factions**, never codes or tokens) and `peekTournament` for what the join
+  screen may show before joining. The **lobby** (`tournament-lobby`) is shared
+  by both roles: the event, one row per seat (name + army, `you`/`organizer`
+  marks, or _Empty seat_), and for the organizer **Share Link** (clipboard,
+  with the URL shown inline when copying is blocked), **QR Code** and a **Start
+  Tournament** button that stays disabled until the odd-field BYE rule exists.
+  Players arrive through `/tournament-join/[code]` (link or QR): a name plus a
+  **Roster** army unlocks **Join**, which takes the first free seat — a full
+  field refuses joins, there is no waitlist and no per-join approval — stores a
+  seat session (`oni-quest-advisor:tournament-session`: code, role, token) and
+  lands in the same lobby read-only; joins reach every open lobby live over
+  SSE. A stored seat session makes the next app start **prompt** instead of
+  dropping the player in: "You are participating in {name}" (the organizer:
+  "…Abandoning it cancels the tournament and deletes it for everyone"), with
+  **Return** — the prominent button and the Escape branch — entering the freshly
+  refetched lobby and **Abandon** the only way out of a tournament: a
+  participant frees their seat for the next joiner (`/leave`), the organizer
+  cancels the event (`/cancel` → status `closed`, seats kept so every device
+  still authenticates), and the other lobbies learn it over SSE, drop their
+  session and show a dismissible banner on the main menu. The lobby's ← Return
+  opens the same prompt, so there is no local-only exit that would strand a
+  seat, and a failed abandon keeps the dialog open rather than clearing the
+  session. Players may not leave once the event is `active` (a seat in a
+  pairing needs a forfeit rule first); the organizer may still cancel it.
+  Server tables `tournaments`/`tournament_events`, endpoints
+  `/api/tournaments/**`, retention (lobby 7 days, abandoned 30, concluded
+  exactly the 48-hour report window, cancelled 24 hours). The **QR symbol is
+  encoded in-app** (`domain/qr.ts`: byte mode, EC level M, versions 1–6, mask 0,
+  rendered as SVG) — no third-party generator, because the link is the
+  credential to join. Spec: `docs/functional-spec/09-tournament.md`.
 
 ## Architecture
 
@@ -281,7 +294,10 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   server-driven: it sends intents to the API and refetches the visibility-filtered
   game view (SSE change notifications trigger refetches) — it never mutates game
   state locally. `tournamentEventStore` is the same shape for a live tournament
-  (`create()`, `join()`, `loadPeek()`, `resumeSession()`, `leave()`, `cancelJoin()`),
+  (`create()`, `join()`, `loadPeek()`, `resumeSession()`, `retry()`,
+  `abandon()`, `cancelJoin()`, `dismissNotice()` — `abandon()` is the only way
+  out and always calls the server, and a `notice` survives the teardown that
+  follows a remote cancellation so the page can say why the lobby is gone),
   while `tournamentStore` stays the local wizard draft. Persisted progress is loaded by merging it onto
   `domain.createEmptyProgress()` (solo — a shallow spread suffices, the fields are
   top-level) or `domain.hydrateTwoPlayerProgress()` (hot-seat — it merges **each

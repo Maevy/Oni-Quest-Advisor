@@ -55,6 +55,11 @@
 
 	/** A local game left open by a previous visit, awaiting the resume-or-abandon choice. */
 	let resumableGame = $state<{ game: OpenGame; mission: Mission } | null>(null);
+	/** A tournament seat held by this device, awaiting the same choice. */
+	let resumableTournament = $state(false);
+	/** The lobby's own ← asked whether to abandon; same dialog, same server call. */
+	let abandoningFromLobby = $state(false);
+	let abandoningTournament = $state(false);
 
 	// Resume an online seat from a previous visit if any, then a tournament seat, and only
 	// then offer the open local game.
@@ -66,13 +71,55 @@
 			}
 			void tournamentEventStore.resumeSession().then((resumedTournament) => {
 				if (resumedTournament) {
-					navigationStore.enterTournamentLobby();
+					// Not straight into the lobby: the player chooses to return, and abandoning
+					// has server-side consequences they should see spelled out first.
+					resumableTournament = true;
 					return;
 				}
 				resumableGame = navigationStore.findResumableGame();
 			});
 		});
 	});
+
+	/** A cancelled tournament has no lobby left — leave it and let the menu say what happened. */
+	$effect(() => {
+		if (tournamentEventStore.notice && navigationStore.screen === 'tournament-lobby') {
+			resumableTournament = false;
+			abandoningFromLobby = false;
+			navigationStore.leaveTournamentLobby();
+		}
+	});
+
+	let showTournamentAbandon = $derived(resumableTournament || abandoningFromLobby);
+	let tournamentAbandonText = $derived.by(() => {
+		const name = tournamentEventStore.tournamentName;
+		const what = name ? `"${name}"` : 'this tournament';
+		return tournamentEventStore.isOrganizer
+			? `You are the organizer of ${what}. Abandoning it cancels the tournament and deletes it for everyone.`
+			: `You are participating in ${what}. Abandoning it gives up your seat.`;
+	});
+
+	/** The prompt's safe branch — back into the lobby, which resynchronizes itself over SSE. */
+	function returnToTournament(): void {
+		resumableTournament = false;
+		abandoningFromLobby = false;
+		navigationStore.enterTournamentLobby();
+	}
+
+	/**
+	 * The prompt's destructive branch, and the only way out of a tournament: a player frees their
+	 * seat, the organizer cancels the event. A failed call keeps the dialog open with the reason,
+	 * because leaving silently would strand a seat nobody can take.
+	 */
+	async function abandonTournament(): Promise<void> {
+		abandoningTournament = true;
+		const abandoned = await tournamentEventStore.abandon();
+		abandoningTournament = false;
+		if (!abandoned) return;
+		resumableTournament = false;
+		abandoningFromLobby = false;
+		navigationStore.leaveTournamentLobby();
+	}
 
 	function resumeOpenGame(): void {
 		if (resumableGame) navigationStore.resumeOpenGame(resumableGame.game, resumableGame.mission);
@@ -433,6 +480,8 @@
 
 {#if navigationStore.screen === 'game-mode'}
 	<GameModeSelect
+		notice={tournamentEventStore.notice}
+		onDismissNotice={() => tournamentEventStore.dismissNotice()}
 		onSoloSelect={() => navigationStore.selectSoloMode()}
 		onTwoPlayerSelect={() => navigationStore.selectTwoPlayerMode()}
 		onOnlineSelect={() => navigationStore.selectOnlineMode()}
@@ -639,11 +688,40 @@
 			view={tournamentEventStore.view}
 			missions={contentStore.missions}
 			factions={contentStore.armyFactions}
-			onLeave={() => {
-				tournamentEventStore.leave();
-				navigationStore.leaveTournamentLobby();
-			}}
+			error={tournamentEventStore.error}
+			onLeave={() => (abandoningFromLobby = true)}
 		/>
+	{:else}
+		<!--
+			The seat is ours but no view arrived — the resume fetch did not get through. Offer a
+			retry and the way out instead of an empty screen.
+		-->
+		<div class="flex min-h-dvh flex-col items-center justify-center px-6">
+			<div
+				class="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-800/60 p-5 text-center backdrop-blur"
+			>
+				<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Tournament</h2>
+				<p class="mt-3 text-sm text-slate-300">
+					{tournamentEventStore.error ?? 'Loading the tournament…'}
+				</p>
+				<div class="mt-4 flex flex-col gap-3">
+					<button
+						type="button"
+						class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
+						onclick={() => void tournamentEventStore.retry()}
+					>
+						Try Again
+					</button>
+					<button
+						type="button"
+						class="rounded-xl border-2 border-red-500/50 bg-slate-900/60 px-6 py-2 font-semibold text-red-300 transition enabled:hover:bg-red-500/10 enabled:active:bg-red-500/20"
+						onclick={() => (abandoningFromLobby = true)}
+					>
+						Abandon
+					</button>
+				</div>
+			</div>
+		</div>
 	{/if}
 {:else if navigationStore.screen === 'tournament-join'}
 	<TournamentJoin
@@ -760,6 +838,23 @@
 		cancelLabel="Resume Game"
 		onConfirm={abandonResumableGame}
 		onCancel={resumeOpenGame}
+	/>
+{/if}
+
+<!--
+	Same shape for a tournament, and the same rule: Escape and the prominent button return to the
+	lobby. Abandoning here is not local — it tells the server, which frees the seat or cancels the
+	event, so a failure keeps the dialog open with the reason.
+-->
+{#if showTournamentAbandon}
+	<ConfirmDialog
+		text={tournamentAbandonText}
+		confirmLabel="Abandon"
+		cancelLabel="Return"
+		confirming={abandoningTournament}
+		errorText={tournamentEventStore.error}
+		onConfirm={() => void abandonTournament()}
+		onCancel={returnToTournament}
 	/>
 {/if}
 

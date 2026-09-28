@@ -2,7 +2,15 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createTournamentEvent, joinTournament, type PickedArmy } from '$lib/domain';
+import {
+	canJoinTournament,
+	cancelTournament,
+	createTournamentEvent,
+	joinTournament,
+	leaveTournament,
+	seatIndexForTokenHash,
+	type PickedArmy
+} from '$lib/domain';
 import { getDb } from './db';
 import { ApiError } from './errors';
 import { generateGameCode, generateSeatToken, hashToken } from './ids';
@@ -142,6 +150,37 @@ describe('tournamentRepository', () => {
 			})),
 			403
 		);
+	});
+
+	it('frees a seat and records the leave in the history', async () => {
+		const { code, playerToken } = await createSeededTournament();
+		await mutateAsTournamentViewer(code, playerToken, (tournament, viewer) => {
+			expect(viewer).toEqual({ kind: 'player', seatIndex: 1 });
+			return {
+				next: leaveTournament(tournament, hashToken(playerToken), new Date().toISOString()),
+				events: { type: 'player-left', actor: 'player', payload: { name: 'Ana', seatIndex: 1 } }
+			};
+		});
+
+		const stored = await getTournament(code);
+		expect(stored?.seats[1].participant).toBeNull();
+		expect(stored?.seats[0].participant?.name).toBe('Marta');
+		expect(await eventCount(code)).toBe(3); // created + joined + left
+	});
+
+	it('closes the tournament for everyone when the organizer cancels', async () => {
+		const { code, organizerToken, playerToken } = await createSeededTournament();
+		await mutateAsTournamentOrganizer(code, organizerToken, (tournament) => ({
+			next: cancelTournament(tournament, new Date().toISOString()),
+			events: { type: 'tournament-cancelled', actor: 'organizer' }
+		}));
+
+		const stored = await getTournament(code);
+		expect(stored?.status).toBe('closed');
+		expect(canJoinTournament(stored!)).toBe(false);
+		// The seats survive the cancellation, so a player's token still authenticates and their
+		// device can be told what happened instead of meeting a bare 404.
+		expect(seatIndexForTokenHash(stored!, hashToken(playerToken))).toBe(1);
 	});
 
 	it('serializes concurrent joins so no seat is booked twice', async () => {

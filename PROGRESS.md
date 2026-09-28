@@ -63,7 +63,77 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (Tournament: creation, the lobby and joining)
+## What was done in the last session (Tournament: returning to a seat, and abandoning it)
+
+Polish on the shipped lobby: until now a reload dropped a device straight back into the lobby
+without asking, and the only way out — the lobby's ← Return — cleared `localStorage` while the
+server kept the seat occupied (or the whole event alive) forever. Both ends now go through the
+server, and every participant lands back on the screen the tournament is currently on.
+
+1. **The startup prompt.** A stored seat session is offered back the way an open local game is:
+   the app fetches the current view first (so the prompt can name the tournament and so a dead
+   session is dropped instead of offered), then asks. _"You are participating in "X". Abandoning
+   it gives up your seat."_ — the organizer gets _"You are the organizer of "X". Abandoning it
+   cancels the tournament and deletes it for everyone."_ **Return** is the prominent button and
+   the Escape branch and enters the freshly refetched lobby, which then stays current over SSE;
+   **Abandon** is the destructive one. It is the third startup claim, after the online seat and
+   before the local game.
+2. **One way out.** The lobby's ← Return opens exactly the same prompt with exactly the same
+   consequences — there is no local-only exit any more, because that is what stranded seats. A
+   failed abandon (offline) keeps the dialog open with the reason (`ConfirmDialog` grew an
+   optional `errorText`) rather than clearing the session behind the server's back. When the
+   resume fetch itself did not get through, the lobby screen shows the error with **Try Again**
+   and **Abandon** instead of rendering nothing. A successful retry re-opens the SSE stream too —
+   without that the lobby would sit on its fetched view and miss every later change until a
+   reload (found by the offline browser pass below).
+3. **Domain** (`tournamentEvent.ts`): `canLeaveTournament`/`leaveTournament` (frees the caller's
+   seat; refuses the organizer, who cancels instead, and refuses a token with no seat) and
+   `canCancelTournament`/`cancelTournament` (status → `closed`, **seats kept** so every open
+   device still authenticates and can be told what happened instead of meeting a bare 404).
+   Leaving is a lobby-only rule for players — a seat in a running pairing needs a forfeit rule
+   that does not exist yet (recorded as an open question); the organizer may cancel a running
+   event, never a concluded one. 13 new tests (41 in `tournamentEvent.spec.ts`).
+4. **Server**: `POST /api/tournaments/[id]/leave` (403 for the organizer, 409 once running, 401
+   for a stranger, `player-left` in the history) and `/cancel` (organizer-only,
+   `tournament-cancelled`), both through the existing FIFO-serialized mutations and both
+   announcing themselves over SSE. Retention split: a concluded event still lives exactly the
+   48-hour report window, a **cancelled** one 24 hours — long enough for the open lobbies to be
+   told, and it has no report to keep.
+5. **The cancelled device.** A refetch that comes back `closed` tears the session down and sets a
+   store `notice` that survives the teardown, so the page can navigate home and show a dismissible
+   banner on the main menu: _"The organizer cancelled this tournament."_ (a `GameModeSelect`
+   notice prop). The same path reports a tournament that was deleted while the app was shut, and
+   the invite link itself says _"This tournament was cancelled by its organizer"_ with **Join**
+   disabled. `teardown()` now invalidates the fetch sequence so an in-flight response cannot
+   resurrect a view for a session that is already gone.
+6. **Decisions taken (with the user):** one abandon everywhere (the lobby's ← is not a local-only
+   leave); a cancellation marks the event `closed`, notifies, and is purged by retention rather
+   than hard-deleted (a 404 cannot be distinguished from a mistyped code); the TO may cancel a
+   running event while players may not leave one.
+7. **Verified:** `check` 0/0, lint clean, 466 tests (16 new: 13 domain, 2 repository, 1
+   retention), a 22-assertion API pass (create, two joins, leave, the freed seat rejoinable, the
+   organizer's 403 on leave, a player's 403 on cancel, stranger/missing-token 401s, 404, cancel,
+   the seats surviving it, peek and join refusing a closed event, double-cancel and
+   leave-after-cancel 409s, both SSE notifications, health) and a 36-assertion two-context
+   browser pass (create through the wizard, both reload prompts and their role-specific wording,
+   Escape = Return, the join over the invite link, the organizer's lobby updating live on the
+   leave, the rejoin into the freed seat, the cancel reaching the player's device with the banner,
+   a reload afterwards offering nothing, the cancelled invite link, and the prompt at 320 px),
+   plus a 13-assertion offline pass (all `/api/tournaments/**` blocked: the prompt still appears
+   with "this tournament" and the reason, Return lands on the retry panel rather than an empty
+   screen, unblocking and **Try Again** resynchronizes the lobby, a join then reaches it live,
+   and abandoning still cancels the event server-side).
+   Two throwaway-script traps found on the way: Chromium's `innerText` returns CSS-uppercased
+   panel titles (so body-text assertions must compare case-blind), and a fresh browser context
+   shows the privacy banner, which intercepts clicks until dismissed.
+8. **Docs:** 09-tournament gained a "Returning to a tournament, and abandoning it" section with
+   the decisions and the new open question, the navigation flow records the third startup prompt
+   and the lobby's ← semantics (plus its stale "server-side, next iteration" wizard diagram,
+   fixed), the functional README gained a **Seat session** glossary entry, and the server
+   CLAUDE.md the cancelled-event retention window.
+9. **Next (agreed, not built):** still the odd field and the **BYE** behind Start Tournament.
+
+## What was done in the session before (Tournament: creation, the lobby and joining)
 
 The feature left the client: **Create Tournament** on the overview now talks to the server, and
 the tournament lives in a shared **lobby** the organizer and every player see.
