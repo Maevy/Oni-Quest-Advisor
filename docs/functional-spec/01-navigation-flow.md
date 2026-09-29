@@ -297,7 +297,10 @@ Progress written before this feature existed has no open-game record. It is not 
 picked up when that mission is next started, so no one loses an old run to the upgrade.
 
 Online has no open-game record: its state lives on the server and its seat resumes itself, straight
-into the game screen with no prompt. A tournament seat does prompt — _"You are participating in
+onto the `online-game` screen with no prompt — landing on whichever of that screen's five views the
+fetched state names, so a reload during Army Preparation returns to the preparation step. The one
+thing a reload does lose is an **in-progress cut**: it lives only in the borrowed builder, so the
+seat is back to "needs a match list". A tournament seat does prompt — _"You are participating in
 {name}. Abandoning it gives up your seat."_ (the organizer gets _"You are the organizer of {name}.
 Abandoning it cancels the tournament and deletes it for everyone."_) — because unlike a local run,
 abandoning it changes something on the server: a participant frees their seat for the next joiner,
