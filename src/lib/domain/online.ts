@@ -1,4 +1,4 @@
-import { MAX_ROUND, MIN_ROUND, type SchemeDraft } from './progress';
+import { MAX_ROUND, MIN_ROUND } from './progress';
 import { chooseScheme, setSchemeChecked, type ChosenScheme } from './scheme';
 import { schemeFactionForArmy } from './faction';
 import { pickedArmyFormat, type PickedArmy } from './savedArmy';
@@ -114,6 +114,8 @@ export type PublicSeatState = {
 	rosterCode: string | null;
 	/** Whether the opponent has a match list to field — not the list itself, and never its code. */
 	combatReady: boolean;
+	/** Whether the opponent has named a Leader — public, because Proceed is gated on both. */
+	hasLeader: boolean;
 	/**
 	 * The Leader's M and INT from Scheme selection on, for the initiative roll. Which copy is the
 	 * Leader never travels.
@@ -154,7 +156,6 @@ export type OnlineGameEventType =
 	| 'join-requested'
 	| 'join-accepted'
 	| 'join-denied'
-	| 'intelligence-drafted'
 	| 'schemes-drawn'
 	| 'scheme-chosen'
 	| 'scheme-deleted'
@@ -348,22 +349,37 @@ export function isLeaderStatsRevealed(state: OnlineGameState): boolean {
 	return state.status !== 'lobby' && state.phase !== 'armies' && state.phase !== 'prep';
 }
 
-export function canLeavePrep(state: OnlineGameState): boolean {
-	return state.status === 'active' && state.phase === 'prep' && bothCombatReady(state);
+/** Both seats have named a Leader, which is what gives a seat its intelligence. */
+export function bothLeadersAssigned(state: OnlineGameState): boolean {
+	return state.player1.leader !== null && state.player2 !== null && state.player2.leader !== null;
 }
 
-/** Prep → Scheme setup. There is no way back: a cut is final once the table moves on. */
+export function canLeavePrep(state: OnlineGameState): boolean {
+	return (
+		state.status === 'active' &&
+		state.phase === 'prep' &&
+		bothCombatReady(state) &&
+		bothLeadersAssigned(state)
+	);
+}
+
+/**
+ * Prep → Scheme setup. There is no way back: a cut is final once the table moves on.
+ *
+ * Both halves of the Scheme draft are derived here rather than typed in later: the faction from
+ * the combat army, the intelligence from the Leader's declared INT. Nothing about the draw is left
+ * for a client to choose, because the draw count is the one thing a player could otherwise
+ * inflate.
+ */
 export function leavePrep(state: OnlineGameState): OnlineGameState {
 	if (!canLeavePrep(state) || state.player2 === null) return state;
-	// Each seat's Scheme faction is the one its combat army belongs to, so the setup step has
-	// nothing left to choose but the intelligence.
 	const seed = (seat: OnlineSeatState): OnlineSeatState => ({
 		...seat,
 		progress: {
 			...seat.progress,
 			schemeDraft: {
-				...seat.progress.schemeDraft,
-				factionId: schemeFactionForArmy((seat.combatArmy ?? seat.army).factionId)
+				factionId: schemeFactionForArmy((seat.combatArmy ?? seat.army).factionId),
+				intelligence: seat.leader?.int ?? null
 			}
 		}
 	});
@@ -373,23 +389,12 @@ export function leavePrep(state: OnlineGameState): OnlineGameState {
 // --- setup: faction and Scheme ---
 
 /**
- * Scheme setup happens in the `setup` phase, after both seats have a match list — the army's
- * faction is the seat's faction, so there is nothing left to choose but the intelligence.
+ * Scheme setup happens in the `setup` phase, after both seats have a match list and a Leader —
+ * the army fixes the faction and the Leader fixes the intelligence, so there is nothing left to
+ * choose but the Scheme itself.
  */
 export function canEditSetup(state: OnlineGameState): boolean {
 	return state.status === 'active' && state.phase === 'setup';
-}
-
-export function setSeatDraft(
-	state: OnlineGameState,
-	seat: PlayerKey,
-	draft: Partial<SchemeDraft>
-): OnlineGameState {
-	if (!canEditSetup(state)) return state;
-	return updateSeat(state, seat, (s) => ({
-		...s,
-		progress: { ...s.progress, schemeDraft: { ...s.progress.schemeDraft, ...draft } }
-	}));
 }
 
 export function setSeatDrawnSchemes(
@@ -663,6 +668,7 @@ export function toPublicSeat(seat: OnlineSeatState, reveal: SeatReveal): PublicS
 		rosterCode: reveal.roster && pickedArmyFormat(seat.army) === 'roster' ? seat.army.code : null,
 		ready: seat.ready,
 		combatReady: seat.combatArmy !== null,
+		hasLeader: seat.leader !== null,
 		leaderStats:
 			reveal.leaderStats && seat.leader !== null
 				? { m: seat.leader.m, int: seat.leader.int }

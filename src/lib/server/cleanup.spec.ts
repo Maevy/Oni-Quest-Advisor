@@ -14,7 +14,7 @@ import {
 	leaveArmies,
 	leavePrep,
 	requestJoin,
-	setSeatDraft,
+	setLeader,
 	setSeatDrawnSchemes,
 	setSeatObjectiveChecked,
 	snapshotAndProceed,
@@ -96,10 +96,12 @@ async function insertJourneyGame(journey: Journey): Promise<string> {
 	for (const seat of ['player1', 'player2'] as const) state = toggleReady(state, seat);
 	state = startGame(state);
 	state = leaveArmies(state);
+	for (const seat of ['player1', 'player2'] as const) {
+		state = setLeader(state, seat, { entryId: 'imported-1', m: 6, int: 14 });
+	}
 	// Both fixture seats registered Standard lists, so preparation is already satisfied.
 	state = leavePrep(state);
 	for (const seat of ['player1', 'player2'] as const) {
-		state = setSeatDraft(state, seat, { intelligence: 14 });
 		state = setSeatDrawnSchemes(state, seat, [SCHEME_ID]);
 		state = chooseSeatScheme(state, seat, SCHEME_ID);
 	}

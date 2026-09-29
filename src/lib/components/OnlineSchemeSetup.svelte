@@ -7,32 +7,18 @@
 		schemeDraft: SchemeDraft;
 		drawnCards: SchemeCard[];
 		chosenCard: SchemeCard | null;
-		onSetIntelligence: (intelligence: number | null) => void;
 		onDraw: () => void;
 		onChoose: (schemeId: string) => void;
 		onDelete: () => void;
 	};
 
-	let {
-		factionName,
-		schemeDraft,
-		drawnCards,
-		chosenCard,
-		onSetIntelligence,
-		onDraw,
-		onChoose,
-		onDelete
-	}: Props = $props();
+	let { factionName, schemeDraft, drawnCards, chosenCard, onDraw, onChoose, onDelete }: Props =
+		$props();
 
 	let canDraw = $derived(schemeDraft.factionId !== null && schemeDraft.intelligence !== null);
 	let drawCount = $derived(
 		schemeDraft.intelligence !== null ? drawCountForIntelligence(schemeDraft.intelligence) : null
 	);
-
-	function handleIntelligenceInput(event: Event): void {
-		const value = (event.target as HTMLInputElement).value;
-		onSetIntelligence(value === '' ? null : Number(value));
-	}
 </script>
 
 {#if chosenCard}
@@ -76,16 +62,15 @@
 				{factionName ?? '—'}
 			</span>
 		</span>
-		<label class="flex flex-col gap-1 text-sm text-slate-100">
+		<span class="flex flex-col gap-1 text-sm text-slate-100">
 			Intelligence
-			<input
-				type="number"
-				min="0"
-				class="w-24 rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-slate-100"
-				value={schemeDraft.intelligence ?? ''}
-				oninput={handleIntelligenceInput}
-			/>
-		</label>
+			<span
+				class="rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-slate-100"
+				title="Your Leader's INT, fixed when you assigned them"
+			>
+				{schemeDraft.intelligence ?? '—'}
+			</span>
+		</span>
 		<button
 			type="button"
 			disabled={!canDraw}

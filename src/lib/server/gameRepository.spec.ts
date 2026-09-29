@@ -89,8 +89,8 @@ describe('gameRepository', () => {
 		await mutateAsSeat(id, player2Token, (game, seat) => ({
 			next: { ...game, [seat]: { ...game[seat]!, nickname: 'Renamed' } },
 			events: [
-				{ type: 'intelligence-drafted', actor: seat, payload: { step: 1 } },
-				{ type: 'intelligence-drafted', actor: seat, payload: { step: 2 } }
+				{ type: 'seat-ready-toggled', actor: seat, payload: { step: 1 } },
+				{ type: 'seat-ready-toggled', actor: seat, payload: { step: 2 } }
 			]
 		}));
 
@@ -113,7 +113,7 @@ describe('gameRepository', () => {
 		await expectApiError(
 			mutateAsSeat(id, 'not-a-real-token', (game) => ({
 				next: game,
-				events: { type: 'intelligence-drafted', actor: 'player1' }
+				events: { type: 'seat-ready-toggled', actor: 'player1' }
 			})),
 			401
 		);

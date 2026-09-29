@@ -24,7 +24,6 @@
 		/** Scheme factions — the deck an army faction draws from, not the army factions themselves. */
 		factions: Faction[];
 		schemes: SchemeCard[];
-		onSetIntelligence: (intelligence: number | null) => void;
 		onDrawSchemes: () => void;
 		onChooseScheme: (schemeId: string) => void;
 		onDeleteScheme: () => void;
@@ -41,7 +40,6 @@
 		combatView,
 		factions,
 		schemes,
-		onSetIntelligence,
 		onDrawSchemes,
 		onChooseScheme,
 		onDeleteScheme,
@@ -140,7 +138,6 @@
 					schemeDraft={view.self.progress.schemeDraft}
 					{drawnCards}
 					chosenCard={chosenCardSelf}
-					{onSetIntelligence}
 					onDraw={onDrawSchemes}
 					onChoose={onChooseScheme}
 					onDelete={onDeleteScheme}
@@ -203,8 +200,8 @@
 	{/if}
 
 	<p class="text-sm text-slate-200">
-		Your faction is the one your army belongs to. Enter your intelligence, draw, and keep one Scheme
-		secret.
+		Your faction is the one your army belongs to and your intelligence is your Leader's — both
+		fixed, both shown. Draw, and keep one Scheme secret.
 	</p>
 
 	{@render seatPanel('player1')}

@@ -105,20 +105,7 @@ export async function closeGame(gameId: string, token: string): Promise<void> {
 	await parse<Record<string, never>>(response);
 }
 
-/** Sets the seat's intelligence; the Scheme faction comes from the combat army, not from here. */
-export async function draftIntelligence(
-	gameId: string,
-	token: string,
-	intelligence: number | null
-): Promise<void> {
-	const response = await fetch(`${BASE}/${gameId}/draft`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-		body: JSON.stringify({ intelligence })
-	});
-	await parse<Record<string, never>>(response);
-}
-
+/** Draws the seat's Scheme hand; the count comes from the intelligence the Leader seeded. */
 export async function drawSchemes(gameId: string, token: string): Promise<void> {
 	const response = await fetch(`${BASE}/${gameId}/draw`, {
 		method: 'POST',

@@ -146,12 +146,12 @@ content is never transmitted to the opponent at all. See
 
 ## Persistence
 
-| Data                                                     | Solo / hot-seat                              | Online                                     |
-| -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------ |
-| Chosen scheme (id, faction, intelligence, checked boxes) | `localStorage`, per mission                  | server game state, per seat                |
-| Drawn hand (pre-choice)                                  | **not persisted**                            | server-side, per seat                      |
-| Scheme draft (faction + intelligence)                    | `localStorage`, survives a delete            | server game state                          |
-| Reveal state                                             | `schemeRevealed` per player (`localStorage`) | `revealIntent` + `schemeRevealed` per seat |
+| Data                                                     | Solo / hot-seat                              | Online                                                                                                  |
+| -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Chosen scheme (id, faction, intelligence, checked boxes) | `localStorage`, per mission                  | server game state, per seat                                                                             |
+| Drawn hand (pre-choice)                                  | **not persisted**                            | server-side, per seat                                                                                   |
+| Scheme draft (faction + intelligence)                    | `localStorage`, survives a delete; **typed** | server game state; **seeded** by `leavePrep` from the combat army and the Leader's INT, shown read-only |
+| Reveal state                                             | `schemeRevealed` per player (`localStorage`) | `revealIntent` + `schemeRevealed` per seat                                                              |
 
 Solo and hot-seat progress is merged onto the empty-progress factory on load, so fields added
 later get their defaults.

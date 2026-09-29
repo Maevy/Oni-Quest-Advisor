@@ -59,6 +59,7 @@
 		combat: PickedArmy | null;
 		isRoster: boolean;
 		ready: boolean;
+		hasLeader: boolean;
 		own: boolean;
 	};
 
@@ -70,6 +71,7 @@
 			combat: view.self.combatArmy,
 			isRoster: format === 'roster',
 			ready: view.self.combatArmy !== null,
+			hasLeader: view.self.leader !== null,
 			own: true
 		};
 	}
@@ -83,6 +85,7 @@
 			combat: null,
 			isRoster: opponent.army.format === 'roster',
 			ready: opponent.combatReady,
+			hasLeader: opponent.hasLeader,
 			own: false
 		};
 	}
@@ -94,14 +97,17 @@
 
 	let myCombatReady = $derived(view.self.combatArmy !== null);
 	let bothCombatReady = $derived(myCombatReady && (view.opponent?.combatReady ?? false));
+	let myLeaderSet = $derived(view.self.leader !== null);
+	let canProceed = $derived(bothCombatReady && myLeaderSet && (view.opponent?.hasLeader ?? false));
 
-	let proceedHint = $derived(
-		view.opponent === null
-			? 'Waiting for a second player.'
-			: myCombatReady
-				? 'Waiting for the other player to prepare their army.'
-				: 'Prepare your army to continue.'
-	);
+	/** Names whichever of the four gates Proceed is still waiting on, in the order they are met. */
+	let proceedHint = $derived.by(() => {
+		if (view.opponent === null) return 'Waiting for a second player.';
+		if (!myCombatReady) return 'Prepare your army to continue.';
+		if (!myLeaderSet) return 'Choose your Leader to continue.';
+		if (!view.opponent.combatReady) return 'Waiting for the other player to prepare their army.';
+		return 'Waiting for the other player to choose their Leader.';
+	});
 
 	async function handleAdvance() {
 		if (acting) return;
@@ -222,6 +228,8 @@
 					{/if}
 				{:else if !panel.ready}
 					<p class="text-xs text-slate-200 italic">Preparing their army…</p>
+				{:else if !panel.hasLeader}
+					<p class="text-xs text-slate-200 italic">Choosing their Leader…</p>
 				{/if}
 			</div>
 		{:else}
@@ -269,13 +277,13 @@
 	{#if isLeader}
 		<button
 			type="button"
-			disabled={!bothCombatReady || acting}
+			disabled={!canProceed || acting}
 			class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
 			onclick={handleAdvance}
 		>
 			Proceed to the mission
 		</button>
-		{#if !bothCombatReady}
+		{#if !canProceed}
 			<p class="-mt-1 text-center text-xs text-slate-200">{proceedHint}</p>
 		{/if}
 	{:else}

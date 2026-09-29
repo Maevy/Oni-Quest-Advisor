@@ -776,7 +776,6 @@
 			combatView={onlineCombatView}
 			factions={contentStore.factions}
 			schemes={contentStore.schemes}
-			onSetIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}
 			onDrawSchemes={() => onlineGameStore.drawSchemes()}
 			onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
 			onDeleteScheme={() => onlineGameStore.deleteScheme()}

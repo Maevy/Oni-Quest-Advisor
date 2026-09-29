@@ -6,7 +6,6 @@ import {
 	createGame as apiCreateGame,
 	deleteScheme as apiDeleteScheme,
 	denyJoin as apiDenyJoin,
-	draftIntelligence as apiDraftIntelligence,
 	drawSchemes as apiDrawSchemes,
 	fetchGameState,
 	fetchJoinStatus,
@@ -155,10 +154,6 @@ class OnlineGameStore {
 	}
 
 	// --- setup actions (server-authoritative: send intent, then refetch) ---
-
-	async draftIntelligence(intelligence: number | null): Promise<void> {
-		await this.sendSetup((gameId, token) => apiDraftIntelligence(gameId, token, intelligence));
-	}
 
 	async drawSchemes(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiDrawSchemes(gameId, token));

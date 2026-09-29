@@ -5,6 +5,7 @@ import {
 	acceptJoin,
 	advanceToScoring,
 	bothCombatReady,
+	bothLeadersAssigned,
 	bothReady,
 	bothSchemesRevealed,
 	canChooseSeatScheme,
@@ -36,7 +37,6 @@ import {
 	setCombatArmy,
 	setLeader,
 	setSeatDrawnSchemes,
-	setSeatDraft,
 	setSeatObjectiveChecked,
 	setSeatSchemeChecked,
 	snapshotAndProceed,
@@ -47,6 +47,7 @@ import {
 	toPublicSeat,
 	viewForSeat,
 	type OnlineGameState,
+	type SeatLeader,
 	type SeatReveal
 } from './online';
 
@@ -76,6 +77,9 @@ const BOB_CUT: PickedArmy = {
 	code: 'aaaaa:2s:0',
 	format: 'standard'
 };
+
+const ALICE_LEADER: SeatLeader = { entryId: 'imported-1', m: 6, int: 14 };
+const BOB_LEADER: SeatLeader = { entryId: 'imported-1', m: 5, int: 12 };
 
 /** A fresh lobby — the mission and the leader's army arrive with the creation. */
 function newGame(): OnlineGameState {
@@ -108,12 +112,18 @@ function atPrepStart(): OnlineGameState {
 	return leaveArmies(atRevealStart());
 }
 
-/** Preparation with both seats combat-ready: Alice registered Standard, Bob has cut his roster. */
+/**
+ * Preparation with both seats combat-ready and both Leaders named: Alice registered Standard,
+ * Bob has cut his roster. The Leaders' INTs are what `leavePrep` seeds the drafts with.
+ */
 function inPrep(): OnlineGameState {
-	return setCombatArmy(atPrepStart(), 'player2', BOB_CUT);
+	let state = setCombatArmy(atPrepStart(), 'player2', BOB_CUT);
+	state = setLeader(state, 'player1', ALICE_LEADER);
+	state = setLeader(state, 'player2', BOB_LEADER);
+	return state;
 }
 
-/** Preparation → Scheme setup, which seeds each seat's faction from its combat army. */
+/** Preparation → Scheme setup, which seeds each seat's faction and intelligence. */
 function inSetup(): OnlineGameState {
 	return leavePrep(inPrep());
 }
@@ -122,8 +132,7 @@ function draftAndChooseScheme(
 	state: OnlineGameState,
 	seat: 'player1' | 'player2'
 ): OnlineGameState {
-	let next = setSeatDraft(state, seat, { intelligence: 14 });
-	next = setSeatDrawnSchemes(next, seat, ['head-hunt', 'stand-your-ground']);
+	let next = setSeatDrawnSchemes(state, seat, ['head-hunt', 'stand-your-ground']);
 	next = chooseSeatScheme(next, seat, 'head-hunt');
 	return next;
 }
@@ -248,17 +257,23 @@ describe('scheme setup', () => {
 		).toBe('sand-kingdoms');
 	});
 
+	it('takes the intelligence from the Leader rather than from an input', () => {
+		const state = inSetup();
+		expect(state.player1.progress.schemeDraft.intelligence).toBe(ALICE_LEADER.int);
+		expect(state.player2?.progress.schemeDraft.intelligence).toBe(BOB_LEADER.int);
+	});
+
 	it('maps a monster army faction onto the shared Monster Factions deck', () => {
 		const oni: PickedArmy = { ...BOB_CUT, factionId: 'oni-clans' };
-		const state = leavePrep(setCombatArmy(atPrepStart(), 'player2', oni));
+		let state = setCombatArmy(atPrepStart(), 'player2', oni);
+		state = setLeader(state, 'player1', ALICE_LEADER);
+		state = setLeader(state, 'player2', BOB_LEADER);
+		state = leavePrep(state);
 		expect(state.player2?.progress.schemeDraft.factionId).toBe('monster-factions');
 	});
 
-	it('choosing a scheme requires an intelligence and a drawn hand', () => {
+	it('choosing a scheme requires a drawn hand', () => {
 		let state = inSetup();
-		state = chooseSeatScheme(state, 'player1', 'head-hunt');
-		expect(state.player1.progress.scheme, 'no intelligence yet').toBeNull();
-		state = setSeatDraft(state, 'player1', { intelligence: 14 });
 		state = chooseSeatScheme(state, 'player1', 'head-hunt');
 		expect(state.player1.progress.scheme, 'no drawn hand yet').toBeNull();
 		state = setSeatDrawnSchemes(state, 'player1', ['head-hunt', 'stand-your-ground']);
@@ -273,7 +288,6 @@ describe('scheme setup', () => {
 
 	it('rejects choosing a card that is not in the drawn hand', () => {
 		let state = inSetup();
-		state = setSeatDraft(state, 'player1', { intelligence: 14 });
 		state = setSeatDrawnSchemes(state, 'player1', ['head-hunt']);
 		expect(canChooseSeatScheme(state, 'player1', 'martial-valor')).toBe(false);
 		state = chooseSeatScheme(state, 'player1', 'martial-valor');
@@ -302,21 +316,19 @@ describe('scheme setup', () => {
 		});
 	});
 
-	it('is locked in the lobby, where no combat army has fixed a faction yet', () => {
-		let state = lobbyWithBothPlayers();
-		state = setSeatDraft(state, 'player1', { intelligence: 14 });
-		expect(state.player1.progress.schemeDraft.intelligence).toBeNull();
+	it('is locked in the lobby, where neither the army nor the Leader has fixed a draft yet', () => {
+		const state = lobbyWithBothPlayers();
+		expect(state.player1.progress.schemeDraft).toEqual({ factionId: null, intelligence: null });
 		expect(canDrawSchemes(state, 'player1')).toBe(false);
 	});
 
 	it('is locked during preparation and again once the rounds have begun', () => {
 		const prep = inPrep();
 		expect(canEditSetup(prep)).toBe(false);
-		expect(setSeatDraft(prep, 'player1', { intelligence: 14 })).toBe(prep);
+		expect(setSeatDrawnSchemes(prep, 'player1', ['head-hunt'])).toBe(prep);
 
 		let state = roundsBegun();
-		state = setSeatDraft(state, 'player1', { intelligence: 16 });
-		expect(state.player1.progress.schemeDraft.intelligence).toBe(14);
+		expect(state.player1.progress.schemeDraft.intelligence).toBe(ALICE_LEADER.int);
 		state = clearSeatScheme(state, 'player2');
 		expect(state.player2?.progress.scheme).not.toBeNull();
 	});
@@ -452,10 +464,14 @@ describe('preparation', () => {
 		expect(state.player2?.combatArmy?.code).toBe('aaaaa:2s:1');
 	});
 
-	it('leaves preparation only once both seats are combat-ready', () => {
+	it('leaves preparation only once both seats are combat-ready and led', () => {
 		const stuck = atPrepStart();
 		expect(canLeavePrep(stuck)).toBe(false);
 		expect(leavePrep(stuck)).toBe(stuck);
+		const noLeader = setCombatArmy(atPrepStart(), 'player2', BOB_CUT);
+		expect(bothLeadersAssigned(noLeader), 'combat-ready is not enough').toBe(false);
+		expect(canLeavePrep(noLeader)).toBe(false);
+		expect(leavePrep(noLeader)).toBe(noLeader);
 		expect(canLeavePrep(inPrep())).toBe(true);
 		expect(leavePrep(inPrep()).phase).toBe('setup');
 	});

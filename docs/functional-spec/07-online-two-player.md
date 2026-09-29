@@ -134,29 +134,36 @@ the choice, because a new list renumbers its copies and the old pointer would da
 The opponent's panel shows the same status and never the list: a combat army's code is that seat's
 secret, exactly like the registered one's.
 
-**Proceed to the mission** belongs to the leader and unlocks when **both** seats are combat-ready.
-Until then the hint under it says whose turn it is: _"Prepare your army to continue."_ or _"Waiting
-for the other player to prepare their army."_ Non-leaders read _"The game leader continues once both
-armies are combat-ready."_
+**Proceed to the mission** belongs to the leader and unlocks when **both** seats are combat-ready
+**and both have named a Leader** — the Leader is what gives a seat its intelligence, so a seat
+without one could never draw. Until then the hint under it names whichever of the four gates is
+still open, in order: _"Waiting for a second player."_, _"Prepare your army to continue."_,
+_"Choose your Leader to continue."_, _"Waiting for the other player to prepare their army."_,
+_"Waiting for the other player to choose their Leader."_ The opponent's panel mirrors the last two
+as _"Preparing their army…"_ and _"Choosing their Leader…"_. Non-leaders read _"The game leader
+continues once both armies are combat-ready."_
 
 ## Scheme selection
 
-Proceeding opens **Scheme selection**. Each player's **faction is already fixed** — it is the one
-their combat army belongs to, shown read-only. There is no faction dropdown any more, and no way to
-draw from a deck the army does not belong to.
+Proceeding opens **Scheme selection**. Both halves of the draft are already fixed and shown
+read-only: the **faction** is the one the combat army belongs to, and the **intelligence** is the
+Leader's declared INT. There is no faction dropdown and **no intelligence input** — the draw count
+is the one number a player could inflate, so it is derived from a value that is already public (the
+Leader's INT, published at this very step) rather than typed. `leavePrep` seeds both into the draft,
+and the server draws from what it seeded, so no client input touches the count.
 
 > Oni Clans and Goblin Wartribes are army factions with no Scheme deck of their own; both draw from
 > **Monster Factions**, the deck the scheme data has always kept for them.
 
 Each player, independently:
 
-1. enters their **intelligence**,
-2. presses **Draw Missions** — the draw happens **server-side**, and the resulting hand is
-   persisted per seat,
-3. picks one card.
+1. presses **Draw Missions** — the draw happens **server-side** from the seeded intelligence, and
+   the resulting hand is persisted per seat,
+2. picks one card.
 
 Draw counts follow the standard brackets (≤ 13 → 2, 14–15 → 3, ≥ 16 → 4); see
-[04-schemes-panel.md](./04-schemes-panel.md).
+[04-schemes-panel.md](./04-schemes-panel.md). The local modes still type their intelligence in,
+having no Leader to take it from.
 
 **Begin Round 1** belongs to the leader and unlocks once both seats have chosen; the hint under it
 names whichever is missing. Choosing is not the same as being locked in — a player may delete and
