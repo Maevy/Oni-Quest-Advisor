@@ -3,6 +3,7 @@
 		spellcraftLevelCap,
 		upgradeCostInArmy,
 		upgradeSlotsFor,
+		type ArmyConstraint,
 		type ArmyEntry,
 		type ArmyFactionConfig,
 		type ArmyFormat,
@@ -17,6 +18,7 @@
 		type ArmyStratagemSpec,
 		type ArmyUnitSpec,
 		type ArmyUnitSize,
+		type ArmyUpgradeBlock,
 		type ArmyUpgradeSelection,
 		type ArmyUpgradeSpec
 	} from '$lib/domain';
@@ -40,7 +42,7 @@
 		upgradeIndex: Record<string, ArmyUpgradeSpec>;
 		rulesIndexes: ArmyRulesIndexes;
 		armyRows: ArmyRosterRow[];
-		/** Roster (tournament) equipment pool. */
+		/** Roster equipment pool. */
 		rosterPicks: ArmyRosterPick[];
 		counts: Record<string, number>;
 		format: ArmyFormat;
@@ -49,6 +51,21 @@
 		isOverLimit: boolean;
 		/** Import flow: open directly on the Your-Army panel. */
 		startOnArmyPanel: boolean;
+		/** True while another flow has borrowed the builder to cut a roster down to a match list. */
+		constrained: boolean;
+		/** The budgets that cut works inside; null in the free builder. */
+		constraint: ArmyConstraint | null;
+		/** How many more copies of a unit the roster has; null outside a cut. */
+		unitBudget: (unitId: string) => number | null;
+		/** Why a copy may not be mounted; null when it may. */
+		mountBlock: (entryId: string) => ArmyUpgradeBlock | null;
+		/** What is left of the roster's equipment pool, unassigned. */
+		poolRemaining: ArmyRosterPick[];
+		/**
+		 * Hands the finished cut to whichever flow borrowed the builder. Absent outside a cut —
+		 * and a cut with no listener shows no Accept, rather than one that silently does nothing.
+		 */
+		onAccept?: () => void;
 		onReturn: () => void;
 		onSetFormat: (format: ArmyFormat) => void;
 		onCopyCode: () => Promise<{ code: string; copied: boolean } | null>;
@@ -86,6 +103,12 @@
 		limit,
 		isOverLimit,
 		startOnArmyPanel,
+		constrained,
+		constraint,
+		unitBudget,
+		mountBlock,
+		poolRemaining,
+		onAccept,
 		onReturn,
 		onSetFormat,
 		onCopyCode,
@@ -104,6 +127,20 @@
 	function pickQty(upgradeId: string): number {
 		return rosterPicks.find((pick) => pick.id === upgradeId)?.qty ?? 0;
 	}
+
+	/** The most copies of a unit this build may hold: its own limit, or the roster's budget. */
+	function unitCeiling(unit: ArmyUnitSpec): number {
+		const room = unitBudget(unit.id);
+		if (room === null) return unit.limit;
+		return Math.min(unit.limit, (counts[unit.id] ?? 0) + room);
+	}
+
+	let canAccept = $derived(entries.length > 0 && !isOverLimit);
+	let acceptHint = $derived(
+		entries.length === 0
+			? 'Add at least one model from your roster.'
+			: `Over the ${limit}-point cap — remove ${points - limit} more.`
+	);
 
 	let showArmy = $state(false);
 	// Import flow: the store flags a code import, open on the Your-Army panel.
@@ -188,49 +225,68 @@
 			class="rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 			onclick={onReturn}
 		>
-			← Main Menu
+			{constrained ? '← Back' : '← Main Menu'}
 		</button>
-		<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
-			<button
-				type="button"
-				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('standard')}
-				onclick={() => onSetFormat('standard')}
+		{#if constrained}
+			<span
+				class="rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200"
 			>
-				Standard
-			</button>
-			<button
-				type="button"
-				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('roster')}
-				onclick={() => onSetFormat('roster')}
-			>
-				Roster
-			</button>
-		</div>
+				Cut down from your roster
+			</span>
+		{:else}
+			<div class="flex overflow-hidden rounded-xl border border-slate-600/60 bg-slate-900/60">
+				<button
+					type="button"
+					class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('standard')}
+					onclick={() => onSetFormat('standard')}
+				>
+					Standard
+				</button>
+				<button
+					type="button"
+					class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('roster')}
+					onclick={() => onSetFormat('roster')}
+				>
+					Roster
+				</button>
+			</div>
+		{/if}
 	</div>
 
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div class="flex flex-wrap items-center gap-2">
-			<button
-				type="button"
-				aria-label="Copy Army Code to Clipboard"
-				disabled={entries.length === 0}
-				class={'rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
-					(copyResult?.copied
-						? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200 active:bg-emerald-200'
-						: 'bg-sky-300 text-slate-950 hover:bg-sky-200 active:bg-sky-200') +
-					' disabled:cursor-not-allowed disabled:opacity-50'}
-				onclick={copyArmyCode}
-			>
-				{copyResult?.copied ? 'Copied ✓' : 'Copy Army Code'}
-			</button>
-			<button
-				type="button"
-				disabled={entries.length === 0}
-				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-sky-100 transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-				onclick={onSaveArmy}
-			>
-				Save Army
-			</button>
+			{#if constrained && onAccept}
+				<button
+					type="button"
+					disabled={!canAccept}
+					class="rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold whitespace-nowrap text-slate-950 transition enabled:hover:bg-emerald-200 enabled:active:bg-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+					onclick={onAccept}
+				>
+					Accept
+				</button>
+			{:else if !constrained}
+				<button
+					type="button"
+					aria-label="Copy Army Code to Clipboard"
+					disabled={entries.length === 0}
+					class={'rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition ' +
+						(copyResult?.copied
+							? 'bg-emerald-300 text-slate-950 hover:bg-emerald-200 active:bg-emerald-200'
+							: 'bg-sky-300 text-slate-950 hover:bg-sky-200 active:bg-sky-200') +
+						' disabled:cursor-not-allowed disabled:opacity-50'}
+					onclick={copyArmyCode}
+				>
+					{copyResult?.copied ? 'Copied ✓' : 'Copy Army Code'}
+				</button>
+				<button
+					type="button"
+					disabled={entries.length === 0}
+					class="rounded-xl border-2 border-sky-500/50 bg-slate-900/40 px-3 py-2 text-xs font-semibold whitespace-nowrap text-sky-100 transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+					onclick={onSaveArmy}
+				>
+					Save Army
+				</button>
+			{/if}
 		</div>
 		<div
 			class={'rounded-xl border-2 px-4 py-2 text-sm font-bold tabular-nums ' +
@@ -239,6 +295,10 @@
 			{points}/{limit}
 		</div>
 	</div>
+
+	{#if constrained && onAccept && !canAccept}
+		<p class="-mt-2 text-xs text-slate-400">{acceptHint}</p>
+	{/if}
 
 	{#if copyResult}
 		<div class="rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2">
@@ -309,7 +369,7 @@
 										<span
 											class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300"
 										>
-											Limit {unit.limit}
+											Limit {unitCeiling(unit)}
 										</span>
 										<span
 											class="rounded-md border border-emerald-500/50 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300 tabular-nums"
@@ -336,7 +396,7 @@
 									{/if}
 									<button
 										type="button"
-										disabled={(counts[unit.id] ?? 0) >= unit.limit}
+										disabled={(counts[unit.id] ?? 0) >= unitCeiling(unit)}
 										aria-label={'Add ' + unit.name}
 										class="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-sky-500/50 bg-slate-900/60 text-lg font-bold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-40"
 										onclick={() => onAddUnit(unit.id)}
@@ -486,11 +546,15 @@
 										{#if row.mount}
 											<button
 												type="button"
+												disabled={mountBlock(row.entryId) !== null}
+												title={mountBlock(row.entryId) !== null
+													? 'Not mounted in your roster'
+													: undefined}
 												aria-label={(row.mounted ? 'Remove ' : 'Add ') +
 													row.mount.name +
 													' mount for ' +
 													row.name}
-												class={'relative shrink-0 rounded-lg border-2 p-0.5 transition ' +
+												class={'relative shrink-0 rounded-lg border-2 p-0.5 transition disabled:cursor-not-allowed disabled:opacity-40 ' +
 													(row.mounted ? 'border-emerald-500/60' : 'border-slate-600/60')}
 												onclick={() => onToggleMount(row.entryId)}
 											>
@@ -611,6 +675,23 @@
 									{/if}
 								{/each}
 							{/if}
+							{#if constrained && poolRemaining.length > 0}
+								<h3 class="pt-2 pb-1 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+									Still in your roster
+								</h3>
+								<div class="flex flex-wrap gap-1.5">
+									{#each poolRemaining as pick (pick.id)}
+										{@const upgrade = upgradeIndex[pick.id]}
+										{#if upgrade}
+											<span
+												class="rounded-md border border-slate-600/60 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-300"
+											>
+												{upgrade.name} ×{pick.qty}
+											</span>
+										{/if}
+									{/each}
+								</div>
+							{/if}
 						</div>
 					{/if}
 				</div>
@@ -673,6 +754,7 @@
 				{rulesIndexes}
 				{spells}
 				{itemIndex}
+				{constraint}
 				spellcraftOptions={spellcraftOptionsFor(row)}
 				factionColor={faction.color}
 				onSelect={(upgradeId) => {

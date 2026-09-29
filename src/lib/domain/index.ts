@@ -12,6 +12,7 @@ export * from './twoPlayer';
 export * from './online';
 export * from './army';
 export * from './armyCode';
+export * from './armyConstraint';
 export * from './savedArmy';
 export * from './tournament';
 export * from './tournamentEvent';

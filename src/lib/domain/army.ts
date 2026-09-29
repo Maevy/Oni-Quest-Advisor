@@ -1,3 +1,5 @@
+import { constraintUpgradeAvailable, type ArmyConstraint } from './armyConstraint';
+
 export type ArmyFormat = 'standard' | 'roster';
 
 /** Points cap per army format. */
@@ -1033,13 +1035,14 @@ export function upgradedArmyUnit(
 }
 
 /** Why an upgrade cannot be picked for an entry right now, when it cannot. */
-export type ArmyUpgradeBlock = 'locked' | 'owned' | 'slots' | 'limit' | 'requirement' | 'max-level';
+export type ArmyUpgradeBlock =
+	'locked' | 'owned' | 'slots' | 'limit' | 'roster' | 'requirement' | 'max-level';
 
 /**
  * Block reason for picking an upgrade for an entry: already owned by this
- * copy, no free slot, the per-army limit is reached, the unit misses a
- * requirement (class, forbidden trait, size ceiling), or every level-up
- * effect already sits at max level.
+ * copy, no free slot, the per-army limit is reached, the roster pool being cut
+ * down has no copies left, the unit misses a requirement (class, forbidden
+ * trait, size ceiling), or every level-up effect already sits at max level.
  */
 export function entryUpgradeBlock(
 	entries: ArmyEntry[],
@@ -1049,7 +1052,8 @@ export function entryUpgradeBlock(
 	upgradeIndex: Record<string, ArmyUpgradeSpec>,
 	rules: ArmyRulesIndexes,
 	spells: ArmySpellSpec[] = [],
-	itemIndex: Record<string, ArmyItemSpec> = {}
+	itemIndex: Record<string, ArmyItemSpec> = {},
+	constraint: ArmyConstraint | null = null
 ): ArmyUpgradeBlock | null {
 	const entry = entries.find((candidate) => candidate.id === entryId);
 	const unit = units.find((candidate) => candidate.id === entry?.unitId);
@@ -1073,6 +1077,9 @@ export function entryUpgradeBlock(
 			0
 		);
 		if (total >= upgrade.limit) return 'limit';
+	}
+	if (constraint !== null && !constraintUpgradeAvailable(constraint, entries, upgrade.id)) {
+		return 'roster';
 	}
 	if (upgrade.requirement) {
 		const { classes: required, notTraits, maxSize } = upgrade.requirement;
@@ -1167,11 +1174,21 @@ export function addEntryUpgrade(
 	rules: ArmyRulesIndexes,
 	spells: ArmySpellSpec[] = [],
 	itemIndex: Record<string, ArmyItemSpec> = {},
-	selection: ArmyUpgradeSelection = {}
+	selection: ArmyUpgradeSelection = {},
+	constraint: ArmyConstraint | null = null
 ): ArmyEntry[] {
 	if (
-		entryUpgradeBlock(entries, entryId, upgrade, units, upgradeIndex, rules, spells, itemIndex) !==
-		null
+		entryUpgradeBlock(
+			entries,
+			entryId,
+			upgrade,
+			units,
+			upgradeIndex,
+			rules,
+			spells,
+			itemIndex,
+			constraint
+		) !== null
 	) {
 		return entries;
 	}

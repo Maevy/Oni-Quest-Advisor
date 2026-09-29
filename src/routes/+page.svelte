@@ -590,6 +590,11 @@
 		limit={armyBuilderStore.limit}
 		isOverLimit={armyBuilderStore.isOverLimit}
 		startOnArmyPanel={armyBuilderStore.startOnArmyPanel}
+		constrained={armyBuilderStore.constraint !== null}
+		constraint={armyBuilderStore.constraint}
+		unitBudget={(unitId) => armyBuilderStore.unitBudget(unitId)}
+		mountBlock={(entryId) => armyBuilderStore.mountBlock(entryId)}
+		poolRemaining={armyBuilderStore.poolRemaining}
 		onReturn={() => navigationStore.leaveArmyBuilder()}
 		onSetFormat={requestFormat}
 		onCopyCode={copyArmyCode}

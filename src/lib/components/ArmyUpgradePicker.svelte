@@ -5,6 +5,7 @@
 		inscribableItems,
 		upgradeCostInArmy,
 		upgradeOptionUsable,
+		type ArmyConstraint,
 		type ArmyEntry,
 		type ArmyItemSpec,
 		type ArmyRulesIndexes,
@@ -29,6 +30,8 @@
 		rulesIndexes: ArmyRulesIndexes;
 		spells: ArmySpellSpec[];
 		itemIndex: Record<string, ArmyItemSpec>;
+		/** The budgets of a roster being cut down; null in the free builder. */
+		constraint: ArmyConstraint | null;
 		spellcraftOptions: ArmySpellcraftOption[];
 		factionColor: string;
 		onSelect: (upgradeId: string) => void;
@@ -52,6 +55,7 @@
 		rulesIndexes,
 		spells,
 		itemIndex,
+		constraint,
 		spellcraftOptions,
 		factionColor,
 		onSelect,
@@ -67,6 +71,7 @@
 		owned: 'Already taken by this model',
 		slots: 'No free upgrade slot',
 		limit: 'Army limit reached',
+		roster: 'None left in your roster',
 		requirement: 'Model does not meet the requirement',
 		'max-level': 'Already at the maximum level'
 	};
@@ -84,7 +89,8 @@
 			upgradeIndex,
 			rulesIndexes,
 			spells,
-			itemIndex
+			itemIndex,
+			constraint
 		);
 	}
 

@@ -4,6 +4,11 @@ import {
 	addEntryUpgrade,
 	addRosterPick,
 	armyPoints,
+	constraintAllowsUnit,
+	constraintFromRoster,
+	constraintMountRoom,
+	constraintRemaining,
+	constraintUnitRoom,
 	decodeArmy,
 	encodeArmy,
 	indexArmyRules,
@@ -19,6 +24,7 @@ import {
 	upgradesForFaction,
 	type ArmyCodeCatalog,
 	type ArmyCodeDecodeError,
+	type ArmyConstraint,
 	type ArmyEntry,
 	type ArmyFactionId,
 	type ArmyFormat,
@@ -26,6 +32,7 @@ import {
 	type ArmyRosterPick,
 	type ArmyRulesIndexes,
 	type ArmyUnitSpec,
+	type ArmyUpgradeBlock,
 	type ArmyUpgradeSelection,
 	type ArmyUpgradeSpec,
 	type SavedArmy
@@ -41,8 +48,10 @@ class ArmyBuilderStore {
 	/** Opens the builder on the Your-Army panel; set by a code import. */
 	startOnArmyPanel = $state(false);
 	savedArmies = $state<SavedArmy[]>([]);
-	/** Roster (tournament) equipment pool; empty in standard armies. */
+	/** Roster equipment pool; empty in standard armies. */
 	rosterPicks = $state<ArmyRosterPick[]>([]);
+	/** Budgets while a roster is being cut down to a match list; null in the free builder. */
+	constraint = $state<ArmyConstraint | null>(null);
 
 	points = $derived(
 		armyPoints(this.entries, this.units, this.upgradeIndex) +
@@ -53,7 +62,12 @@ class ArmyBuilderStore {
 
 	/** Units available to the selected faction: its exclusives plus the neutral pool. */
 	get units(): ArmyUnitSpec[] {
-		return this.factionId ? unitsForFaction(this.factionId, contentStore.armyUnits) : [];
+		if (this.factionId === null) return [];
+		const factionUnits = unitsForFaction(this.factionId, contentStore.armyUnits);
+		const constraint = this.constraint;
+		return constraint === null
+			? factionUnits
+			: factionUnits.filter((unit) => constraintAllowsUnit(constraint, unit.id));
 	}
 
 	/** Mount options (never recruitable standalone). */
@@ -63,7 +77,12 @@ class ArmyBuilderStore {
 
 	/** Upgrades available to the selected faction: neutral pool plus own exclusives. */
 	get upgrades(): ArmyUpgradeSpec[] {
-		return this.factionId ? upgradesForFaction(this.factionId, contentStore.armyUpgrades) : [];
+		if (this.factionId === null) return [];
+		const factionUpgrades = upgradesForFaction(this.factionId, contentStore.armyUpgrades);
+		const constraint = this.constraint;
+		return constraint === null
+			? factionUpgrades
+			: factionUpgrades.filter((upgrade) => (constraint.upgradeQty[upgrade.id] ?? 0) > 0);
 	}
 
 	get upgradeIndex(): Record<string, ArmyUpgradeSpec> {
@@ -90,12 +109,15 @@ class ArmyBuilderStore {
 		this.format = 'standard';
 		this.entries = [];
 		this.rosterPicks = [];
+		this.constraint = null;
 		this.startOnArmyPanel = false;
 	}
 
 	/** Switches the format, clearing the list - the page confirms beforehand. */
 	setFormat(format: ArmyFormat): void {
 		if (format === this.format) return;
+		// A cut-down build has no format to switch to: it is Standard by definition.
+		if (this.constraint !== null) return;
 		this.format = format;
 		this.entries = [];
 		this.rosterPicks = [];
@@ -104,6 +126,8 @@ class ArmyBuilderStore {
 
 	/** Adds one copy of an upgrade to the roster pool (limit-guarded). */
 	addRosterPick(upgradeId: string): void {
+		// A cut-down build is a Standard list: its equipment is assigned per copy, never pooled.
+		if (this.constraint !== null) return;
 		this.rosterPicks = addRosterPick(this.rosterPicks, upgradeId, this.upgrades);
 	}
 
@@ -112,6 +136,8 @@ class ArmyBuilderStore {
 	}
 
 	addUnit(unitId: string): void {
+		const constraint = this.constraint;
+		if (constraint !== null && constraintUnitRoom(constraint, this.entries, unitId) < 1) return;
 		this.entries = addArmyUnit(this.entries, unitId, this.units, crypto.randomUUID());
 	}
 
@@ -142,6 +168,7 @@ class ArmyBuilderStore {
 	 * invalidates - the page confirms beforehand.
 	 */
 	toggleMount(entryId: string): void {
+		if (this.mountBlock(entryId) !== null) return;
 		let next = this.entries;
 		for (const upgrade of this.mountConflicts(entryId)) {
 			next = removeEntryUpgrade(next, entryId, upgrade.id);
@@ -162,12 +189,66 @@ class ArmyBuilderStore {
 			this.rulesIndexes,
 			contentStore.armySpells,
 			this.itemIndex,
-			selection
+			selection,
+			this.constraint
 		);
 	}
 
 	removeUpgrade(entryId: string, upgradeId: string): void {
 		this.entries = removeEntryUpgrade(this.entries, entryId, upgradeId);
+	}
+
+	// --- cutting a roster down to a match list ---
+
+	/** What is left of the roster's equipment pool, for the constrained builder's summary. */
+	get poolRemaining(): ArmyRosterPick[] {
+		const constraint = this.constraint;
+		return constraint === null ? [] : constraintRemaining(constraint, this.entries);
+	}
+
+	/** How many more copies of a unit the roster has; null outside a cut-down build. */
+	unitBudget(unitId: string): number | null {
+		const constraint = this.constraint;
+		return constraint === null ? null : constraintUnitRoom(constraint, this.entries, unitId);
+	}
+
+	/**
+	 * Why this copy may not be mounted, or null when it may. Unmounting is always allowed — the
+	 * roster's mounted copies are a ceiling that only ever comes down.
+	 */
+	mountBlock(entryId: string): ArmyUpgradeBlock | null {
+		const constraint = this.constraint;
+		if (constraint === null) return null;
+		const entry = this.entries.find((candidate) => candidate.id === entryId);
+		if (!entry || entry.mounted === true) return null;
+		return constraintMountRoom(constraint, this.entries, entry.unitId) < 1 ? 'roster' : null;
+	}
+
+	/**
+	 * Opens a constrained build: the roster code becomes the budget and the list starts empty in
+	 * Standard format. Returns the decode error, or null on success.
+	 */
+	beginRosterCut(code: string): ArmyCodeDecodeError | null {
+		const decoded = decodeArmy(code, this.codeCatalog);
+		if (!decoded.ok) return decoded.error;
+		if (decoded.list.format !== 'roster') return 'invalid';
+		this.factionId = decoded.list.factionId;
+		this.format = 'standard';
+		this.entries = [];
+		this.rosterPicks = [];
+		this.constraint = constraintFromRoster(decoded.list.entries, decoded.list.picks);
+		this.startOnArmyPanel = false;
+		return null;
+	}
+
+	/**
+	 * The finished cut as a Standard army code, or null while there is nothing to accept or the
+	 * list is over the cap. The builder never blocks an over-cap pick — it shows the total in red
+	 * and refuses here, the same way it has always treated the free builder.
+	 */
+	acceptCut(): string | null {
+		if (this.constraint === null || this.isOverLimit) return null;
+		return this.exportArmyCode();
 	}
 
 	/** The catalogs an army code indexes into (and fingerprints against). */
@@ -292,6 +373,8 @@ class ArmyBuilderStore {
 		this.format = format;
 		this.entries = next;
 		this.rosterPicks = nextPicks;
+		// An import replaces the whole list, so any budget left over from a cut would be wrong.
+		this.constraint = null;
 		this.startOnArmyPanel = true;
 		return null;
 	}
@@ -302,6 +385,7 @@ class ArmyBuilderStore {
 		this.format = 'standard';
 		this.entries = [];
 		this.rosterPicks = [];
+		this.constraint = null;
 		this.startOnArmyPanel = false;
 	}
 }

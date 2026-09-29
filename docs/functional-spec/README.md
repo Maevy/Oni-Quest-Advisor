@@ -98,6 +98,10 @@ each `src/lib/` folder.
   catalog so a code built on a different roster is rejected rather than mis-decoded.
 - **Saved army** — a named army code in `localStorage`, listed and loadable from the faction
   select.
+- **Cut** — a Standard (≤85) list built out of a Roster one, restricted to the copies, mounts and
+  equipment the roster actually held. Produced in the **borrowed builder**: the army builder
+  opened by another flow, with an **Accept** instead of Save/Copy and exits that return to the
+  borrower rather than the main menu.
 
 ### Tournament
 

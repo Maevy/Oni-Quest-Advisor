@@ -41,6 +41,11 @@ class NavigationStore {
 	showPrivacyNotice = $state(false);
 	/** One-time heads-up shown before first entering the experimental online mode. */
 	showOnlineIntro = $state(false);
+	/**
+	 * Where the army builder's exits return to when another flow has borrowed it; null means the
+	 * main menu, which is where the builder's own entry point leaves them.
+	 */
+	builderReturn = $state<Screen | null>(null);
 
 	selectSoloMode(): void {
 		this.gameMode = 'solo';
@@ -102,6 +107,7 @@ class NavigationStore {
 	}
 
 	selectArmyBuilder(): void {
+		this.builderReturn = null;
 		this.screen = 'army-faction-select';
 	}
 
@@ -115,9 +121,21 @@ class NavigationStore {
 		this.screen = 'army-builder';
 	}
 
+	/**
+	 * Hands the builder to another flow — an online match cutting a roster down to a match list.
+	 * It opens on the builder itself (the caller has already loaded the list into the store), and
+	 * both exits go back to `returnScreen` instead of the main menu.
+	 */
+	borrowArmyBuilder(returnScreen: Screen): void {
+		this.builderReturn = returnScreen;
+		this.screen = 'army-builder';
+	}
+
 	leaveArmyBuilder(): void {
+		const target = this.builderReturn;
 		armyBuilderStore.leave();
-		this.screen = 'game-mode';
+		this.builderReturn = null;
+		this.screen = target ?? 'game-mode';
 	}
 
 	/** Opens the tournament configuration wizard on a clean draft. */

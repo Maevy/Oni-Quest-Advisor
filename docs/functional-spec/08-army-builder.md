@@ -230,6 +230,50 @@ Each copy costs points toward the 125 cap and is limited by the upgrade's per-ar
 > upgrades, and Roster entries carry none. Whether that is a rules ruling or an oversight is
 > unresolved; see Open questions.
 
+## Cutting a roster down to a match list
+
+A Roster army is "everything I bring"; a match is only 85 points. When a match is played with a
+Roster list — an online game today, a tournament round later — the player cuts a **Standard** army
+out of it, tailored against the opponent's faction. The builder is _borrowed_ for this: another
+flow loads the roster as a budget, the player builds inside it, and **Accept** hands the result
+back.
+
+The budget is derived from the roster and is nothing more than three counts:
+
+| Budget   | From the roster                              | Enforced by                                       |
+| -------- | -------------------------------------------- | ------------------------------------------------- |
+| copies   | one per entry, per unit                      | the Available panel's `+` disables at the ceiling |
+| mounts   | one per entry that was **mounted**, per unit | a copy may be left on foot, never newly mounted   |
+| upgrades | the equipment pool's `qty`, per upgrade id   | assignable copy by copy until the pool runs out   |
+
+Three consequences worth knowing:
+
+- **The mount rule only ever comes down.** A unit mounted twice in the roster may field two
+  mounted copies, one or none; a unit never mounted may not be mounted at all. Unmounting gives
+  the budget back, so the choice stays reversible while the cut is open.
+- **The pool has no memory of a target.** `ArmyRosterPick` is `{ id, qty }` — a shopping list, not
+  an equipped state — so which copy receives which upgrade, which item a Glyphscribe inscribes and
+  which Affinity a Mana Catalyst swaps are all decided fresh, per copy, during the cut. Nothing
+  can be inferred from the roster.
+- **Everything else is unchanged.** Slots (1 + Resourceful + Pouches), per-army upgrade limits,
+  `upgradesLocked` units, class/trait requirements and size ceilings all still apply — they never
+  knew about formats. Where the pool and the per-army limit disagree, the **tighter** one wins and
+  the picker says which: `Army limit reached` versus `None left in your roster`.
+
+The cut is an ordinary Standard list, so it encodes to a normal `s` code with no picks section and
+replays through an import unchanged.
+
+While borrowed the builder looks different: **← Back** instead of ← Main Menu, a
+_"Cut down from your roster"_ tag where the Standard/Roster tabs were (there is no format to
+choose), **Accept** where Copy Army Code and Save Army were, and a **Still in your roster** chip
+list in Your Army showing what the pool has left unassigned. The point badge keeps its normal
+behaviour — the builder never blocks an over-cap pick, it shows the total in red — and **Accept
+refuses** instead, naming what is wrong: _"Add at least one model from your roster."_ or _"Over
+the 85-point cap — remove {n} more."_
+
+Leaving through **← Back** abandons the cut and resets the builder; both exits return to whichever
+screen borrowed it rather than the main menu.
+
 ## Army codes
 
 An entire list — faction, format, every copy, mounts, upgrades with all their selections, and the
@@ -278,8 +322,9 @@ its row.
 
 - **The Roster equipment pool ignores the Paimon cost reduction.** Structurally impossible today
   (the reduction scans per-entry upgrades). Is that the correct ruling?
-- **Nothing blocks exceeding the point cap** — only the badge turns red. Intentional, but worth
-  restating whenever someone asks for a "legal army" check.
+- **Nothing blocks exceeding the point cap** — only the badge turns red. Intentional in the free
+  builder, and worth restating whenever someone asks for a "legal army" check. The borrowed
+  builder is the exception: it still never blocks a pick, but **Accept refuses** an over-cap cut.
 - **Upgrade descriptions in the picker and detail dialogs strip rich links to plain text**; only
   the unit card's rules popups render them clickable. Inconsistent, and it hides cross-references
   exactly where a player is deciding whether to take an upgrade.
@@ -291,5 +336,7 @@ its row.
 - **A picked army is a snapshot, not a link.** Saving an army and then picking it for a run copies
   name, faction and code into the run; editing or deleting the save afterwards does not touch the
   run. Whether a run should instead track its save live is undecided.
-- **Roster saves cannot be picked.** The picker lists standard-format saves only, so a Roster list
-  built in the builder has no path into a mission run yet.
+- **Roster saves cannot be picked for a mission run.** The mission briefing's picker lists
+  standard-format saves only, so a Roster list has no path into a solo or hot-seat run. Online
+  create/join is the exception — it lists **both** formats, because a Roster list there is cut
+  down to 85 afterwards. Whether a local run should get the same cut is undecided.

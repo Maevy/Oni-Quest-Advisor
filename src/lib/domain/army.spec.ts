@@ -65,6 +65,7 @@ import {
 	type ArmyUnitSpec,
 	type ArmyUpgradeSpec
 } from './army';
+import type { ArmyConstraint } from './armyConstraint';
 
 const STATS: ArmyStats = {
 	STA: 1,
@@ -1731,6 +1732,102 @@ describe('entryUpgradeBlock', () => {
 		expect(entryUpgradeBlock(entries, 'w1', UPGRADES[7], UNITS, UPGRADE_INDEX, BLOCK_RULES)).toBe(
 			'max-level'
 		);
+	});
+});
+
+describe('entryUpgradeBlock with a roster constraint', () => {
+	/** A cut-down build whose pool holds two Pouches and nothing else. */
+	const POOL: ArmyConstraint = { unitCopies: {}, unitMounted: {}, upgradeQty: { pouch: 2 } };
+	const POUCH = UPGRADES.find((upgrade) => upgrade.id === 'pouch')!;
+	const CROSSBOW = UPGRADES.find((upgrade) => upgrade.id === 'imported-crossbow')!;
+
+	function blockFor(
+		entries: ArmyEntry[],
+		entryId: string,
+		upgrade: ArmyUpgradeSpec,
+		constraint: ArmyConstraint | null = POOL
+	) {
+		return entryUpgradeBlock(
+			entries,
+			entryId,
+			upgrade,
+			UNITS,
+			UPGRADE_INDEX,
+			BLOCK_RULES,
+			[],
+			{},
+			constraint
+		);
+	}
+
+	it('blocks an upgrade the roster pool never held', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(blockFor(entries, 'w1', UPGRADES[0])).toBe('roster');
+	});
+
+	it('allows a copy while the pool still has one', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: ['pouch'] },
+			{ id: 'w2', unitId: 'warrior' }
+		];
+		expect(blockFor(entries, 'w2', POUCH)).toBeNull();
+	});
+
+	it('blocks once every pool copy is assigned, on any copy', () => {
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: ['pouch'] },
+			{ id: 'w2', unitId: 'warrior', upgrades: ['pouch'] },
+			{ id: 'w3', unitId: 'warrior' }
+		];
+		expect(blockFor(entries, 'w3', POUCH)).toBe('roster');
+	});
+
+	it('lets the per-army limit win when it is tighter than the pool', () => {
+		const constraint: ArmyConstraint = {
+			unitCopies: {},
+			unitMounted: {},
+			upgradeQty: { 'imported-crossbow': 3 }
+		};
+		const entries: ArmyEntry[] = [
+			{ id: 'w1', unitId: 'warrior', upgrades: ['imported-crossbow'] },
+			{ id: 'w2', unitId: 'warrior' }
+		];
+		expect(blockFor(entries, 'w2', CROSSBOW, constraint)).toBe('limit');
+	});
+
+	it('is not consulted at all without a constraint', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		expect(blockFor(entries, 'w1', UPGRADES[0], null)).toBeNull();
+	});
+
+	it('keeps addEntryUpgrade from assigning an upgrade the pool lacks', () => {
+		const entries: ArmyEntry[] = [{ id: 'w1', unitId: 'warrior' }];
+		const added = addEntryUpgrade(
+			entries,
+			'w1',
+			UPGRADES[0],
+			UNITS,
+			UPGRADE_INDEX,
+			BLOCK_RULES,
+			[],
+			{},
+			{},
+			POOL
+		);
+		expect(added).toBe(entries);
+		const pooled = addEntryUpgrade(
+			entries,
+			'w1',
+			POUCH,
+			UNITS,
+			UPGRADE_INDEX,
+			BLOCK_RULES,
+			[],
+			{},
+			{},
+			POOL
+		);
+		expect(pooled[0]?.upgrades).toEqual(['pouch']);
 	});
 });
 

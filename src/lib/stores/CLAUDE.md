@@ -23,3 +23,12 @@
   fields added later get their defaults — keep this pattern when extending
   `MissionProgress`.
 - Markup-free: no Svelte component/UI concerns in this layer.
+- **Stores are unit-testable.** Vitest runs in a node environment with no browser, but the
+  `sveltekit()` plugin in `vite.config.ts` applies the runes transform to `.svelte.ts` under
+  `test` too, so a `$state`/`$derived` class instantiates and behaves normally outside a
+  component. `armyBuilder.svelte.spec.ts` is the working example: `await contentStore.loadArmy()`
+  in a `beforeAll`, then drive the singleton through its methods against the real bundled
+  content. Two things follow from the singleton being shared: reset it at the top of each case
+  (`selectFaction()`/`leave()`), and build fixtures from whatever the content actually offers
+  rather than assuming a unit id — a fixture that asserts "some faction has a unit with limit ≥ 3"
+  survives a content drop, one that names a unit does not.
