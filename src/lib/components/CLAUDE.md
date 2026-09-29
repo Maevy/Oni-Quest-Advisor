@@ -5,7 +5,16 @@
   the page in `routes` wire store state to props instead.
 - Domain _types_ (`Mission`, `SchemeCard`, `MissionProgress`, ...) are fine to import
   for prop typing. Domain _logic_ (random draws, clamping, VP math) is not — that stays
-  in `lib/domain` or `lib/stores`.
+  in `lib/domain` or `lib/stores`. The line is _decisions_: a pure read/format accessor
+  with no rule in it (`unitStatuses`, `pickedArmyFormat`, `qrCodeMatrix`) is a display
+  helper and fine to call, whereas anything that could be wrong about the game is not.
+- **A panel that renders for either seat belongs in a `{#snippet}`, not in duplicated
+  own/opponent branches.** The online seat cards started as four near-identical blocks
+  (P1/P2 × own/opponent) and every change had to be made four times. Compute a per-seat
+  data object in the script — `{@const}` inside a snippet cannot see an `{#if}`'s
+  narrowing, and TypeScript will reject a comparison it can prove false — then
+  `{@render seatPanel('player1')}` twice. `OnlineArmyPrep`, `OnlineSchemeSelect` and the
+  lobby's Ready row all do this.
 - Style with Tailwind utility classes. Keep touch targets large and layouts
   mobile-first — the app is used on a phone screen during a game.
 - Keep components small and focused (e.g. `MissionMap`, `ResultsPanel`, `SchemesPanel`,

@@ -99,14 +99,26 @@ native/platform-specific one. Used on a phone screen during a game session.
   and Mana Catalyst (`replaceAffinity` option: swap one Affinity element for
   Fire/Water/Earth/Air — a single element auto-resolves, several open a
   second picker step); selections persist on the entry
-  (`spellcraftChoices`, `upgradeChoices`). **Roster format** (125 pts):
+  (`spellcraftChoices`, `upgradeChoices`). **Roster format** (125 pts, internal id
+  `'roster'` — renamed from `'tournament'`, with `decodeArmy` still reading the old
+  `t` format character and `savedArmyFormat()` folding an old save's string):
   units keep mounts but carry no upgrades — the faction's upgrade catalog
   becomes a separate equipment pool (`rosterPicks`, steppers with per-army
   `limit` caps, costs count toward the cap; `addRosterPick`/`removeRosterPick`/
   `rosterPickPoints` in domain). Switching Standard↔Roster with a non-empty
   list asks for confirmation and clears it. Army codes carry the pool in an
-  optional picks section (tournament only); saves carry a `format` field
+  optional picks section (roster only); saves carry a `format` field
   (absent on old saves = standard) and the Load Army dialog filters by it.
+  **Cutting a roster down to a match list** (`domain/armyConstraint.ts`): a match is
+  85 points, so a Roster registration is cut to a Standard list restricted to what
+  the roster held — three budgets (copies per unit, **mounted** copies per unit,
+  assignable copies per upgrade id from the pool's `qty`). The pool records no target
+  and no selection, so which copy gets which upgrade is always the player's choice.
+  `entryUpgradeBlock`/`addEntryUpgrade` take an optional constraint and add a
+  `'roster'` block reason after `'limit'`; the builder's `units`/`upgrades` getters
+  filter to the roster's ids. Nothing gates the point cap (the free builder never
+  did) — `acceptCut()` refuses an over-cap list instead. The result is an ordinary
+  Standard list, so it encodes to a normal `s` code.
   Upgrade artwork lives in `assets/upgrades/<Faction>/`,
   matched by normalized filename + `UPGRADE_ICON_ALIASES`.
   NEUTRAL-tagged units are available to every faction except the monster ones
@@ -148,7 +160,9 @@ native/platform-specific one. Used on a phone screen during a game session.
   chosen Scheme, a `schemeDraft` (faction/intelligence) that survives deleting the
   chosen Scheme — but not a mission `Reset`, which rebuilds progress from empty —
   `currentRound` (tracked manually by the players, clamped to `MIN_ROUND`..`MAX_ROUND`
-  = 1–5), and `pickedArmy`: a **snapshot** (`{ name, factionId, code }`) of a saved
+  = 1–5), and `pickedArmy`: a **snapshot** (`{ name, factionId, code, format? }` —
+  `PickedArmy`, shared with the online seats and tournament registrations; read the
+  format through `pickedArmyFormat()`) of a saved
   standard army attached from the briefing's **Pick Army** button, rendered read-only
   in the tracker's Army view. Each copy's live Life/stamina lives in `vitality`
   (entry id → `{ hp, sta }`, absent = full): an Army row opens a vitality menu on
@@ -181,14 +195,31 @@ native/platform-specific one. Used on a phone screen during a game session.
   independently via `calculateTwoPlayerVP`; each is capped at `MAX_TOTAL_VP`.
 - **OnlineGameState** (online 2-player, server-authoritative; `domain/online.ts`) →
   statuses `lobby`/`active`/`finished`/`closed`; two seats (nickname, seat-token
-  hash, a `SeatProgress`, `revealIntent`, private `drawnSchemeIds`); `pendingJoin`;
-  season/mission; round × phase (`reveal`/`scoring`); round VP snapshots; winner.
-  Scheme boxes are scoreable **only once revealed** (hidden schemes earn no scheme
-  VP); `finishGame` auto-reveals everything and writes a `resultSummary` (winner,
-  final VP, factions, mission) onto the state for later statistics export.
-  Pure transition functions with `can*` guards plus the per-seat visibility filter
-  (`viewForSeat` — the opponent's unrevealed scheme never leaves the server). The
-  full player journey and phase model live in `MULTIPLAYER_PLAN.md` (local-only).
+  hash, a **registered `army`** and a **`combatArmy`**, `ready`, a `SeatProgress`,
+  `revealIntent`, private `drawnSchemeIds`); `pendingJoin` (which also carries the
+  joiner's army); season/mission **fixed at creation**; round × phase
+  (`prep`/`setup`/`reveal`/`scoring`); round VP snapshots; winner. A game is born
+  set up — the creator picks the mission and their army on a **frontend-only draft
+  screen** and **Open Lobby** is the first server call — and Start Game (leader-only,
+  gated on both seats' **Ready**) opens `prep`, not round 1. In `prep` a seat that
+  registered a **Roster** cuts it down to a Standard ≤85 list in the borrowed army
+  builder and registers it through `/combat-army`; a Standard registration _is_ its
+  own combat army from `createEmptySeat`. `leavePrep` (leader, needs both combat-ready)
+  seeds each seat's Scheme **faction from its combat army** via `schemeFactionForArmy()`
+  and moves to `setup`, where only the intelligence is drafted (`/draft` refuses a
+  `factionId`); `startRounds` then opens round 1's `reveal`. The two preparation steps
+  are **phases, not statuses**, because `cleanup.ts` buckets retention by status
+  literal — a new status would match no bucket and leak forever. Scheme boxes are
+  scoreable **only once revealed** (hidden schemes earn no scheme VP); `finishGame`
+  auto-reveals everything and writes a `resultSummary` (winner, final VP, factions,
+  mission) onto the state for later statistics export. Pure transition functions with
+  `can*` guards plus the per-seat visibility filter (`viewForSeat` — the opponent's
+  unrevealed scheme **and both armies' codes** never leave the server; `ready` and
+  `combatReady` _are_ public because leader buttons are gated on them). Note
+  `PublicSeatState.factionId` is a **scheme** faction while `army.factionId` is an
+  `ArmyFactionId` — different id spaces, overlapping on five of seven. The full player
+  journey lives in `docs/functional-spec/07-online-two-player.md`;
+  `MULTIPLAYER_PLAN.md` (local-only) is design history.
 - **Tournament** (under construction) → an event run by a Tournament Organizer
   (TO): players join, are paired round by round at tables, and the event
   concludes with a victor. Reached from the mode select's red **Organize
@@ -330,10 +361,19 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `domain.createEmptyProgress()` (solo — a shallow spread suffices, the fields are
   top-level) or `domain.hydrateTwoPlayerProgress()` (hot-seat — it merges **each
   seat** onto its own defaults, since the new fields live inside `player1`/`player2`).
-  Keep this pattern when extending either progress type. `navigationStore` tracks
-  `gameMode`, routes `selectMission()` to the correct progress store, and gates the
+  Keep this pattern when extending either progress type. **Online has no such
+  hydrate function** — its state is one server-side JSON document with no migration
+  mechanism, so a shape change there means wiping the database rather than merging.
+  `navigationStore` tracks
+  `gameMode`, routes `selectMission()` to the correct progress store, gates the
   one-time notices (privacy banner on first visit,
-  online intro before first entering the online mode).
+  online intro before first entering the online mode), and owns `builderReturn` —
+  `borrowArmyBuilder(returnScreen)` hands the army builder to another flow (the online
+  prep step cutting a roster) so both its exits go back there instead of `game-mode`.
+  `armyBuilderStore` is the one store with **unit tests**: the `sveltekit()` vite plugin
+  applies the runes transform under vitest, so a `$state` class works in the node
+  environment — `armyBuilder.svelte.spec.ts` is the working example, and its fixtures
+  are built from whatever the bundled content offers rather than naming unit ids.
 - `routes` (`+page.svelte`) switches screens on `navigationStore.screen` and wires
   store state/methods to component props/callbacks: the local flow
   (`game-mode` → `season-select` → `mission-select`, then both modes through the
@@ -341,7 +381,12 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   game and enters `mission-detail`, rendering `MissionDetail` or
   `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
-  (`online-create` → `online-join` → `online-game`) and the tournament flow
+  (`online-create` → `online-join` → `online-game`; that last id renders **five**
+  different views chosen by the fetched state rather than by a click — the lobby,
+  Army Preparation (`phase prep`), Scheme Selection (`phase setup`), the game view
+  and the statistics view — so a leader's Start Game / Proceed / Begin Round 1 moves
+  every device without a reload, and `army-builder` is borrowed mid-flow for a cut)
+  and the tournament flow
   (`tournament-setup`, all three panes on one screen id → `tournament-lobby` →
   `tournament-round` once the event is active, with `tournament-join` reached
   from an invite link or QR code; which of lobby/round shows follows the fetched
@@ -375,13 +420,21 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `DescriptionPanel`, `SetupPanel`, `MissionMap`, `QuestRulesPanel`, `Panel`,
   `IncrementBoxes`). Seat colours (P1 sky / P2 orange) come from
   `playerAccent.ts` as literal class strings — never build them by interpolation,
-  Tailwind only sees whole names. Online mode has its own set (`OnlineCreate`,
-  `OnlineJoin`, `OnlineLobby`, `OnlineGameView`, `OnlineStats`, `OnlineSchemeSetup`,
-  `OnlineMissionView`, `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`,
-  plus the one-time `OnlineIntroNotice` shown before first entry), also reusing the
-  shared panels (collapsible there via `Panel`'s `collapsible` prop). The army
+  Tailwind only sees whole names. Online mode has its own set (`OnlineCreate` — the
+  local three-field draft, `OnlineJoin`, `OnlineLobby`, `OnlineArmyPrep`,
+  `OnlineSchemeSelect`, `OnlineGameView`, `OnlineStats`, `OnlineSchemeSetup` — the
+  per-seat draw-and-choose area, faction read-only, `OnlineMissionView`,
+  `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`, plus the one-time
+  `OnlineIntroNotice` shown before first entry), also reusing the
+  shared panels (collapsible there via `Panel`'s `collapsible` prop) and `ArmyBadge`
+  (an army's name, faction colour and Standard/Roster tag — never its code).
+  `OnlineArmyPrep` and `OnlineSchemeSelect` render both seats from one `{#snippet}`,
+  because the own/opponent branches otherwise duplicate. The army
   builder adds `ArmyFactionSelect`, `ArmyBuilderView` (sliding panels, swipe,
-  mount toggles) and the `UnitCard` statline popup; the tournament wizard adds
+  mount toggles, and a **borrowed** shape from its `constrained` prop: ← Back, no
+  format tabs, **Accept** in place of Copy/Save, a Limit chip showing the roster's
+  ceiling and a "Still in your roster" chip list) and the `UnitCard` statline popup;
+  the tournament wizard adds
   `TournamentSetup` (all three panes, with the Add Quest popup and the retention
   notice inside it), the read-only `TournamentOverview` it renders on the last
   one, the shared `TournamentLobby` (organizer and players), `TournamentJoin`,
@@ -440,7 +493,7 @@ read it before adding files there.
 - `npm run check` — svelte-kit sync + svelte-check (type check, strict)
 - `npm run lint` — prettier --check + eslint · `npm run format` — prettier --write
 - `npm run test` — vitest run (tests: `src/**/*.{test,spec}.ts` — `lib/domain`,
-  `lib/server`, plus a mission-content spec in `lib/data`)
+  `lib/server`, `lib/stores`, plus a mission-content spec in `lib/data`)
 
 After code changes, verify with `npm run check`, `npm run lint`, and `npm run test`.
 
@@ -448,7 +501,19 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - Day-to-day work happens on **`develop`** (remote: GitHub `Maevy/Oni-Quest-Advisor`).
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
-  and push branch + tag. Current release: **v0.8.0** — the hot-seat parity
+  and push branch + tag.
+- **Unreleased on `develop`: the online-mode redesign** (`da407c1`…`abf7779`) — the
+  create screen is a local draft carrying mission + army, both seats register an army,
+  Start Game is gated on per-seat **Ready**, and a match opens with Army Preparation
+  (a Roster is cut to ≤85 in the borrowed builder) and Scheme Selection (faction from
+  the combat army). Details in `PROGRESS.md`. **Its first deploy must wipe the
+  production database** — online state is one JSON document with no migration path and
+  seats gained required `army`/`combatArmy` fields, so an older row would read a
+  missing combat army as combat-ready. The app is in beta and the wipe is authorized in
+  principle, but it is destructive on shared infrastructure: confirm explicitly, and
+  note `flyctl` on this machine needs the user's own interactive `flyctl auth login`
+  first.
+- Current release: **v0.8.0** — the hot-seat parity
   release: the 2-player tracker now matches the solo one. Both local modes go
   through the Mission Briefing, whose army slots are per seat in hot-seat ("Pick
   P1 Army" / "Pick P2 Army", seat-coloured panels, and a warning when either seat

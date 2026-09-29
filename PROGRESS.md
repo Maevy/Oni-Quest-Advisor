@@ -34,6 +34,15 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   was the rules-link hotfix. The per-session details are all recorded below. Day-to-day work
   happens on `develop`, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git` (note the
   working branch is `develop`, not `main`).
+- **Unreleased on `develop`: the online-mode redesign** (five commits, `da407c1`…`abf7779`).
+  Creation is now a **frontend-only draft** carrying the mission and the leader's army, both seats
+  register an army, Start Game is gated on per-seat **Ready**, and a match opens with two new
+  phases — **Army Preparation**, where a Roster registration is cut down to a Standard ≤85 list in
+  a _borrowed_ army builder, and **Scheme Selection**, whose faction comes from the combat army
+  rather than from a dropdown. The Roster format's internal id also changed from `'tournament'` to
+  `'roster'` behind a decode migration. **Deploying this requires wiping the production database** —
+  there is no `hydrateOnlineGameState`, so a row written before the change would read a missing
+  `combatArmy` as combat-ready with no army behind it. Details in the session notes below.
 - The Fly volume `oni_quest_data` (1 GB, mounted at `/data`) exists since the
   v0.5.0 deploy — future deploys only need `fly deploy`. (A fresh app clone
   would have to create the volume first:
@@ -63,7 +72,133 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
   `size_info` became a required, ordered `ArmyUnitSize`, Flying Carpet's size
   ceiling got automated, and a mounted model counts as its mount's size.
 
-## What was done in the last session (Tournament: starting the event, the match-prep screen and its roadmap)
+## What was done in the last session (online mode redesigned: a game is born set up, both seats bring an army, and a match starts by cutting the armies)
+
+The online mode's front door was inverted and its opening grew two preparation steps. This is
+**unreleased** work on `develop` — five commits, `da407c1`…`abf7779` — and it is the groundwork the
+tournament's match phase will sit on, since a tournament round is going to be several of these games
+running under tournament overwatch.
+
+> **Deploying this needs the production database wiped.** `combatArmy` is a new required field on a
+> seat and there is no `hydrateOnlineGameState`, so a row written before the change would read
+> `undefined !== null` as combat-ready with no army behind it. The dev `.data/oni-quest.db` was
+> deleted twice for exactly this reason (once for `army`, once for `combatArmy`). Nothing has been
+> run against Fly yet.
+
+1. **The Roster format is no longer internally named `'tournament'`** (`da407c1`). `ArmyFormat`'s
+   second value collided with the tournament feature's own vocabulary, and the redesign was about to
+   put a format into server payloads for the first time. It is `'roster'` now, behind a **decode**
+   migration rather than a data one: `encodeArmy` writes the format character `r`, `decodeArmy`
+   accepts both `r` and the legacy `t` (`isRosterFormatChar`, and a picks section is legal on
+   either), and `savedArmyFormat()` folds a stored `'tournament'` string to `'roster'` — so no
+   saved-army record is rewritten and a code shared before the rename still imports. The
+   fingerprint is catalog-derived and was untouched, which is _why_ old codes still decode instead
+   of failing as `roster-mismatch`. The `'tournament'`/`'tournament-join'` **slot ids** in
+   `+page.svelte` name the wizard's army slots, not the format, and stayed.
+2. **A game is born set up** (`ba18257`). `POST /api/games` used to accept `{ nickname }` and
+   nothing else, so a game existed before anything about it had been decided and the mission was
+   then picked in the lobby by the leader once Player 2 had joined — which is why the season
+   dropdown read _"Season (locked until a player joins)"_. The create screen is now a
+   **frontend-only draft** in the shape of the tournament wizard (Player Name, season → mission, a
+   Your Army row opening the saved-army picker) and **Open Lobby** is the first server call,
+   carrying `{ nickname, season, missionId, army }` with the mission validated against bundled
+   content the way the deleted endpoint did. A failure returns to the same screen **with the draft
+   intact**, which matters because the 20/hour creation bucket now bites after the player has done
+   the work. Gone with the old flow: `canSelectMission`, `selectMission`, `/select-mission`,
+   `onlineApi.selectMission`, the store method, the lobby's Mission Selection card and the
+   `mission-selected` event type. The joiner does the same on the join screen, so
+   **both seats arrive with an army** — `PendingJoin` carries it through the request and
+   `acceptJoin` seats it. The picker for the two online slots is deliberately **unfiltered**
+   (`pickFormatFor` returns `null`) because either format is legal there.
+3. **Readiness** (`283e14e`). `OnlineSeatState.ready`, toggled by its own seat only, public in the
+   filtered view because the leader's Start Game is gated on it and hiding it would leave that
+   button locked for a reason no client could name. Each seat card grew a Ready row from one
+   snippet — your own a toggle (**Ready** → **Ready ✓**, `aria-pressed`), the other's a read-only
+   chip — and Start Game carries a hint naming whichever gate is missing. **`startGame` is a total
+   function, which is the trap here**: a caller that forgets readiness gets no error, it silently
+   keeps a lobby, so `cleanup.spec`'s synthetic journey would have kept passing its retention tests
+   for the wrong reason. Every fixture that starts a game now goes through a `readyUp()` helper.
+4. **The borrowed builder** (`2f9d17d`). `domain/armyConstraint.ts` derives the cut's budget from a
+   decoded roster — and it is only **three counts**, because a roster's equipment pool is
+   `{ id, qty }`: a shopping list with a price, not an equipped state, and nothing in the codebase
+   ever resolved "Pouch ×2 in the pool" onto a model. Copies per unit, **mounted** copies per unit
+   (the user's rule — a mount picked in the roster may be deselected, one never picked may never be
+   added — is a pure ceiling, so no entry has to be traced back to the copy it came from, and
+   unmounting gives the budget back), and assignable copies per upgrade id. Enforcement went into
+   the seams that already existed rather than beside them: `entryUpgradeBlock`/`addEntryUpgrade`
+   take an optional constraint and return a new `'roster'` reason, checked **after** the per-army
+   `'limit'` so the tighter of the two wins and the picker says which; the store's `units` and
+   `upgrades` getters filter to the ids the roster held, so the Available panel and the picker can
+   only offer what was brought. The point cap stayed **soft** — the free builder has always let a
+   list overshoot and shown the total in red — so `acceptCut()` refuses instead of the `+` buttons
+   blocking. `navigationStore` gained `builderReturn` + `borrowArmyBuilder()` because
+   `leaveArmyBuilder()` hard-coded `game-mode` **and** called the store's `leave()`, so borrowing
+   the builder from a live match would have dumped the player out of the match and wiped the list
+   they were cutting.
+5. **Army preparation and Scheme selection** (`abf7779`). `OnlineGamePhase` is now
+   `prep | setup | reveal | scoring`, and the two new steps are **phases, not statuses** on purpose:
+   `cleanup.ts` buckets retention by status literal, so a new status would match no bucket and leak
+   forever. A seat carries `combatArmy` next to its registered `army` — `createEmptySeat` sets it to
+   the registration when that is already Standard and to `null` for a Roster, which is exactly what
+   makes a seat read _"Needs a match list"_ — and `POST /combat-army` registers the cut, refusing a
+   non-Standard payload and a seat that never had anything to cut. It stays editable for the whole
+   `prep` phase; `leavePrep` is what makes it final. Both seats land on the new **Army Preparation**
+   screen, the Standard one already combat-ready. Proceeding opens **Scheme Selection**, which lost
+   its faction dropdown: `leavePrep` seeds each seat's `schemeDraft.factionId` from its combat army,
+   as a transition rather than a client call so no seat can draw from a deck its army does not
+   belong to, and `/draft` was narrowed to intelligence only — a `factionId` in the body is a
+   **400**, not a silent ignore. `canStartGame` correspondingly lost its `bothSchemesChosen` clause.
+   The lobby came out of all this ~200 lines smaller, and its stale _"Round controls arrive in the
+   next update."_ placeholder and stray-space close dialog went with the rewrite, closing two
+   long-standing open questions.
+6. **The monster-faction bridge, which nobody had needed until now.** `schemeFactionForArmy()` in
+   `domain/faction.ts`: five of the seven army ids are also scheme ids, but **Oni Clans and Goblin
+   Wartribes have no scheme deck of their own** — they are the two halves of the scheme data's
+   Monster Factions and share its deck, which `data/armyFactions.ts` had been saying in a comment
+   for months. Resolving an army faction against the scheme catalogs without the mapping finds
+   nothing for exactly those two. The related trap: `PublicSeatState.factionId` is a **scheme**
+   faction (6 ids) while an army's is an `ArmyFactionId` (7 ids), they overlap on five, and they
+   resolve against different catalogs — so the army faction had to be its own field or the prep
+   screen would mis-resolve precisely the monster factions.
+
+Also worth keeping: **stores are unit-testable.** The `sveltekit()` vite plugin applies the runes
+transform under vitest too, so a `$state` class instantiates and behaves in the node environment —
+`armyBuilder.svelte.spec.ts` is the first store spec and the working example. Its fixtures are built
+from whatever the bundled content offers (a mountable unit with limit ≥ 2, a mountless one with
+limit ≥ 3, an upgrade with limit ≥ 2) so a content drop cannot break them, and one of them recorded
+a fact the first attempt got wrong: **no single unit reaches 85 points at its copy limit**, so
+building an over-cap list takes several. Two browser-harness traps cost a run each and are now in
+the memory notes — Playwright's `hasText`/`text=` matching is **case-insensitive substring**, so
+`'Game Leader'` also matched "waiting for _the game leader_", and the first unit in the Helian
+catalog is `upgradesLocked` so it renders no upgrade slot at all.
+
+**Verification:** 592 tests (73 new across the session), `svelte-check` 0/0, lint clean. Plus four
+throwaway passes, all deleted afterwards: a 17-assertion browser pass for the format migration (a
+forged pre-rename save with `format: 'tournament'` and a `t` code files under the Roster tab and
+loads at the 125 cap with its equipment pool intact), a 34-assertion two-context pass for the new
+front door ending on the regression that scheme setup → Start Game still reached Round 1, a
+19-assertion + 21-assertion pair for readiness (API and two-device), and a 36-assertion +
+44-assertion pair for the preparation phases — the browser one driving the whole journey: create
+with a Roster and join with a Standard, both ready, Start Game, the borrowed builder (Back instead
+of Main Menu, no format tabs, no Copy or Save, the 85 cap, a catalog narrowed to the one unit the
+roster held, the picker offering only its pool upgrade), Accept returning to a combat-ready seat
+with Edit match list, Proceed, Scheme selection with the faction shown rather than chosen, Begin
+Round 1, both devices in Round 1, and a reload resuming into it.
+
+**New open questions** (all recorded in `docs/functional-spec/07-online-two-player.md`): the cut
+keeps its registration's name, so the two badges on the prep screen read identically apart from the
+format tag; a combat army's **legality is the client's word**, since the server has no army catalogs
+and cannot check ≤85 or subset-of-roster (the same ruling the tournament join already made); and a
+vanished leader now strands a table in **two more places**, neither with a timeout. Still deferred
+from before: the leader's accept popup cannot show the joiner's army, and
+`pendingJoinNickname` is only hidden client-side.
+
+**Next:** the tournament's match phase — a round's tables become N online games, which is why this
+redesign came first. Note what a tournament will need that online does not have yet: an army
+registered per **round** rather than per game, and a scoring path back into the tournament's VP
+standing.
+
+## What was done in the session before (Tournament: starting the event, the match-prep screen and its roadmap)
 
 The tournament left the lobby. **Start Tournament** works, and behind it is a new screen every
 device shares: the round, the mission, the victory-point standing and the table assignment board.

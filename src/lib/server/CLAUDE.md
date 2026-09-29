@@ -21,7 +21,11 @@
   `mutateAsTournamentViewer` / `mutateAsTournamentOrganizer` for everything else) with its own FIFO
   queue, so a lobby's concurrent joins can never double-book a seat.
 - `payload.ts` parses request-body shapes the server stores as snapshots (a `PickedArmy`, a string
-  list) with hard length caps. `sse.ts` is an in-process change-notification registry — one per
+  list) with hard length caps. A `PickedArmy` must carry its `format` explicitly
+  (`'standard' | 'roster'`) — the server has **no army catalogs loaded**, so it can neither read the
+  format back out of a code nor check a point total. Army legality is therefore the client's word;
+  what the server does check is shape, length and the format value itself.
+  `sse.ts` is an in-process change-notification registry — one per
   entity family, capped subscribers per entity (8 games, 40 tournaments). Events are hints — the
   client refetches the full visibility-filtered state on notification, so no event replay logic
   exists anywhere.
@@ -37,5 +41,13 @@
   exactly the 48-hour report window the creation notice promises, cancelled 24 hours — a cancelled
   event has no report, but its rows must outlive the cancellation so the open lobbies can still be
   told what happened instead of meeting a 404).
+  **The buckets are status-string literals, so a new `status` value is never collected** — it
+  matches no `staleIds(db, [...], window)` call and its rows live forever. Add a _phase_ instead,
+  or add the status to a bucket in the same commit. This is why the online preparation steps are
+  phases of `active` and not statuses of their own.
+- There is **no migration mechanism**: an entity's state is one JSON document in a TEXT column, and
+  the online game has no `hydrate*` equivalent of hot-seat's `hydrateTwoPlayerProgress`. A new
+  required field on a stored shape therefore means wiping the database (dev: delete
+  `.data/oni-quest.db*`; prod: an explicit, confirmed action).
 - All game rules live in `lib/domain` (`online.ts`, `tournamentEvent.ts`) — this layer only
   persists, authenticates and transports. Validation of actions = domain `can*` guards.
