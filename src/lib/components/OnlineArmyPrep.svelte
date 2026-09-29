@@ -164,16 +164,16 @@
 							Create army out of a roster
 						</button>
 					{:else}
-						<p class="text-xs text-slate-400">
+						<p class="text-xs text-slate-200">
 							Your registered army is already a legal match list.
 						</p>
 					{/if}
 				{:else if !panel.ready}
-					<p class="text-xs text-slate-400 italic">Preparing their army…</p>
+					<p class="text-xs text-slate-200 italic">Preparing their army…</p>
 				{/if}
 			</div>
 		{:else}
-			<p class="mt-3 text-center text-slate-400">No Player 2, invite someone</p>
+			<p class="mt-3 text-center text-slate-200">No Player 2, invite someone</p>
 		{/if}
 	</div>
 {/snippet}
@@ -191,9 +191,9 @@
 
 	<div class="text-center">
 		<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id}</h1>
-		<p class="text-slate-400">Army Preparation</p>
+		<p class="text-slate-200">Army Preparation</p>
 		{#if missionName}
-			<p class="mt-1 text-sm text-slate-300">{view.season} — {missionName}</p>
+			<p class="mt-1 text-sm text-slate-100">{view.season} — {missionName}</p>
 		{/if}
 	</div>
 
@@ -206,7 +206,7 @@
 		</div>
 	{/if}
 
-	<p class="text-sm text-slate-400">
+	<p class="text-sm text-slate-200">
 		A match is 85 points. A Standard army is combat-ready as registered; a Roster army is cut down
 		to the list you field, out of nothing but what it held.
 	</p>
@@ -224,10 +224,10 @@
 			Proceed to the mission
 		</button>
 		{#if !bothCombatReady}
-			<p class="-mt-1 text-center text-xs text-slate-400">{proceedHint}</p>
+			<p class="-mt-1 text-center text-xs text-slate-200">{proceedHint}</p>
 		{/if}
 	{:else}
-		<p class="text-center text-xs text-slate-400">
+		<p class="text-center text-xs text-slate-200">
 			The game leader continues once both armies are combat-ready.
 		</p>
 	{/if}

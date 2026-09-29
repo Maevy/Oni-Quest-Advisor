@@ -61,7 +61,7 @@
 					</ul>
 				</div>
 			{/if}
-			<p class="text-xs text-slate-500">Objectives unlock once the game has started.</p>
+			<p class="text-xs text-slate-300">Objectives unlock once the game has started.</p>
 		</div>
 	</Panel>
 	<QuestRulesPanel sections={mission.questRules} collapsible />

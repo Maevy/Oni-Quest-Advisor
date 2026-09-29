@@ -36,7 +36,7 @@
 					{rule.heading}
 				</p>
 			{/if}
-			<p class="mt-2 text-sm text-slate-300">{rule.text}</p>
+			<p class="mt-2 text-sm text-slate-100">{rule.text}</p>
 		</div>
 	</div>
 {/if}

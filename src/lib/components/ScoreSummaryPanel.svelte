@@ -17,9 +17,9 @@
 
 <Panel>
 	<div class="text-center">
-		<p class="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Total VP</p>
+		<p class="text-[10px] font-semibold tracking-wide text-slate-200 uppercase">Total VP</p>
 		<p class="text-5xl font-bold text-sky-300">
-			{totalVP}<span class="text-xl font-semibold text-slate-400"> / {MAX_TOTAL_VP}</span>
+			{totalVP}<span class="text-xl font-semibold text-slate-200"> / {MAX_TOTAL_VP}</span>
 		</p>
 	</div>
 
@@ -52,7 +52,7 @@
 		</div>
 		<button
 			type="button"
-			class="rounded-lg border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-800/60"
+			class="rounded-lg border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-sm text-slate-100 transition hover:bg-slate-800/60"
 			onclick={onReset}
 		>
 			Reset

@@ -49,7 +49,7 @@
 				<p class="min-w-0 flex-1 text-sm text-red-300">{notice}</p>
 				<button
 					type="button"
-					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-600/60 bg-slate-900/60 text-sm font-bold text-slate-300 transition hover:bg-slate-800/60"
+					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-600/60 bg-slate-900/60 text-sm font-bold text-slate-100 transition hover:bg-slate-800/60"
 					aria-label="Dismiss"
 					onclick={onDismissNotice}
 				>

@@ -284,7 +284,7 @@
 			{/if}
 			<div class="min-w-0">
 				<h2 class="text-lg font-bold text-slate-100">{unit.name}</h2>
-				<p class="text-xs font-medium tracking-wide text-slate-300">
+				<p class="text-xs font-medium tracking-wide text-slate-100">
 					Size: {armyUnitSizeLabel(size)}
 				</p>
 				<p class="text-sm font-semibold" style="color: {faction.color}">{faction.name}</p>
@@ -391,7 +391,7 @@
 					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
 						Inventory
 						{#if unit.inventorySpace}
-							<span class="ml-1 font-normal text-slate-300 normal-case">
+							<span class="ml-1 font-normal text-slate-100 normal-case">
 								({usedSpace}/{unit.inventorySpace} Space used)
 							</span>
 						{/if}
@@ -410,11 +410,11 @@
 									{#each group.rows as row (row.item.id)}
 										<div class="rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5">
 											<p class="text-sm font-medium text-slate-100">{row.item.name}</p>
-											<p class="mt-0.5 text-[10px] tracking-wide text-slate-400 uppercase">
+											<p class="mt-0.5 text-[10px] tracking-wide text-slate-200 uppercase">
 												{itemTypeDisplay(row.item.category, row.item.mode)}
 											</p>
 											{#if row.item.effect.length > 0}
-												<p class="mt-1 text-xs text-slate-300">
+												<p class="mt-1 text-xs text-slate-100">
 													{@render segmentsView(row.item.effect)}
 												</p>
 											{/if}
@@ -479,7 +479,7 @@
 									{#each group.entries as stratagem (stratagem.id)}
 										<div class="rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5">
 											<p class="text-sm font-medium text-slate-100">{stratagem.name}</p>
-											<p class="mt-1 text-xs text-slate-300">
+											<p class="mt-1 text-xs text-slate-100">
 												{@render segmentsView(stratagem.effect)}
 											</p>
 										</div>
@@ -519,7 +519,7 @@
 									<span
 										class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase {ELEMENT_CHIP_CLASSES[
 											group.element
-										] ?? 'border-slate-500/30 bg-slate-500/10 text-slate-300'}"
+										] ?? 'border-slate-500/30 bg-slate-500/10 text-slate-100'}"
 									>
 										{group.label}
 									</span>
@@ -534,7 +534,7 @@
 														Lv {spell.level}
 													</p>
 												</div>
-												<p class="mt-1 text-xs text-slate-300">
+												<p class="mt-1 text-xs text-slate-100">
 													{@render segmentsView(spell.effect)}
 												</p>
 												{#if spell.pw || spell.type || spell.rch || spell.stk}
@@ -544,7 +544,7 @@
 																<span
 																	class="rounded-md bg-slate-900/60 px-1.5 py-0.5 text-[10px] text-slate-200"
 																>
-																	<span class="font-semibold tracking-wide text-slate-500 uppercase"
+																	<span class="font-semibold tracking-wide text-slate-300 uppercase"
 																		>{label}</span
 																	>
 																	<span class="tabular-nums">{value}</span>
@@ -560,7 +560,7 @@
 							{/each}
 						</div>
 					{:else}
-						<p class="mt-2 text-sm text-slate-500">
+						<p class="mt-2 text-sm text-slate-300">
 							No spells at this level for the unit's affinities.
 						</p>
 					{/if}
@@ -573,7 +573,7 @@
 										Level {romanNumeral(section.level)}
 									</p>
 								{/if}
-								<p class="text-sm text-slate-300">
+								<p class="text-sm text-slate-100">
 									{@render segmentsView(section.text)}
 								</p>
 							</div>

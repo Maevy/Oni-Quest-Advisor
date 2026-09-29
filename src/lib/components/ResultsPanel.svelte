@@ -45,7 +45,7 @@
 				{@const complete = isGroupComplete(entry.rows)}
 				<li class="rounded-xl border border-slate-700/40 bg-slate-900/40 p-3">
 					<div class="flex items-start justify-between gap-3">
-						<span class={complete ? 'text-slate-500 line-through' : 'text-slate-200'}>
+						<span class={complete ? 'text-slate-300 line-through' : 'text-slate-200'}>
 							{entry.text}
 						</span>
 						<span class="shrink-0 text-sm font-semibold text-sky-300">{entry.vp} VP</span>
@@ -90,7 +90,7 @@
 						: 'px-2 py-1.5'}"
 				>
 					<div class="flex items-start justify-between gap-3">
-						<span class={complete ? 'text-slate-500 line-through' : 'text-slate-200'}>
+						<span class={complete ? 'text-slate-300 line-through' : 'text-slate-200'}>
 							{objective.text}
 						</span>
 						<span

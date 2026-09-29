@@ -21,7 +21,7 @@
 		<div class="mt-4 flex justify-center gap-3">
 			<button
 				type="button"
-				class="rounded-xl border-2 border-slate-600/50 bg-slate-900/60 px-6 py-2 font-semibold text-slate-300 transition hover:bg-slate-700/30 active:bg-slate-700/40"
+				class="rounded-xl border-2 border-slate-600/50 bg-slate-900/60 px-6 py-2 font-semibold text-slate-100 transition hover:bg-slate-700/30 active:bg-slate-700/40"
 				onclick={onCancel}
 			>
 				Back

@@ -48,7 +48,7 @@
 				onclick={() => (open = !open)}
 			>
 				{title}
-				<span aria-hidden="true" class="text-slate-400">{open ? '▾' : '▸'}</span>
+				<span aria-hidden="true" class="text-slate-200">{open ? '▾' : '▸'}</span>
 			</button>
 		{:else}
 			<h2 class="mb-3 text-sm font-semibold tracking-wide uppercase {titleClass}">{title}</h2>

@@ -21,7 +21,7 @@
 
 	let { view, missions, factions, error = null, onStart, onLeave }: Props = $props();
 
-	const label = 'shrink-0 text-xs tracking-wide text-slate-400 uppercase';
+	const label = 'shrink-0 text-xs tracking-wide text-slate-200 uppercase';
 	const value = 'min-w-0 text-right text-sm break-words text-slate-100';
 	const inviteButton =
 		'rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-2.5 text-sm font-medium text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20';
@@ -87,12 +87,12 @@
 				{#if copied}
 					<p class="mt-2 text-xs text-emerald-300">Link copied — paste it into your messenger.</p>
 				{:else if clipboardFailed}
-					<p class="mt-2 text-xs text-slate-400">
+					<p class="mt-2 text-xs text-slate-200">
 						Copying is blocked here — share this link instead:
 					</p>
 					<p class="mt-1 text-xs break-all text-sky-300">{inviteUrl}</p>
 				{:else}
-					<p class="mt-2 text-xs text-slate-400">
+					<p class="mt-2 text-xs text-slate-200">
 						Players open the link, enter their name and a Roster army, and take a seat.
 					</p>
 				{/if}
@@ -121,7 +121,7 @@
 							</a>
 							<!-- eslint-enable svelte/no-navigation-without-resolve -->
 						{:else}
-							<span class="text-slate-400">None</span>
+							<span class="text-slate-200">None</span>
 						{/if}
 					</dd>
 				</div>
@@ -147,7 +147,7 @@
 							{mission?.name ?? missionId}
 						</p>
 						{#if mission}
-							<p class="mt-0.5 truncate text-xs text-slate-400">{mission.season}</p>
+							<p class="mt-0.5 truncate text-xs text-slate-200">{mission.season}</p>
 						{/if}
 					</li>
 				{/each}
@@ -158,7 +158,7 @@
 			<ul class="flex flex-col gap-1.5">
 				{#each view.tableNames as name, index (index)}
 					<li class="flex items-baseline gap-2">
-						<span class="w-6 shrink-0 text-center text-xs text-slate-500">{index + 1}</span>
+						<span class="w-6 shrink-0 text-center text-xs text-slate-300">{index + 1}</span>
 						<span class="min-w-0 flex-1 truncate text-sm text-slate-100">{name}</span>
 					</li>
 				{/each}
@@ -171,20 +171,20 @@
 					<li
 						class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
 					>
-						<span class="w-6 shrink-0 text-center text-xs text-slate-500">{index + 1}</span>
+						<span class="w-6 shrink-0 text-center text-xs text-slate-300">{index + 1}</span>
 						{#if seat.name}
 							<div class="min-w-0 flex-1">
 								<p class="truncate text-sm font-semibold text-slate-100">
 									{seat.name}
 									{#if seat.you}<span class="text-sky-300">(you)</span>{/if}
-									{#if seat.organizer}<span class="text-xs text-slate-400">· organizer</span>{/if}
+									{#if seat.organizer}<span class="text-xs text-slate-200">· organizer</span>{/if}
 								</p>
 								{#if seat.army}
 									{@const faction = factions.find(
 										(candidate) => candidate.id === seat.army?.factionId
 									)}
 									<span
-										class="mt-0.5 block truncate text-xs {faction ? '' : 'text-slate-400'}"
+										class="mt-0.5 block truncate text-xs {faction ? '' : 'text-slate-200'}"
 										style={faction ? `color: ${faction.color}` : undefined}
 									>
 										{seat.army.name} · {faction?.name ?? seat.army.factionId}
@@ -192,7 +192,7 @@
 								{/if}
 							</div>
 						{:else}
-							<p class="flex-1 text-sm text-slate-500">Empty seat</p>
+							<p class="flex-1 text-sm text-slate-300">Empty seat</p>
 						{/if}
 					</li>
 				{/each}
@@ -211,7 +211,7 @@
 			>
 				Start Tournament
 			</button>
-			<p class="-mt-2 text-center text-xs text-slate-400">
+			<p class="-mt-2 text-center text-xs text-slate-200">
 				{#if view.joinedCount < 2}
 					At least two players must be in before the tournament can start.
 				{:else if emptySeats > 1}
@@ -224,7 +224,7 @@
 				{/if}
 			</p>
 		{:else}
-			<p class="text-center text-xs text-slate-400">
+			<p class="text-center text-xs text-slate-200">
 				The organizer starts the tournament once everyone is in.
 			</p>
 		{/if}
@@ -246,10 +246,10 @@
 			<div class="mt-3">
 				<QrCode value={inviteUrl} />
 			</div>
-			<p class="mt-3 text-xs break-all text-slate-400">{inviteUrl}</p>
+			<p class="mt-3 text-xs break-all text-slate-200">{inviteUrl}</p>
 			<button
 				type="button"
-				class="mt-4 w-full rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800/60"
+				class="mt-4 w-full rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 transition hover:bg-slate-800/60"
 				onclick={() => (showQr = false)}
 			>
 				Close

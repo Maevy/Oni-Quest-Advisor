@@ -7,5 +7,5 @@
 </script>
 
 <Panel title="Schemes" {collapsible}>
-	<p class="text-slate-300">Can be selected when the game starts.</p>
+	<p class="text-slate-100">Can be selected when the game starts.</p>
 </Panel>

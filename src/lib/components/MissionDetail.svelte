@@ -209,7 +209,7 @@
 						/>
 					{:else}
 						<Panel title="Army">
-							<p class="text-sm text-slate-400">
+							<p class="text-sm text-slate-200">
 								No army is attached to this run. Pick one from the mission briefing before starting
 								the game.
 							</p>

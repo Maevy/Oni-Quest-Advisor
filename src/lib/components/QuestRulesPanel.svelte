@@ -14,7 +14,7 @@
 				{#if section.label}
 					<h3 class="font-semibold text-slate-100">{section.label}</h3>
 				{/if}
-				<p class="mt-1 whitespace-pre-line text-slate-300">{section.description}</p>
+				<p class="mt-1 whitespace-pre-line text-slate-100">{section.description}</p>
 			</div>
 		{/each}
 	</div>

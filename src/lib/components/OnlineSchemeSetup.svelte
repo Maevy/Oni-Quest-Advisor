@@ -41,7 +41,7 @@
 	>
 		<div>
 			<h3 class="font-semibold text-sky-100">{chosenCard.title}</h3>
-			<p class="mt-1 text-sm text-slate-300">{chosenCard.ruleText}</p>
+			<p class="mt-1 text-sm text-slate-100">{chosenCard.ruleText}</p>
 		</div>
 		<button
 			type="button"
@@ -61,13 +61,13 @@
 				onclick={() => onChoose(card.id)}
 			>
 				<h3 class="font-semibold text-sky-100">{card.title}</h3>
-				<p class="mt-1 text-sm text-slate-300">{card.ruleText}</p>
+				<p class="mt-1 text-sm text-slate-100">{card.ruleText}</p>
 			</button>
 		{/each}
 	</div>
 {:else}
 	<div class="flex flex-wrap items-end gap-2">
-		<span class="flex flex-col gap-1 text-sm text-slate-300">
+		<span class="flex flex-col gap-1 text-sm text-slate-100">
 			Faction
 			<span
 				class="rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-slate-100"
@@ -76,7 +76,7 @@
 				{factionName ?? '—'}
 			</span>
 		</span>
-		<label class="flex flex-col gap-1 text-sm text-slate-300">
+		<label class="flex flex-col gap-1 text-sm text-slate-100">
 			Intelligence
 			<input
 				type="number"
@@ -95,7 +95,7 @@
 			Draw Missions
 		</button>
 		{#if drawCount !== null}
-			<span class="text-xs text-slate-500">Draws {drawCount}</span>
+			<span class="text-xs text-slate-300">Draws {drawCount}</span>
 		{/if}
 	</div>
 {/if}

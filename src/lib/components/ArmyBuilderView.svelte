@@ -297,7 +297,7 @@
 	</div>
 
 	{#if constrained && onAccept && !canAccept}
-		<p class="-mt-2 text-xs text-slate-400">{acceptHint}</p>
+		<p class="-mt-2 text-xs text-slate-200">{acceptHint}</p>
 	{/if}
 
 	{#if copyResult}
@@ -389,7 +389,7 @@
 											−
 										</button>
 										<span
-											class="min-w-4 text-center text-sm font-semibold text-slate-300 tabular-nums"
+											class="min-w-4 text-center text-sm font-semibold text-slate-100 tabular-nums"
 										>
 											{counts[unit.id] ?? 0}
 										</span>
@@ -461,7 +461,7 @@
 												−
 											</button>
 											<span
-												class="min-w-4 text-center text-sm font-semibold text-slate-300 tabular-nums"
+												class="min-w-4 text-center text-sm font-semibold text-slate-100 tabular-nums"
 											>
 												{pickQty(upgrade.id)}
 											</span>
@@ -490,7 +490,7 @@
 				>
 					<h2 class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Your Army</h2>
 					{#if armyRows.length === 0 && rosterPicks.length === 0 && poolRemaining.length === 0}
-						<p class="text-sm text-slate-500">No units yet. Add some from the unit list.</p>
+						<p class="text-sm text-slate-300">No units yet. Add some from the unit list.</p>
 					{:else}
 						<div
 							bind:this={armyList}
@@ -585,7 +585,7 @@
 											{#each row.upgrades as upgrade (upgrade.id)}
 												<div class="flex items-center justify-between gap-2">
 													<div class="flex min-w-0 items-center gap-1.5">
-														<span class="text-slate-500">└</span>
+														<span class="text-slate-300">└</span>
 														<button
 															type="button"
 															aria-label={'Show details for ' + upgrade.name}
@@ -653,7 +653,7 @@
 											</div>
 											<div class="flex shrink-0 items-center gap-1.5">
 												<span
-													class="rounded-md border border-slate-600/60 bg-slate-900/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300 tabular-nums"
+													class="rounded-md border border-slate-600/60 bg-slate-900/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-100 tabular-nums"
 												>
 													×{pick.qty}
 												</span>
@@ -684,7 +684,7 @@
 										{@const upgrade = upgradeIndex[pick.id]}
 										{#if upgrade}
 											<span
-												class="rounded-md border border-slate-600/60 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-300"
+												class="rounded-md border border-slate-600/60 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-100"
 											>
 												{upgrade.name} ×{pick.qty}
 											</span>

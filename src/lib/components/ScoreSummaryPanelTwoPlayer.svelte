@@ -35,7 +35,7 @@
 			{PLAYER_SEATS[player].label} Total VP
 		</p>
 		<p class="text-4xl font-bold {colours.text}">
-			{vp}<span class="text-base font-semibold text-slate-400"> / {MAX_TOTAL_VP}</span>
+			{vp}<span class="text-base font-semibold text-slate-200"> / {MAX_TOTAL_VP}</span>
 		</p>
 	</div>
 {/snippet}
@@ -82,7 +82,7 @@
 		</button>
 	</div>
 	{#if !controlsRound}
-		<p class="mt-2 text-[10px] text-slate-500 italic">
+		<p class="mt-2 text-[10px] text-slate-300 italic">
 			Only {PLAYER_SEATS.player1.label} advances the round.
 		</p>
 	{/if}

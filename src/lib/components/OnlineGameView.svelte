@@ -83,10 +83,10 @@
 
 	<div class="text-center">
 		<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id}</h1>
-		<p class="text-slate-400">
+		<p class="text-slate-200">
 			Round {view.currentRound} — {isReveal ? 'Reveal' : 'Scoring'} Phase
 		</p>
-		<p class="mt-1 text-sm text-slate-300">
+		<p class="mt-1 text-sm text-slate-100">
 			Your VP: <span class="font-semibold text-sky-300">{myVP} / {MAX_TOTAL_VP}</span>
 		</p>
 	</div>
@@ -100,12 +100,12 @@
 	{/if}
 
 	{#if isReveal}
-		<div class="rounded-xl border border-emerald-500/30 bg-slate-800/40 p-3 text-sm text-slate-300">
+		<div class="rounded-xl border border-emerald-500/30 bg-slate-800/40 p-3 text-sm text-slate-100">
 			Reveal phase — press <span class="font-semibold text-emerald-300">Reveal</span> on your scheme if
 			you want it shown. It becomes visible to the opponent once scoring starts.
 		</div>
 	{:else}
-		<div class="rounded-xl border border-sky-500/30 bg-slate-800/40 p-3 text-sm text-slate-300">
+		<div class="rounded-xl border border-sky-500/30 bg-slate-800/40 p-3 text-sm text-slate-100">
 			Scoring phase — check your objectives and scheme boxes.
 		</div>
 	{/if}
@@ -178,7 +178,7 @@
 				</button>
 			{/if}
 		{:else}
-			<p class="text-center text-sm text-slate-400">The game leader advances the rounds.</p>
+			<p class="text-center text-sm text-slate-200">The game leader advances the rounds.</p>
 		{/if}
 	</div>
 </div>

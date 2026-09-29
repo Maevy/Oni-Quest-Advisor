@@ -66,7 +66,7 @@
 		{/if}
 		<div class="min-w-0 flex-1">
 			<p class="truncate text-sm font-semibold text-slate-100">{row.name}</p>
-			<p class="mt-0.5 text-xs text-slate-400">
+			<p class="mt-0.5 text-xs text-slate-200">
 				{row.points} pts{#if row.mounted}
 					· mounted on {row.mount?.name}{/if}
 			</p>
@@ -91,7 +91,7 @@
 		<div class="mt-1.5 space-y-1 pl-8">
 			{#each row.upgrades as upgrade (upgrade.id)}
 				<div class="flex min-w-0 items-center gap-1.5">
-					<span class="text-slate-500">└</span>
+					<span class="text-slate-300">└</span>
 					<button
 						type="button"
 						aria-label={'Show details for ' + upgrade.name}
@@ -125,7 +125,7 @@
 	</div>
 	<p class="mt-0.5 text-xs" style="color: {view.faction.color}">{view.faction.name}</p>
 	{#if hint}
-		<p class="mt-1.5 text-xs text-slate-500 italic">{hint}</p>
+		<p class="mt-1.5 text-xs text-slate-300 italic">{hint}</p>
 	{/if}
 
 	<ul class="mt-3 flex flex-col gap-2">
@@ -154,7 +154,7 @@
 				{/if}
 			</li>
 		{:else}
-			<li class="text-sm text-slate-500">This army has no units.</li>
+			<li class="text-sm text-slate-300">This army has no units.</li>
 		{/each}
 	</ul>
 </Panel>

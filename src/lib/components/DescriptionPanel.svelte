@@ -32,5 +32,5 @@
 	<div class="mb-3">
 		<RuleLabels {brokenMorale} {ceasefire} {onOpenRule} />
 	</div>
-	<p class="text-slate-300">{description}</p>
+	<p class="text-slate-100">{description}</p>
 </Panel>

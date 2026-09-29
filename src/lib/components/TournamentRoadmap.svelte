@@ -100,7 +100,7 @@
 	>
 		{#if shownStep}
 			{label(shownStep)}
-			<span class="text-slate-500">
+			<span class="text-slate-300">
 				·
 				{stateOf(shown) === 'done' ? 'done' : stateOf(shown) === 'now' ? 'now' : 'upcoming'}
 			</span>

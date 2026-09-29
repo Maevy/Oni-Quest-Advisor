@@ -133,7 +133,7 @@
 
 {#snippet readyRow(own: boolean, ready: boolean)}
 	<div class="mt-2 flex items-center justify-between gap-2">
-		<span class="text-xs font-semibold tracking-wide text-slate-400 uppercase">Ready</span>
+		<span class="text-xs font-semibold tracking-wide text-slate-200 uppercase">Ready</span>
 		{#if own}
 			<button
 				type="button"
@@ -173,7 +173,7 @@
 
 	<div class="text-center">
 		<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id} Lobby</h1>
-		<p class="text-slate-400">
+		<p class="text-slate-200">
 			{#if view.status === 'lobby'}
 				Setup Phase
 			{:else if view.status === 'finished'}
@@ -251,7 +251,7 @@
 					{view.season} — <span class="font-semibold">{selectedMission.name}</span>
 				</p>
 			{:else}
-				<p class="text-sm text-slate-400 italic">
+				<p class="text-sm text-slate-200 italic">
 					This game's mission is not in the bundled content.
 				</p>
 			{/if}
@@ -297,7 +297,7 @@
 				{@render readyRow(view.seat === 'player2', p2Ready)}
 			{/if}
 			{#if !p2Army}
-				<p class="mt-3 text-center text-slate-400">No Player 2, invite someone</p>
+				<p class="mt-3 text-center text-slate-200">No Player 2, invite someone</p>
 			{/if}
 		</div>
 
@@ -316,15 +316,15 @@
 					Start Game
 				</button>
 				{#if !canStart}
-					<p class="-mt-1 text-center text-xs text-slate-400">{startHint}</p>
+					<p class="-mt-1 text-center text-xs text-slate-200">{startHint}</p>
 				{/if}
 			{:else}
-				<p class="text-center text-xs text-slate-400">
+				<p class="text-center text-xs text-slate-200">
 					The game leader starts the game once both players are ready.
 				</p>
 			{/if}
 		{:else}
-			<p class="text-center text-xs text-slate-500">
+			<p class="text-center text-xs text-slate-300">
 				This game is running, but its mission content is missing on this device.
 			</p>
 		{/if}

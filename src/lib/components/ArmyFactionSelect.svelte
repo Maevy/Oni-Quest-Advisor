@@ -76,7 +76,7 @@
 				autocomplete="off"
 				autocapitalize="off"
 				spellcheck="false"
-				class="w-full max-w-sm rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-center text-sm text-sky-100 backdrop-blur outline-none placeholder:text-slate-500 focus:border-sky-400"
+				class="placeholder:text-slate-300@@PH w-full max-w-sm rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-center text-sm text-sky-100 backdrop-blur outline-none focus:border-sky-400"
 			/>
 			<button
 				type="button"

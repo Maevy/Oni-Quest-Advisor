@@ -179,7 +179,7 @@
 		/>
 	{:else}
 		<Panel title={seat.label + ' Army'} titleClass={seatAccent(seat.hue).text}>
-			<p class="text-sm text-slate-400">
+			<p class="text-sm text-slate-200">
 				{seat.label} has no army attached to this run. One can be picked from the mission briefing before
 				starting the game.
 			</p>

@@ -58,7 +58,7 @@
 				<div class="flex items-start justify-between gap-2">
 					<div>
 						<h3 class="font-semibold {myAccent.title}">{myCard.title}</h3>
-						<p class="mt-1 text-sm text-slate-300">{myCard.ruleText}</p>
+						<p class="mt-1 text-sm text-slate-100">{myCard.ruleText}</p>
 					</div>
 					{#if myRevealed}
 						<span
@@ -97,13 +97,13 @@
 							onSetChecked={() => {}}
 						/>
 					{:else}
-						<p class="text-xs text-slate-500">
+						<p class="text-xs text-slate-300">
 							Hidden schemes can't be scored — reveal your scheme to unlock its boxes.
 						</p>
 					{/if}
 				</div>
 			{:else}
-				<p class="text-sm text-slate-400 italic">No scheme</p>
+				<p class="text-sm text-slate-200 italic">No scheme</p>
 			{/if}
 		</div>
 
@@ -112,7 +112,7 @@
 			<p class="mb-2 text-xs font-semibold {opponentAccent.text}">{opponentNickname}</p>
 			{#if opponent?.schemeRevealed && opponent.revealedScheme && opponentCard}
 				<h3 class="font-semibold {opponentAccent.title}">{opponentCard.title}</h3>
-				<p class="mt-1 text-sm text-slate-300">{opponentCard.ruleText}</p>
+				<p class="mt-1 text-sm text-slate-100">{opponentCard.ruleText}</p>
 				<div class="mt-3">
 					<IncrementBoxes
 						count={opponentCard.maxIncrements}
@@ -122,9 +122,9 @@
 					/>
 				</div>
 			{:else if opponent?.hasScheme}
-				<p class="text-sm text-slate-400 italic">Hidden Scheme</p>
+				<p class="text-sm text-slate-200 italic">Hidden Scheme</p>
 			{:else}
-				<p class="text-sm text-slate-400 italic">No schemes</p>
+				<p class="text-sm text-slate-200 italic">No schemes</p>
 			{/if}
 		</div>
 	</div>

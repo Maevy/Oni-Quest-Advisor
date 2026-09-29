@@ -20,7 +20,7 @@
 	<div class="min-w-0 flex-1">
 		<span class="block truncate text-sm font-semibold text-slate-100">{name}</span>
 		<span
-			class="mt-0.5 block truncate text-xs {faction ? '' : 'text-slate-400'}"
+			class="mt-0.5 block truncate text-xs {faction ? '' : 'text-slate-200'}"
 			style={faction ? `color: ${faction.color}` : undefined}
 		>
 			{faction?.name ?? factionId}

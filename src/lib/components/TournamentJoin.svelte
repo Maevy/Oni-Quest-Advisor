@@ -41,7 +41,7 @@
 
 	const label = 'text-sm font-semibold tracking-wide text-sky-300 uppercase';
 	const field =
-		'w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-base text-sky-100 backdrop-blur outline-none placeholder:text-slate-500 focus:border-sky-400';
+		'w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-base text-sky-100 backdrop-blur outline-none placeholder:text-slate-300@@PH focus:border-sky-400';
 </script>
 
 <div class="min-h-dvh pb-6">
@@ -51,7 +51,7 @@
 		{#if error && !peek}
 			<Panel title="Tournament">
 				<p class="text-sm text-red-400">{error}</p>
-				<p class="mt-2 text-xs text-slate-400">
+				<p class="mt-2 text-xs text-slate-200">
 					Check the code in your invite, or ask the organizer for a fresh link.
 				</p>
 			</Panel>
@@ -59,17 +59,17 @@
 			<Panel title="Tournament">
 				<dl class="flex flex-col gap-2">
 					<div class="flex items-baseline justify-between gap-3 border-b border-slate-700/30 pb-2">
-						<dt class="shrink-0 text-xs tracking-wide text-slate-400 uppercase">Name</dt>
+						<dt class="shrink-0 text-xs tracking-wide text-slate-200 uppercase">Name</dt>
 						<dd class="min-w-0 text-right text-sm break-words text-slate-100">{peek.name}</dd>
 					</div>
 					<div class="flex items-baseline justify-between gap-3 border-b border-slate-700/30 pb-2">
-						<dt class="shrink-0 text-xs tracking-wide text-slate-400 uppercase">Organizer</dt>
+						<dt class="shrink-0 text-xs tracking-wide text-slate-200 uppercase">Organizer</dt>
 						<dd class="min-w-0 text-right text-sm break-words text-slate-100">
 							{peek.organizerName}
 						</dd>
 					</div>
 					<div class="flex items-baseline justify-between gap-3">
-						<dt class="shrink-0 text-xs tracking-wide text-slate-400 uppercase">Seats</dt>
+						<dt class="shrink-0 text-xs tracking-wide text-slate-200 uppercase">Seats</dt>
 						<dd class="min-w-0 text-right text-sm text-slate-100">
 							{peek.joinedCount} of {peek.participantCount} taken
 						</dd>
@@ -112,7 +112,7 @@
 										{army.name}
 									</span>
 									<span
-										class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-400'}"
+										class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-200'}"
 										style={armyFaction ? `color: ${armyFaction.color}` : undefined}
 									>
 										{armyFaction?.name ?? army.factionId}
@@ -156,17 +156,17 @@
 			{:else if peek.full}
 				<p class="-mt-2 text-center text-xs text-red-400">Every seat is taken.</p>
 			{:else if army === null}
-				<p class="-mt-2 text-center text-xs text-slate-400">Pick a Roster army to join.</p>
+				<p class="-mt-2 text-center text-xs text-slate-200">Pick a Roster army to join.</p>
 			{:else if name.trim() === ''}
-				<p class="-mt-2 text-center text-xs text-slate-400">Enter your name to join.</p>
+				<p class="-mt-2 text-center text-xs text-slate-200">Enter your name to join.</p>
 			{:else}
-				<p class="-mt-2 text-center text-xs text-slate-400">
+				<p class="-mt-2 text-center text-xs text-slate-200">
 					You enter the lobby like everyone else — and can see who else is in.
 				</p>
 			{/if}
 		{:else}
 			<Panel title="Tournament">
-				<p class="text-sm text-slate-400">Looking up the tournament…</p>
+				<p class="text-sm text-slate-200">Looking up the tournament…</p>
 			</Panel>
 		{/if}
 	</div>

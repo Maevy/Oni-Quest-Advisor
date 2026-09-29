@@ -68,7 +68,7 @@
 						<div class="flex items-start justify-between gap-3">
 							<div>
 								<h3 class="font-semibold {player.textColor}">{player.card.title}</h3>
-								<p class="mt-1 text-sm text-slate-300">{player.card.ruleText}</p>
+								<p class="mt-1 text-sm text-slate-100">{player.card.ruleText}</p>
 								<div class="mt-3">
 									<IncrementBoxes
 										count={player.card.maxIncrements}
@@ -106,7 +106,7 @@
 									onclick={() => onChoose(player.key, card.id)}
 								>
 									<h3 class="font-semibold {player.textColor}">{card.title}</h3>
-									<p class="mt-1 text-sm text-slate-300">{card.ruleText}</p>
+									<p class="mt-1 text-sm text-slate-100">{card.ruleText}</p>
 								</button>
 							{/each}
 						</div>
@@ -117,7 +117,7 @@
 								? drawCountForIntelligence(player.draft.intelligence)
 								: null}
 						<div class="flex flex-wrap items-end gap-2">
-							<label class="flex flex-col gap-1 text-sm text-slate-300">
+							<label class="flex flex-col gap-1 text-sm text-slate-100">
 								Faction
 								<select
 									class="rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-slate-100"
@@ -131,7 +131,7 @@
 									{/each}
 								</select>
 							</label>
-							<label class="flex flex-col gap-1 text-sm text-slate-300">
+							<label class="flex flex-col gap-1 text-sm text-slate-100">
 								Intelligence
 								<input
 									type="number"
@@ -153,7 +153,7 @@
 								Draw Missions
 							</button>
 							{#if drawCount !== null}
-								<span class="text-xs text-slate-500">Draws {drawCount}</span>
+								<span class="text-xs text-slate-300">Draws {drawCount}</span>
 							{/if}
 						</div>
 					{/if}
@@ -161,7 +161,7 @@
 					{#if player.chosen && player.card && player.revealed}
 						<div>
 							<h3 class="font-semibold {player.textColor}">{player.card.title}</h3>
-							<p class="mt-1 text-sm text-slate-300">{player.card.ruleText}</p>
+							<p class="mt-1 text-sm text-slate-100">{player.card.ruleText}</p>
 							<div class="mt-3">
 								<IncrementBoxes
 									count={player.card.maxIncrements}
@@ -171,9 +171,9 @@
 							</div>
 						</div>
 					{:else if player.chosen}
-						<span class="text-sm text-slate-500 italic">Hidden</span>
+						<span class="text-sm text-slate-300 italic">Hidden</span>
 					{:else}
-						<span class="text-sm text-slate-500 italic">No schemes</span>
+						<span class="text-sm text-slate-300 italic">No schemes</span>
 					{/if}
 				{/if}
 			</div>

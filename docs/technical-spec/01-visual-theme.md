@@ -45,6 +45,22 @@ The one deliberate exception to "soft rounded edges": the map frame uses `rounde
 so the 36″ board reads as a hard-edged playing surface, and its border is dropped to `/20` so
 the frame does not compete with zone colours.
 
+### The muted text scale
+
+Readable text never sits below `slate-300`. Body copy and captions are `text-slate-200`, primary
+and list text `text-slate-100`, and the dimmest readable role — italic "nothing here yet" states —
+`text-slate-300`. Placeholders are `placeholder:text-slate-400`.
+
+The reason is the background: the scrim over the key art falls to 15% opacity across the middle of
+the screen, so any text placed outside a panel sits on **photograph**, and grey body text on a
+bright burst of artwork was the app's most common legibility complaint. Raising the muted end of
+the scale by two steps fixed it without touching the frosted-glass surfaces.
+
+`slate-400` and `slate-500` therefore survive only as **state** colours, never as body text:
+inactive segments of the tab and view switchers, off-state status glyphs (`fill-slate-500`), the
+locked/none round chip, the lobby's "Not ready" chip, and disabled buttons. Where dimness _is_ the
+meaning, it stays.
+
 ## Buttons
 
 Outlined, never solid-bright: a coloured `border-2` at `/50` over a near-black fill, with the

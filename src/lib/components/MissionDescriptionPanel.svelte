@@ -16,7 +16,7 @@
 </script>
 
 <Panel title="Mission Description" {collapsible}>
-	<p class="text-slate-300">{description}</p>
+	<p class="text-slate-100">{description}</p>
 	<div class="mt-3">
 		<RuleLabels {brokenMorale} {ceasefire} {onOpenRule} />
 	</div>

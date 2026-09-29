@@ -606,7 +606,7 @@
 		/>
 	{:else}
 		<div class="flex justify-center p-8">
-			<p class="text-sm text-slate-400">Loading army builder…</p>
+			<p class="text-sm text-slate-200">Loading army builder…</p>
 		</div>
 	{/if}
 {:else if navigationStore.screen === 'army-builder' && armyFaction}
@@ -771,7 +771,7 @@
 		{#if onlineGameStore.resuming}
 			<p class="text-lg text-sky-200">Reconnecting to your game…</p>
 		{:else}
-			<p class="text-slate-300">{onlineGameStore.error ?? 'Could not load the game.'}</p>
+			<p class="text-slate-100">{onlineGameStore.error ?? 'Could not load the game.'}</p>
 			<button
 				type="button"
 				class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"

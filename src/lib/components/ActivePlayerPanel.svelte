@@ -26,7 +26,7 @@
 		{#if armyName}
 			{armyName}
 		{:else}
-			<span class="font-normal text-slate-500 italic">No army picked</span>
+			<span class="font-normal text-slate-300 italic">No army picked</span>
 		{/if}
 	</p>
 </Panel>

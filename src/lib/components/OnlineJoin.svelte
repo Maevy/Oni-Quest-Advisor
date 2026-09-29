@@ -117,7 +117,7 @@
 		{:else if pendingNickname}
 			<div class="w-full rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
 				<p class="text-lg text-sky-100">Waiting for the game leader to accept your request…</p>
-				<p class="mt-2 animate-pulse text-sm text-slate-400">Game#{gameCode}</p>
+				<p class="mt-2 animate-pulse text-sm text-slate-200">Game#{gameCode}</p>
 			</div>
 		{:else}
 			<div
@@ -134,7 +134,7 @@
 					placeholder="e.g. Konichan"
 					aria-label="Your player name"
 					autocomplete="off"
-					class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-lg text-sky-100 backdrop-blur outline-none placeholder:text-slate-500 focus:border-sky-400"
+					class="placeholder:text-slate-300@@PH rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-lg text-sky-100 backdrop-blur outline-none focus:border-sky-400"
 				/>
 				<span class="text-left text-sm font-semibold tracking-wide text-sky-300 uppercase">
 					Your Army
@@ -151,7 +151,7 @@
 						>
 							<span class="block truncate text-sm font-semibold text-slate-100">{army.name}</span>
 							<span
-								class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-400'}"
+								class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-200'}"
 								style={armyFaction ? `color: ${armyFaction.color}` : undefined}
 							>
 								{armyFaction?.name ?? army.factionId}
@@ -179,7 +179,7 @@
 					>
 						Pick Army
 					</button>
-					<p class="text-left text-xs text-slate-400">
+					<p class="text-left text-xs text-slate-200">
 						A Standard army (85 points) is combat-ready at once. A Roster army (125 points) is cut
 						down to 85 after the game starts.
 					</p>

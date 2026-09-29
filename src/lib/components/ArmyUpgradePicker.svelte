@@ -178,13 +178,13 @@
 					<button
 						type="button"
 						aria-label="Back to the options"
-						class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+						class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800"
 						onclick={back}
 					>
 						Back
 					</button>
 				</div>
-				<p class="mt-2 text-xs text-slate-400">
+				<p class="mt-2 text-xs text-slate-200">
 					{pendingUpgrade.name}: choose the current Affinity that
 					{pendingOption.label} replaces.
 				</p>
@@ -201,7 +201,7 @@
 								})}
 						>
 							<p class="text-sm font-medium text-slate-100">{element}</p>
-							<p class="mt-0.5 text-xs text-slate-300">
+							<p class="mt-0.5 text-xs text-slate-100">
 								This Affinity is replaced by {pendingOption.label}.
 							</p>
 						</button>
@@ -213,13 +213,13 @@
 					<button
 						type="button"
 						aria-label="Back to the options"
-						class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+						class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800"
 						onclick={back}
 					>
 						Back
 					</button>
 				</div>
-				<p class="mt-2 text-xs text-slate-400">
+				<p class="mt-2 text-xs text-slate-200">
 					{pendingUpgrade.name}: choose the item to inscribe. Its weight drops by 1 and its Strike
 					rises by 1.
 				</p>
@@ -234,7 +234,7 @@
 								onSelectChoice(pendingUpgrade.id, pendingOptionId, { itemId: item.id })}
 						>
 							<p class="text-sm font-medium text-slate-100">{item.name}</p>
-							<p class="text-[10px] whitespace-nowrap text-slate-400 uppercase">
+							<p class="text-[10px] whitespace-nowrap text-slate-200 uppercase">
 								WGT {item.weight}
 							</p>
 						</button>
@@ -247,13 +247,13 @@
 				<button
 					type="button"
 					aria-label="Back to the upgrade list"
-					class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+					class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800"
 					onclick={back}
 				>
 					Back
 				</button>
 			</div>
-			<p class="mt-2 text-xs text-slate-400">{pendingUpgrade.name}: choose one option.</p>
+			<p class="mt-2 text-xs text-slate-200">{pendingUpgrade.name}: choose one option.</p>
 			<div class="mt-3 space-y-2">
 				{#each choiceEffectOf(pendingUpgrade)?.options ?? [] as option (option.id)}
 					{@const reason = optionBlockReason(option)}
@@ -288,13 +288,13 @@
 				<button
 					type="button"
 					aria-label="Back to the upgrade list"
-					class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+					class="rounded-lg border border-slate-600/60 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800"
 					onclick={back}
 				>
 					Back
 				</button>
 			</div>
-			<p class="mt-2 text-xs text-slate-400">
+			<p class="mt-2 text-xs text-slate-200">
 				{pendingUpgrade.name}: choose which spellcraft to raise one level.
 			</p>
 			<div class="mt-3 space-y-2">
@@ -310,7 +310,7 @@
 					>
 						<p class="text-sm font-medium text-slate-100">{option.name}</p>
 						{#if option.upgradable}
-							<p class="mt-0.5 text-xs text-slate-300">
+							<p class="mt-0.5 text-xs text-slate-100">
 								Level {option.level} → {option.level + 1}
 							</p>
 						{:else}
@@ -327,7 +327,7 @@
 				<button
 					type="button"
 					aria-label="Close upgrade picker"
-					class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-600/60 text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+					class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-600/60 text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800"
 					onclick={onClose}
 				>
 					✕
@@ -361,11 +361,11 @@
 									</p>
 								</div>
 								{#if upgrade.limit}
-									<p class="mt-0.5 text-[10px] tracking-wide text-slate-500 uppercase">
+									<p class="mt-0.5 text-[10px] tracking-wide text-slate-300 uppercase">
 										Max {upgrade.limit} per army
 									</p>
 								{/if}
-								<p class="mt-1 text-xs text-slate-300">
+								<p class="mt-1 text-xs text-slate-100">
 									{upgrade.description.map((segment) => segment.text).join('')}
 								</p>
 								{#if block}

@@ -86,7 +86,7 @@
 
 	const label = 'text-sm font-semibold tracking-wide text-sky-300 uppercase';
 	const field =
-		'w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-base text-sky-100 backdrop-blur outline-none placeholder:text-slate-500 focus:border-sky-400';
+		'w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-base text-sky-100 backdrop-blur outline-none placeholder:text-slate-300@@PH focus:border-sky-400';
 	const stepperButton =
 		'flex h-12 w-12 items-center justify-center rounded-lg border border-slate-600/60 bg-slate-800/80 text-2xl font-bold text-slate-100 transition active:bg-slate-700/80 disabled:cursor-not-allowed disabled:opacity-30';
 	const checkbox =
@@ -162,7 +162,7 @@
 								https://tabletop.events/…
 							</p>
 						{:else}
-							<p class="text-xs text-slate-500">
+							<p class="text-xs text-slate-300">
 								Optional — where this tournament is listed outside the app.
 							</p>
 						{/if}
@@ -191,7 +191,7 @@
 								<span class="block text-sm font-medium text-slate-100">
 									I am also a participant
 								</span>
-								<span class="mt-0.5 block text-xs text-slate-400">
+								<span class="mt-0.5 block text-xs text-slate-200">
 									You take one of the seats below, are paired in like everyone else and field the
 									Roster army you pick.
 								</span>
@@ -214,7 +214,7 @@
 										<span
 											class="mt-0.5 block truncate text-xs {organizerFaction
 												? ''
-												: 'text-slate-400'}"
+												: 'text-slate-200'}"
 											style={organizerFaction ? `color: ${organizerFaction.color}` : undefined}
 										>
 											{organizerFaction?.name ?? draft.organizerArmy.factionId}
@@ -264,7 +264,7 @@
 							>
 								{draft.participantCount}
 							</span>
-							<span class="mt-1 text-[10px] tracking-wide text-slate-400 uppercase">
+							<span class="mt-1 text-[10px] tracking-wide text-slate-200 uppercase">
 								participants
 							</span>
 						</div>
@@ -280,7 +280,7 @@
 					</div>
 					<!-- An odd field would need a bye rule — someone sitting a round out and still
 					     scoring — so the stepper only ever lands on an even count. -->
-					<p class="text-center text-xs text-slate-400">
+					<p class="text-center text-xs text-slate-200">
 						Rounds pair players off, so the field steps in pairs — nobody sits a round out.
 						{#if draft.organizerPlays}You hold one of these {draft.participantCount} seats.{/if}
 					</p>
@@ -296,7 +296,7 @@
 							<span class="block text-sm font-medium text-slate-100">
 								I assign the pairings myself each round
 							</span>
-							<span class="mt-0.5 block text-xs text-slate-400">
+							<span class="mt-0.5 block text-xs text-slate-200">
 								Left unticked, the app pairs each round automatically with a Swiss system.
 							</span>
 						</span>
@@ -312,7 +312,7 @@
 					Pick a Roster army for your seat to continue.
 				</p>
 			{:else}
-				<p class="-mt-2 text-center text-xs text-slate-400">Next: missions and tables.</p>
+				<p class="-mt-2 text-center text-xs text-slate-200">Next: missions and tables.</p>
 			{/if}
 		{:else if step === 'missions'}
 			<Panel title="Missions">
@@ -328,7 +328,7 @@
 										{mission?.name ?? missionId}
 									</p>
 									{#if mission}
-										<p class="mt-0.5 truncate text-xs text-slate-400">{mission.season}</p>
+										<p class="mt-0.5 truncate text-xs text-slate-200">{mission.season}</p>
 									{/if}
 								</div>
 								<button
@@ -343,7 +343,7 @@
 						{/each}
 					</ul>
 				{:else}
-					<p class="text-sm text-slate-400">No missions yet — a tournament needs at least one.</p>
+					<p class="text-sm text-slate-200">No missions yet — a tournament needs at least one.</p>
 				{/if}
 				<button
 					type="button"
@@ -355,14 +355,14 @@
 			</Panel>
 
 			<Panel title="Tables">
-				<p class="text-xs text-slate-400">
+				<p class="text-xs text-slate-200">
 					{draft.tableNames.length} tables — one per pair of players. Rename them to tell the room apart,
 					e.g. "City Table".
 				</p>
 				<ul class="mt-3 flex flex-col gap-2">
 					{#each draft.tableNames as name, index (index)}
 						<li class="flex items-center gap-2">
-							<span class="w-6 shrink-0 text-center text-xs text-slate-500">{index + 1}</span>
+							<span class="w-6 shrink-0 text-center text-xs text-slate-300">{index + 1}</span>
 							<input
 								id="table-name-{index}"
 								type="text"
@@ -381,7 +381,7 @@
 			<button type="button" class={advanceButton} disabled={!canCreate} onclick={onReview}>
 				Overview
 			</button>
-			<p class="-mt-2 text-center text-xs text-slate-400">
+			<p class="-mt-2 text-center text-xs text-slate-200">
 				Next: review the whole tournament, then create it.
 			</p>
 		{:else}
@@ -414,7 +414,7 @@
 			class="max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur"
 		>
 			<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Add Quest</h2>
-			<label class="mt-3 flex flex-col gap-1 text-sm text-slate-300">
+			<label class="mt-3 flex flex-col gap-1 text-sm text-slate-100">
 				Season
 				<select
 					class={select}
@@ -438,17 +438,17 @@
 						>
 							<span class="block text-sm font-semibold text-slate-100">{mission.name}</span>
 							{#if added}
-								<span class="mt-0.5 block text-xs text-slate-500">already on the list</span>
+								<span class="mt-0.5 block text-xs text-slate-300">already on the list</span>
 							{/if}
 						</button>
 					</li>
 				{:else}
-					<li class="text-sm text-slate-500">This season has no missions.</li>
+					<li class="text-sm text-slate-300">This season has no missions.</li>
 				{/each}
 			</ul>
 			<button
 				type="button"
-				class="mt-4 w-full rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800/60"
+				class="mt-4 w-full rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 transition hover:bg-slate-800/60"
 				onclick={() => (showAddQuest = false)}
 			>
 				Cancel

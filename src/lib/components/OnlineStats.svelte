@@ -81,7 +81,7 @@
 		<table class="w-full text-sm">
 			<thead>
 				<tr class="text-left">
-					<th class="py-1 pr-2 font-semibold text-slate-400">Round</th>
+					<th class="py-1 pr-2 font-semibold text-slate-200">Round</th>
 					<th class="py-1 pr-2 font-semibold text-sky-300">
 						{seatInfo('player1')?.nickname ?? 'Player 1'}
 					</th>
@@ -94,7 +94,7 @@
 				{#each rounds as round (round)}
 					{@const snapshot = view.roundSnapshots[round]}
 					<tr class="border-t border-slate-700/50">
-						<td class="py-1.5 pr-2 text-slate-300">{round}</td>
+						<td class="py-1.5 pr-2 text-slate-100">{round}</td>
 						<td class="py-1.5 pr-2 text-sky-100">{snapshot?.player1 ?? '—'}</td>
 						<td class="py-1.5 text-orange-100">{snapshot?.player2 ?? '—'}</td>
 					</tr>
@@ -121,7 +121,7 @@
 				</p>
 				{#if info.scheme && info.card}
 					<h3 class="font-semibold text-slate-100">{info.card.title}</h3>
-					<p class="mt-1 text-sm text-slate-300">{info.card.ruleText}</p>
+					<p class="mt-1 text-sm text-slate-100">{info.card.ruleText}</p>
 					<div class="mt-2">
 						<IncrementBoxes
 							count={info.card.maxIncrements}
@@ -131,7 +131,7 @@
 						/>
 					</div>
 				{:else}
-					<p class="text-sm text-slate-400 italic">No scheme</p>
+					<p class="text-sm text-slate-200 italic">No scheme</p>
 				{/if}
 			</div>
 		{/if}

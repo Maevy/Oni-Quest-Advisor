@@ -33,7 +33,7 @@
 					</h1>
 					<img src={rasetsu} alt="Rasetsu" class="w-16 shrink-0 object-contain sm:w-24" />
 				</div>
-				<p class="text-slate-400">Choose a Season to begin.</p>
+				<p class="text-slate-200">Choose a Season to begin.</p>
 			</div>
 
 			{#if seasons.length > 0}
@@ -49,7 +49,7 @@
 					{/each}
 				</div>
 			{:else}
-				<p class="text-slate-500">No seasons available yet.</p>
+				<p class="text-slate-300">No seasons available yet.</p>
 			{/if}
 		</div>
 	</div>

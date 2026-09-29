@@ -137,22 +137,22 @@
 				/>
 			{:else if view.opponent}
 				<ArmyBadge {...view.opponent.army} factions={armyFactions} />
-				<p class="text-sm text-slate-300">Faction: {opponentFactionName ?? '—'}</p>
+				<p class="text-sm text-slate-100">Faction: {opponentFactionName ?? '—'}</p>
 				{#if view.opponent.schemeRevealed && view.opponent.revealedScheme}
 					{@const revealedCard = schemes.find(
 						(card) => card.id === view.opponent?.revealedScheme?.schemeId
 					)}
 					<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
 						<h3 class="font-semibold text-orange-100">{revealedCard?.title ?? ''}</h3>
-						<p class="mt-1 text-sm text-slate-300">{revealedCard?.ruleText ?? ''}</p>
+						<p class="mt-1 text-sm text-slate-100">{revealedCard?.ruleText ?? ''}</p>
 					</div>
 				{:else if view.opponent.hasScheme}
-					<p class="text-sm text-slate-400 italic">Hidden Scheme</p>
+					<p class="text-sm text-slate-200 italic">Hidden Scheme</p>
 				{:else}
-					<p class="text-sm text-slate-400 italic">Choosing a Scheme…</p>
+					<p class="text-sm text-slate-200 italic">Choosing a Scheme…</p>
 				{/if}
 			{:else}
-				<p class="text-center text-slate-400">No Player 2, invite someone</p>
+				<p class="text-center text-slate-200">No Player 2, invite someone</p>
 			{/if}
 		</div>
 	</div>
@@ -171,9 +171,9 @@
 
 	<div class="text-center">
 		<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id}</h1>
-		<p class="text-slate-400">Scheme Selection</p>
+		<p class="text-slate-200">Scheme Selection</p>
 		{#if missionName}
-			<p class="mt-1 text-sm text-slate-300">{view.season} — {missionName}</p>
+			<p class="mt-1 text-sm text-slate-100">{view.season} — {missionName}</p>
 		{/if}
 	</div>
 
@@ -186,7 +186,7 @@
 		</div>
 	{/if}
 
-	<p class="text-sm text-slate-400">
+	<p class="text-sm text-slate-200">
 		Your faction is the one your army belongs to. Enter your intelligence, draw, and keep one Scheme
 		secret.
 	</p>
@@ -204,10 +204,10 @@
 			Begin Round 1
 		</button>
 		{#if !bothSchemes}
-			<p class="-mt-1 text-center text-xs text-slate-400">{beginHint}</p>
+			<p class="-mt-1 text-center text-xs text-slate-200">{beginHint}</p>
 		{/if}
 	{:else}
-		<p class="text-center text-xs text-slate-400">
+		<p class="text-center text-xs text-slate-200">
 			The game leader begins round 1 once both Schemes are chosen.
 		</p>
 	{/if}

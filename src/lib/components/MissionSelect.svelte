@@ -28,7 +28,7 @@
 
 	<div class="mx-auto w-full max-w-xl px-4 pt-4">
 		{#if missions.length > 0}
-			<p class="text-center text-slate-400">Pick your mission or press random.</p>
+			<p class="text-center text-slate-200">Pick your mission or press random.</p>
 			<div class="mt-3 rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
 				<div class="grid grid-cols-3 gap-3">
 					{#each missions as mission (mission.id)}
@@ -43,7 +43,7 @@
 				</div>
 			</div>
 		{:else}
-			<p class="text-center text-slate-500">No missions in this season yet.</p>
+			<p class="text-center text-slate-300">No missions in this season yet.</p>
 		{/if}
 	</div>
 </div>

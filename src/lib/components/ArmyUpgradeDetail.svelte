@@ -44,7 +44,7 @@
 						{cost} points
 					</p>
 					{#if upgrade.limit}
-						<p class="mt-0.5 text-[10px] tracking-wide text-slate-500 uppercase">
+						<p class="mt-0.5 text-[10px] tracking-wide text-slate-300 uppercase">
 							Max {upgrade.limit} per army
 						</p>
 					{/if}
@@ -53,13 +53,13 @@
 			<button
 				type="button"
 				aria-label={'Close ' + upgrade.name}
-				class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-600/60 text-slate-300 transition hover:bg-slate-800/60 active:bg-slate-800"
+				class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-600/60 text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800"
 				onclick={onClose}
 			>
 				✕
 			</button>
 		</div>
-		<p class="mt-3 text-xs text-slate-300">
+		<p class="mt-3 text-xs text-slate-100">
 			{upgrade.description.map((segment) => segment.text).join('')}
 		</p>
 	</div>

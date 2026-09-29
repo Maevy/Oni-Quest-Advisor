@@ -14,9 +14,9 @@
 
 	const row =
 		'flex items-baseline justify-between gap-3 border-b border-slate-700/30 pb-2 last:border-b-0 last:pb-0';
-	const label = 'shrink-0 text-xs tracking-wide text-slate-400 uppercase';
+	const label = 'shrink-0 text-xs tracking-wide text-slate-200 uppercase';
 	const value = 'min-w-0 text-right text-sm break-words text-slate-100';
-	const muted = 'text-slate-400';
+	const muted = 'text-slate-200';
 </script>
 
 <Panel title="Tournament">
@@ -78,14 +78,14 @@
 		</div>
 	</dl>
 	{#if draft.organizerPlays}
-		<p class="mt-2 text-xs text-slate-400">
+		<p class="mt-2 text-xs text-slate-200">
 			You hold one of these {draft.participantCount} seats.
 		</p>
 	{/if}
 </Panel>
 
 <Panel title="Missions">
-	<p class="text-xs text-slate-400">A mission plays once per tournament.</p>
+	<p class="text-xs text-slate-200">A mission plays once per tournament.</p>
 	<ul class="mt-2 flex flex-col gap-2">
 		{#each draft.missionIds as missionId (missionId)}
 			{@const mission = missions.find((candidate) => candidate.id === missionId)}
@@ -94,7 +94,7 @@
 					{mission?.name ?? missionId}
 				</p>
 				{#if mission}
-					<p class="mt-0.5 truncate text-xs text-slate-400">{mission.season}</p>
+					<p class="mt-0.5 truncate text-xs text-slate-200">{mission.season}</p>
 				{/if}
 			</li>
 		{/each}
@@ -102,13 +102,13 @@
 </Panel>
 
 <Panel title="Tables">
-	<p class="text-xs text-slate-400">
+	<p class="text-xs text-slate-200">
 		{draft.tableNames.length} tables — one per pair of players, so every round seats the whole field.
 	</p>
 	<ul class="mt-2 flex flex-col gap-1.5">
 		{#each draft.tableNames as name, index (index)}
 			<li class="flex items-baseline gap-2">
-				<span class="w-6 shrink-0 text-center text-xs text-slate-500">{index + 1}</span>
+				<span class="w-6 shrink-0 text-center text-xs text-slate-300">{index + 1}</span>
 				{#if name.trim() === ''}
 					<span class="min-w-0 flex-1 truncate text-sm {muted}">unnamed</span>
 				{:else}

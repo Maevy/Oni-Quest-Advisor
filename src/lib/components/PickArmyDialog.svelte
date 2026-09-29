@@ -27,7 +27,7 @@
 	}
 
 	function factionColor(factionId: string): string {
-		return factions.find((faction) => faction.id === factionId)?.color ?? 'text-slate-400';
+		return factions.find((faction) => faction.id === factionId)?.color ?? 'text-slate-200';
 	}
 </script>
 
@@ -42,7 +42,7 @@
 		class="max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-2xl border border-slate-700/50 bg-slate-800/80 p-5 backdrop-blur"
 	>
 		<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Pick Army</h2>
-		<p class="mt-1 text-xs text-slate-400">{note}</p>
+		<p class="mt-1 text-xs text-slate-200">{note}</p>
 		<ul class="mt-3 flex flex-col gap-2">
 			{#each armies as army (army.id)}
 				<li>
@@ -61,7 +61,7 @@
 		</ul>
 		<button
 			type="button"
-			class="mt-4 w-full rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-300 transition hover:bg-slate-800/60"
+			class="mt-4 w-full rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 transition hover:bg-slate-800/60"
 			onclick={onCancel}
 		>
 			Cancel

@@ -82,7 +82,7 @@
 			</button>
 		</div>
 		{#if groups.length === 0}
-			<p class="mt-4 text-center text-sm text-slate-500">
+			<p class="mt-4 text-center text-sm text-slate-300">
 				No saved {filter === 'standard' ? 'Standard' : 'Roster'} armies yet.
 			</p>
 		{:else}

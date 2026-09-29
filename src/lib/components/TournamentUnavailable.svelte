@@ -19,7 +19,7 @@
 		class="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-800/60 p-5 text-center backdrop-blur"
 	>
 		<h2 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">Tournament</h2>
-		<p class="mt-3 text-sm text-slate-300">{error ?? 'Loading the tournament…'}</p>
+		<p class="mt-3 text-sm text-slate-100">{error ?? 'Loading the tournament…'}</p>
 		<div class="mt-4 flex flex-col gap-3">
 			<button
 				type="button"

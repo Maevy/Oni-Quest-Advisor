@@ -8,7 +8,7 @@
 </script>
 
 <Panel title="Setup" {collapsible}>
-	<ul class="list-disc space-y-2 pl-5 text-slate-300">
+	<ul class="list-disc space-y-2 pl-5 text-slate-100">
 		{#each setup as item, index (index)}
 			<li><span class="font-semibold text-slate-100">{item.label}:</span> {item.description}</li>
 		{/each}

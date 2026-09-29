@@ -91,7 +91,7 @@
 				</h1>
 				<img src={rasetsu} alt="Rasetsu" class="w-16 shrink-0 object-contain sm:w-24" />
 			</div>
-			<p class="text-slate-400">Online 2 Player Game</p>
+			<p class="text-slate-200">Online 2 Player Game</p>
 		</div>
 
 		<div class={panel}>
@@ -103,7 +103,7 @@
 				bind:value={nickname}
 				placeholder="e.g. Konichan"
 				autocomplete="off"
-				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-lg text-sky-100 backdrop-blur outline-none placeholder:text-slate-500 focus:border-sky-400"
+				class="placeholder:text-slate-300@@PH rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-lg text-sky-100 backdrop-blur outline-none focus:border-sky-400"
 			/>
 		</div>
 
@@ -133,7 +133,7 @@
 					<option value={mission.id}>{mission.name}</option>
 				{/each}
 			</select>
-			<p class="text-left text-xs text-slate-400">
+			<p class="text-left text-xs text-slate-200">
 				The mission is fixed for the whole game — your opponent joins into it.
 			</p>
 		</div>
@@ -152,7 +152,7 @@
 					>
 						<span class="block truncate text-sm font-semibold text-slate-100">{army.name}</span>
 						<span
-							class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-400'}"
+							class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-200'}"
 							style={armyFaction ? `color: ${armyFaction.color}` : undefined}
 						>
 							{armyFaction?.name ?? army.factionId}
@@ -180,7 +180,7 @@
 				>
 					Pick Army
 				</button>
-				<p class="text-left text-xs text-slate-400">
+				<p class="text-left text-xs text-slate-200">
 					A Standard army (85 points) is combat-ready at once. A Roster army (125 points) is cut
 					down to 85 after the game starts.
 				</p>
@@ -196,7 +196,7 @@
 			Open Lobby
 		</button>
 		{#if !valid}
-			<p class="-mt-3 text-xs text-slate-400">Name, mission and army open the lobby.</p>
+			<p class="-mt-3 text-xs text-slate-200">Name, mission and army open the lobby.</p>
 		{/if}
 		{#if error}
 			<p class="text-sm text-red-400" role="alert">{error}</p>

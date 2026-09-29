@@ -37,7 +37,7 @@
 		onLeave
 	}: Props = $props();
 
-	const field = 'shrink-0 text-xs tracking-wide text-slate-400 uppercase';
+	const field = 'shrink-0 text-xs tracking-wide text-slate-200 uppercase';
 	const value = 'min-w-0 text-right text-sm break-words text-slate-100';
 	const placeButton =
 		'mt-2 w-full rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-3 py-2 text-sm font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600';
@@ -245,13 +245,13 @@
 					<dd class={value}>
 						{mission?.name ?? round.missionId}
 						{#if mission}
-							<span class="text-xs text-slate-400">· {mission.season}</span>
+							<span class="text-xs text-slate-200">· {mission.season}</span>
 						{/if}
 					</dd>
 				</div>
 			</dl>
 
-			<h3 class="mt-4 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+			<h3 class="mt-4 text-xs font-semibold tracking-wide text-slate-200 uppercase">
 				Victory Points
 			</h3>
 			<ul class="mt-2 flex max-h-64 flex-col gap-1.5 overflow-y-auto overscroll-contain pr-1">
@@ -282,7 +282,7 @@
 			>
 				Start Round
 			</button>
-			<p class="-mt-2 text-center text-xs text-slate-400">
+			<p class="-mt-2 text-center text-xs text-slate-200">
 				{#if round.ready}
 					Every player is paired. Starting locks the tables and moves the round on.
 				{:else if round.pool.length === 0}
@@ -294,7 +294,7 @@
 				{/if}
 			</p>
 		{:else}
-			<p class="text-center text-sm text-slate-300">
+			<p class="text-center text-sm text-slate-100">
 				{#if round.phase === 'setup'}
 					The organizer starts the round once every player is paired.
 				{:else if round.phase === 'game'}
@@ -306,7 +306,7 @@
 		{/if}
 
 		<Panel title="Table Assignment">
-			<p class="mb-3 text-xs text-slate-400">
+			<p class="mb-3 text-xs text-slate-200">
 				{#if round.phase !== 'setup'}
 					The tables are locked — this round is under way.
 				{:else if isOrganizer}
@@ -322,15 +322,15 @@
 					? 'border-sky-400 bg-sky-500/10 ring-2 ring-sky-400'
 					: 'border-slate-600/50 bg-slate-900/40'}"
 			>
-				<h3 class="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+				<h3 class="text-xs font-semibold tracking-wide text-slate-200 uppercase">
 					{view.needsBye ? 'Players & Bye' : 'Players'}
-					<span class="ml-1 text-slate-500">({round.pool.length})</span>
+					<span class="ml-1 text-slate-300">({round.pool.length})</span>
 				</h3>
 				<div class="mt-2 flex flex-wrap gap-2">
 					{#each round.pool as occupant (key(occupant))}
 						{@render chip(occupant)}
 					{:else}
-						<p class="text-xs text-slate-500">Everybody is at a table.</p>
+						<p class="text-xs text-slate-300">Everybody is at a table.</p>
 					{/each}
 				</div>
 				{#if canAssign && selectedOccupant !== null && selectedIsSeated}
@@ -357,7 +357,7 @@
 							<h3 class="min-w-0 truncate text-sm font-semibold text-slate-100">
 								{tableName(index)}
 							</h3>
-							<span class="shrink-0 text-xs text-slate-500">
+							<span class="shrink-0 text-xs text-slate-300">
 								{table.length}/{round.maxOccupants}
 							</span>
 						</div>
@@ -365,7 +365,7 @@
 							{#each table as occupant (key(occupant))}
 								{@render chip(occupant)}
 							{:else}
-								<p class="text-xs text-slate-500">Empty — drop a player here</p>
+								<p class="text-xs text-slate-300">Empty — drop a player here</p>
 							{/each}
 						</div>
 						{#if holdsBye(table)}
