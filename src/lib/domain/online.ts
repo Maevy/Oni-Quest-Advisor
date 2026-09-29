@@ -8,11 +8,12 @@ import type { PlayerKey, SeatProgress } from './twoPlayer';
 export type OnlineGameStatus = 'lobby' | 'active' | 'finished' | 'closed';
 /**
  * `armies` reveals both rosters, `prep` cuts a registered Roster army down to a match list,
- * `setup` chooses Schemes, then each round runs `reveal` → `scoring`. The preparation steps live in
- * the phase rather than in a status of their own because `cleanup.ts` buckets retention by status
- * literal — a new status would match no bucket and never be collected.
+ * `setup` chooses Schemes, and `playing` is every round — a round carries no sub-phase, because
+ * everything a round needs is editable within it. The preparation steps live in the phase rather
+ * than in a status of their own because `cleanup.ts` buckets retention by status literal — a new
+ * status would match no bucket and never be collected.
  */
-export type OnlineGamePhase = 'armies' | 'prep' | 'setup' | 'reveal' | 'scoring';
+export type OnlineGamePhase = 'armies' | 'prep' | 'setup' | 'playing';
 
 export const MAX_NICKNAME_LENGTH = 24;
 
@@ -33,8 +34,6 @@ export type OnlineSeatState = {
 	/** Lobby readiness: this player says they are set to start. Toggled by its own seat only. */
 	ready: boolean;
 	progress: SeatProgress;
-	/** Toggleable intent during a Reveal phase — committed when the leader advances to Scoring. */
-	revealIntent: boolean;
 	/** Ids of the drawn scheme cards; private to this seat, persisted for reconnects. */
 	drawnSchemeIds: string[];
 };
@@ -163,7 +162,7 @@ export type OnlineGameEventType =
 	| 'combat-army-set'
 	| 'leader-assigned'
 	| 'game-started'
-	| 'reveal-intent-toggled'
+	| 'scheme-revealed'
 	| 'phase-changed'
 	| 'objective-toggled'
 	| 'scheme-box-toggled'
@@ -201,7 +200,6 @@ export function createEmptySeat(
 		leader: null,
 		ready: false,
 		progress: createEmptyProgress(),
-		revealIntent: false,
 		drawnSchemeIds: []
 	};
 }
@@ -229,7 +227,7 @@ export function createOnlineGame(
 		season: setup.season,
 		missionId: setup.missionId,
 		currentRound: MIN_ROUND,
-		phase: 'reveal',
+		phase: 'playing',
 		roundSnapshots: {},
 		winner: null,
 		resultSummary: null,
@@ -515,41 +513,42 @@ export function canStartRounds(state: OnlineGameState): boolean {
 	return state.status === 'active' && state.phase === 'setup' && bothSchemesChosen(state);
 }
 
-/** Scheme setup → round 1's Reveal phase. */
+/**
+ * Scheme setup → round 1. A running round carries no sub-phase: everything a round needs —
+ * objectives, the reveal, scheme boxes — is editable within it, as on a physical table.
+ */
 export function startRounds(state: OnlineGameState): OnlineGameState {
 	if (!canStartRounds(state)) return state;
-	return { ...state, phase: 'reveal' };
+	return { ...state, phase: 'playing' };
 }
 
-// --- active: rounds & phases ---
+// --- active: rounds ---
 
-export function toggleRevealIntent(state: OnlineGameState, seat: PlayerKey): OnlineGameState {
-	if (state.status !== 'active' || state.phase !== 'reveal') return state;
+/** A round is in progress: its objectives and scheme boxes are editable by their owners. */
+export function isRoundRunning(state: OnlineGameState): boolean {
+	return state.status === 'active' && state.phase === 'playing';
+}
+
+/**
+ * Reveals this seat's scheme, immediately and permanently. The reveal is each player's own
+ * decision at any moment of a running round — not an intent the leader commits on their behalf at
+ * a phase change — so there is nothing to toggle and nothing to take back.
+ */
+export function canRevealSeatScheme(state: OnlineGameState, seat: PlayerKey): boolean {
+	if (!isRoundRunning(state)) return false;
 	const current = state[seat];
-	if (!current || !current.progress.scheme) return state;
-	return updateSeat(state, seat, (s) => ({ ...s, revealIntent: !s.revealIntent }));
+	return !!current?.progress.scheme && !current.progress.schemeRevealed;
 }
 
-/** Commits every reveal intent: intended schemes become permanently revealed. */
-export function advanceToScoring(state: OnlineGameState): OnlineGameState {
-	if (state.status !== 'active' || state.phase !== 'reveal') return state;
-	const commit = (seat: OnlineSeatState): OnlineSeatState => {
-		const revealed = seat.progress.scheme && seat.revealIntent;
-		return {
-			...seat,
-			revealIntent: false,
-			progress: revealed ? { ...seat.progress, schemeRevealed: true } : seat.progress
-		};
-	};
-	return {
-		...state,
-		player1: commit(state.player1),
-		player2: state.player2 ? commit(state.player2) : null,
-		phase: 'scoring'
-	};
+export function revealSeatScheme(state: OnlineGameState, seat: PlayerKey): OnlineGameState {
+	if (!canRevealSeatScheme(state, seat)) return state;
+	return updateSeat(state, seat, (s) => ({
+		...s,
+		progress: { ...s.progress, schemeRevealed: true }
+	}));
 }
 
-/** Objectives are editable only by their owner and only during the Scoring phase. */
+/** Objectives are editable only by their owner, at any point in a running round. */
 export function setSeatObjectiveChecked(
 	state: OnlineGameState,
 	seat: PlayerKey,
@@ -557,7 +556,7 @@ export function setSeatObjectiveChecked(
 	checkedCount: number,
 	maxCount: number
 ): OnlineGameState {
-	if (state.status !== 'active' || state.phase !== 'scoring') return state;
+	if (!isRoundRunning(state)) return state;
 	const clamped = Math.max(0, Math.min(checkedCount, maxCount));
 	return updateSeat(state, seat, (s) => ({
 		...s,
@@ -568,9 +567,9 @@ export function setSeatObjectiveChecked(
 	}));
 }
 
-/** Scheme boxes are editable only by their owner, only during Scoring, and only once revealed. */
+/** Scheme boxes are editable only by their owner, in a running round, and only once revealed. */
 export function canScoreSeatScheme(state: OnlineGameState, seat: PlayerKey): boolean {
-	if (state.status !== 'active' || state.phase !== 'scoring') return false;
+	if (!isRoundRunning(state)) return false;
 	const current = state[seat];
 	return !!current?.progress.scheme && current.progress.schemeRevealed;
 }
@@ -591,35 +590,26 @@ export function setSeatSchemeChecked(
 	}));
 }
 
-export function bothSchemesRevealed(state: OnlineGameState): boolean {
-	const p1 = state.player1;
-	const p2 = state.player2;
-	const revealed = (seat: OnlineSeatState | null) =>
-		!!seat && (!seat.progress.scheme || seat.progress.schemeRevealed);
-	return revealed(p1) && revealed(p2);
-}
-
-/** Snapshots the current round's VP, then advances; skips the next Reveal phase when nothing is left to reveal. */
+/** Snapshots the current round's VP and opens the next one. Round 5 concludes instead. */
 export function snapshotAndProceed(state: OnlineGameState, vp: RoundSnapshot): OnlineGameState {
-	if (state.status !== 'active' || state.phase !== 'scoring') return state;
+	if (!isRoundRunning(state)) return state;
 	if (state.currentRound >= MAX_ROUND) return state;
 	return {
 		...state,
 		roundSnapshots: { ...state.roundSnapshots, [state.currentRound]: vp },
 		currentRound: state.currentRound + 1,
-		phase: bothSchemesRevealed(state) ? 'scoring' : 'reveal'
+		phase: 'playing'
 	};
 }
 
 export function finishGame(state: OnlineGameState, vp: RoundSnapshot): OnlineGameState {
-	if (state.status !== 'active' || state.phase !== 'scoring' || state.currentRound !== MAX_ROUND) {
+	if (!isRoundRunning(state) || state.currentRound !== MAX_ROUND) {
 		return state;
 	}
 	const revealAll = (seat: OnlineSeatState): OnlineSeatState => {
 		if (!seat.progress.scheme) return seat;
 		return {
 			...seat,
-			revealIntent: false,
 			progress: { ...seat.progress, schemeRevealed: true }
 		};
 	};

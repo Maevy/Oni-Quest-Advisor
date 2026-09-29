@@ -1,5 +1,5 @@
 import type { Client } from '@libsql/client';
-import { MAX_ROUND, advanceToScoring, finishGame, type OnlineGameState } from '$lib/domain';
+import { MAX_ROUND, finishGame, type OnlineGameState } from '$lib/domain';
 import { ApiError } from './errors';
 import { mutateOpen } from './gameRepository';
 import { notifyGameChanged } from './sse';
@@ -99,7 +99,9 @@ async function autoFinishStaleGame(id: string, cutoff: string): Promise<boolean>
 			if (game.status !== 'active' || game.currentRound !== MAX_ROUND || game.updatedAt >= cutoff) {
 				throw new ApiError(409, 'Game is no longer eligible for auto-finish');
 			}
-			const ready = advanceToScoring(game);
+			// A stale game may be stuck in any phase; its final round is over either way, so
+			// auto-finish forces the shape finishGame expects rather than walking the phases.
+			const ready = game.phase === 'playing' ? game : { ...game, phase: 'playing' as const };
 			const vp = computeRoundVp(ready);
 			if (!vp) throw new ApiError(500, 'Mission content missing');
 			const next = finishGame(ready, vp);

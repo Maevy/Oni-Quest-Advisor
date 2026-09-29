@@ -14,10 +14,18 @@
 		entries: ResultsEntry[];
 		important?: string[];
 		checkedObjectiveCounts: Record<string, number>;
+		/** Read-only rendering for a seat that is not yours. */
+		editable?: boolean;
 		onSetChecked: (objectiveId: string, checkedCount: number, maxCount: number) => void;
 	};
 
-	let { entries, important, checkedObjectiveCounts, onSetChecked }: Props = $props();
+	let {
+		entries,
+		important,
+		checkedObjectiveCounts,
+		editable = true,
+		onSetChecked
+	}: Props = $props();
 
 	function entryKey(entry: ResultsEntry): string {
 		return entry.kind === 'roundGroup' ? `group:${entry.group}` : `objective:${entry.objective.id}`;
@@ -70,6 +78,7 @@
 									<IncrementBoxes
 										count={objective.count}
 										checkedCount={checkedCountOf(objective)}
+										disabled={!editable}
 										onSetChecked={(count) => onSetChecked(objective.id, count, objective.count)}
 									/>
 								{:else}
@@ -103,6 +112,7 @@
 						<IncrementBoxes
 							count={objective.count}
 							{checkedCount}
+							disabled={!editable}
 							tone={isCeasefire ? 'penalty' : 'score'}
 							onSetChecked={(count) => onSetChecked(objective.id, count, objective.count)}
 						/>
@@ -110,6 +120,7 @@
 						<input
 							type="checkbox"
 							checked={checkedCount > 0}
+							disabled={!editable}
 							onchange={(event) =>
 								onSetChecked(objective.id, (event.target as HTMLInputElement).checked ? 1 : 0, 1)}
 							class="h-5 w-5 rounded border-slate-500 bg-slate-900 {isCeasefire

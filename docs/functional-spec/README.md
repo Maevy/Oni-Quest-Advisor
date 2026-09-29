@@ -83,10 +83,11 @@ each `src/lib/` folder.
   Not to be confused with a seat's **Leader** below.
 - **Ready** — a seat's lobby readiness, toggled by its own player and public to both, because the
   leader's Start Game is gated on it.
-- **Phase** — within an active game: `armies` (both rosters flip open) → `prep` (cut the armies) →
-  `setup` (choose Schemes) → then each round's `reveal` → `scoring`. Objectives and scheme boxes
-  are editable **only** during Scoring. The preparation steps are phases rather than statuses so
-  the retention buckets, which key on status, keep applying.
+- **Phase** — within an active game: `armies` (both rosters flip open) → `prep` (cut the armies and
+  name Leaders) → `setup` (choose Schemes) → `playing`, which is every round at once: a round has
+  no sub-phase, and revealing a scheme is a one-way act available at any moment of it. The
+  preparation steps are phases rather than statuses so the retention buckets, which key on status,
+  keep applying.
 - **Army reveal** — the rulebook's faction and roster reveal as one step: from the moment the game
   is running, a Roster registration's contents are browsable by both players. A Standard
   registration's are not, because for it the registered list is the match list.

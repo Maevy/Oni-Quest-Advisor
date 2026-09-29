@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import {
 		armyCopyCounts,
+		calculateTwoPlayerVP,
 		getMissionsForSeason,
 		getScoreableResults,
 		getSeasons,
@@ -43,7 +44,7 @@
 	import MissionDetail from '$lib/components/MissionDetail.svelte';
 	import MissionDetailTwoPlayer from '$lib/components/MissionDetailTwoPlayer.svelte';
 	import OnlineCreate from '$lib/components/OnlineCreate.svelte';
-	import OnlineGameView from '$lib/components/OnlineGameView.svelte';
+	import OnlineTracker from '$lib/components/OnlineTracker.svelte';
 	import OnlineIntroNotice from '$lib/components/OnlineIntroNotice.svelte';
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
@@ -201,6 +202,7 @@
 			: null
 	);
 	let onlineResults = $derived(onlineMission ? getScoreableResults(onlineMission) : []);
+	let onlineEntries = $derived(groupResults(onlineResults));
 	let onlineMyCard = $derived(
 		onlineGameStore.view?.self.progress.scheme
 			? (contentStore.schemes.find(
@@ -216,6 +218,25 @@
 			: null
 	);
 	let onlineMyVP = $derived(onlineMission ? onlineGameStore.myVP(onlineMission, onlineMyCard) : 0);
+	/**
+	 * The opponent's running total, from what the filter publishes: their objective counts and,
+	 * once revealed, their scheme and its boxes. A hidden scheme scores nothing, as on the table.
+	 */
+	let onlineOpponentVP = $derived.by(() => {
+		const view = onlineGameStore.view;
+		const opponent = view?.opponent ?? null;
+		if (!onlineMission || !opponent) return 0;
+		return calculateTwoPlayerVP(
+			onlineMission,
+			{
+				checkedObjectiveCounts: opponent.checkedObjectiveCounts,
+				scheme: opponent.revealedScheme,
+				schemeDraft: { factionId: null, intelligence: null },
+				schemeRevealed: opponent.schemeRevealed
+			},
+			onlineOpponentRevealedCard
+		);
+	});
 
 	/**
 	 * The roster a seat may browse. A Roster registration's contents are public once the game is
@@ -783,23 +804,26 @@
 			onCloseGame={() => onlineGameStore.closeGame()}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineMission}
-		<OnlineGameView
+		<OnlineTracker
 			view={onlineGameStore.view}
+			mission={onlineMission}
+			entries={onlineEntries}
 			isLeader={onlineGameStore.isLeader}
 			error={onlineGameStore.error}
-			mission={onlineMission}
-			results={onlineResults}
 			myCard={onlineMyCard}
+			opponentCard={onlineOpponentRevealedCard}
 			myVP={onlineMyVP}
-			opponentRevealedCard={onlineOpponentRevealedCard}
-			onToggleRevealIntent={() => onlineGameStore.toggleRevealIntent()}
+			opponentVP={onlineOpponentVP}
 			onSetObjectiveChecked={(objectiveId, checkedCount) =>
 				onlineGameStore.setObjectiveChecked(objectiveId, checkedCount)}
 			onSetSchemeChecked={(checkedIncrements) =>
 				onlineGameStore.setSchemeChecked(checkedIncrements)}
-			onAdvancePhase={() => onlineGameStore.advancePhase()}
-			onFinishGame={() => onlineGameStore.finishGame()}
-			onCloseGame={() => onlineGameStore.closeGame()}
+			onRevealScheme={() => onlineGameStore.revealScheme()}
+			onAdvance={() => onlineGameStore.advancePhase()}
+			onReturn={() => {
+				onlineGameStore.leave();
+				navigationStore.leaveOnline();
+			}}
 		/>
 	{:else if onlineGameStore.view.status === 'finished'}
 		<OnlineStats

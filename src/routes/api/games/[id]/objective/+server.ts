@@ -1,11 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { getScoreableResults, setSeatObjectiveChecked } from '$lib/domain';
+import { getScoreableResults, isRoundRunning, setSeatObjectiveChecked } from '$lib/domain';
 import { findMission } from '$lib/server/content';
 import { ApiError, api, bearerToken } from '$lib/server/http';
 import { mutateAsSeat } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
 
-/** Owner-only objective toggle during the Scoring phase; bounds come from the mission content. */
+/** Owner-only objective toggle during a running round; bounds come from the mission content. */
 export const POST = api(async ({ params, request }) => {
 	const body: unknown = await request.json().catch(() => null);
 	const payload =
@@ -15,8 +15,8 @@ export const POST = api(async ({ params, request }) => {
 	if (!objectiveId || !Number.isFinite(checkedCount)) throw new ApiError(400, 'Unknown objective');
 
 	await mutateAsSeat(params.id, bearerToken(request), (game, seat) => {
-		if (game.status !== 'active' || game.phase !== 'scoring') {
-			throw new ApiError(409, 'Objectives are locked outside the Scoring phase');
+		if (!isRoundRunning(game)) {
+			throw new ApiError(409, 'Objectives are locked outside a running round');
 		}
 		const mission = game.missionId ? findMission(game.missionId) : undefined;
 		if (!mission) throw new ApiError(500, 'Mission content missing');

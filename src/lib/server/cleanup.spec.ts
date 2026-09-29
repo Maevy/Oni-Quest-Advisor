@@ -5,7 +5,6 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
 	MAX_ROUND,
 	acceptJoin,
-	advanceToScoring,
 	chooseSeatScheme,
 	closeGame,
 	createOnlineGame,
@@ -21,7 +20,7 @@ import {
 	startGame,
 	startRounds,
 	toggleReady,
-	toggleRevealIntent,
+	revealSeatScheme,
 	type PickedArmy
 } from '$lib/domain';
 import { cleanupStaleGames, cleanupStaleTournaments } from './cleanup';
@@ -74,8 +73,7 @@ async function insertLobbyGame(ageInDays: number): Promise<string> {
 type Journey = {
 	ageInDays: number;
 	roundsAdvanced: number;
-	reachScoring?: boolean;
-	revealIntent?: boolean;
+	reveal?: boolean;
 	objectiveChecks?: number;
 	finished?: boolean;
 	closed?: boolean;
@@ -107,11 +105,9 @@ async function insertJourneyGame(journey: Journey): Promise<string> {
 	}
 	state = startRounds(state);
 	for (let round = 0; round < journey.roundsAdvanced; round++) {
-		state = advanceToScoring(state);
 		state = snapshotAndProceed(state, { player1: 0, player2: 0 });
 	}
-	if (journey.revealIntent) state = toggleRevealIntent(state, 'player1');
-	if (journey.reachScoring) state = advanceToScoring(state);
+	if (journey.reveal) state = revealSeatScheme(state, 'player1');
 	if (journey.objectiveChecks) {
 		state = setSeatObjectiveChecked(state, 'player1', 'unlock-cache', journey.objectiveChecks, 2);
 	}
@@ -157,14 +153,14 @@ describe('cleanupStaleGames', () => {
 		const staleFinished = await insertJourneyGame({
 			ageInDays: 91,
 			roundsAdvanced: 4,
-			reachScoring: true,
+			reveal: true,
 			finished: true
 		});
 		const staleClosed = await insertJourneyGame({ ageInDays: 91, roundsAdvanced: 2, closed: true });
 		const freshFinished = await insertJourneyGame({
 			ageInDays: 89,
 			roundsAdvanced: 4,
-			reachScoring: true,
+			reveal: true,
 			finished: true
 		});
 		await cleanupStaleGames(await getDb());
@@ -185,7 +181,7 @@ describe('cleanupStaleGames', () => {
 		const id = await insertJourneyGame({
 			ageInDays: 31,
 			roundsAdvanced: 4,
-			reachScoring: true,
+			reveal: true,
 			objectiveChecks: 2
 		});
 		const summary = await cleanupStaleGames(await getDb());
@@ -204,7 +200,7 @@ describe('cleanupStaleGames', () => {
 	});
 
 	it('auto-finishes stale final-round games stuck in the reveal phase', async () => {
-		const id = await insertJourneyGame({ ageInDays: 31, roundsAdvanced: 4, revealIntent: true });
+		const id = await insertJourneyGame({ ageInDays: 31, roundsAdvanced: 4, reveal: true });
 		await cleanupStaleGames(await getDb());
 		const game = await getGame(id);
 		expect(game?.status).toBe('finished');
@@ -213,7 +209,7 @@ describe('cleanupStaleGames', () => {
 	});
 
 	it('leaves fresh final-round games untouched', async () => {
-		const id = await insertJourneyGame({ ageInDays: 2, roundsAdvanced: 4, reachScoring: true });
+		const id = await insertJourneyGame({ ageInDays: 2, roundsAdvanced: 4, reveal: true });
 		await cleanupStaleGames(await getDb());
 		const game = await getGame(id);
 		expect(game?.status).toBe('active');

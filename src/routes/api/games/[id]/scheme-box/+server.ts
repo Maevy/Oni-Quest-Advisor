@@ -1,11 +1,11 @@
 import { json } from '@sveltejs/kit';
-import { setSeatSchemeChecked } from '$lib/domain';
+import { isRoundRunning, setSeatSchemeChecked } from '$lib/domain';
 import { getSchemes } from '$lib/server/content';
 import { ApiError, api, bearerToken } from '$lib/server/http';
 import { mutateAsSeat } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
 
-/** Owner-only scheme-box toggle during the Scoring phase; boxes unlock only once the scheme is revealed. */
+/** Owner-only scheme-box toggle during a running round; boxes unlock only once the scheme is revealed. */
 export const POST = api(async ({ params, request }) => {
 	const body: unknown = await request.json().catch(() => null);
 	const checkedIncrements =
@@ -15,8 +15,8 @@ export const POST = api(async ({ params, request }) => {
 	if (!Number.isFinite(checkedIncrements)) throw new ApiError(400, 'Invalid checkedIncrements');
 
 	await mutateAsSeat(params.id, bearerToken(request), (game, seat) => {
-		if (game.status !== 'active' || game.phase !== 'scoring') {
-			throw new ApiError(409, 'Scheme boxes are locked outside the Scoring phase');
+		if (!isRoundRunning(game)) {
+			throw new ApiError(409, 'Scheme boxes are locked outside a running round');
 		}
 		const chosen = game[seat]?.progress.scheme;
 		if (!chosen) throw new ApiError(409, 'No scheme chosen');

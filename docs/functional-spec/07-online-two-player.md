@@ -175,48 +175,54 @@ picked, and — from this step on — **their Leader's M and INT**, as _"Their L
 puts at step 8, and stops at the two numbers. Neither the drawn hand nor the chosen card is
 transmitted.
 
-## Playing: rounds and phases
+## Playing: the tracker
 
-**Begin Round 1** → Round 1, **Reveal** phase. The game view header shows `Game#{id}`,
-`Round {n} — Reveal Phase` / `— Scoring Phase`, and `Your VP: {n} / 10`.
+**Begin Round 1** opens the tracker — the same groundwork as the solo and hot-seat trackers: a
+`ScreenHeader` carrying the mission name and a four-way sliding spotlight switcher, **P1 Scoring /
+P2 Scoring / Army / Mission**, swipeable left and right like the others. Under the header a shared
+score bar shows `Round {n} / 5`, the running score in the seat colours, and — for the leader only —
+the one button that moves the game: **Advance to next round**, reading **Conclude game** on round 5.
 
-Each round has two phases:
+### The scoring views
 
-### Reveal phase
+One view per seat, labelled by seat and coloured by it. Your own is editable; the other seat's is
+read-only — its boxes inert, its scheme _"Hidden Scheme"_ until revealed. Each view shows:
 
-- Each player may press **Reveal** on their own scheme. This is a **toggleable intent**, not a
-  commitment — the button reads **Undo reveal** once set, and a hint confirms
-  _"Reveal intent set — the opponent sees it once scoring starts."_
-- Objectives and scheme boxes are **frozen**; the scheme panel shows disabled boxes.
-- The leader's footer button reads **"Round {n} Scoring"**. Pressing it **commits** every set
-  intent: those schemes become permanently revealed and visible to the opponent. Intents that
-  were not set stay hidden.
-- Non-leaders see _"The game leader advances the rounds."_
+- the seat's name and its running VP against the 10 cap,
+- its scheme: the card and, while hidden, a **Reveal** button on your own view (the opponent's
+  hidden scheme shows nothing but the label); once revealed, the card with its increment boxes,
+  editable only on your own view,
+- its Results as the grouped per-round cards, editable only on your own view.
 
-### Scoring phase
+Objective counts are cumulative across rounds — nothing is discarded when a round ends.
 
-- Each player checks **their own** objectives. State is cumulative across rounds — nothing is
-  discarded when a round ends.
-- Revealed schemes show **editable** increment boxes, **owner-only**.
-- A scheme still hidden shows instead: _"Hidden schemes can't be scored — reveal your scheme to
-  unlock its boxes."_ **A hidden scheme earns no Scheme VP at all.** Revealing is therefore a
-  real trade-off: secrecy versus scoring.
-- The leader's footer button reads **"Proceed to next round"**, which:
-  - snapshots both players' cumulative VP for the round (this feeds the statistics table),
-  - freezes objectives and boxes (state preserved, read-only),
-  - advances to Round _n_+1's **Reveal** phase — **except** when both schemes are already
-    revealed, in which case Reveal is skipped and it goes straight to Scoring.
+### Revealing a scheme
 
-This repeats through **Scoring Round 5**, after which the leader's button reads
-**"Finish Game"**.
+**Reveal** is available at any moment of any round, and it is neither a toggle nor an intent:
+pressing it opens a confirmation — _"Reveal your scheme? Your opponent will see it and its boxes
+unlock. This cannot be undone."_ (**Reveal** / **Keep it hidden**) — and confirming reveals the
+scheme immediately, on both devices, forever. There is no phase that commits it and no way back.
+Revealing unlocks that scheme's boxes; **a hidden scheme earns no Scheme VP at all**, so the
+trade-off is secrecy versus scoring, exactly as on a table.
 
-## Finish and statistics
+### The Army and Mission views
 
-**Finish Game** (leader) concludes the game for both players. All remaining hidden schemes are
-**auto-revealed** so the totals are traceable — auto-reveal does _not_ retroactively award VP,
-since those boxes were never ticked.
+**Army** is, for now, an empty list — _"Nothing tracked here yet."_ — a placeholder for the per-copy
+tracking planned for it. **Mission** is the read-only mission: description, setup, map and quest
+rules, with the Broken Morale / Ceasefire rule cards opening from their labels.
 
-The statistics screen replaces the game view:
+**Advance to next round** snapshots both players' cumulative VP for the round (this feeds the
+statistics table) and opens the next one. Objectives stay editable throughout a round — there is no
+freezing and no sub-phase — and non-leaders see no advance button at all.
+
+## Concluding and the scoring board
+
+On round 5 the leader's button reads **Conclude game**. It snapshots round 5, **auto-reveals** any
+scheme still hidden so the totals are traceable (auto-reveal does _not_ retroactively award VP,
+since those boxes were never ticked), computes the winner and writes the result summary. The game
+is over: no further mutations, no joins, nothing left to advance.
+
+The **scoring board** replaces the tracker on every device:
 
 - **Winner banner** — `Victory for` / faction name / player name, in the winner's seat colour, or
   **Draw**.
@@ -224,9 +230,12 @@ The statistics screen replaces the game view:
   **cumulative VP at the end of that round** (an em dash where no snapshot exists).
 - **Both seats' scheme cards** — player name and faction, the (now revealed) card and its rule
   text, and its increment boxes read-only; _No scheme_ if none was chosen.
-- **Return to Main Menu**.
+- **End game** — each player presses it **separately**, on their own device, when they are done
+  reading. It is a local leave: it clears the seat session and returns to the main menu, while the
+  concluded game stays on the server for its retention window and the other player's board is
+  untouched.
 
-There is no rematch or room reuse — returning to the menu ends it.
+There is no rematch or room reuse.
 
 ## Closing a game
 
@@ -298,17 +307,17 @@ for the whole match; that is recorded as an open question below.
 
 ## Differences from hot-seat
 
-|                         | Online                                                | Hot-seat                      |
-| ----------------------- | ----------------------------------------------------- | ----------------------------- |
-| Source of truth         | server                                                | `localStorage`                |
-| Scheme secrecy          | server-enforced filtering                             | convention + a swap countdown |
-| Reveal                  | toggleable intent, committed on phase change          | permanent, one press          |
-| Hidden scheme scoring   | impossible                                            | possible                      |
-| Revealed scheme's boxes | owner only                                            | either player                 |
-| Objectives              | own column, Scoring phase only                        | active seat's own sheet       |
-| Round                   | server phase engine, leader-driven                    | manual, Player 1 only         |
-| Armies                  | a registration **and** a cut combat list, server-side | one per seat, tracked live    |
-| Finish / statistics     | yes                                                   | none                          |
+|                         | Online                                                 | Hot-seat                      |
+| ----------------------- | ------------------------------------------------------ | ----------------------------- |
+| Source of truth         | server                                                 | `localStorage`                |
+| Scheme secrecy          | server-enforced filtering                              | convention + a swap countdown |
+| Reveal                  | one confirmed press, any time in a round, irreversible | permanent, one press          |
+| Hidden scheme scoring   | impossible                                             | possible                      |
+| Revealed scheme's boxes | owner only                                             | either player                 |
+| Objectives              | own view, editable all round                           | active seat's own sheet       |
+| Round                   | server round engine, leader advances                   | manual, Player 1 only         |
+| Armies                  | a registration **and** a cut combat list, server-side  | one per seat, tracked live    |
+| Finish / statistics     | yes                                                    | none                          |
 
 An online seat's armies are **registrations**, not tracked forces: the server stores the snapshots
 and shows the registered one's name, faction and format, but nothing scores damage against them.

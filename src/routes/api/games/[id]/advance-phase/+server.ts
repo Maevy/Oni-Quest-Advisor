@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
 import {
-	advanceToScoring,
 	canLeaveArmies,
 	canLeavePrep,
 	canStartRounds,
+	finishGame,
 	leaveArmies,
 	leavePrep,
 	MAX_ROUND,
@@ -18,10 +18,9 @@ import { computeRoundVp } from '$lib/server/vp';
 
 /**
  * Leader advances the game one step:
- * Armies → Preparation (the reveal is over), Preparation → Scheme setup (both seats
- * combat-ready), Scheme setup → Round 1 Reveal (both Schemes chosen), Reveal → Scoring (commits
- * reveal intents), or Scoring → next round (VP snapshot; skips the next Reveal phase when both
- * schemes are already revealed).
+ * Armies → Preparation (the reveal is over), Preparation → Scheme setup (both seats combat-ready
+ * and led), Scheme setup → Round 1 (both Schemes chosen), Round 1–4 → the next round (VP
+ * snapshot), Round 5 → concluded (final snapshot, winner, result summary, status finished).
  */
 export const POST = api(async ({ params, request }) => {
 	await mutateAsLeader(params.id, bearerToken(request), (game) => {
@@ -37,7 +36,7 @@ export const POST = api(async ({ params, request }) => {
 
 		if (game.phase === 'prep') {
 			if (!canLeavePrep(game)) {
-				throw new ApiError(409, 'Both players need a combat-ready army');
+				throw new ApiError(409, 'Both players need a combat-ready army and a Leader');
 			}
 			const next = leavePrep(game);
 			return { next, events: phaseEvent(next) };
@@ -51,30 +50,25 @@ export const POST = api(async ({ params, request }) => {
 			return { next, events: phaseEvent(next) };
 		}
 
-		if (game.phase === 'reveal') {
-			const next = advanceToScoring(game);
-			return { next, events: phaseEvent(next) };
-		}
-
-		// Scoring phase: snapshot VP, then advance.
-		if (game.currentRound >= MAX_ROUND) {
-			throw new ApiError(409, 'The final round is finished with Finish Game');
-		}
+		// A running round: snapshot its VP, then advance — or conclude on round 5.
 		const vp = computeRoundVp(game);
 		if (!vp) throw new ApiError(500, 'Mission content missing');
+		const snapshotted = {
+			type: 'round-snapshotted',
+			actor: 'player1',
+			payload: { round: game.currentRound, ...vp }
+		} as const;
+
+		if (game.currentRound >= MAX_ROUND) {
+			const next = finishGame(game, vp);
+			return {
+				next,
+				events: [snapshotted, { type: 'game-finished', actor: 'player1' } as const]
+			};
+		}
 
 		const next = snapshotAndProceed(game, vp);
-		return {
-			next,
-			events: [
-				{
-					type: 'round-snapshotted',
-					actor: 'player1',
-					payload: { round: game.currentRound, ...vp }
-				},
-				phaseEvent(next)
-			]
-		};
+		return { next, events: [snapshotted, phaseEvent(next)] };
 	});
 	notifyGameChanged(params.id, 'phase-changed');
 	return json({ ok: true });

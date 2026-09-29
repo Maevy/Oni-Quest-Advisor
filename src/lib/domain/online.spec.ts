@@ -3,16 +3,15 @@ import { MAX_ROUND, MIN_ROUND } from './progress';
 import type { PickedArmy } from './savedArmy';
 import {
 	acceptJoin,
-	advanceToScoring,
 	bothCombatReady,
 	bothLeadersAssigned,
 	bothReady,
-	bothSchemesRevealed,
 	canChooseSeatScheme,
 	canDrawSchemes,
 	canEditSetup,
 	canLeaveArmies,
 	canLeavePrep,
+	canRevealSeatScheme,
 	canRequestJoin,
 	canScoreSeatScheme,
 	canSetCombatArmy,
@@ -33,6 +32,7 @@ import {
 	MAX_NICKNAME_LENGTH,
 	normalizeNickname,
 	requestJoin,
+	revealSeatScheme,
 	seatForTokenHash,
 	setCombatArmy,
 	setLeader,
@@ -43,7 +43,6 @@ import {
 	startGame,
 	startRounds,
 	toggleReady,
-	toggleRevealIntent,
 	toPublicSeat,
 	viewForSeat,
 	type OnlineGameState,
@@ -137,7 +136,7 @@ function draftAndChooseScheme(
 	return next;
 }
 
-/** Round 1's Reveal phase, with both Schemes chosen. */
+/** Round 1 in progress, with both Schemes chosen. */
 function roundsBegun(): OnlineGameState {
 	let state = inSetup();
 	state = draftAndChooseScheme(state, 'player1');
@@ -145,16 +144,22 @@ function roundsBegun(): OnlineGameState {
 	return startRounds(state);
 }
 
-function activeScoringGame(): OnlineGameState {
-	return advanceToScoring(roundsBegun());
+/** A running round with both schemes still hidden. */
+function activePlayingGame(): OnlineGameState {
+	return roundsBegun();
 }
 
-/** Both players set their reveal intent, so scoring starts with both schemes revealed. */
-function revealedScoringGame(): OnlineGameState {
+/** Both players revealed, so their scheme boxes are scoreable. */
+function revealedPlayingGame(): OnlineGameState {
 	let state = roundsBegun();
-	state = toggleRevealIntent(state, 'player1');
-	state = toggleRevealIntent(state, 'player2');
-	return advanceToScoring(state);
+	state = revealSeatScheme(state, 'player1');
+	state = revealSeatScheme(state, 'player2');
+	return state;
+}
+
+/** A running round 5, which is the only round finishGame accepts. */
+function atRoundFive(): OnlineGameState {
+	return { ...activePlayingGame(), currentRound: MAX_ROUND };
 }
 
 describe('normalizeNickname', () => {
@@ -182,7 +187,7 @@ describe('createOnlineGame', () => {
 		expect(state.player2).toBeNull();
 		expect(state.pendingJoin).toBeNull();
 		expect(state.currentRound).toBe(MIN_ROUND);
-		expect(state.phase).toBe('reveal');
+		expect(state.phase).toBe('playing');
 		expect(state.winner).toBeNull();
 	});
 
@@ -418,7 +423,7 @@ describe('the army reveal', () => {
 	});
 
 	it('stays revealed after the game ends', () => {
-		const finished = finishGame(activeScoringGame(), { player1: 1, player2: 0 });
+		const finished = finishGame(activePlayingGame(), { player1: 1, player2: 0 });
 		expect(isRosterRevealed(finished)).toBe(true);
 	});
 
@@ -538,7 +543,7 @@ describe('startRounds', () => {
 		state = draftAndChooseScheme(state, 'player2');
 		expect(canStartRounds(state)).toBe(true);
 		state = startRounds(state);
-		expect(state.phase).toBe('reveal');
+		expect(state.phase).toBe('playing');
 		expect(state.currentRound).toBe(MIN_ROUND);
 	});
 
@@ -549,35 +554,34 @@ describe('startRounds', () => {
 	});
 });
 
-describe('reveal intent and advanceToScoring', () => {
-	it('toggles intent only during the reveal phase and only with a scheme', () => {
+describe('revealing a scheme', () => {
+	it('is a one-way act of the seat that owns the scheme, in any running round', () => {
 		const setup = draftAndChooseScheme(inSetup(), 'player1');
-		expect(toggleRevealIntent(setup, 'player1'), 'setup is not the reveal phase').toBe(setup);
+		expect(revealSeatScheme(setup, 'player1'), 'setup is not a running round').toBe(setup);
 		const state = roundsBegun();
-		expect(toggleRevealIntent(state, 'player1').player1.revealIntent).toBe(true);
-		expect(
-			toggleRevealIntent(toggleRevealIntent(state, 'player1'), 'player1').player1.revealIntent
-		).toBe(false);
+		expect(canRevealSeatScheme(state, 'player1')).toBe(true);
+		const revealed = revealSeatScheme(state, 'player1');
+		expect(revealed.player1.progress.schemeRevealed).toBe(true);
+		expect(revealSeatScheme(revealed, 'player1'), 'irreversible').toBe(revealed);
 	});
 
-	it('advanceToScoring commits intents permanently and clears them', () => {
-		let state = toggleRevealIntent(roundsBegun(), 'player1');
-		state = advanceToScoring(state);
-		expect(state.phase).toBe('scoring');
-		expect(state.player1.progress.schemeRevealed).toBe(true);
-		expect(state.player1.revealIntent).toBe(false);
-		expect(state.player2?.progress.schemeRevealed).toBe(false);
+	it('refuses a seat with no scheme', () => {
+		const state = inSetup();
+		expect(revealSeatScheme(state, 'player1')).toBe(state);
+	});
+
+	it('unlocks the owner’s scheme boxes and nothing else', () => {
+		const state = roundsBegun();
+		expect(canScoreSeatScheme(state, 'player1')).toBe(false);
+		const revealed = revealSeatScheme(state, 'player1');
+		expect(canScoreSeatScheme(revealed, 'player1')).toBe(true);
+		expect(canScoreSeatScheme(revealed, 'player2'), 'the other seat stays hidden').toBe(false);
 	});
 });
 
-describe('scoring phase actions', () => {
-	it('objectives are only editable during scoring and clamp to bounds', () => {
+describe('round actions', () => {
+	it('objectives are editable throughout a running round and clamp to bounds', () => {
 		let state = roundsBegun();
-		expect(
-			setSeatObjectiveChecked(state, 'player1', 'obj', 1, 1),
-			'reveal phase freezes objectives'
-		).toBe(state);
-		state = advanceToScoring(state);
 		state = setSeatObjectiveChecked(state, 'player1', 'obj', 1, 1);
 		expect(state.player1.progress.checkedObjectiveCounts.obj).toBe(1);
 		expect(state.player2?.progress.checkedObjectiveCounts.obj).toBeUndefined();
@@ -585,22 +589,26 @@ describe('scoring phase actions', () => {
 		expect(state.player1.progress.checkedObjectiveCounts.obj).toBe(2);
 	});
 
-	it('scheme boxes are only editable by the owner during scoring', () => {
-		let state = revealedScoringGame();
+	it('objectives are locked outside a running round', () => {
+		const setup = inSetup();
+		expect(setSeatObjectiveChecked(setup, 'player1', 'obj', 1, 1)).toBe(setup);
+		const finished = finishGame(atRoundFive(), { player1: 1, player2: 0 });
+		expect(setSeatObjectiveChecked(finished, 'player1', 'obj', 1, 1)).toBe(finished);
+	});
+
+	it('scheme boxes are only editable by the owner during a running round', () => {
+		let state = revealedPlayingGame();
 		state = setSeatSchemeChecked(state, 'player1', 2, 3);
 		expect(state.player1.progress.scheme?.checkedIncrements).toBe(2);
 		expect(state.player2?.progress.scheme?.checkedIncrements).toBe(0);
 	});
 
 	it('hidden schemes cannot be scored — boxes unlock only once revealed', () => {
-		let state = activeScoringGame();
+		let state = activePlayingGame();
 		expect(canScoreSeatScheme(state, 'player1')).toBe(false);
 		state = setSeatSchemeChecked(state, 'player1', 2, 3);
 		expect(state.player1.progress.scheme?.checkedIncrements, 'hidden scheme stays at 0').toBe(0);
-		state = {
-			...state,
-			player1: { ...state.player1, progress: { ...state.player1.progress, schemeRevealed: true } }
-		};
+		state = revealSeatScheme(state, 'player1');
 		expect(canScoreSeatScheme(state, 'player1')).toBe(true);
 		state = setSeatSchemeChecked(state, 'player1', 2, 3);
 		expect(state.player1.progress.scheme?.checkedIncrements).toBe(2);
@@ -608,31 +616,23 @@ describe('scoring phase actions', () => {
 });
 
 describe('snapshotAndProceed', () => {
-	it('snapshots the round, advances, and enters the reveal phase', () => {
-		let state = activeScoringGame();
+	it('snapshots the round, advances, and keeps the round running', () => {
+		let state = activePlayingGame();
 		state = snapshotAndProceed(state, { player1: 3, player2: 1 });
 		expect(state.roundSnapshots[1]).toEqual({ player1: 3, player2: 1 });
 		expect(state.currentRound).toBe(2);
-		expect(state.phase).toBe('reveal');
+		expect(state.phase).toBe('playing');
 	});
 
-	it('skips the reveal phase when both schemes are already revealed', () => {
-		let state = activeScoringGame();
-		state = {
-			...state,
-			player1: { ...state.player1, progress: { ...state.player1.progress, schemeRevealed: true } },
-			player2: state.player2
-				? { ...state.player2, progress: { ...state.player2.progress, schemeRevealed: true } }
-				: null
-		};
-		expect(bothSchemesRevealed(state)).toBe(true);
+	it('leaves reveal state untouched — revealing is each seat’s own act', () => {
+		let state = revealSeatScheme(roundsBegun(), 'player1');
 		state = snapshotAndProceed(state, { player1: 0, player2: 0 });
-		expect(state.currentRound).toBe(2);
-		expect(state.phase).toBe('scoring');
+		expect(state.player1.progress.schemeRevealed).toBe(true);
+		expect(state.player2?.progress.schemeRevealed).toBe(false);
 	});
 
 	it('does not proceed past the last round', () => {
-		let state = activeScoringGame();
+		let state = activePlayingGame();
 		state = { ...state, currentRound: MAX_ROUND };
 		expect(snapshotAndProceed(state, { player1: 1, player2: 1 })).toBe(state);
 	});
@@ -640,7 +640,7 @@ describe('snapshotAndProceed', () => {
 
 describe('finishGame', () => {
 	it('snapshots round 5, auto-reveals, computes the winner and finishes', () => {
-		let state = activeScoringGame();
+		let state = activePlayingGame();
 		state = { ...state, currentRound: MAX_ROUND };
 		state = finishGame(state, { player1: 7, player2: 4 });
 		expect(state.status).toBe('finished');
@@ -660,14 +660,14 @@ describe('finishGame', () => {
 	});
 
 	it('reports a draw on equal VP', () => {
-		let state = activeScoringGame();
+		let state = activePlayingGame();
 		state = { ...state, currentRound: MAX_ROUND };
 		state = finishGame(state, { player1: 5, player2: 5 });
 		expect(state.winner).toBe('draw');
 	});
 
 	it('refuses to finish outside round 5 scoring', () => {
-		const state = activeScoringGame();
+		const state = activePlayingGame();
 		expect(finishGame(state, { player1: 1, player2: 0 })).toBe(state);
 	});
 });
@@ -676,8 +676,8 @@ describe('closeGame', () => {
 	it('closes lobby and active games but never overrides finished', () => {
 		const lobby = newGame();
 		expect(closeGame(lobby).status).toBe('closed');
-		expect(closeGame(activeScoringGame()).status).toBe('closed');
-		let finished = activeScoringGame();
+		expect(closeGame(activePlayingGame()).status).toBe('closed');
+		let finished = activePlayingGame();
 		finished = { ...finished, currentRound: MAX_ROUND };
 		finished = finishGame(finished, { player1: 1, player2: 0 });
 		expect(closeGame(finished).status).toBe('finished');
@@ -707,8 +707,7 @@ describe('visibility', () => {
 	});
 
 	it('toPublicSeat exposes the scheme once revealed', () => {
-		let state = toggleRevealIntent(roundsBegun(), 'player1');
-		state = advanceToScoring(state);
+		const state = revealSeatScheme(roundsBegun(), 'player1');
 		const view = toPublicSeat(state.player1, ROSTER_ONLY);
 		expect(view.schemeRevealed).toBe(true);
 		expect(view.revealedScheme?.schemeId).toBe('head-hunt');
@@ -745,7 +744,7 @@ describe('visibility', () => {
 	});
 
 	it('viewForSeat exposes the result summary once the game is finished', () => {
-		let state = activeScoringGame();
+		let state = activePlayingGame();
 		state = { ...state, currentRound: MAX_ROUND };
 		state = finishGame(state, { player1: 7, player2: 4 });
 		const view = viewForSeat(state, 'player2');

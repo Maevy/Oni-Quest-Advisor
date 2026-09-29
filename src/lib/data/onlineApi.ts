@@ -175,8 +175,9 @@ export async function startGame(gameId: string, token: string): Promise<void> {
 	await parse<Record<string, never>>(response);
 }
 
-export async function toggleRevealIntent(gameId: string, token: string): Promise<void> {
-	const response = await fetch(`${BASE}/${gameId}/reveal-intent`, {
+/** Reveals this seat's scheme, immediately and irreversibly. */
+export async function revealScheme(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/reveal-scheme`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
 	});
@@ -212,14 +213,6 @@ export async function setSchemeBoxChecked(
 
 export async function advancePhase(gameId: string, token: string): Promise<void> {
 	const response = await fetch(`${BASE}/${gameId}/advance-phase`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${token}` }
-	});
-	await parse<Record<string, never>>(response);
-}
-
-export async function finishGame(gameId: string, token: string): Promise<void> {
-	const response = await fetch(`${BASE}/${gameId}/finish`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
 	});

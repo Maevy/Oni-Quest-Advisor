@@ -142,6 +142,9 @@
 		class="mt-2 rounded-xl bg-sky-300 px-6 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 		onclick={onReturnToMenu}
 	>
-		Return to Main Menu
+		End game
 	</button>
+	<p class="mt-1 text-center text-xs text-slate-200">
+		The game is concluded; this only leaves the scoring board on your device.
+	</p>
 </div>

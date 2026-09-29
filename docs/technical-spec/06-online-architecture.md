@@ -58,12 +58,10 @@ combatArmy: PickedArmy | null,
 leader: SeatLeader | null,
 ready: boolean,
 progress: { checkedObjectiveCounts, scheme, schemeDraft, schemeRevealed },
-revealIntent: boolean,
 drawnSchemeIds: string[]
 ```
 
-`status` ∈ `lobby | active | finished | closed`; `phase` ∈ `armies | prep | setup | reveal |
-scoring`;
+`status` ∈ `lobby | active | finished | closed`; `phase` ∈ `armies | prep | setup | playing`;
 `currentRound` clamped to `MIN_ROUND..MAX_ROUND` (1–5); `MAX_NICKNAME_LENGTH` = 24 (the field is
 still named `nickname` throughout the wire protocol and the domain — only the **user-visible**
 labels say "Player Name").
@@ -123,13 +121,12 @@ turn a failed guard into `409`.
 | `leavePrep`                               | `canLeavePrep`: `active` ∧ `prep` ∧ `bothCombatReady` ∧ `bothLeadersAssigned` | phase `setup`, **seeding each seat's draft**: faction from the combat army, intelligence from the Leader's INT                              |
 | `setSeatDrawnSchemes` / `clearSeatScheme` | `canEditSetup`: `active` ∧ `setup`                                            | edits that seat                                                                                                                             |
 | `chooseSeatScheme`                        | `canEditSetup` ∧ draft complete ∧ `schemeId ∈ drawnSchemeIds`                 | sets `scheme`, **clears the hand**                                                                                                          |
-| `startRounds`                             | `canStartRounds`: `active` ∧ `setup` ∧ `bothSchemesChosen`                    | phase `reveal`, still round 1                                                                                                               |
-| `toggleRevealIntent`                      | `active` ∧ `reveal` ∧ seat has a scheme                                       | flips `revealIntent`                                                                                                                        |
-| `advanceToScoring`                        | `active` ∧ `reveal`                                                           | every seat with scheme ∧ intent → `schemeRevealed = true`; all intents cleared; phase `scoring`                                             |
-| `setSeatObjectiveChecked`                 | `active` ∧ `scoring`                                                          | own seat only, count clamped to `0..maxCount`                                                                                               |
-| `setSeatSchemeChecked`                    | `canScoreSeatScheme`: `active` ∧ `scoring` ∧ scheme ∧ **`schemeRevealed`**    | own `checkedIncrements`, clamped                                                                                                            |
-| `snapshotAndProceed`                      | `active` ∧ `scoring` ∧ round < 5                                              | writes the round snapshot; round + 1; phase `reveal`, or `scoring` when both schemes are already revealed                                   |
-| `finishGame`                              | `active` ∧ `scoring` ∧ round = 5                                              | snapshot round 5; **auto-reveal all**; compute winner; write `resultSummary`; `finished`                                                    |
+| `startRounds`                             | `canStartRounds`: `active` ∧ `setup` ∧ `bothSchemesChosen`                    | phase `playing`, still round 1                                                                                                              |
+| `revealSeatScheme`                        | `canRevealSeatScheme`: `active` ∧ `playing` ∧ scheme ∧ not yet revealed       | sets `schemeRevealed = true`, permanently; one-way, owner-only                                                                              |
+| `setSeatObjectiveChecked`                 | `active` ∧ `playing`                                                          | own seat only, count clamped to `0..maxCount`                                                                                               |
+| `setSeatSchemeChecked`                    | `canScoreSeatScheme`: `active` ∧ `playing` ∧ scheme ∧ **`schemeRevealed`**    | own `checkedIncrements`, clamped                                                                                                            |
+| `snapshotAndProceed`                      | `active` ∧ `playing` ∧ round < 5                                              | writes the round snapshot; round + 1; stays `playing`                                                                                       |
+| `finishGame`                              | `active` ∧ `playing` ∧ round = 5                                              | snapshot round 5; **auto-reveal all**; compute winner; write `resultSummary`; `finished`                                                    |
 | `closeGame`                               | not `finished` ∧ not `closed`                                                 | `closed`                                                                                                                                    |
 
 There is no `selectMission` transition: the mission arrives with the creation and cannot change.
@@ -150,8 +147,10 @@ starting anything.
 
 **The reveal gate on scoring is enforced twice**: by `canScoreSeatScheme` in the domain and by an
 explicit check in the `/scheme-box` endpoint. `calculateTwoPlayerVP` itself does _not_ check
-`schemeRevealed` — a hidden scheme scores 0 only because its `checkedIncrements` can never leave 0. That is a real invariant, not a coincidence, but it is worth knowing that the VP function is
-not itself the gate.
+`schemeRevealed` — a hidden scheme scores 0 only because its `checkedIncrements` can never leave 0.
+That is a real invariant, not a coincidence, but it is worth knowing that the VP function is not
+itself the gate. Revealing is a **one-way seat action** (`revealSeatScheme`), not an intent the
+leader commits: there is no phase boundary that flips it and no transition that un-flips it.
 
 ### Visibility filter
 
@@ -165,7 +164,7 @@ only:
 `revealedScheme` (**null unless the scheme is both chosen and revealed**),
 `checkedObjectiveCounts`.
 
-It strips `tokenHash`, `drawnSchemeIds`, `revealIntent`, `intelligence`, the unrevealed
+It strips `tokenHash`, `drawnSchemeIds`, `intelligence`, the unrevealed
 `scheme` object **and the cut's code**. `combatReady` is a bare boolean: the opponent learns
 that a match list exists, never what is in it. **The opponent's unrevealed scheme content never
 leaves the server** — this is the enforcement point, not the UI.
@@ -184,7 +183,10 @@ The two `factionId`s in that list are **different id spaces**: `army.factionId` 
 ids; conflating them mis-resolves exactly the two monster factions.
 
 `PublicArmy.format` is derived with `pickedArmyFormat()`, because the server never decodes a code
-— it has no army catalogs loaded — so the format has to travel explicitly in the payload.
+— it has no army catalogs loaded — so the format has to travel explicitly in the payload. The same
+absence of catalogs is why the Leader's M and INT are **declared by the client** at assignment and
+stored verbatim: the server could not compute them, and the draw count is seeded from the stored
+value rather than accepted from a request.
 
 > Gap: `pendingJoinNickname` is placed in the view for _any_ seat and only hidden by the client.
 > It should be filtered to the leader. The pending join's army is not exposed at all, so the
@@ -214,11 +216,10 @@ matching `sha256(token)` against a seat's `tokenHash` · **leader** = seat auth 
 | POST   | `/api/games/[id]/start`         | leader      | lobby → active, opening `armies`                                                                                                  |
 | POST   | `/api/games/[id]/combat-army`   | seat        | register the Standard list cut from this seat's Roster; refuses a non-Standard format and a seat that had nothing to cut          |
 | POST   | `/api/games/[id]/leader`        | seat        | assign or clear this seat's Leader, declaring its M and INT; refuses a malformed entry id or statistic                            |
-| POST   | `/api/games/[id]/reveal-intent` | seat        | toggle the reveal intent                                                                                                          |
+| POST   | `/api/games/[id]/reveal-scheme` | seat        | reveal this seat's scheme, immediately and irreversibly; refuses outside a running round or twice                                 |
 | POST   | `/api/games/[id]/objective`     | seat        | set an objective's checked count                                                                                                  |
 | POST   | `/api/games/[id]/scheme-box`    | seat        | set own scheme increments                                                                                                         |
-| POST   | `/api/games/[id]/advance-phase` | leader      | armies → prep → setup → round 1 reveal, then reveal → scoring, or scoring → next round                                            |
-| POST   | `/api/games/[id]/finish`        | leader      | finish after round-5 scoring                                                                                                      |
+| POST   | `/api/games/[id]/advance-phase` | leader      | armies → prep → setup → round 1, rounds 1–4 → next round, round 5 → concluded                                                     |
 | POST   | `/api/games/[id]/close`         | leader      | close/abandon                                                                                                                     |
 
 Error conventions: `400` malformed or unknown content ids · `401` missing/invalid token · `403`
@@ -320,7 +321,7 @@ Append-only, written inside the same transaction as the state change. Actor is `
 | `combat-army-set`                                  | `{ name }` — never the code                                                        |
 | `leader-assigned`                                  | `{ assigned }` — never the entry id, never the statistics                          |
 | `game-started`                                     | —                                                                                  |
-| `reveal-intent-toggled`                            | `{ intent }`                                                                       |
+| `scheme-revealed`                                  | — (the scheme itself is in state, filtered as ever)                                |
 | `phase-changed`                                    | `{ round, phase }`                                                                 |
 | `objective-toggled`                                | `{ objectiveId, checkedCount }` (clamped)                                          |
 | `scheme-box-toggled`                               | `{ checkedIncrements }`                                                            |
@@ -366,7 +367,8 @@ Runs once on startup (inside `getDb()`) and then every **24 h** via
 The round-5 auto-finish exists so a forgotten final click does not lose a result the KPI export
 would otherwise have had: `autoFinishStaleGame` re-checks eligibility _inside_ the mutation
 (`active` ∧ round 5 ∧ older than the cutoff, else it throws and is skipped), then runs the
-existing `advanceToScoring` → `computeRoundVp` → `finishGame` path and writes both events with
+existing `computeRoundVp` → `finishGame` path (forcing the phase to `playing` first, since a stale
+game may be stuck in any of them) and writes both events with
 `actor: 'server'` and `autoFinished: true`. It reuses the real transition functions rather than
 duplicating finish logic, so an auto-finished game is indistinguishable from a manually finished
 one apart from that flag.

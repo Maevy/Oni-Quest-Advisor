@@ -9,7 +9,6 @@ import {
 	drawSchemes as apiDrawSchemes,
 	fetchGameState,
 	fetchJoinStatus,
-	finishGame as apiFinishGame,
 	gameEventsUrl,
 	generateJoinToken,
 	OnlineApiError,
@@ -20,7 +19,7 @@ import {
 	setSchemeBoxChecked as apiSetSchemeBoxChecked,
 	startGame as apiStartGame,
 	toggleReady as apiToggleReady,
-	toggleRevealIntent as apiToggleRevealIntent,
+	revealScheme as apiRevealScheme,
 	type JoinStatus
 } from '$lib/data/onlineApi';
 import {
@@ -201,8 +200,9 @@ class OnlineGameStore {
 		await this.sendSetup((gameId, token) => apiAdvancePhase(gameId, token));
 	}
 
-	async toggleRevealIntent(): Promise<void> {
-		await this.sendSetup((gameId, token) => apiToggleRevealIntent(gameId, token));
+	/** Reveals this seat's scheme, immediately and irreversibly — the confirm lives in the UI. */
+	async revealScheme(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiRevealScheme(gameId, token));
 	}
 
 	async setObjectiveChecked(objectiveId: string, checkedCount: number): Promise<void> {
@@ -215,10 +215,6 @@ class OnlineGameStore {
 		await this.sendSetup((gameId, token) =>
 			apiSetSchemeBoxChecked(gameId, token, checkedIncrements)
 		);
-	}
-
-	async finishGame(): Promise<void> {
-		await this.sendSetup((gameId, token) => apiFinishGame(gameId, token));
 	}
 
 	/** The seat's own VP (opponent scheme VP stays hidden until revealed). */
