@@ -50,13 +50,21 @@ at creation.
   the id is not in the bundled content the card says so rather than guessing.
 - **Seat cards**: Player 1 (sky, with a **Game Leader** badge) and Player 2 (orange). Each opens
   with that player's **army** — name, faction in its colour and a **Standard**/**Roster** tag —
-  and holds their faction/scheme area below. Empty seat 2 reads **"No Player 2, invite someone"**.
-  The opponent's army **code never leaves the server**, so a seat card cannot be used to import
-  somebody else's list.
+  then a **Ready** row, then their faction/scheme area. Empty seat 2 reads **"No Player 2, invite
+  someone"**. The opponent's army **code never leaves the server**, so a seat card cannot be used
+  to import somebody else's list.
+- **Ready** (per seat, lobby only): your own row is a toggle button reading **Ready** and then
+  **Ready ✓** (`aria-pressed`), so it can be taken back. The other seat's row is a read-only chip
+  — **Ready** in emerald or **Not ready** in slate — because nobody can ready anybody else. The
+  row disappears once the game has started; readiness is spent.
 - A read-only **mission preview** follows, with every panel collapsible and its Results showing
   no boxes at all plus the note _"Objectives unlock once the game has started."_
 - **Start Game** (leader only, at the bottom) — disabled until **both** players have chosen a
-  Scheme. Player 2 sees no Start button.
+  Scheme **and both** are ready. While it is disabled a hint under it names whichever gate is
+  still missing, in the order it can be acted on: _"Waiting for a second player to join."_ →
+  _"Both players must choose a Scheme."_ → _"Press Ready once your Scheme is set."_ → _"Waiting
+  for the other player to be ready."_ Player 2 sees no Start button, only _"The game leader
+  starts the game once both players are ready."_
 - When a join request arrives, the leader gets a popup: **"{name} wants to join your game"**
   with **Accept** / **Deny**.
 
@@ -90,9 +98,15 @@ Once Player 2 is present, both seats' scheme areas unlock. Each player, independ
 Draw counts follow the standard brackets (≤ 13 → 2, 14–15 → 3, ≥ 16 → 4); see
 [04-schemes-panel.md](./04-schemes-panel.md).
 
+Choosing a card and pressing **Ready** are separate acts: the Scheme is what the seat scores with,
+readiness is its word that it is set to begin. Start Game needs **both from both seats**, so a
+player who has chosen but not readied leaves the leader's button locked — and the hint under it
+names that.
+
 **What the opponent sees during setup:** their **faction only**, plus **"Hidden Scheme"** once a
 card is chosen (or **"No schemes"** before that). Neither the drawn hand nor the chosen card is
-transmitted.
+transmitted. Readiness **is** public — the leader's Start Game is gated on it, so hiding it would
+leave the button locked for no reason either player can see.
 
 ## Playing: rounds and phases
 

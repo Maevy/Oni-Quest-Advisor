@@ -74,6 +74,8 @@ each `src/lib/` folder.
   stores. A seat's view of the game is filtered: the opponent's unrevealed Scheme never reaches
   it.
 - **Leader** — the player who created the game. Alone may advance phases, finish and close it.
+- **Ready** — a seat's lobby readiness, toggled by its own player and public to both, because the
+  leader's Start Game is gated on it. Start needs both seats ready **and** both Schemes chosen.
 - **Phase** — within an active game, each round is `reveal` then `scoring`. Objectives and scheme
   boxes are editable **only** during Scoring.
 - **Round snapshot** — each player's cumulative VP recorded at every round end; feeds the

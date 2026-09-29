@@ -4,12 +4,14 @@ import type { PickedArmy } from './savedArmy';
 import {
 	acceptJoin,
 	advanceToScoring,
+	bothReady,
 	bothSchemesRevealed,
 	canChooseSeatScheme,
 	canDrawSchemes,
 	canRequestJoin,
 	canScoreSeatScheme,
 	canStartGame,
+	canToggleReady,
 	chooseSeatScheme,
 	clearSeatScheme,
 	closeGame,
@@ -26,6 +28,7 @@ import {
 	setSeatSchemeChecked,
 	snapshotAndProceed,
 	startGame,
+	toggleReady,
 	toggleRevealIntent,
 	toPublicSeat,
 	viewForSeat,
@@ -64,6 +67,11 @@ function lobbyWithBothPlayers(): OnlineGameState {
 	return state;
 }
 
+/** Both seats pressed Ready, which is half of what Start Game asks for. */
+function readyUp(state: OnlineGameState): OnlineGameState {
+	return toggleReady(toggleReady(state, 'player1'), 'player2');
+}
+
 function draftAndChooseScheme(
 	state: OnlineGameState,
 	seat: 'player1' | 'player2'
@@ -78,7 +86,7 @@ function activeScoringGame(): OnlineGameState {
 	let state = lobbyWithBothPlayers();
 	state = draftAndChooseScheme(state, 'player1');
 	state = draftAndChooseScheme(state, 'player2');
-	state = startGame(state);
+	state = startGame(readyUp(state));
 	state = advanceToScoring(state);
 	return state;
 }
@@ -88,7 +96,7 @@ function revealedScoringGame(): OnlineGameState {
 	let state = lobbyWithBothPlayers();
 	state = draftAndChooseScheme(state, 'player1');
 	state = draftAndChooseScheme(state, 'player2');
-	state = startGame(state);
+	state = startGame(readyUp(state));
 	state = toggleRevealIntent(state, 'player1');
 	state = toggleRevealIntent(state, 'player2');
 	state = advanceToScoring(state);
@@ -251,7 +259,7 @@ describe('scheme setup', () => {
 		let state = lobbyWithBothPlayers();
 		state = draftAndChooseScheme(state, 'player1');
 		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(state);
+		state = startGame(readyUp(state));
 		state = setSeatDraft(state, 'player1', { intelligence: 16 });
 		expect(state.player1.progress.schemeDraft.intelligence).toBe(14);
 		state = clearSeatScheme(state, 'player2');
@@ -259,18 +267,73 @@ describe('scheme setup', () => {
 	});
 });
 
+describe('readiness', () => {
+	it('starts false on both seats', () => {
+		const state = lobbyWithBothPlayers();
+		expect(state.player1.ready).toBe(false);
+		expect(state.player2?.ready).toBe(false);
+		expect(bothReady(state)).toBe(false);
+	});
+
+	it('toggles per seat, so one seat cannot ready the other', () => {
+		let state = lobbyWithBothPlayers();
+		state = toggleReady(state, 'player1');
+		expect(state.player1.ready).toBe(true);
+		expect(state.player2?.ready, 'seat 2 is untouched').toBe(false);
+		expect(bothReady(state)).toBe(false);
+		state = toggleReady(state, 'player2');
+		expect(bothReady(state)).toBe(true);
+		state = toggleReady(state, 'player2');
+		expect(bothReady(state), 'ready is a toggle, not a latch').toBe(false);
+	});
+
+	it('is a lobby-only signal', () => {
+		let state = lobbyWithBothPlayers();
+		state = draftAndChooseScheme(state, 'player1');
+		state = draftAndChooseScheme(state, 'player2');
+		expect(canToggleReady(state, 'player2')).toBe(true);
+		state = startGame(readyUp(state));
+		expect(state.status).toBe('active');
+		expect(canToggleReady(state, 'player1')).toBe(false);
+		expect(toggleReady(state, 'player1')).toBe(state);
+	});
+
+	it('cannot be toggled for an empty seat', () => {
+		const state = newGame();
+		expect(canToggleReady(state, 'player2')).toBe(false);
+		expect(toggleReady(state, 'player2')).toBe(state);
+	});
+
+	it('survives into the public seat view', () => {
+		let state = lobbyWithBothPlayers();
+		expect(toPublicSeat(state.player2!).ready).toBe(false);
+		state = toggleReady(state, 'player2');
+		expect(toPublicSeat(state.player2!).ready).toBe(true);
+	});
+});
+
 describe('startGame', () => {
-	it('requires a mission and both schemes', () => {
+	it('requires a mission, both schemes and both seats ready', () => {
 		let state = lobbyWithBothPlayers();
 		expect(canStartGame(state)).toBe(false);
 		state = draftAndChooseScheme(state, 'player1');
-		expect(canStartGame(state)).toBe(false);
 		state = draftAndChooseScheme(state, 'player2');
+		expect(canStartGame(state), 'schemes alone do not start the game').toBe(false);
+		state = toggleReady(state, 'player1');
+		expect(canStartGame(state), 'one seat ready is not enough').toBe(false);
+		state = toggleReady(state, 'player2');
 		expect(canStartGame(state)).toBe(true);
 		state = startGame(state);
 		expect(state.status).toBe('active');
 		expect(state.currentRound).toBe(MIN_ROUND);
 		expect(state.phase).toBe('reveal');
+	});
+
+	it('refuses when a scheme is missing even though both seats are ready', () => {
+		const state = readyUp(lobbyWithBothPlayers());
+		expect(bothReady(state)).toBe(true);
+		expect(canStartGame(state)).toBe(false);
+		expect(startGame(state)).toBe(state);
 	});
 });
 
@@ -280,7 +343,7 @@ describe('reveal intent and advanceToScoring', () => {
 		state = draftAndChooseScheme(state, 'player1');
 		state = draftAndChooseScheme(state, 'player2');
 		expect(toggleRevealIntent(state, 'player1'), 'lobby is not reveal phase').toBe(state);
-		state = startGame(state);
+		state = startGame(readyUp(state));
 		expect(toggleRevealIntent(state, 'player1').player1.revealIntent).toBe(true);
 		expect(
 			toggleRevealIntent(toggleRevealIntent(state, 'player1'), 'player1').player1.revealIntent
@@ -291,7 +354,7 @@ describe('reveal intent and advanceToScoring', () => {
 		let state = lobbyWithBothPlayers();
 		state = draftAndChooseScheme(state, 'player1');
 		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(state);
+		state = startGame(readyUp(state));
 		state = toggleRevealIntent(state, 'player1');
 		state = advanceToScoring(state);
 		expect(state.phase).toBe('scoring');
@@ -306,7 +369,7 @@ describe('scoring phase actions', () => {
 		let state = lobbyWithBothPlayers();
 		state = draftAndChooseScheme(state, 'player1');
 		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(state);
+		state = startGame(readyUp(state));
 		expect(
 			setSeatObjectiveChecked(state, 'player1', 'obj', 1, 1),
 			'reveal phase freezes objectives'
@@ -443,7 +506,7 @@ describe('visibility', () => {
 		let state = lobbyWithBothPlayers();
 		state = draftAndChooseScheme(state, 'player1');
 		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(state);
+		state = startGame(readyUp(state));
 		state = toggleRevealIntent(state, 'player1');
 		state = advanceToScoring(state);
 		const view = toPublicSeat(state.player1);

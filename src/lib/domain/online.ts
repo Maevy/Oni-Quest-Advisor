@@ -16,6 +16,8 @@ export type OnlineSeatState = {
 	tokenHash: string;
 	/** The army the player registered with; its code is this seat's secret. */
 	army: PickedArmy;
+	/** Lobby readiness: this player says they are set to start. Toggled by its own seat only. */
+	ready: boolean;
 	progress: SeatProgress;
 	/** Toggleable intent during a Reveal phase — committed when the leader advances to Scoring. */
 	revealIntent: boolean;
@@ -71,6 +73,8 @@ export type PublicArmy = {
 export type PublicSeatState = {
 	nickname: string;
 	army: PublicArmy;
+	/** Lobby readiness — public, since the leader's Start Game is gated on both seats. */
+	ready: boolean;
 	factionId: string | null;
 	hasScheme: boolean;
 	schemeRevealed: boolean;
@@ -108,6 +112,7 @@ export type OnlineGameEventType =
 	| 'schemes-drawn'
 	| 'scheme-chosen'
 	| 'scheme-deleted'
+	| 'seat-ready-toggled'
 	| 'game-started'
 	| 'reveal-intent-toggled'
 	| 'phase-changed'
@@ -142,6 +147,7 @@ export function createEmptySeat(
 		nickname,
 		tokenHash,
 		army,
+		ready: false,
 		progress: createEmptyProgress(),
 		revealIntent: false,
 		drawnSchemeIds: []
@@ -302,13 +308,39 @@ export function clearSeatScheme(state: OnlineGameState, seat: PlayerKey): Online
 	return updateSeat(state, seat, (s) => ({ ...s, progress: { ...s.progress, scheme: null } }));
 }
 
+// --- lobby: readiness ---
+
+/** Readiness is a lobby-only signal, and a seat may only flip its own. */
+export function canToggleReady(state: OnlineGameState, seat: PlayerKey): boolean {
+	return state.status === 'lobby' && state[seat] !== null;
+}
+
+export function toggleReady(state: OnlineGameState, seat: PlayerKey): OnlineGameState {
+	if (!canToggleReady(state, seat)) return state;
+	return updateSeat(state, seat, (s) => ({ ...s, ready: !s.ready }));
+}
+
+/** Both seats say they are set to start. */
+export function bothReady(state: OnlineGameState): boolean {
+	return state.player1.ready && state.player2 !== null && state.player2.ready;
+}
+
+/** Both seats have committed a Scheme. */
+export function bothSchemesChosen(state: OnlineGameState): boolean {
+	return (
+		state.player1.progress.scheme !== null &&
+		state.player2 !== null &&
+		state.player2.progress.scheme !== null
+	);
+}
+
 export function canStartGame(state: OnlineGameState): boolean {
 	return (
 		state.status === 'lobby' &&
 		state.missionId !== null &&
 		state.player2 !== null &&
-		state.player1.progress.scheme !== null &&
-		state.player2.progress.scheme !== null
+		bothSchemesChosen(state) &&
+		bothReady(state)
 	);
 }
 
@@ -459,6 +491,7 @@ export function toPublicSeat(seat: OnlineSeatState): PublicSeatState {
 			factionId: seat.army.factionId,
 			format: pickedArmyFormat(seat.army)
 		},
+		ready: seat.ready,
 		factionId: progress.scheme?.factionId ?? progress.schemeDraft.factionId,
 		hasScheme: progress.scheme !== null,
 		schemeRevealed: progress.schemeRevealed,

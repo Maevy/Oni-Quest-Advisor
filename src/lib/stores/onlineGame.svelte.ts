@@ -18,6 +18,7 @@ import {
 	setObjectiveChecked as apiSetObjectiveChecked,
 	setSchemeBoxChecked as apiSetSchemeBoxChecked,
 	startGame as apiStartGame,
+	toggleReady as apiToggleReady,
 	toggleRevealIntent as apiToggleRevealIntent,
 	type JoinStatus
 } from '$lib/data/onlineApi';
@@ -164,6 +165,11 @@ class OnlineGameStore {
 
 	async deleteScheme(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiDeleteScheme(gameId, token));
+	}
+
+	/** Flips this seat's lobby readiness; the leader's Start Game needs both seats ready. */
+	async toggleReady(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiToggleReady(gameId, token));
 	}
 
 	async startGame(): Promise<void> {

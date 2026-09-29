@@ -694,6 +694,7 @@
 			onDrawSchemes={() => onlineGameStore.drawSchemes()}
 			onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
 			onDeleteScheme={() => onlineGameStore.deleteScheme()}
+			onToggleReady={() => onlineGameStore.toggleReady()}
 			onStartGame={() => onlineGameStore.startGame()}
 		/>
 	{/if}

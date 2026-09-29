@@ -137,6 +137,14 @@ export async function deleteScheme(gameId: string, token: string): Promise<void>
 	await parse<Record<string, never>>(response);
 }
 
+export async function toggleReady(gameId: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/ready`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
 export async function startGame(gameId: string, token: string): Promise<void> {
 	const response = await fetch(`${BASE}/${gameId}/start`, {
 		method: 'POST',

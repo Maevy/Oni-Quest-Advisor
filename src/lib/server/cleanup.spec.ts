@@ -17,6 +17,7 @@ import {
 	setSeatObjectiveChecked,
 	snapshotAndProceed,
 	startGame,
+	toggleReady,
 	toggleRevealIntent,
 	type PickedArmy
 } from '$lib/domain';
@@ -93,6 +94,7 @@ async function insertJourneyGame(journey: Journey): Promise<string> {
 		state = setSeatDraft(state, seat, { factionId: 'helian-league', intelligence: 14 });
 		state = setSeatDrawnSchemes(state, seat, [SCHEME_ID]);
 		state = chooseSeatScheme(state, seat, SCHEME_ID);
+		state = toggleReady(state, seat);
 	}
 	state = startGame(state);
 	for (let round = 0; round < journey.roundsAdvanced; round++) {

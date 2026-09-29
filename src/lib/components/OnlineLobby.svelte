@@ -36,6 +36,7 @@
 		onDrawSchemes: () => void;
 		onChooseScheme: (schemeId: string) => void;
 		onDeleteScheme: () => void;
+		onToggleReady: () => Promise<void>;
 		onStartGame: () => void;
 	};
 
@@ -58,6 +59,7 @@
 		onDrawSchemes,
 		onChooseScheme,
 		onDeleteScheme,
+		onToggleReady,
 		onStartGame
 	}: Props = $props();
 
@@ -79,6 +81,8 @@
 
 	let p1Army = $derived(view.seat === 'player1' ? ownArmy(view.self) : (opponent?.army ?? null));
 	let p2Army = $derived(view.seat === 'player2' ? ownArmy(view.self) : (opponent?.army ?? null));
+	let p1Ready = $derived(view.seat === 'player1' ? view.self.ready : (opponent?.ready ?? false));
+	let p2Ready = $derived(view.seat === 'player2' ? view.self.ready : (opponent?.ready ?? false));
 
 	let drawnCards = $derived(
 		view.self.drawnSchemeIds
@@ -96,12 +100,35 @@
 		return factions.find((faction) => faction.id === publicSeat.factionId)?.name ?? null;
 	}
 
+	let bothSchemes = $derived(
+		view.self.progress.scheme !== null && (view.opponent?.hasScheme ?? false)
+	);
 	let canStart = $derived(
 		view.status === 'lobby' &&
 			view.missionId !== null &&
-			view.self.progress.scheme !== null &&
-			(view.opponent?.hasScheme ?? false)
+			view.opponent !== null &&
+			bothSchemes &&
+			view.self.ready &&
+			(view.opponent?.ready ?? false)
 	);
+
+	/** Names whichever half of the start gate is still missing, in the order it can be acted on. */
+	let startHint = $derived.by(() => {
+		if (view.opponent === null) return 'Waiting for a second player to join.';
+		if (!bothSchemes) return 'Both players must choose a Scheme.';
+		if (!view.self.ready) return 'Press Ready once your Scheme is set.';
+		return 'Waiting for the other player to be ready.';
+	});
+
+	async function handleToggleReady() {
+		if (acting) return;
+		acting = true;
+		try {
+			await onToggleReady();
+		} finally {
+			acting = false;
+		}
+	}
 
 	async function copyInvite() {
 		try {
@@ -144,6 +171,35 @@
 		}
 	}
 </script>
+
+{#snippet readyRow(own: boolean, ready: boolean)}
+	<div class="mt-2 flex items-center justify-between gap-2">
+		<span class="text-xs font-semibold tracking-wide text-slate-400 uppercase">Ready</span>
+		{#if own}
+			<button
+				type="button"
+				aria-pressed={ready}
+				disabled={acting}
+				class={'rounded-lg border-2 px-4 py-1.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ' +
+					(ready
+						? 'border-emerald-400 bg-emerald-400/20 text-emerald-200'
+						: 'border-emerald-500/50 bg-slate-900/60 text-emerald-100 enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20')}
+				onclick={handleToggleReady}
+			>
+				{ready ? 'Ready ✓' : 'Ready'}
+			</button>
+		{:else}
+			<span
+				class={'rounded-lg border px-4 py-1.5 text-sm font-semibold ' +
+					(ready
+						? 'border-emerald-400/60 bg-emerald-400/15 text-emerald-200'
+						: 'border-slate-600/50 bg-slate-900/60 text-slate-400')}
+			>
+				{ready ? 'Ready' : 'Not ready'}
+			</span>
+		{/if}
+	</div>
+{/snippet}
 
 <div class="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-3 px-4 py-4">
 	{#if isLeader && (view.status === 'lobby' || view.status === 'active')}
@@ -261,6 +317,9 @@
 					<ArmyBadge {...p1Army} factions={armyFactions} />
 				</div>
 			{/if}
+			{#if view.status === 'lobby'}
+				{@render readyRow(view.seat === 'player1', p1Ready)}
+			{/if}
 			<div class="mt-3">
 				{#if view.seat === 'player1'}
 					{#if view.status === 'lobby' && setupUnlocked}
@@ -318,6 +377,9 @@
 						<ArmyBadge {...p2Army} factions={armyFactions} />
 					</div>
 				{/if}
+				{#if view.status === 'lobby'}
+					{@render readyRow(true, p2Ready)}
+				{/if}
 				<div class="mt-3">
 					{#if view.status === 'lobby' && setupUnlocked}
 						<OnlineSchemeSetup
@@ -347,6 +409,9 @@
 					<div class="mt-3">
 						<ArmyBadge {...p2Army} factions={armyFactions} />
 					</div>
+				{/if}
+				{#if view.status === 'lobby'}
+					{@render readyRow(false, p2Ready)}
 				{/if}
 				<div class="mt-3">
 					<p class="text-sm text-slate-300">Faction: {factionName(opponent) ?? '—'}</p>
@@ -379,15 +444,24 @@
 			<p class="text-center text-xs text-slate-500">Round controls arrive in the next update.</p>
 		{/if}
 
-		{#if view.status === 'lobby' && isLeader}
-			<button
-				type="button"
-				disabled={!canStart}
-				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-				onclick={onStartGame}
-			>
-				Start Game
-			</button>
+		{#if view.status === 'lobby'}
+			{#if isLeader}
+				<button
+					type="button"
+					disabled={!canStart}
+					class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+					onclick={onStartGame}
+				>
+					Start Game
+				</button>
+				{#if !canStart && startHint}
+					<p class="-mt-1 text-center text-xs text-slate-400">{startHint}</p>
+				{/if}
+			{:else}
+				<p class="text-center text-xs text-slate-400">
+					The game leader starts the game once both players are ready.
+				</p>
+			{/if}
 		{/if}
 	{/if}
 </div>

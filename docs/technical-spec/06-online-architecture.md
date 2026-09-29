@@ -54,6 +54,7 @@ createdAt, updatedAt
 ```
 nickname, tokenHash,
 army: PickedArmy,
+ready: boolean,
 progress: { checkedObjectiveCounts, scheme, schemeDraft, schemeRevealed },
 revealIntent: boolean,
 drawnSchemeIds: string[]
@@ -72,6 +73,10 @@ client resolves the id against the bundled content and must tolerate a mission t
 format? }`) supplied by the create/join payload. The code is that seat's secret and is only ever
 echoed back to its owner.
 
+`ready` is the seat's lobby readiness, toggled by its own seat only and meaningful only while
+`status === 'lobby'`. It is public in the filtered view because `canStartGame` is gated on it —
+hiding it would leave the leader's Start Game locked for a reason no client could name.
+
 Note that a seat's `progress` is the **same `SeatProgress` type hot-seat uses**, which is why
 `calculateTwoPlayerVP` is shared by both modes. The army is _not_ part of that shared type —
 hot-seat keeps its `pickedArmy` and live `vitality` on `PlayerProgress`, locally, while an online
@@ -83,24 +88,29 @@ Every transition is a pure function with a `can*` guard. Guards return booleans;
 functions are total (they return the state unchanged when the guard fails), and the endpoints
 turn a failed guard into `409`.
 
-| Function                                                   | Guard                                                                      | Side effects                                                                                              |
-| ---------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `createOnlineGame`                                         | —                                                                          | `lobby`, seat 1 filled with its army, season + mission set, round 1, phase `reveal`                       |
-| `requestJoin`                                              | `lobby` ∧ no seat 2 ∧ no pending                                           | sets `pendingJoin` (name, token hash **and army**)                                                        |
-| `acceptJoin`                                               | `lobby` ∧ no seat 2 ∧ pending exists                                       | seat 2 filled from pending, army included; `pendingJoin` cleared                                          |
-| `denyJoin`                                                 | pending exists                                                             | `pendingJoin` cleared                                                                                     |
-| `setSeatDraft` / `setSeatDrawnSchemes` / `clearSeatScheme` | `canEditSetup`: `lobby` ∧ seat 2 present                                   | edits that seat                                                                                           |
-| `chooseSeatScheme`                                         | `canEditSetup` ∧ draft complete ∧ `schemeId ∈ drawnSchemeIds`              | sets `scheme`, **clears the hand**                                                                        |
-| `startGame`                                                | `canStartGame`: `lobby` ∧ mission ∧ seat 2 ∧ both schemes chosen           | `active`, round 1, `reveal`                                                                               |
-| `toggleRevealIntent`                                       | `active` ∧ `reveal` ∧ seat has a scheme                                    | flips `revealIntent`                                                                                      |
-| `advanceToScoring`                                         | `active` ∧ `reveal`                                                        | every seat with scheme ∧ intent → `schemeRevealed = true`; all intents cleared; phase `scoring`           |
-| `setSeatObjectiveChecked`                                  | `active` ∧ `scoring`                                                       | own seat only, count clamped to `0..maxCount`                                                             |
-| `setSeatSchemeChecked`                                     | `canScoreSeatScheme`: `active` ∧ `scoring` ∧ scheme ∧ **`schemeRevealed`** | own `checkedIncrements`, clamped                                                                          |
-| `snapshotAndProceed`                                       | `active` ∧ `scoring` ∧ round < 5                                           | writes the round snapshot; round + 1; phase `reveal`, or `scoring` when both schemes are already revealed |
-| `finishGame`                                               | `active` ∧ `scoring` ∧ round = 5                                           | snapshot round 5; **auto-reveal all**; compute winner; write `resultSummary`; `finished`                  |
-| `closeGame`                                                | not `finished` ∧ not `closed`                                              | `closed`                                                                                                  |
+| Function                                                   | Guard                                                                          | Side effects                                                                                              |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `createOnlineGame`                                         | —                                                                              | `lobby`, seat 1 filled with its army, season + mission set, round 1, phase `reveal`                       |
+| `requestJoin`                                              | `lobby` ∧ no seat 2 ∧ no pending                                               | sets `pendingJoin` (name, token hash **and army**)                                                        |
+| `acceptJoin`                                               | `lobby` ∧ no seat 2 ∧ pending exists                                           | seat 2 filled from pending, army included; `pendingJoin` cleared                                          |
+| `denyJoin`                                                 | pending exists                                                                 | `pendingJoin` cleared                                                                                     |
+| `setSeatDraft` / `setSeatDrawnSchemes` / `clearSeatScheme` | `canEditSetup`: `lobby` ∧ seat 2 present                                       | edits that seat                                                                                           |
+| `chooseSeatScheme`                                         | `canEditSetup` ∧ draft complete ∧ `schemeId ∈ drawnSchemeIds`                  | sets `scheme`, **clears the hand**                                                                        |
+| `toggleReady`                                              | `canToggleReady`: `lobby` ∧ that seat is filled                                | flips that seat's `ready`; a seat can only flip its own                                                   |
+| `startGame`                                                | `canStartGame`: `lobby` ∧ mission ∧ seat 2 ∧ `bothSchemesChosen` ∧ `bothReady` | `active`, round 1, `reveal`                                                                               |
+| `toggleRevealIntent`                                       | `active` ∧ `reveal` ∧ seat has a scheme                                        | flips `revealIntent`                                                                                      |
+| `advanceToScoring`                                         | `active` ∧ `reveal`                                                            | every seat with scheme ∧ intent → `schemeRevealed = true`; all intents cleared; phase `scoring`           |
+| `setSeatObjectiveChecked`                                  | `active` ∧ `scoring`                                                           | own seat only, count clamped to `0..maxCount`                                                             |
+| `setSeatSchemeChecked`                                     | `canScoreSeatScheme`: `active` ∧ `scoring` ∧ scheme ∧ **`schemeRevealed`**     | own `checkedIncrements`, clamped                                                                          |
+| `snapshotAndProceed`                                       | `active` ∧ `scoring` ∧ round < 5                                               | writes the round snapshot; round + 1; phase `reveal`, or `scoring` when both schemes are already revealed |
+| `finishGame`                                               | `active` ∧ `scoring` ∧ round = 5                                               | snapshot round 5; **auto-reveal all**; compute winner; write `resultSummary`; `finished`                  |
+| `closeGame`                                                | not `finished` ∧ not `closed`                                                  | `closed`                                                                                                  |
 
 There is no `selectMission` transition: the mission arrives with the creation and cannot change.
+
+`bothSchemesChosen` and `bothReady` are separate named predicates because the client needs to say
+which of the two the leader is still waiting for — the lobby renders a hint naming the missing
+half. `bothReady` is false while seat 2 is empty, which is what keeps a lone leader from starting.
 
 **The reveal gate on scoring is enforced twice**: by `canScoreSeatScheme` in the domain and by an
 explicit check in the `/scheme-box` endpoint. `calculateTwoPlayerVP` itself does _not_ check
@@ -113,7 +123,7 @@ not itself the gate.
 returned **in full**, secrets included. The opponent goes through `toPublicSeat`, which exposes
 only:
 
-`nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `factionId`
+`nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `ready`, `factionId`
 (= `scheme?.factionId ?? schemeDraft.factionId`), `hasScheme`, `schemeRevealed`,
 `revealedScheme` (**null unless the scheme is both chosen and revealed**),
 `checkedObjectiveCounts`.
@@ -156,6 +166,7 @@ matching `sha256(token)` against a seat's `tokenHash` · **leader** = seat auth 
 | POST   | `/api/games/[id]/draw`          | seat        | server-side scheme draw                                                                                                           |
 | POST   | `/api/games/[id]/choose-scheme` | seat        | commit a chosen scheme                                                                                                            |
 | POST   | `/api/games/[id]/delete-scheme` | seat        | clear the chosen scheme                                                                                                           |
+| POST   | `/api/games/[id]/ready`         | seat        | toggle this seat's lobby readiness                                                                                                |
 | POST   | `/api/games/[id]/start`         | leader      | lobby → active                                                                                                                    |
 | POST   | `/api/games/[id]/reveal-intent` | seat        | toggle the reveal intent                                                                                                          |
 | POST   | `/api/games/[id]/objective`     | seat        | set an objective's checked count                                                                                                  |
@@ -260,6 +271,7 @@ Append-only, written inside the same transaction as the state change. Actor is `
 | `schemes-drawn`                                    | `{ count }` — the hand itself stays in state and is private                        |
 | `scheme-chosen`                                    | `{ schemeId }`                                                                     |
 | `scheme-deleted`                                   | —                                                                                  |
+| `seat-ready-toggled`                               | `{ ready }` — the seat's own new value                                             |
 | `game-started`                                     | —                                                                                  |
 | `reveal-intent-toggled`                            | `{ intent }`                                                                       |
 | `phase-changed`                                    | `{ round, phase }`                                                                 |
