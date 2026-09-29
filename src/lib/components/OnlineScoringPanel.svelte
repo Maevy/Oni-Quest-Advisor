@@ -47,46 +47,49 @@
 	let increments = $derived(scheme?.checkedIncrements ?? 0);
 </script>
 
-<!-- The running total lives in the score bar above the views, so this panel only says who the
-     seat is — which is what a player scrolling four panes actually needs to know. -->
-<Panel title="{PLAYER_SEATS[seat].label} Scoring" titleClass={accent.text}>
-	<p class="text-sm text-slate-100">{nickname} is {PLAYER_SEATS[seat].label}</p>
-</Panel>
+<!-- The heading *is* the panel: on a four-pane swipeable strip the question this pane answers is
+     whose sheet it is, and the running total already sits in the score bar above the views. -->
+<Panel title="{nickname} is {PLAYER_SEATS[seat].label}" titleClass={accent.text} centered />
 
 <Panel title="Scheme Results" titleClass={accent.text}>
-	{#if !hasScheme}
-		<p class="text-sm text-slate-200 italic">No scheme chosen.</p>
-	{:else if !revealed}
-		{#if isOwn}
+	<div class="rounded-xl border border-slate-700/50 bg-slate-900/50 p-3">
+		{#if !hasScheme}
+			<p class="text-sm text-slate-200 italic">No scheme chosen.</p>
+		{:else if !revealed}
+			{#if isOwn}
+				<h3 class="font-semibold text-slate-100">{schemeCard?.title ?? ''}</h3>
+				<p class="mt-1 text-sm text-slate-100">{schemeCard?.ruleText ?? ''}</p>
+				<button
+					type="button"
+					class="mt-2 rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20"
+					onclick={onReveal}
+				>
+					Reveal
+				</button>
+				<div class="mt-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2">
+					<p class="text-xs font-semibold tracking-wide text-amber-300 uppercase">Important</p>
+					<p class="mt-1 text-sm text-amber-100/90">
+						Revealing shows this scheme to your opponent, permanently, and unlocks its boxes.
+					</p>
+				</div>
+			{:else}
+				<p class="text-sm text-slate-200 italic">Hidden Scheme</p>
+			{/if}
+		{:else}
 			<h3 class="font-semibold text-slate-100">{schemeCard?.title ?? ''}</h3>
 			<p class="mt-1 text-sm text-slate-100">{schemeCard?.ruleText ?? ''}</p>
-			<button
-				type="button"
-				class="mt-2 rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20"
-				onclick={onReveal}
-			>
-				Reveal
-			</button>
-			<p class="mt-1 text-xs text-slate-200">
-				Revealing shows this scheme to your opponent, permanently, and unlocks its boxes.
-			</p>
-		{:else}
-			<p class="text-sm text-slate-200 italic">Hidden Scheme</p>
+			{#if schemeCard}
+				<div class="mt-2">
+					<IncrementBoxes
+						count={schemeCard.maxIncrements}
+						checkedCount={increments}
+						disabled={!editable}
+						onSetChecked={onSetSchemeChecked}
+					/>
+				</div>
+			{/if}
 		{/if}
-	{:else}
-		<h3 class="font-semibold text-slate-100">{schemeCard?.title ?? ''}</h3>
-		<p class="mt-1 text-sm text-slate-100">{schemeCard?.ruleText ?? ''}</p>
-		{#if schemeCard}
-			<div class="mt-2">
-				<IncrementBoxes
-					count={schemeCard.maxIncrements}
-					checkedCount={increments}
-					disabled={!editable}
-					onSetChecked={onSetSchemeChecked}
-				/>
-			</div>
-		{/if}
-	{/if}
+	</div>
 </Panel>
 
 <ResultsPanel {entries} {important} checkedObjectiveCounts={checked} {editable} {onSetChecked} />

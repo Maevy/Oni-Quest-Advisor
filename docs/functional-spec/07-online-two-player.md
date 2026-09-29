@@ -189,12 +189,15 @@ One view per seat, labelled by seat and coloured by it. Your own is editable; th
 read-only — its boxes inert, its scheme _"Hidden Scheme"_ until revealed. Each view is three
 panels, top to bottom:
 
-- **{seat} Scoring** — one line, _"{name} is Player 1"_. No total: the running VP for both seats
-  is already in the score bar above the views, and repeating it here would only invite the two to
-  disagree.
-- **Scheme Results** — the seat's scheme: the card and, while hidden, a **Reveal** button on your
-  own view (the opponent's hidden scheme shows nothing but the label); once revealed, the card
-  with its increment boxes, editable only on your own view.
+- **{seat} Scoring** — the heading _is_ the panel: _"{name} is Player 1"_, centred and in the
+  seat's colour, with nothing beneath it. No total: the running VP for both seats is already in
+  the score bar above the views, and repeating it here would only invite the two to disagree.
+- **Scheme Results** — the seat's scheme, wrapped in its own inner box so the card reads as one
+  object: the card and, while hidden, a **Reveal** button on your own view plus an amber
+  **Important** note — _"Revealing shows this scheme to your opponent, permanently, and unlocks
+  its boxes."_ — in the same style as the mission's important callouts; the opponent's hidden
+  scheme shows nothing but the label. Once revealed, the card with its increment boxes, editable
+  only on your own view.
 - **Results** — the grouped per-round cards, editable only on your own view.
 
 Objective counts are cumulative across rounds — nothing is discarded when a round ends.

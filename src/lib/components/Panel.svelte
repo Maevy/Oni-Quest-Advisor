@@ -15,10 +15,15 @@
 		 * (the roadmap's grey dots), where readability beats the glass.
 		 */
 		tone?: 'frosted' | 'dark';
-		children: Snippet;
+		children?: Snippet;
 		/** Online mission screens get crowded on phones — collapsible panels free up space. */
 		collapsible?: boolean;
 		defaultOpen?: boolean;
+		/**
+		 * Centres the heading and drops its bottom margin: for a panel whose heading *is* the
+		 * content, like a scoring view saying whose sheet it is.
+		 */
+		centered?: boolean;
 	};
 
 	let {
@@ -27,7 +32,8 @@
 		tone = 'frosted',
 		children,
 		collapsible = false,
-		defaultOpen = true
+		defaultOpen = true,
+		centered = false
 	}: Props = $props();
 
 	// Initial value only — later prop changes shouldn't override the user's toggle.
@@ -51,10 +57,16 @@
 				<span aria-hidden="true" class="text-slate-200">{open ? '▾' : '▸'}</span>
 			</button>
 		{:else}
-			<h2 class="mb-3 text-sm font-semibold tracking-wide uppercase {titleClass}">{title}</h2>
+			<h2
+				class="text-sm font-semibold tracking-wide uppercase {titleClass} {centered
+					? 'text-center'
+					: 'mb-3'}"
+			>
+				{title}
+			</h2>
 		{/if}
 	{/if}
-	{#if open}
+	{#if open && children}
 		{@render children()}
 	{/if}
 </section>
