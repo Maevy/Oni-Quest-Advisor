@@ -2,6 +2,7 @@
 	import { pickedArmyFormat } from '$lib/domain';
 	import type {
 		ArmyFactionConfig,
+		ArmyRosterRow,
 		ArmyView,
 		OnlineGameView,
 		PickedArmy,
@@ -21,8 +22,11 @@
 		armyFactions: ArmyFactionConfig[];
 		/** Resolved rosters per seat; the reveal already happened, so both are browsable here. */
 		rosterViews: Record<PlayerKey, ArmyView | null>;
+		/** This seat's own combat army resolved into rows, for the Leader choice. */
+		combatView: ArmyView | null;
 		/** Opens the borrowed army builder on this seat's registered Roster army. */
 		onCutArmy: () => void;
+		onSetLeader: (row: ArmyRosterRow) => void;
 		onAdvance: () => Promise<void>;
 		onCloseGame: () => Promise<void>;
 	};
@@ -34,7 +38,9 @@
 		missionName,
 		armyFactions,
 		rosterViews,
+		combatView,
 		onCutArmy,
+		onSetLeader,
 		onAdvance,
 		onCloseGame
 	}: Props = $props();
@@ -181,6 +187,37 @@
 					{:else}
 						<p class="text-xs text-slate-200">
 							Your registered army is already a legal match list.
+						</p>
+					{/if}
+					{#if panel.ready && combatView}
+						<h3 class="pt-1 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+							Your Leader
+						</h3>
+						<div class="flex flex-col gap-1.5">
+							{#each combatView.rows as row (row.entryId)}
+								{@const chosen = view.self.leader?.entryId === row.entryId}
+								<button
+									type="button"
+									aria-pressed={chosen}
+									disabled={acting}
+									class={'flex items-center justify-between gap-2 rounded-xl border-2 px-3 py-2 text-left text-sm transition disabled:cursor-not-allowed disabled:opacity-50 ' +
+										(chosen
+											? 'border-emerald-400 bg-emerald-400/15 text-emerald-100'
+											: 'border-slate-600/60 bg-slate-900/60 text-slate-100 enabled:hover:bg-slate-800/60')}
+									onclick={() => onSetLeader(row)}
+								>
+									<span class="min-w-0 truncate font-semibold">
+										{row.name}{row.mounted ? ' (mounted)' : ''}
+									</span>
+									<span class="shrink-0 text-xs text-slate-200 tabular-nums">
+										M {row.effectiveStats.M ?? '—'} · INT {row.effectiveStats.INT ?? '—'}
+									</span>
+								</button>
+							{/each}
+						</div>
+						<p class="text-xs text-slate-200">
+							Only your Leader may use Stratagems. The M and INT shown here become visible to your
+							opponent at Scheme selection; which model it is stays yours.
 						</p>
 					{/if}
 				{:else if !panel.ready}

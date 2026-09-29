@@ -123,6 +123,14 @@ amber.
   the registered one and an **Edit match list** button. **The cut stays editable until the table
   moves on** — leaving preparation is what makes it final.
 
+Once combat-ready, a seat assigns its **Leader** from the same screen: a **Your Leader** list of
+every copy in the match list, each row showing its name and its **M** and **INT**, chosen with a
+single tap and changeable until preparation ends. **Any** copy may be the Leader — Stratagems are
+restricted _to_ the Leader, not the Leader to Stratagem-bearers — and the list carries the rule the
+choice exists for: _"Only your Leader may use Stratagems. The M and INT shown here become visible to
+your opponent at Scheme selection; which model it is stays yours."_ Re-cutting the match list clears
+the choice, because a new list renumbers its copies and the old pointer would dangle.
+
 The opponent's panel shows the same status and never the list: a combat army's code is that seat's
 secret, exactly like the registered one's.
 
@@ -155,7 +163,10 @@ names whichever is missing. Choosing is not the same as being locked in — a pl
 re-choose while this step is open.
 
 **What the opponent sees here:** their **faction**, plus _"Choosing a Scheme…"_ until a card is
-picked. Neither the drawn hand nor the chosen card is transmitted.
+picked, and — from this step on — **their Leader's M and INT**, as _"Their Leader: M {m} · INT
+{int}"_. Which copy it is never travels; the exposure exists for the initiative roll the rulebook
+puts at step 8, and stops at the two numbers. Neither the drawn hand nor the chosen card is
+transmitted.
 
 ## Playing: rounds and phases
 
@@ -249,6 +260,8 @@ add-on:
 | Roster contents (units, pool)     | own, always         | from the reveal on            |
 | The cut match list                | own, with its code  | **only the flag**             |
 | A Standard list's contents        | own, always         | **nothing until deployment**  |
+| Leader identity                   | own                 | **nothing, ever**             |
+| Leader M and INT                  | own                 | from Scheme selection on      |
 | Combat-ready flag                 | ✓                   | ✓                             |
 | Scheme faction (from the army)    | ✓                   | ✓                             |
 | Drawn scheme hand                 | own cards           | **nothing**                   |

@@ -13,6 +13,7 @@
 		resolveArmyEntries,
 		savedArmyFormat,
 		type ArmyFormat,
+		type ArmyRosterRow,
 		type ArmyView,
 		type Mission,
 		type OpenGame,
@@ -246,6 +247,22 @@
 		player1: rosterViewFor('player1'),
 		player2: rosterViewFor('player2')
 	});
+
+	/** This seat's own match list resolved into rows: what the Leader is chosen from. */
+	let onlineCombatView = $derived.by(() =>
+		onlineGameStore.view?.self.combatArmy
+			? contentStore.armyView(onlineGameStore.view.self.combatArmy, {})
+			: null
+	);
+
+	/** Assigns the Leader, declaring the two statistics the initiative roll will need. */
+	function assignLeader(row: ArmyRosterRow): void {
+		void onlineGameStore.setLeader({
+			entryId: row.entryId,
+			m: row.effectiveStats.M,
+			int: row.effectiveStats.INT
+		});
+	}
 
 	// --- cutting a registered Roster army down to a match list ---
 	let onlineCutError = $state<string | null>(null);
@@ -743,7 +760,9 @@
 			missionName={onlineMission?.name ?? null}
 			armyFactions={contentStore.armyFactions}
 			rosterViews={onlineRosterViews}
+			combatView={onlineCombatView}
 			onCutArmy={() => void openRosterCut()}
+			onSetLeader={assignLeader}
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
 		/>
@@ -754,6 +773,7 @@
 			error={onlineGameStore.error}
 			missionName={onlineMission?.name ?? null}
 			armyFactions={contentStore.armyFactions}
+			combatView={onlineCombatView}
 			factions={contentStore.factions}
 			schemes={contentStore.schemes}
 			onSetIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}

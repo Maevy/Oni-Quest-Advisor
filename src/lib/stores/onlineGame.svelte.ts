@@ -16,6 +16,7 @@ import {
 	OnlineApiError,
 	requestJoin as apiRequestJoin,
 	setCombatArmy as apiSetCombatArmy,
+	setLeader as apiSetLeader,
 	setObjectiveChecked as apiSetObjectiveChecked,
 	setSchemeBoxChecked as apiSetSchemeBoxChecked,
 	startGame as apiStartGame,
@@ -30,7 +31,14 @@ import {
 	type OnlineSession
 } from '$lib/data/onlineSession';
 import { calculateTwoPlayerVP } from '$lib/domain';
-import type { Mission, OnlineGameSetup, OnlineGameView, PickedArmy, SchemeCard } from '$lib/domain';
+import type {
+	Mission,
+	OnlineGameSetup,
+	OnlineGameView,
+	PickedArmy,
+	SchemeCard,
+	SeatLeader
+} from '$lib/domain';
 
 /** Pending join request from the perspective of the joining phone (no seat yet). */
 type PendingJoinAttempt = { gameId: string; nickname: string; token: string };
@@ -174,6 +182,14 @@ class OnlineGameStore {
 	/** Registers the Standard list this seat fields, cut down from the Roster army it brought. */
 	async setCombatArmy(army: PickedArmy): Promise<void> {
 		await this.sendSetup((gameId, token) => apiSetCombatArmy(gameId, token, army));
+	}
+
+	/**
+	 * Assigns this seat's Leader from the match list, declaring the M and INT the initiative roll
+	 * will need. Only those two numbers are ever published, and only from Scheme selection on.
+	 */
+	async setLeader(leader: SeatLeader | null): Promise<void> {
+		await this.sendSetup((gameId, token) => apiSetLeader(gameId, token, leader));
 	}
 
 	async startGame(): Promise<void> {

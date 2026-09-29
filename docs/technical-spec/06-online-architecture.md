@@ -55,6 +55,7 @@ createdAt, updatedAt
 nickname, tokenHash,
 army: PickedArmy,
 combatArmy: PickedArmy | null,
+leader: SeatLeader | null,
 ready: boolean,
 progress: { checkedObjectiveCounts, scheme, schemeDraft, schemeRevealed },
 revealIntent: boolean,
@@ -85,6 +86,13 @@ registration when that is already Standard, and to `null` for a Roster — which
 seat "needs a match list" until `/combat-army` lands. It is editable for the whole `prep` phase, so
 a cut can be redone; `leavePrep` is what makes it final.
 
+`leader` is the copy of the combat army chosen as Leader (`SeatLeader` = `{ entryId, m, int }`),
+assigned during `prep` and cleared by any re-cut, because a new list renumbers its copies on decode
+and the old `entryId` would dangle. The two statistics are **declared by the client**: the server
+loads no army catalogs and cannot compute effective stats from a code, so this rests on the same
+"client's word" ruling as army legality. Only `m` and `int` are ever published, and only from
+`setup` on (`isLeaderStatsRevealed`); the `entryId` never leaves the seat's own view.
+
 `ready` is the seat's lobby readiness, toggled by its own seat only and meaningful only while
 `status === 'lobby'`. It is public in the filtered view because `canStartGame` is gated on it —
 hiding it would leave the leader's Start Game locked for a reason no client could name. The same
@@ -110,7 +118,8 @@ turn a failed guard into `409`.
 | `toggleReady`                                              | `canToggleReady`: `lobby` ∧ that seat is filled                            | flips that seat's `ready`; a seat can only flip its own                                                                                     |
 | `startGame`                                                | `canStartGame`: `lobby` ∧ mission ∧ seat 2 ∧ `bothReady`                   | `active`, round 1, **phase `armies`**                                                                                                       |
 | `leaveArmies`                                              | `canLeaveArmies`: `active` ∧ `armies`                                      | phase `prep`; the reveal is one-way                                                                                                         |
-| `setCombatArmy`                                            | `canSetCombatArmy`: `active` ∧ `prep` ∧ that seat registered a **Roster**  | stores the cut Standard list on that seat                                                                                                   |
+| `setCombatArmy`                                            | `canSetCombatArmy`: `active` ∧ `prep` ∧ that seat registered a **Roster**  | stores the cut Standard list on that seat, **clearing its Leader**                                                                          |
+| `setLeader`                                                | `canSetLeader`: `active` ∧ `prep` ∧ that seat has a combat army            | stores the chosen copy and its declared M/INT                                                                                               |
 | `leavePrep`                                                | `canLeavePrep`: `active` ∧ `prep` ∧ `bothCombatReady`                      | phase `setup`, **and each seat's `schemeDraft.factionId` seeded from its combat army**                                                      |
 | `setSeatDraft` / `setSeatDrawnSchemes` / `clearSeatScheme` | `canEditSetup`: `active` ∧ `setup`                                         | edits that seat                                                                                                                             |
 | `chooseSeatScheme`                                         | `canEditSetup` ∧ draft complete ∧ `schemeId ∈ drawnSchemeIds`              | sets `scheme`, **clears the hand**                                                                                                          |
@@ -147,7 +156,7 @@ returned **in full**, secrets included. The opponent goes through `toPublicSeat`
 only:
 
 `nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `rosterCode`, `ready`,
-`combatReady`,
+`combatReady`, `leaderStats`,
 `factionId` (= `scheme?.factionId ?? schemeDraft.factionId`), `hasScheme`, `schemeRevealed`,
 `revealedScheme` (**null unless the scheme is both chosen and revealed**),
 `checkedObjectiveCounts`.
@@ -199,8 +208,9 @@ matching `sha256(token)` against a seat's `tokenHash` · **leader** = seat auth 
 | POST   | `/api/games/[id]/choose-scheme` | seat        | commit a chosen scheme                                                                                                            |
 | POST   | `/api/games/[id]/delete-scheme` | seat        | clear the chosen scheme                                                                                                           |
 | POST   | `/api/games/[id]/ready`         | seat        | toggle this seat's lobby readiness                                                                                                |
-| POST   | `/api/games/[id]/start`         | leader      | lobby → active, opening `prep`                                                                                                    |
+| POST   | `/api/games/[id]/start`         | leader      | lobby → active, opening `armies`                                                                                                  |
 | POST   | `/api/games/[id]/combat-army`   | seat        | register the Standard list cut from this seat's Roster; refuses a non-Standard format and a seat that had nothing to cut          |
+| POST   | `/api/games/[id]/leader`        | seat        | assign or clear this seat's Leader, declaring its M and INT; refuses a malformed entry id or statistic                            |
 | POST   | `/api/games/[id]/reveal-intent` | seat        | toggle the reveal intent                                                                                                          |
 | POST   | `/api/games/[id]/objective`     | seat        | set an objective's checked count                                                                                                  |
 | POST   | `/api/games/[id]/scheme-box`    | seat        | set own scheme increments                                                                                                         |
@@ -306,6 +316,7 @@ Append-only, written inside the same transaction as the state change. Actor is `
 | `scheme-deleted`                                   | —                                                                                  |
 | `seat-ready-toggled`                               | `{ ready }` — the seat's own new value                                             |
 | `combat-army-set`                                  | `{ name }` — never the code                                                        |
+| `leader-assigned`                                  | `{ assigned }` — never the entry id, never the statistics                          |
 | `game-started`                                     | —                                                                                  |
 | `reveal-intent-toggled`                            | `{ intent }`                                                                       |
 | `phase-changed`                                    | `{ round, phase }`                                                                 |

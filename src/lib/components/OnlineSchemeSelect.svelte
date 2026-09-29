@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type {
 		ArmyFactionConfig,
+		ArmyView,
 		Faction,
 		OnlineGameView,
 		PlayerKey,
@@ -18,6 +19,8 @@
 		error: string | null;
 		missionName: string | null;
 		armyFactions: ArmyFactionConfig[];
+		/** This seat's own combat army resolved into rows, to name the chosen Leader. */
+		combatView: ArmyView | null;
 		/** Scheme factions — the deck an army faction draws from, not the army factions themselves. */
 		factions: Faction[];
 		schemes: SchemeCard[];
@@ -35,6 +38,7 @@
 		error,
 		missionName,
 		armyFactions,
+		combatView,
 		factions,
 		schemes,
 		onSetIntelligence,
@@ -61,6 +65,9 @@
 	/** Seeded by `leavePrep` from the combat army; there is nothing left to choose here. */
 	let myFactionName = $derived(schemeFactionName(view.self.progress.schemeDraft.factionId));
 	let opponentFactionName = $derived(schemeFactionName(view.opponent?.factionId ?? null));
+	let ownLeaderName = $derived(
+		combatView?.rows.find((row) => row.entryId === view.self.leader?.entryId)?.name ?? null
+	);
 
 	function schemeFactionName(factionId: string | null): string | null {
 		if (factionId === null) return null;
@@ -125,6 +132,9 @@
 					format={pickedArmyFormat(view.self.army)}
 					factions={armyFactions}
 				/>
+				{#if ownLeaderName}
+					<p class="text-sm text-slate-100">Your Leader: {ownLeaderName}</p>
+				{/if}
 				<OnlineSchemeSetup
 					factionName={myFactionName}
 					schemeDraft={view.self.progress.schemeDraft}
@@ -138,6 +148,12 @@
 			{:else if view.opponent}
 				<ArmyBadge {...view.opponent.army} factions={armyFactions} />
 				<p class="text-sm text-slate-100">Faction: {opponentFactionName ?? '—'}</p>
+				{#if view.opponent.leaderStats}
+					<p class="text-sm text-slate-100">
+						Their Leader: M {view.opponent.leaderStats.m ?? '—'} · INT
+						{view.opponent.leaderStats.int ?? '—'}
+					</p>
+				{/if}
 				{#if view.opponent.schemeRevealed && view.opponent.revealedScheme}
 					{@const revealedCard = schemes.find(
 						(card) => card.id === view.opponent?.revealedScheme?.schemeId

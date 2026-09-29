@@ -28,6 +28,8 @@ export type OnlineSeatState = {
 	 * from the start; a Roster one is null until the player cuts one down and accepts it.
 	 */
 	combatArmy: PickedArmy | null;
+	/** The copy of the combat army chosen as Leader; null until assigned. */
+	leader: SeatLeader | null;
 	/** Lobby readiness: this player says they are set to start. Toggled by its own seat only. */
 	ready: boolean;
 	progress: SeatProgress;
@@ -35,6 +37,26 @@ export type OnlineSeatState = {
 	revealIntent: boolean;
 	/** Ids of the drawn scheme cards; private to this seat, persisted for reconnects. */
 	drawnSchemeIds: string[];
+};
+
+/**
+ * A seat's chosen Leader: which copy of the combat army it is, plus the two statistics the
+ * initiative roll will need. The server cannot compute those — it loads no army catalogs — so the
+ * client declares them, the same ruling army legality already rests on. The entry id stays
+ * private; only the statistics are ever published.
+ */
+export type SeatLeader = {
+	entryId: string;
+	m: number | null;
+	int: number | null;
+};
+
+/** Which of a seat's secrets the current point in the game has opened up. */
+export type SeatReveal = {
+	/** The roster's contents, from the army reveal on. */
+	roster: boolean;
+	/** The leader's M and INT, from Scheme selection on. */
+	leaderStats: boolean;
 };
 
 export type RoundSnapshot = { player1: number; player2: number };
@@ -92,6 +114,11 @@ export type PublicSeatState = {
 	rosterCode: string | null;
 	/** Whether the opponent has a match list to field — not the list itself, and never its code. */
 	combatReady: boolean;
+	/**
+	 * The Leader's M and INT from Scheme selection on, for the initiative roll. Which copy is the
+	 * Leader never travels.
+	 */
+	leaderStats: { m: number | null; int: number | null } | null;
 	/** Lobby readiness — public, since the leader's Start Game is gated on both seats. */
 	ready: boolean;
 	factionId: string | null;
@@ -133,6 +160,7 @@ export type OnlineGameEventType =
 	| 'scheme-deleted'
 	| 'seat-ready-toggled'
 	| 'combat-army-set'
+	| 'leader-assigned'
 	| 'game-started'
 	| 'reveal-intent-toggled'
 	| 'phase-changed'
@@ -169,6 +197,7 @@ export function createEmptySeat(
 		army,
 		// A Standard registration is already a legal match list; a Roster one has to be cut down.
 		combatArmy: pickedArmyFormat(army) === 'standard' ? army : null,
+		leader: null,
 		ready: false,
 		progress: createEmptyProgress(),
 		revealIntent: false,
@@ -288,7 +317,35 @@ export function setCombatArmy(
 	army: PickedArmy
 ): OnlineGameState {
 	if (!canSetCombatArmy(state, seat)) return state;
-	return updateSeat(state, seat, (s) => ({ ...s, combatArmy: army }));
+	// A new list renumbers its copies on decode, so a leader chosen from the old one would dangle.
+	return updateSeat(state, seat, (s) => ({ ...s, combatArmy: army, leader: null }));
+}
+
+/**
+ * Any copy of the combat army may be the Leader — Stratagems are restricted *to* the Leader, not
+ * the Leader to Stratagem-bearers — so the only precondition is having a list to choose from.
+ */
+export function canSetLeader(state: OnlineGameState, seat: PlayerKey): boolean {
+	if (state.status !== 'active' || state.phase !== 'prep') return false;
+	const own = state[seat];
+	return own !== null && own.combatArmy !== null;
+}
+
+export function setLeader(
+	state: OnlineGameState,
+	seat: PlayerKey,
+	leader: SeatLeader | null
+): OnlineGameState {
+	if (!canSetLeader(state, seat)) return state;
+	return updateSeat(state, seat, (s) => ({ ...s, leader }));
+}
+
+/**
+ * The Leader's M and INT are published from Scheme selection on, because that is where the
+ * initiative roll that needs them sits. The Leader's identity never is.
+ */
+export function isLeaderStatsRevealed(state: OnlineGameState): boolean {
+	return state.status !== 'lobby' && state.phase !== 'armies' && state.phase !== 'prep';
 }
 
 export function canLeavePrep(state: OnlineGameState): boolean {
@@ -592,7 +649,7 @@ export function closeGame(state: OnlineGameState): OnlineGameState {
 
 // --- visibility ---
 
-export function toPublicSeat(seat: OnlineSeatState, rosterRevealed: boolean): PublicSeatState {
+export function toPublicSeat(seat: OnlineSeatState, reveal: SeatReveal): PublicSeatState {
 	const { progress } = seat;
 	return {
 		nickname: seat.nickname,
@@ -603,9 +660,13 @@ export function toPublicSeat(seat: OnlineSeatState, rosterRevealed: boolean): Pu
 		},
 		// The roster's contents are public once revealed — but only a roster's. A Standard
 		// registration is the match list itself and stays secret until deployment.
-		rosterCode: rosterRevealed && pickedArmyFormat(seat.army) === 'roster' ? seat.army.code : null,
+		rosterCode: reveal.roster && pickedArmyFormat(seat.army) === 'roster' ? seat.army.code : null,
 		ready: seat.ready,
 		combatReady: seat.combatArmy !== null,
+		leaderStats:
+			reveal.leaderStats && seat.leader !== null
+				? { m: seat.leader.m, int: seat.leader.int }
+				: null,
 		factionId: progress.scheme?.factionId ?? progress.schemeDraft.factionId,
 		hasScheme: progress.scheme !== null,
 		schemeRevealed: progress.schemeRevealed,
@@ -619,7 +680,10 @@ export function viewForSeat(state: OnlineGameState, seat: PlayerKey): OnlineGame
 	const self = state[seat];
 	if (!self) return null;
 	const opponent = seat === 'player1' ? state.player2 : state.player1;
-	const revealed = isRosterRevealed(state);
+	const reveal: SeatReveal = {
+		roster: isRosterRevealed(state),
+		leaderStats: isLeaderStatsRevealed(state)
+	};
 	return {
 		id: state.id,
 		status: state.status,
@@ -633,6 +697,6 @@ export function viewForSeat(state: OnlineGameState, seat: PlayerKey): OnlineGame
 		winner: state.winner,
 		resultSummary: state.resultSummary,
 		self,
-		opponent: opponent ? toPublicSeat(opponent, revealed) : null
+		opponent: opponent ? toPublicSeat(opponent, reveal) : null
 	};
 }

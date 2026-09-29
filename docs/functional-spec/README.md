@@ -73,10 +73,14 @@ each `src/lib/` folder.
 - **Combat army** — the Standard (≤85) list a seat actually fields. A Standard registration _is_
   its combat army from the start; a Roster registration has none until its player cuts one down in
   the borrowed builder and accepts it. The opponent sees only a **combat-ready** flag.
+- **Leader** — the one copy of a combat army its player assigns in private during Army
+  Preparation. Any copy qualifies; only the Leader may use Stratagems. Its **M** and **INT** become
+  public at Scheme selection, for the initiative roll; which copy it is never travels.
 - **Seat** — one of the two player slots, authenticated by a token whose hash only the server
   stores. A seat's view of the game is filtered: the opponent's unrevealed Scheme never reaches
   it.
-- **Leader** — the player who created the game. Alone may advance phases, finish and close it.
+- **Game leader** — the player who created the game. Alone may advance phases, finish and close it.
+  Not to be confused with a seat's **Leader** below.
 - **Ready** — a seat's lobby readiness, toggled by its own player and public to both, because the
   leader's Start Game is gated on it.
 - **Phase** — within an active game: `armies` (both rosters flip open) → `prep` (cut the armies) →

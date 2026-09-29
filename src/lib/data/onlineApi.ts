@@ -1,4 +1,10 @@
-import type { OnlineGameSetup, OnlineGameView, PickedArmy, PlayerKey } from '$lib/domain';
+import type {
+	OnlineGameSetup,
+	OnlineGameView,
+	PickedArmy,
+	PlayerKey,
+	SeatLeader
+} from '$lib/domain';
 
 const BASE = '/api/games';
 
@@ -156,6 +162,20 @@ export async function setCombatArmy(
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
 		body: JSON.stringify({ army })
+	});
+	await parse<Record<string, never>>(response);
+}
+
+/** Assigns (or clears) this seat's Leader, declaring the statistics the initiative roll needs. */
+export async function setLeader(
+	gameId: string,
+	token: string,
+	leader: SeatLeader | null
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/leader`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ leader })
 	});
 	await parse<Record<string, never>>(response);
 }
