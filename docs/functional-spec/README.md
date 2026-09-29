@@ -70,14 +70,19 @@ each `src/lib/` folder.
 - **Registered army** — the `PickedArmy` snapshot a seat brings to the game: name, faction, code
   and format. The server stores it and shows name, faction and a **Standard**/**Roster** tag to
   both players; the code stays with its owner.
+- **Combat army** — the Standard (≤85) list a seat actually fields. A Standard registration _is_
+  its combat army from the start; a Roster registration has none until its player cuts one down in
+  the borrowed builder and accepts it. The opponent sees only a **combat-ready** flag.
 - **Seat** — one of the two player slots, authenticated by a token whose hash only the server
   stores. A seat's view of the game is filtered: the opponent's unrevealed Scheme never reaches
   it.
 - **Leader** — the player who created the game. Alone may advance phases, finish and close it.
 - **Ready** — a seat's lobby readiness, toggled by its own player and public to both, because the
-  leader's Start Game is gated on it. Start needs both seats ready **and** both Schemes chosen.
-- **Phase** — within an active game, each round is `reveal` then `scoring`. Objectives and scheme
-  boxes are editable **only** during Scoring.
+  leader's Start Game is gated on it.
+- **Phase** — within an active game: `prep` (cut the armies) → `setup` (choose Schemes) → then each
+  round's `reveal` → `scoring`. Objectives and scheme boxes are editable **only** during Scoring.
+  The two preparation steps are phases rather than statuses so the retention buckets, which key on
+  status, keep applying.
 - **Round snapshot** — each player's cumulative VP recorded at every round end; feeds the
   statistics table.
 

@@ -1,17 +1,12 @@
 <script lang="ts">
-	import {
-		drawCountForIntelligence,
-		type Faction,
-		type SchemeCard,
-		type SchemeDraft
-	} from '$lib/domain';
+	import { drawCountForIntelligence, type SchemeCard, type SchemeDraft } from '$lib/domain';
 
 	type Props = {
-		factions: Faction[];
+		/** The Scheme deck's faction name, fixed by the army this seat fields. */
+		factionName: string | null;
 		schemeDraft: SchemeDraft;
 		drawnCards: SchemeCard[];
 		chosenCard: SchemeCard | null;
-		onSetFaction: (factionId: string) => void;
 		onSetIntelligence: (intelligence: number | null) => void;
 		onDraw: () => void;
 		onChoose: (schemeId: string) => void;
@@ -19,11 +14,10 @@
 	};
 
 	let {
-		factions,
+		factionName,
 		schemeDraft,
 		drawnCards,
 		chosenCard,
-		onSetFaction,
 		onSetIntelligence,
 		onDraw,
 		onChoose,
@@ -73,19 +67,15 @@
 	</div>
 {:else}
 	<div class="flex flex-wrap items-end gap-2">
-		<label class="flex flex-col gap-1 text-sm text-slate-300">
+		<span class="flex flex-col gap-1 text-sm text-slate-300">
 			Faction
-			<select
+			<span
 				class="rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-slate-100"
-				value={schemeDraft.factionId ?? ''}
-				onchange={(event) => onSetFaction((event.target as HTMLSelectElement).value)}
+				title="Fixed by the army you field"
 			>
-				<option value="" disabled>Select…</option>
-				{#each factions as faction (faction.id)}
-					<option value={faction.id}>{faction.name}</option>
-				{/each}
-			</select>
-		</label>
+				{factionName ?? '—'}
+			</span>
+		</span>
 		<label class="flex flex-col gap-1 text-sm text-slate-300">
 			Intelligence
 			<input

@@ -4,13 +4,18 @@ import type { PickedArmy } from './savedArmy';
 import {
 	acceptJoin,
 	advanceToScoring,
+	bothCombatReady,
 	bothReady,
 	bothSchemesRevealed,
 	canChooseSeatScheme,
 	canDrawSchemes,
+	canEditSetup,
+	canLeavePrep,
 	canRequestJoin,
 	canScoreSeatScheme,
+	canSetCombatArmy,
 	canStartGame,
+	canStartRounds,
 	canToggleReady,
 	chooseSeatScheme,
 	clearSeatScheme,
@@ -18,16 +23,19 @@ import {
 	createOnlineGame,
 	denyJoin,
 	finishGame,
+	leavePrep,
 	MAX_NICKNAME_LENGTH,
 	normalizeNickname,
 	requestJoin,
 	seatForTokenHash,
+	setCombatArmy,
 	setSeatDrawnSchemes,
 	setSeatDraft,
 	setSeatObjectiveChecked,
 	setSeatSchemeChecked,
 	snapshotAndProceed,
 	startGame,
+	startRounds,
 	toggleReady,
 	toggleRevealIntent,
 	toPublicSeat,
@@ -51,6 +59,14 @@ const BOB_ARMY: PickedArmy = {
 	format: 'roster'
 };
 
+/** The Standard list Bob cuts his roster down to; stands in for the borrowed builder's output. */
+const BOB_CUT: PickedArmy = {
+	name: 'Bob Roster',
+	factionId: 'sand-kingdoms',
+	code: 'aaaaa:2s:0',
+	format: 'standard'
+};
+
 /** A fresh lobby — the mission and the leader's army arrive with the creation. */
 function newGame(): OnlineGameState {
 	return createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT, {
@@ -67,40 +83,54 @@ function lobbyWithBothPlayers(): OnlineGameState {
 	return state;
 }
 
-/** Both seats pressed Ready, which is half of what Start Game asks for. */
+/** Both seats pressed Ready, which is what Start Game asks for. */
 function readyUp(state: OnlineGameState): OnlineGameState {
 	return toggleReady(toggleReady(state, 'player1'), 'player2');
+}
+
+/** Start Game opens the preparation step, with Bob's roster not cut down yet. */
+function atPrepStart(): OnlineGameState {
+	return startGame(readyUp(lobbyWithBothPlayers()));
+}
+
+/** Preparation with both seats combat-ready: Alice registered Standard, Bob has cut his roster. */
+function inPrep(): OnlineGameState {
+	return setCombatArmy(atPrepStart(), 'player2', BOB_CUT);
+}
+
+/** Preparation → Scheme setup, which seeds each seat's faction from its combat army. */
+function inSetup(): OnlineGameState {
+	return leavePrep(inPrep());
 }
 
 function draftAndChooseScheme(
 	state: OnlineGameState,
 	seat: 'player1' | 'player2'
 ): OnlineGameState {
-	let next = setSeatDraft(state, seat, { factionId: 'helian-league', intelligence: 14 });
+	let next = setSeatDraft(state, seat, { intelligence: 14 });
 	next = setSeatDrawnSchemes(next, seat, ['head-hunt', 'stand-your-ground']);
 	next = chooseSeatScheme(next, seat, 'head-hunt');
 	return next;
 }
 
-function activeScoringGame(): OnlineGameState {
-	let state = lobbyWithBothPlayers();
+/** Round 1's Reveal phase, with both Schemes chosen. */
+function roundsBegun(): OnlineGameState {
+	let state = inSetup();
 	state = draftAndChooseScheme(state, 'player1');
 	state = draftAndChooseScheme(state, 'player2');
-	state = startGame(readyUp(state));
-	state = advanceToScoring(state);
-	return state;
+	return startRounds(state);
+}
+
+function activeScoringGame(): OnlineGameState {
+	return advanceToScoring(roundsBegun());
 }
 
 /** Both players set their reveal intent, so scoring starts with both schemes revealed. */
 function revealedScoringGame(): OnlineGameState {
-	let state = lobbyWithBothPlayers();
-	state = draftAndChooseScheme(state, 'player1');
-	state = draftAndChooseScheme(state, 'player2');
-	state = startGame(readyUp(state));
+	let state = roundsBegun();
 	state = toggleRevealIntent(state, 'player1');
 	state = toggleRevealIntent(state, 'player2');
-	state = advanceToScoring(state);
-	return state;
+	return advanceToScoring(state);
 }
 
 describe('normalizeNickname', () => {
@@ -194,13 +224,25 @@ describe('seatForTokenHash', () => {
 });
 
 describe('scheme setup', () => {
-	it('choosing a scheme requires a complete draft and a drawn hand', () => {
-		let state = lobbyWithBothPlayers();
+	it('takes the faction from the combat army rather than from a choice', () => {
+		const state = inSetup();
+		expect(state.player1.progress.schemeDraft.factionId).toBe('helian-league');
+		expect(
+			state.player2?.progress.schemeDraft.factionId,
+			'the joiner cut a Sand Kingdoms list'
+		).toBe('sand-kingdoms');
+	});
+
+	it('maps a monster army faction onto the shared Monster Factions deck', () => {
+		const oni: PickedArmy = { ...BOB_CUT, factionId: 'oni-clans' };
+		const state = leavePrep(setCombatArmy(atPrepStart(), 'player2', oni));
+		expect(state.player2?.progress.schemeDraft.factionId).toBe('monster-factions');
+	});
+
+	it('choosing a scheme requires an intelligence and a drawn hand', () => {
+		let state = inSetup();
 		state = chooseSeatScheme(state, 'player1', 'head-hunt');
-		expect(state.player1.progress.scheme).toBeNull();
-		state = setSeatDraft(state, 'player1', { factionId: 'helian-league' });
-		state = chooseSeatScheme(state, 'player1', 'head-hunt');
-		expect(state.player1.progress.scheme).toBeNull();
+		expect(state.player1.progress.scheme, 'no intelligence yet').toBeNull();
 		state = setSeatDraft(state, 'player1', { intelligence: 14 });
 		state = chooseSeatScheme(state, 'player1', 'head-hunt');
 		expect(state.player1.progress.scheme, 'no drawn hand yet').toBeNull();
@@ -215,8 +257,8 @@ describe('scheme setup', () => {
 	});
 
 	it('rejects choosing a card that is not in the drawn hand', () => {
-		let state = lobbyWithBothPlayers();
-		state = setSeatDraft(state, 'player1', { factionId: 'helian-league', intelligence: 14 });
+		let state = inSetup();
+		state = setSeatDraft(state, 'player1', { intelligence: 14 });
 		state = setSeatDrawnSchemes(state, 'player1', ['head-hunt']);
 		expect(canChooseSeatScheme(state, 'player1', 'martial-valor')).toBe(false);
 		state = chooseSeatScheme(state, 'player1', 'martial-valor');
@@ -225,21 +267,18 @@ describe('scheme setup', () => {
 	});
 
 	it('choosing a scheme discards the drawn hand', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
+		const state = draftAndChooseScheme(inSetup(), 'player1');
 		expect(state.player1.drawnSchemeIds).toEqual([]);
 	});
 
 	it('stores drawn scheme ids per seat', () => {
-		let state = lobbyWithBothPlayers();
-		state = setSeatDrawnSchemes(state, 'player1', ['head-hunt', 'stand-your-ground']);
+		const state = setSeatDrawnSchemes(inSetup(), 'player1', ['head-hunt', 'stand-your-ground']);
 		expect(state.player1.drawnSchemeIds).toEqual(['head-hunt', 'stand-your-ground']);
 		expect(state.player2?.drawnSchemeIds).toEqual([]);
 	});
 
 	it('clearing a scheme keeps the draft', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
+		let state = draftAndChooseScheme(inSetup(), 'player1');
 		state = clearSeatScheme(state, 'player1');
 		expect(state.player1.progress.scheme).toBeNull();
 		expect(state.player1.progress.schemeDraft).toEqual({
@@ -248,18 +287,19 @@ describe('scheme setup', () => {
 		});
 	});
 
-	it('setup edits are locked until player 2 has joined', () => {
-		let state = newGame();
-		state = setSeatDraft(state, 'player1', { factionId: 'helian-league' });
-		expect(state.player1.progress.schemeDraft.factionId).toBeNull();
+	it('is locked in the lobby, where no combat army has fixed a faction yet', () => {
+		let state = lobbyWithBothPlayers();
+		state = setSeatDraft(state, 'player1', { intelligence: 14 });
+		expect(state.player1.progress.schemeDraft.intelligence).toBeNull();
 		expect(canDrawSchemes(state, 'player1')).toBe(false);
 	});
 
-	it('setup edits are locked once the game has started', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(readyUp(state));
+	it('is locked during preparation and again once the rounds have begun', () => {
+		const prep = inPrep();
+		expect(canEditSetup(prep)).toBe(false);
+		expect(setSeatDraft(prep, 'player1', { intelligence: 14 })).toBe(prep);
+
+		let state = roundsBegun();
 		state = setSeatDraft(state, 'player1', { intelligence: 16 });
 		expect(state.player1.progress.schemeDraft.intelligence).toBe(14);
 		state = clearSeatScheme(state, 'player2');
@@ -288,14 +328,11 @@ describe('readiness', () => {
 	});
 
 	it('is a lobby-only signal', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		expect(canToggleReady(state, 'player2')).toBe(true);
-		state = startGame(readyUp(state));
-		expect(state.status).toBe('active');
-		expect(canToggleReady(state, 'player1')).toBe(false);
-		expect(toggleReady(state, 'player1')).toBe(state);
+		expect(canToggleReady(lobbyWithBothPlayers(), 'player2')).toBe(true);
+		const prep = atPrepStart();
+		expect(prep.status).toBe('active');
+		expect(canToggleReady(prep, 'player1')).toBe(false);
+		expect(toggleReady(prep, 'player1')).toBe(prep);
 	});
 
 	it('cannot be toggled for an empty seat', () => {
@@ -313,12 +350,9 @@ describe('readiness', () => {
 });
 
 describe('startGame', () => {
-	it('requires a mission, both schemes and both seats ready', () => {
+	it('requires a mission and both seats ready, and opens preparation', () => {
 		let state = lobbyWithBothPlayers();
 		expect(canStartGame(state)).toBe(false);
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		expect(canStartGame(state), 'schemes alone do not start the game').toBe(false);
 		state = toggleReady(state, 'player1');
 		expect(canStartGame(state), 'one seat ready is not enough').toBe(false);
 		state = toggleReady(state, 'player2');
@@ -326,24 +360,84 @@ describe('startGame', () => {
 		state = startGame(state);
 		expect(state.status).toBe('active');
 		expect(state.currentRound).toBe(MIN_ROUND);
-		expect(state.phase).toBe('reveal');
+		expect(state.phase, 'Start Game opens preparation, not round 1').toBe('prep');
 	});
 
-	it('refuses when a scheme is missing even though both seats are ready', () => {
+	it('no longer asks for Schemes, which are chosen after preparation', () => {
 		const state = readyUp(lobbyWithBothPlayers());
-		expect(bothReady(state)).toBe(true);
-		expect(canStartGame(state)).toBe(false);
-		expect(startGame(state)).toBe(state);
+		expect(state.player1.progress.scheme).toBeNull();
+		expect(state.player2?.progress.scheme).toBeNull();
+		expect(canStartGame(state)).toBe(true);
+	});
+});
+
+describe('preparation', () => {
+	it('a Standard registration is its own combat army from the start', () => {
+		const state = lobbyWithBothPlayers();
+		expect(state.player1.combatArmy).toEqual(ALICE_ARMY);
+		expect(toPublicSeat(state.player1).combatReady).toBe(true);
+	});
+
+	it('a Roster registration has none until it is cut down', () => {
+		const state = lobbyWithBothPlayers();
+		expect(state.player2?.combatArmy).toBeNull();
+		expect(bothCombatReady(state)).toBe(false);
+		expect(toPublicSeat(state.player2!).combatReady).toBe(false);
+	});
+
+	it('only the seat that brought a Roster may set a combat army', () => {
+		const prep = atPrepStart();
+		expect(canSetCombatArmy(prep, 'player1'), 'player1 registered Standard').toBe(false);
+		expect(canSetCombatArmy(prep, 'player2')).toBe(true);
+		expect(setCombatArmy(prep, 'player1', BOB_CUT)).toBe(prep);
+	});
+
+	it('is the only phase a combat army may be set in', () => {
+		expect(canSetCombatArmy(lobbyWithBothPlayers(), 'player2'), 'still a lobby').toBe(false);
+		expect(canSetCombatArmy(inSetup(), 'player2'), 'already past preparation').toBe(false);
+	});
+
+	it('accepts a re-cut, so the list stays editable until the table moves on', () => {
+		const recut: PickedArmy = { ...BOB_CUT, code: 'aaaaa:2s:1' };
+		let state = setCombatArmy(atPrepStart(), 'player2', BOB_CUT);
+		state = setCombatArmy(state, 'player2', recut);
+		expect(state.player2?.combatArmy?.code).toBe('aaaaa:2s:1');
+	});
+
+	it('leaves preparation only once both seats are combat-ready', () => {
+		const stuck = atPrepStart();
+		expect(canLeavePrep(stuck)).toBe(false);
+		expect(leavePrep(stuck)).toBe(stuck);
+		expect(canLeavePrep(inPrep())).toBe(true);
+		expect(leavePrep(inPrep()).phase).toBe('setup');
+	});
+});
+
+describe('startRounds', () => {
+	it('needs both Schemes, and opens round 1 in the reveal phase', () => {
+		let state = inSetup();
+		expect(canStartRounds(state)).toBe(false);
+		state = draftAndChooseScheme(state, 'player1');
+		expect(canStartRounds(state), 'one Scheme is not enough').toBe(false);
+		state = draftAndChooseScheme(state, 'player2');
+		expect(canStartRounds(state)).toBe(true);
+		state = startRounds(state);
+		expect(state.phase).toBe('reveal');
+		expect(state.currentRound).toBe(MIN_ROUND);
+	});
+
+	it('is not available outside the setup phase', () => {
+		expect(canStartRounds(inPrep())).toBe(false);
+		expect(canStartRounds(roundsBegun())).toBe(false);
+		expect(startRounds(inPrep())).toEqual(inPrep());
 	});
 });
 
 describe('reveal intent and advanceToScoring', () => {
 	it('toggles intent only during the reveal phase and only with a scheme', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		expect(toggleRevealIntent(state, 'player1'), 'lobby is not reveal phase').toBe(state);
-		state = startGame(readyUp(state));
+		const setup = draftAndChooseScheme(inSetup(), 'player1');
+		expect(toggleRevealIntent(setup, 'player1'), 'setup is not the reveal phase').toBe(setup);
+		const state = roundsBegun();
 		expect(toggleRevealIntent(state, 'player1').player1.revealIntent).toBe(true);
 		expect(
 			toggleRevealIntent(toggleRevealIntent(state, 'player1'), 'player1').player1.revealIntent
@@ -351,11 +445,7 @@ describe('reveal intent and advanceToScoring', () => {
 	});
 
 	it('advanceToScoring commits intents permanently and clears them', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(readyUp(state));
-		state = toggleRevealIntent(state, 'player1');
+		let state = toggleRevealIntent(roundsBegun(), 'player1');
 		state = advanceToScoring(state);
 		expect(state.phase).toBe('scoring');
 		expect(state.player1.progress.schemeRevealed).toBe(true);
@@ -366,10 +456,7 @@ describe('reveal intent and advanceToScoring', () => {
 
 describe('scoring phase actions', () => {
 	it('objectives are only editable during scoring and clamp to bounds', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(readyUp(state));
+		let state = roundsBegun();
 		expect(
 			setSeatObjectiveChecked(state, 'player1', 'obj', 1, 1),
 			'reveal phase freezes objectives'
@@ -451,7 +538,8 @@ describe('finishGame', () => {
 			roundsPlayed: MAX_ROUND,
 			season: 'Season 2',
 			missionId: 'obelisk-strike',
-			factions: { player1: 'helian-league', player2: 'helian-league' }
+			// Each seat's Scheme faction is the one its combat army belongs to.
+			factions: { player1: 'helian-league', player2: 'sand-kingdoms' }
 		});
 	});
 
@@ -482,11 +570,10 @@ describe('closeGame', () => {
 
 describe('visibility', () => {
 	it('toPublicSeat hides an unrevealed scheme but shows the faction', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player2');
+		const state = draftAndChooseScheme(inSetup(), 'player2');
 		const view = toPublicSeat(state.player2!);
 		expect(view.nickname).toBe('bob');
-		expect(view.factionId).toBe('helian-league');
+		expect(view.factionId).toBe('sand-kingdoms');
 		expect(view.hasScheme).toBe(true);
 		expect(view.schemeRevealed).toBe(false);
 		expect(view.revealedScheme).toBeNull();
@@ -503,11 +590,7 @@ describe('visibility', () => {
 	});
 
 	it('toPublicSeat exposes the scheme once revealed', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
-		state = draftAndChooseScheme(state, 'player2');
-		state = startGame(readyUp(state));
-		state = toggleRevealIntent(state, 'player1');
+		let state = toggleRevealIntent(roundsBegun(), 'player1');
 		state = advanceToScoring(state);
 		const view = toPublicSeat(state.player1);
 		expect(view.schemeRevealed).toBe(true);
@@ -515,8 +598,7 @@ describe('visibility', () => {
 	});
 
 	it('viewForSeat gives the seat its own secrets and a filtered opponent', () => {
-		let state = lobbyWithBothPlayers();
-		state = draftAndChooseScheme(state, 'player1');
+		let state = draftAndChooseScheme(inSetup(), 'player1');
 		state = draftAndChooseScheme(state, 'player2');
 		const view = viewForSeat(state, 'player1');
 		expect(view).not.toBeNull();
@@ -524,9 +606,18 @@ describe('visibility', () => {
 		expect(view!.self.progress.scheme?.schemeId).toBe('head-hunt');
 		expect(view!.self.army).toEqual(ALICE_ARMY);
 		expect(view!.opponent?.revealedScheme).toBeNull();
-		expect(view!.opponent?.factionId).toBe('helian-league');
+		expect(view!.opponent?.factionId).toBe('sand-kingdoms');
 		expect(view!.opponent?.army.name).toBe('Bob Roster');
 		expect(JSON.stringify(view!.opponent)).not.toContain(BOB_ARMY.code);
+	});
+
+	it('viewForSeat keeps the cut match list with its owner', () => {
+		const state = inPrep();
+		const bob = viewForSeat(state, 'player2');
+		const alice = viewForSeat(state, 'player1');
+		expect(bob?.self.combatArmy?.code).toBe(BOB_CUT.code);
+		expect(alice?.opponent?.combatReady).toBe(true);
+		expect(JSON.stringify(alice?.opponent)).not.toContain(BOB_CUT.code);
 	});
 
 	it('viewForSeat returns null for an empty seat', () => {

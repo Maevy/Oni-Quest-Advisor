@@ -314,10 +314,20 @@ the main menu says why. See [09-tournament.md](./09-tournament.md).
   then `army-builder`). A successful code import → `openImportedArmy()`, which enters the builder
   with faction and list already loaded.
 - `army-builder` — **Main Menu** → `leaveArmyBuilder()`: calls `armyBuilderStore.leave()`
-  (discarding the in-memory list; the builder is not persisted) and returns to `game-mode`.
+  (discarding the in-memory list; the builder is not persisted) and returns to `game-mode`, **or to
+  `builderReturn` when another flow has borrowed the builder**.
+- **Borrowed builder** — `borrowArmyBuilder(returnScreen)` hands the same screen to another flow
+  after that flow has loaded a list into the store. Both exits then go back to `returnScreen`
+  instead of the main menu, and `selectArmyBuilder()` clears any stale target so the normal entry
+  point is unaffected. The online army-preparation step uses this to cut a Roster down to a match
+  list; `ArmyBuilderView` renders its borrowed shape (← Back, no format tabs, **Accept** in place of
+  Copy/Save) from the `constrained` prop.
 
 The builder is in-memory only, so leaving it always loses the unsaved list — saves and army
-codes are the persistence mechanism. See [08-army-builder.md](./08-army-builder.md).
+codes are the persistence mechanism. A borrowed builder is the one exception worth noting: its
+**Accept** reads the finished code out of the store _before_ `leaveArmyBuilder()` wipes it, and
+hands that code to the borrowing flow.
+See [08-army-builder.md](./08-army-builder.md).
 
 ## Tournament flow
 
@@ -367,9 +377,19 @@ Full detail in [09-tournament.md](./09-tournament.md).
 
 `online-create` (a **local draft** — player name, mission and army — then **Open Lobby**, the
 first server call) → `online-join` (invite code + player name + army → request → pending) →
-`online-game` (lobby, setup, rounds, statistics — one screen driven by server
-status). `enterOnlineGame()` moves into it; `leaveOnline()` clears `onlineJoinCode` and returns
-to `game-mode`. Full journey in [07-online-two-player.md](./07-online-two-player.md).
+`online-game`. That one screen id renders five different views, chosen by the fetched server state
+rather than by any click: the lobby, **Army Preparation** (`status active`, `phase prep`), **Scheme
+Selection** (`phase setup`), the game view (`phase reveal`/`scoring`, and only when the mission
+content resolves) and the statistics view (`status finished`). Because the switch follows the
+state, a leader's Start Game / Proceed / Begin Round 1 moves **every** device without a reload.
+`enterOnlineGame()` moves into it; `leaveOnline()` clears `onlineJoinCode` and returns to
+`game-mode`.
+
+Army Preparation **borrows the army builder** for a seat that registered a Roster — see the
+borrowed-builder note above — so the flow briefly leaves `online-game` for `army-builder` and
+comes back on Accept or ← Back.
+
+Full journey in [07-online-two-player.md](./07-online-two-player.md).
 
 ## Returning to the start
 

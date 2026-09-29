@@ -1,11 +1,18 @@
 import { MAX_ROUND, MIN_ROUND, type SchemeDraft } from './progress';
 import { chooseScheme, setSchemeChecked, type ChosenScheme } from './scheme';
+import { schemeFactionForArmy } from './faction';
 import { pickedArmyFormat, type PickedArmy } from './savedArmy';
 import type { ArmyFactionId, ArmyFormat } from './army';
 import type { PlayerKey, SeatProgress } from './twoPlayer';
 
 export type OnlineGameStatus = 'lobby' | 'active' | 'finished' | 'closed';
-export type OnlineGamePhase = 'reveal' | 'scoring';
+/**
+ * `prep` cuts a registered Roster army down to a match list, `setup` chooses Schemes, then each
+ * round runs `reveal` → `scoring`. The two preparation steps live in the phase rather than in a
+ * status of their own because `cleanup.ts` buckets retention by status literal — a new status
+ * would match no bucket and never be collected.
+ */
+export type OnlineGamePhase = 'prep' | 'setup' | 'reveal' | 'scoring';
 
 export const MAX_NICKNAME_LENGTH = 24;
 
@@ -16,6 +23,11 @@ export type OnlineSeatState = {
 	tokenHash: string;
 	/** The army the player registered with; its code is this seat's secret. */
 	army: PickedArmy;
+	/**
+	 * The Standard list this seat actually fields. A Standard registration is its own combat army
+	 * from the start; a Roster one is null until the player cuts one down and accepts it.
+	 */
+	combatArmy: PickedArmy | null;
 	/** Lobby readiness: this player says they are set to start. Toggled by its own seat only. */
 	ready: boolean;
 	progress: SeatProgress;
@@ -73,6 +85,8 @@ export type PublicArmy = {
 export type PublicSeatState = {
 	nickname: string;
 	army: PublicArmy;
+	/** Whether the opponent has a match list to field — not the list itself, and never its code. */
+	combatReady: boolean;
 	/** Lobby readiness — public, since the leader's Start Game is gated on both seats. */
 	ready: boolean;
 	factionId: string | null;
@@ -108,11 +122,12 @@ export type OnlineGameEventType =
 	| 'join-requested'
 	| 'join-accepted'
 	| 'join-denied'
-	| 'faction-drafted'
+	| 'intelligence-drafted'
 	| 'schemes-drawn'
 	| 'scheme-chosen'
 	| 'scheme-deleted'
 	| 'seat-ready-toggled'
+	| 'combat-army-set'
 	| 'game-started'
 	| 'reveal-intent-toggled'
 	| 'phase-changed'
@@ -147,6 +162,8 @@ export function createEmptySeat(
 		nickname,
 		tokenHash,
 		army,
+		// A Standard registration is already a legal match list; a Roster one has to be cut down.
+		combatArmy: pickedArmyFormat(army) === 'standard' ? army : null,
 		ready: false,
 		progress: createEmptyProgress(),
 		revealIntent: false,
@@ -238,14 +255,67 @@ export function denyJoin(state: OnlineGameState): OnlineGameState {
 	return { ...state, pendingJoin: null };
 }
 
-// --- lobby: setup ---
+// --- prep: the combat army ---
+
+/** Whether a seat has a match list to field. */
+export function isCombatReady(seat: OnlineSeatState): boolean {
+	return seat.combatArmy !== null;
+}
+
+/** Both seats have a match list, which is what lets the leader leave the prep step. */
+export function bothCombatReady(state: OnlineGameState): boolean {
+	return isCombatReady(state.player1) && state.player2 !== null && isCombatReady(state.player2);
+}
 
 /**
- * Faction/scheme setup unlocks only after both seats are filled, and ends with the lobby.
- * The mission is not part of it any more — the creator picks it before the game exists.
+ * Only a seat that registered a Roster army has anything to cut; a Standard registration is its
+ * own combat army from the moment the seat is filled, and stays that way.
+ */
+export function canSetCombatArmy(state: OnlineGameState, seat: PlayerKey): boolean {
+	if (state.status !== 'active' || state.phase !== 'prep') return false;
+	const own = state[seat];
+	return own !== null && pickedArmyFormat(own.army) === 'roster';
+}
+
+export function setCombatArmy(
+	state: OnlineGameState,
+	seat: PlayerKey,
+	army: PickedArmy
+): OnlineGameState {
+	if (!canSetCombatArmy(state, seat)) return state;
+	return updateSeat(state, seat, (s) => ({ ...s, combatArmy: army }));
+}
+
+export function canLeavePrep(state: OnlineGameState): boolean {
+	return state.status === 'active' && state.phase === 'prep' && bothCombatReady(state);
+}
+
+/** Prep → Scheme setup. There is no way back: a cut is final once the table moves on. */
+export function leavePrep(state: OnlineGameState): OnlineGameState {
+	if (!canLeavePrep(state) || state.player2 === null) return state;
+	// Each seat's Scheme faction is the one its combat army belongs to, so the setup step has
+	// nothing left to choose but the intelligence.
+	const seed = (seat: OnlineSeatState): OnlineSeatState => ({
+		...seat,
+		progress: {
+			...seat.progress,
+			schemeDraft: {
+				...seat.progress.schemeDraft,
+				factionId: schemeFactionForArmy((seat.combatArmy ?? seat.army).factionId)
+			}
+		}
+	});
+	return { ...state, phase: 'setup', player1: seed(state.player1), player2: seed(state.player2) };
+}
+
+// --- setup: faction and Scheme ---
+
+/**
+ * Scheme setup happens in the `setup` phase, after both seats have a match list — the army's
+ * faction is the seat's faction, so there is nothing left to choose but the intelligence.
  */
 export function canEditSetup(state: OnlineGameState): boolean {
-	return state.status === 'lobby' && state.player2 !== null;
+	return state.status === 'active' && state.phase === 'setup';
 }
 
 export function setSeatDraft(
@@ -339,14 +409,27 @@ export function canStartGame(state: OnlineGameState): boolean {
 		state.status === 'lobby' &&
 		state.missionId !== null &&
 		state.player2 !== null &&
-		bothSchemesChosen(state) &&
 		bothReady(state)
 	);
 }
 
+/**
+ * Start Game opens the preparation step, not round 1 — a Roster registration still has to be cut
+ * down to a match list, and Schemes are drawn after that.
+ */
 export function startGame(state: OnlineGameState): OnlineGameState {
 	if (!canStartGame(state)) return state;
-	return { ...state, status: 'active', currentRound: MIN_ROUND, phase: 'reveal' };
+	return { ...state, status: 'active', currentRound: MIN_ROUND, phase: 'prep' };
+}
+
+export function canStartRounds(state: OnlineGameState): boolean {
+	return state.status === 'active' && state.phase === 'setup' && bothSchemesChosen(state);
+}
+
+/** Scheme setup → round 1's Reveal phase. */
+export function startRounds(state: OnlineGameState): OnlineGameState {
+	if (!canStartRounds(state)) return state;
+	return { ...state, phase: 'reveal' };
 }
 
 // --- active: rounds & phases ---
@@ -492,6 +575,7 @@ export function toPublicSeat(seat: OnlineSeatState): PublicSeatState {
 			format: pickedArmyFormat(seat.army)
 		},
 		ready: seat.ready,
+		combatReady: seat.combatArmy !== null,
 		factionId: progress.scheme?.factionId ?? progress.schemeDraft.factionId,
 		hasScheme: progress.scheme !== null,
 		schemeRevealed: progress.schemeRevealed,

@@ -99,15 +99,16 @@ export async function closeGame(gameId: string, token: string): Promise<void> {
 	await parse<Record<string, never>>(response);
 }
 
-export async function draftSeat(
+/** Sets the seat's intelligence; the Scheme faction comes from the combat army, not from here. */
+export async function draftIntelligence(
 	gameId: string,
 	token: string,
-	draft: { factionId?: string | null; intelligence?: number | null }
+	intelligence: number | null
 ): Promise<void> {
 	const response = await fetch(`${BASE}/${gameId}/draft`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-		body: JSON.stringify(draft)
+		body: JSON.stringify({ intelligence })
 	});
 	await parse<Record<string, never>>(response);
 }
@@ -141,6 +142,20 @@ export async function toggleReady(gameId: string, token: string): Promise<void> 
 	const response = await fetch(`${BASE}/${gameId}/ready`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
+/** Registers the Standard list this seat fields, cut down from the Roster army it brought. */
+export async function setCombatArmy(
+	gameId: string,
+	token: string,
+	army: PickedArmy
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/combat-army`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ army })
 	});
 	await parse<Record<string, never>>(response);
 }

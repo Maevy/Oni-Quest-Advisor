@@ -489,7 +489,7 @@
 					style="border-color: {faction.color}"
 				>
 					<h2 class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Your Army</h2>
-					{#if armyRows.length === 0 && rosterPicks.length === 0}
+					{#if armyRows.length === 0 && rosterPicks.length === 0 && poolRemaining.length === 0}
 						<p class="text-sm text-slate-500">No units yet. Add some from the unit list.</p>
 					{:else}
 						<div

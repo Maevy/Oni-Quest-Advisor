@@ -44,6 +44,8 @@
 	import OnlineIntroNotice from '$lib/components/OnlineIntroNotice.svelte';
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
+	import OnlineArmyPrep from '$lib/components/OnlineArmyPrep.svelte';
+	import OnlineSchemeSelect from '$lib/components/OnlineSchemeSelect.svelte';
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
 	import PickArmyDialog from '$lib/components/PickArmyDialog.svelte';
 	import TournamentSetup from '$lib/components/TournamentSetup.svelte';
@@ -210,6 +212,46 @@
 			: null
 	);
 	let onlineMyVP = $derived(onlineMission ? onlineGameStore.myVP(onlineMission, onlineMyCard) : 0);
+
+	// --- cutting a registered Roster army down to a match list ---
+	let onlineCutError = $state<string | null>(null);
+
+	/**
+	 * Borrows the army builder for the online prep step. The catalogs are loaded first because a
+	 * reload lands straight on this screen without ever passing the picker that loads them, and
+	 * decoding an army code needs them.
+	 */
+	async function openRosterCut(): Promise<void> {
+		onlineCutError = null;
+		const registered = onlineGameStore.view?.self.army ?? null;
+		if (registered === null) return;
+		await contentStore.loadArmy();
+		const error = armyBuilderStore.beginRosterCut(registered.code);
+		if (error === 'roster-mismatch') {
+			onlineCutError = 'Your roster was built with a different army roster version.';
+			return;
+		}
+		if (error !== null) {
+			onlineCutError = 'This army code is not valid.';
+			return;
+		}
+		navigationStore.borrowArmyBuilder('online-game');
+	}
+
+	/** Hands the finished cut to the match. The code is read before leaving wipes the builder. */
+	function acceptRosterCut(): void {
+		const code = armyBuilderStore.acceptCut();
+		const registered = onlineGameStore.view?.self.army ?? null;
+		navigationStore.leaveArmyBuilder();
+		if (code === null || registered === null) return;
+		onlineCutError = null;
+		void onlineGameStore.setCombatArmy({
+			name: registered.name,
+			factionId: registered.factionId,
+			code,
+			format: 'standard'
+		});
+	}
 
 	// Solo mode derived values
 	let chosenSchemeCard = $derived(
@@ -595,6 +637,7 @@
 		unitBudget={(unitId) => armyBuilderStore.unitBudget(unitId)}
 		mountBlock={(entryId) => armyBuilderStore.mountBlock(entryId)}
 		poolRemaining={armyBuilderStore.poolRemaining}
+		onAccept={acceptRosterCut}
 		onReturn={() => navigationStore.leaveArmyBuilder()}
 		onSetFormat={requestFormat}
 		onCopyCode={copyArmyCode}
@@ -647,7 +690,34 @@
 		}}
 	/>
 {:else if navigationStore.screen === 'online-game' && onlineGameStore.view}
-	{#if onlineGameStore.view.status === 'active' && onlineMission}
+	{#if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'prep'}
+		<OnlineArmyPrep
+			view={onlineGameStore.view}
+			isLeader={onlineGameStore.isLeader}
+			error={onlineGameStore.error ?? onlineCutError}
+			missionName={onlineMission?.name ?? null}
+			armyFactions={contentStore.armyFactions}
+			onCutArmy={() => void openRosterCut()}
+			onAdvance={() => onlineGameStore.advancePhase()}
+			onCloseGame={() => onlineGameStore.closeGame()}
+		/>
+	{:else if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'setup'}
+		<OnlineSchemeSelect
+			view={onlineGameStore.view}
+			isLeader={onlineGameStore.isLeader}
+			error={onlineGameStore.error}
+			missionName={onlineMission?.name ?? null}
+			armyFactions={contentStore.armyFactions}
+			factions={contentStore.factions}
+			schemes={contentStore.schemes}
+			onSetIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}
+			onDrawSchemes={() => onlineGameStore.drawSchemes()}
+			onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
+			onDeleteScheme={() => onlineGameStore.deleteScheme()}
+			onAdvance={() => onlineGameStore.advancePhase()}
+			onCloseGame={() => onlineGameStore.closeGame()}
+		/>
+	{:else if onlineGameStore.view.status === 'active' && onlineMission}
 		<OnlineGameView
 			view={onlineGameStore.view}
 			isLeader={onlineGameStore.isLeader}
@@ -682,9 +752,7 @@
 			isLeader={onlineGameStore.isLeader}
 			{inviteUrl}
 			error={onlineGameStore.error}
-			factions={contentStore.factions}
 			armyFactions={contentStore.armyFactions}
-			schemes={contentStore.schemes}
 			selectedMission={onlineMission}
 			resultsForMission={onlineResults}
 			onAcceptJoin={() => onlineGameStore.acceptJoin()}
@@ -694,11 +762,6 @@
 				onlineGameStore.leave();
 				navigationStore.leaveOnline();
 			}}
-			onDraftFaction={(factionId) => onlineGameStore.draftFaction(factionId)}
-			onDraftIntelligence={(intelligence) => onlineGameStore.draftIntelligence(intelligence)}
-			onDrawSchemes={() => onlineGameStore.drawSchemes()}
-			onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
-			onDeleteScheme={() => onlineGameStore.deleteScheme()}
 			onToggleReady={() => onlineGameStore.toggleReady()}
 			onStartGame={() => onlineGameStore.startGame()}
 		/>

@@ -2,40 +2,28 @@
 	import { pickedArmyFormat } from '$lib/domain';
 	import type {
 		ArmyFactionConfig,
-		Faction,
 		Mission,
 		OnlineSeatState,
 		PublicArmy,
-		PublicSeatState,
 		ResultObjectiveDef,
-		SchemeCard,
 		OnlineGameView
 	} from '$lib/domain';
 	import ArmyBadge from './ArmyBadge.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import OnlineMissionView from './OnlineMissionView.svelte';
-	import OnlineSchemeSetup from './OnlineSchemeSetup.svelte';
 
 	type Props = {
 		view: OnlineGameView;
 		isLeader: boolean;
 		inviteUrl: string;
 		error: string | null;
-		factions: Faction[];
-		/** Army factions — a different id space from the scheme factions above. */
 		armyFactions: ArmyFactionConfig[];
-		schemes: SchemeCard[];
 		selectedMission: Mission | null;
 		resultsForMission: ResultObjectiveDef[];
 		onAcceptJoin: () => Promise<void>;
 		onDenyJoin: () => Promise<void>;
 		onCloseGame: () => Promise<void>;
 		onReturnToMenu: () => void;
-		onDraftFaction: (factionId: string) => void;
-		onDraftIntelligence: (intelligence: number | null) => void;
-		onDrawSchemes: () => void;
-		onChooseScheme: (schemeId: string) => void;
-		onDeleteScheme: () => void;
 		onToggleReady: () => Promise<void>;
 		onStartGame: () => void;
 	};
@@ -45,20 +33,13 @@
 		isLeader,
 		inviteUrl,
 		error,
-		factions,
 		armyFactions,
-		schemes,
 		selectedMission,
 		resultsForMission,
 		onAcceptJoin,
 		onDenyJoin,
 		onCloseGame,
 		onReturnToMenu,
-		onDraftFaction,
-		onDraftIntelligence,
-		onDrawSchemes,
-		onChooseScheme,
-		onDeleteScheme,
 		onToggleReady,
 		onStartGame
 	}: Props = $props();
@@ -67,7 +48,6 @@
 	let copied = $state(false);
 	let acting = $state(false);
 
-	let setupUnlocked = $derived(view.status === 'lobby' && view.opponent !== null);
 	let opponent = $derived(view.opponent);
 
 	/** The own seat's army reduced to what a seat card shows — never the code. */
@@ -84,39 +64,18 @@
 	let p1Ready = $derived(view.seat === 'player1' ? view.self.ready : (opponent?.ready ?? false));
 	let p2Ready = $derived(view.seat === 'player2' ? view.self.ready : (opponent?.ready ?? false));
 
-	let drawnCards = $derived(
-		view.self.drawnSchemeIds
-			.map((id) => schemes.find((card) => card.id === id))
-			.filter((card): card is SchemeCard => card !== undefined)
-	);
-	let chosenCardSelf = $derived(
-		view.self.progress.scheme
-			? (schemes.find((card) => card.id === view.self.progress.scheme?.schemeId) ?? null)
-			: null
-	);
-
-	function factionName(publicSeat: PublicSeatState): string | null {
-		if (!publicSeat.factionId) return null;
-		return factions.find((faction) => faction.id === publicSeat.factionId)?.name ?? null;
-	}
-
-	let bothSchemes = $derived(
-		view.self.progress.scheme !== null && (view.opponent?.hasScheme ?? false)
-	);
 	let canStart = $derived(
 		view.status === 'lobby' &&
 			view.missionId !== null &&
 			view.opponent !== null &&
-			bothSchemes &&
 			view.self.ready &&
-			(view.opponent?.ready ?? false)
+			(opponent?.ready ?? false)
 	);
 
 	/** Names whichever half of the start gate is still missing, in the order it can be acted on. */
 	let startHint = $derived.by(() => {
 		if (view.opponent === null) return 'Waiting for a second player to join.';
-		if (!bothSchemes) return 'Both players must choose a Scheme.';
-		if (!view.self.ready) return 'Press Ready once your Scheme is set.';
+		if (!view.self.ready) return 'Press Ready to continue.';
 		return 'Waiting for the other player to be ready.';
 	});
 
@@ -202,7 +161,7 @@
 {/snippet}
 
 <div class="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-3 px-4 py-4">
-	{#if isLeader && (view.status === 'lobby' || view.status === 'active')}
+	{#if isLeader && view.status !== 'closed' && view.status !== 'finished'}
 		<button
 			type="button"
 			class="self-start rounded-lg border-2 border-red-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
@@ -217,12 +176,12 @@
 		<p class="text-slate-400">
 			{#if view.status === 'lobby'}
 				Setup Phase
-			{:else if view.status === 'active'}
-				Round {view.currentRound} — {view.phase === 'reveal' ? 'Reveal' : 'Scoring'} Phase
 			{:else if view.status === 'finished'}
 				Finished
-			{:else}
+			{:else if view.status === 'closed'}
 				Closed
+			{:else}
+				Round {view.currentRound}
 			{/if}
 		</p>
 	</div>
@@ -230,6 +189,7 @@
 	{#if error}
 		<div
 			class="rounded-xl border border-red-500/40 bg-slate-800/40 p-3 text-sm text-red-300 backdrop-blur"
+			role="alert"
 		>
 			{error}
 		</div>
@@ -284,20 +244,18 @@
 			</div>
 		{/if}
 
-		{#if view.status === 'lobby'}
-			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
-				<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Mission</p>
-				{#if selectedMission}
-					<p class="text-slate-200">
-						{view.season} — <span class="font-semibold">{selectedMission.name}</span>
-					</p>
-				{:else}
-					<p class="text-sm text-slate-400 italic">
-						This game's mission is not in the bundled content.
-					</p>
-				{/if}
-			</div>
-		{/if}
+		<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
+			<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Mission</p>
+			{#if selectedMission}
+				<p class="text-slate-200">
+					{view.season} — <span class="font-semibold">{selectedMission.name}</span>
+				</p>
+			{:else}
+				<p class="text-sm text-slate-400 italic">
+					This game's mission is not in the bundled content.
+				</p>
+			{/if}
+		</div>
 
 		<!-- Player 1 seat -->
 		<div class="rounded-2xl border border-sky-500/30 bg-slate-800/40 p-4 backdrop-blur">
@@ -320,119 +278,26 @@
 			{#if view.status === 'lobby'}
 				{@render readyRow(view.seat === 'player1', p1Ready)}
 			{/if}
-			<div class="mt-3">
-				{#if view.seat === 'player1'}
-					{#if view.status === 'lobby' && setupUnlocked}
-						<OnlineSchemeSetup
-							{factions}
-							schemeDraft={view.self.progress.schemeDraft}
-							{drawnCards}
-							chosenCard={chosenCardSelf}
-							onSetFaction={onDraftFaction}
-							onSetIntelligence={onDraftIntelligence}
-							onDraw={onDrawSchemes}
-							onChoose={onChooseScheme}
-							onDelete={onDeleteScheme}
-						/>
-					{:else if view.status === 'lobby'}
-						<p class="text-sm text-slate-500">
-							Faction &amp; Scheme selection (locked until a player joins)
-						</p>
-					{:else if chosenCardSelf}
-						<div class="rounded-xl border border-sky-500/40 bg-slate-900/40 p-3">
-							<h3 class="font-semibold text-sky-100">{chosenCardSelf.title}</h3>
-							<p class="mt-1 text-sm text-slate-300">{chosenCardSelf.ruleText}</p>
-						</div>
-					{/if}
-				{:else if opponent}
-					<p class="text-sm text-slate-300">Faction: {factionName(opponent) ?? '—'}</p>
-					<div class="mt-2">
-						{#if opponent.schemeRevealed && opponent.revealedScheme}
-							{@const revealedCard = schemes.find(
-								(card) => card.id === opponent.revealedScheme?.schemeId
-							)}
-							<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
-								<h3 class="font-semibold text-orange-100">{revealedCard?.title ?? ''}</h3>
-								<p class="mt-1 text-sm text-slate-300">{revealedCard?.ruleText ?? ''}</p>
-							</div>
-						{:else if opponent.hasScheme}
-							<p class="text-sm text-slate-400 italic">Hidden Scheme</p>
-						{:else}
-							<p class="text-sm text-slate-400 italic">No schemes</p>
-						{/if}
-					</div>
-				{/if}
-			</div>
 		</div>
 
 		<!-- Player 2 seat -->
 		<div class="rounded-2xl border border-orange-500/30 bg-slate-800/40 p-4 backdrop-blur">
-			{#if view.seat === 'player2'}
-				<div class="flex items-center justify-between gap-2">
-					<span class="font-semibold text-orange-300">Player 2</span>
-					<span class="text-slate-100">{view.self.nickname}</span>
-				</div>
-				{#if p2Army}
-					<div class="mt-3">
-						<ArmyBadge {...p2Army} factions={armyFactions} />
-					</div>
-				{/if}
-				{#if view.status === 'lobby'}
-					{@render readyRow(true, p2Ready)}
-				{/if}
+			<div class="flex items-center justify-between gap-2">
+				<span class="font-semibold text-orange-300">Player 2</span>
+				<span class="text-slate-100">
+					{view.seat === 'player2' ? view.self.nickname : (opponent?.nickname ?? '')}
+				</span>
+			</div>
+			{#if p2Army}
 				<div class="mt-3">
-					{#if view.status === 'lobby' && setupUnlocked}
-						<OnlineSchemeSetup
-							{factions}
-							schemeDraft={view.self.progress.schemeDraft}
-							{drawnCards}
-							chosenCard={chosenCardSelf}
-							onSetFaction={onDraftFaction}
-							onSetIntelligence={onDraftIntelligence}
-							onDraw={onDrawSchemes}
-							onChoose={onChooseScheme}
-							onDelete={onDeleteScheme}
-						/>
-					{:else if chosenCardSelf}
-						<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
-							<h3 class="font-semibold text-orange-100">{chosenCardSelf.title}</h3>
-							<p class="mt-1 text-sm text-slate-300">{chosenCardSelf.ruleText}</p>
-						</div>
-					{/if}
+					<ArmyBadge {...p2Army} factions={armyFactions} />
 				</div>
-			{:else if opponent}
-				<div class="flex items-center justify-between gap-2">
-					<span class="font-semibold text-orange-300">Player 2</span>
-					<span class="text-slate-100">{opponent.nickname}</span>
-				</div>
-				{#if p2Army}
-					<div class="mt-3">
-						<ArmyBadge {...p2Army} factions={armyFactions} />
-					</div>
-				{/if}
-				{#if view.status === 'lobby'}
-					{@render readyRow(false, p2Ready)}
-				{/if}
-				<div class="mt-3">
-					<p class="text-sm text-slate-300">Faction: {factionName(opponent) ?? '—'}</p>
-					<div class="mt-2">
-						{#if opponent.schemeRevealed && opponent.revealedScheme}
-							{@const revealedCard = schemes.find(
-								(card) => card.id === opponent.revealedScheme?.schemeId
-							)}
-							<div class="rounded-xl border border-orange-500/40 bg-slate-900/40 p-3">
-								<h3 class="font-semibold text-orange-100">{revealedCard?.title ?? ''}</h3>
-								<p class="mt-1 text-sm text-slate-300">{revealedCard?.ruleText ?? ''}</p>
-							</div>
-						{:else if opponent.hasScheme}
-							<p class="text-sm text-slate-400 italic">Hidden Scheme</p>
-						{:else}
-							<p class="text-sm text-slate-400 italic">No schemes</p>
-						{/if}
-					</div>
-				</div>
-			{:else}
-				<p class="text-center text-slate-400">No Player 2, invite someone</p>
+			{/if}
+			{#if view.status === 'lobby' && p2Army}
+				{@render readyRow(view.seat === 'player2', p2Ready)}
+			{/if}
+			{#if !p2Army}
+				<p class="mt-3 text-center text-slate-400">No Player 2, invite someone</p>
 			{/if}
 		</div>
 
@@ -440,21 +305,17 @@
 			<OnlineMissionView mission={selectedMission} results={resultsForMission} />
 		{/if}
 
-		{#if view.status === 'active'}
-			<p class="text-center text-xs text-slate-500">Round controls arrive in the next update.</p>
-		{/if}
-
 		{#if view.status === 'lobby'}
 			{#if isLeader}
 				<button
 					type="button"
-					disabled={!canStart}
+					disabled={!canStart || acting}
 					class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
 					onclick={onStartGame}
 				>
 					Start Game
 				</button>
-				{#if !canStart && startHint}
+				{#if !canStart}
 					<p class="-mt-1 text-center text-xs text-slate-400">{startHint}</p>
 				{/if}
 			{:else}
@@ -462,6 +323,10 @@
 					The game leader starts the game once both players are ready.
 				</p>
 			{/if}
+		{:else}
+			<p class="text-center text-xs text-slate-500">
+				This game is running, but its mission content is missing on this device.
+			</p>
 		{/if}
 	{/if}
 </div>
@@ -503,9 +368,9 @@
 <!-- Close confirmation -->
 {#if confirmingClose}
 	<ConfirmDialog
-		text="Do you really want to close the game ?"
+		text="Do you really want to close the game?"
 		confirmLabel="Close Game"
-		cancelLabel="Keep playing"
+		cancelLabel="Cancel"
 		confirming={acting}
 		onConfirm={handleConfirmedClose}
 		onCancel={() => (confirmingClose = false)}

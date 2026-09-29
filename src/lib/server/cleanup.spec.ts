@@ -11,12 +11,14 @@ import {
 	createOnlineGame,
 	createTournamentEvent,
 	finishGame,
+	leavePrep,
 	requestJoin,
 	setSeatDraft,
 	setSeatDrawnSchemes,
 	setSeatObjectiveChecked,
 	snapshotAndProceed,
 	startGame,
+	startRounds,
 	toggleReady,
 	toggleRevealIntent,
 	type PickedArmy
@@ -90,13 +92,16 @@ async function insertJourneyGame(journey: Journey): Promise<string> {
 	);
 	state = requestJoin(state, 'Joiner', hashToken(generateSeatToken()), FIXTURE_ARMY);
 	state = acceptJoin(state);
+	for (const seat of ['player1', 'player2'] as const) state = toggleReady(state, seat);
+	state = startGame(state);
+	// Both fixture seats registered Standard lists, so preparation is already satisfied.
+	state = leavePrep(state);
 	for (const seat of ['player1', 'player2'] as const) {
-		state = setSeatDraft(state, seat, { factionId: 'helian-league', intelligence: 14 });
+		state = setSeatDraft(state, seat, { intelligence: 14 });
 		state = setSeatDrawnSchemes(state, seat, [SCHEME_ID]);
 		state = chooseSeatScheme(state, seat, SCHEME_ID);
-		state = toggleReady(state, seat);
 	}
-	state = startGame(state);
+	state = startRounds(state);
 	for (let round = 0; round < journey.roundsAdvanced; round++) {
 		state = advanceToScoring(state);
 		state = snapshotAndProceed(state, { player1: 0, player2: 0 });

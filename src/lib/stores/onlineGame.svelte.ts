@@ -6,7 +6,7 @@ import {
 	createGame as apiCreateGame,
 	deleteScheme as apiDeleteScheme,
 	denyJoin as apiDenyJoin,
-	draftSeat as apiDraftSeat,
+	draftIntelligence as apiDraftIntelligence,
 	drawSchemes as apiDrawSchemes,
 	fetchGameState,
 	fetchJoinStatus,
@@ -15,6 +15,7 @@ import {
 	generateJoinToken,
 	OnlineApiError,
 	requestJoin as apiRequestJoin,
+	setCombatArmy as apiSetCombatArmy,
 	setObjectiveChecked as apiSetObjectiveChecked,
 	setSchemeBoxChecked as apiSetSchemeBoxChecked,
 	startGame as apiStartGame,
@@ -147,12 +148,8 @@ class OnlineGameStore {
 
 	// --- setup actions (server-authoritative: send intent, then refetch) ---
 
-	async draftFaction(factionId: string | null): Promise<void> {
-		await this.sendSetup((gameId, token) => apiDraftSeat(gameId, token, { factionId }));
-	}
-
 	async draftIntelligence(intelligence: number | null): Promise<void> {
-		await this.sendSetup((gameId, token) => apiDraftSeat(gameId, token, { intelligence }));
+		await this.sendSetup((gameId, token) => apiDraftIntelligence(gameId, token, intelligence));
 	}
 
 	async drawSchemes(): Promise<void> {
@@ -172,11 +169,26 @@ class OnlineGameStore {
 		await this.sendSetup((gameId, token) => apiToggleReady(gameId, token));
 	}
 
+	// --- preparation ---
+
+	/** Registers the Standard list this seat fields, cut down from the Roster army it brought. */
+	async setCombatArmy(army: PickedArmy): Promise<void> {
+		await this.sendSetup((gameId, token) => apiSetCombatArmy(gameId, token, army));
+	}
+
 	async startGame(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiStartGame(gameId, token));
 	}
 
 	// --- round engine actions ---
+
+	/**
+	 * Leader-only step forward: preparation → Scheme setup → round 1, then each round's
+	 * Reveal → Scoring → next round. Which step it takes is the server's decision, from the phase.
+	 */
+	async advancePhase(): Promise<void> {
+		await this.sendSetup((gameId, token) => apiAdvancePhase(gameId, token));
+	}
 
 	async toggleRevealIntent(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiToggleRevealIntent(gameId, token));
@@ -192,10 +204,6 @@ class OnlineGameStore {
 		await this.sendSetup((gameId, token) =>
 			apiSetSchemeBoxChecked(gameId, token, checkedIncrements)
 		);
-	}
-
-	async advancePhase(): Promise<void> {
-		await this.sendSetup((gameId, token) => apiAdvancePhase(gameId, token));
 	}
 
 	async finishGame(): Promise<void> {
