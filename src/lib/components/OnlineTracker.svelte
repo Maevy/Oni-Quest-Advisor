@@ -90,8 +90,7 @@
 			scheme: own ? view.self.progress.scheme : (publicSeat?.revealedScheme ?? null),
 			hasScheme: own ? view.self.progress.scheme !== null : (publicSeat?.hasScheme ?? false),
 			revealed: own ? view.self.progress.schemeRevealed : (publicSeat?.schemeRevealed ?? false),
-			card: own ? myCard : opponentCard,
-			vp: seat === 'player1' ? p1VP : p2VP
+			card: own ? myCard : opponentCard
 		};
 	}
 
@@ -211,7 +210,6 @@
 							hasScheme={scoring.hasScheme}
 							revealed={scoring.revealed}
 							isOwn={scoring.own}
-							vp={scoring.vp}
 							{onSetSchemeChecked}
 							onReveal={() => (confirmingReveal = true)}
 						/>

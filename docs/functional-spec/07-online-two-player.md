@@ -186,13 +186,16 @@ the one button that moves the game: **Advance to next round**, reading **Conclud
 ### The scoring views
 
 One view per seat, labelled by seat and coloured by it. Your own is editable; the other seat's is
-read-only — its boxes inert, its scheme _"Hidden Scheme"_ until revealed. Each view shows:
+read-only — its boxes inert, its scheme _"Hidden Scheme"_ until revealed. Each view is three
+panels, top to bottom:
 
-- the seat's name and its running VP against the 10 cap,
-- its scheme: the card and, while hidden, a **Reveal** button on your own view (the opponent's
-  hidden scheme shows nothing but the label); once revealed, the card with its increment boxes,
-  editable only on your own view,
-- its Results as the grouped per-round cards, editable only on your own view.
+- **{seat} Scoring** — one line, _"{name} is Player 1"_. No total: the running VP for both seats
+  is already in the score bar above the views, and repeating it here would only invite the two to
+  disagree.
+- **Scheme Results** — the seat's scheme: the card and, while hidden, a **Reveal** button on your
+  own view (the opponent's hidden scheme shows nothing but the label); once revealed, the card
+  with its increment boxes, editable only on your own view.
+- **Results** — the grouped per-round cards, editable only on your own view.
 
 Objective counts are cumulative across rounds — nothing is discarded when a round ends.
 
