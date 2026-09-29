@@ -52,7 +52,18 @@ export type PickedArmy = {
 	name: string;
 	factionId: ArmyFactionId;
 	code: string;
+	/**
+	 * Absent on snapshots taken before the field existed (= standard). The code carries it
+	 * too, but reading it back needs the catalogs, which a list or a lobby does not have.
+	 */
+	format?: ArmyFormat;
 };
+
+/** The format a picked army was built for; snapshots predating the field are standard. */
+export function pickedArmyFormat(army: PickedArmy): ArmyFormat {
+	if ((army.format as string | undefined) === LEGACY_ROSTER_FORMAT) return 'roster';
+	return army.format ?? 'standard';
+}
 
 /**
  * Everything the read-only army view needs, resolved once per render: the snapshot,

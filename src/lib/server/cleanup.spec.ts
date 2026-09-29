@@ -12,13 +12,13 @@ import {
 	createTournamentEvent,
 	finishGame,
 	requestJoin,
-	selectMission,
 	setSeatDraft,
 	setSeatDrawnSchemes,
 	setSeatObjectiveChecked,
 	snapshotAndProceed,
 	startGame,
-	toggleRevealIntent
+	toggleRevealIntent,
+	type PickedArmy
 } from '$lib/domain';
 import { cleanupStaleGames, cleanupStaleTournaments } from './cleanup';
 import { getDb } from './db';
@@ -33,6 +33,18 @@ const MISSION_ID = 'treasure-hunt';
 const SEASON = 'Season 2';
 const SCHEME_ID = 'opportunistic-manipulation';
 
+const FIXTURE_ARMY: PickedArmy = {
+	name: 'Fixture',
+	factionId: 'helian-league',
+	code: 'aaaaa:0s:0',
+	format: 'standard'
+};
+
+/** Creation carries the mission now, so every fixture game is born set up. */
+function fixtureSetup() {
+	return { season: SEASON, missionId: MISSION_ID, army: FIXTURE_ARMY };
+}
+
 function daysAgo(days: number): string {
 	return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
@@ -40,7 +52,13 @@ function daysAgo(days: number): string {
 /** A lobby game with only the leader seat filled. */
 async function insertLobbyGame(ageInDays: number): Promise<string> {
 	const id = generateGameCode();
-	const state = createOnlineGame(id, 'Leader', hashToken(generateSeatToken()), daysAgo(ageInDays));
+	const state = createOnlineGame(
+		id,
+		'Leader',
+		hashToken(generateSeatToken()),
+		daysAgo(ageInDays),
+		fixtureSetup()
+	);
 	await insertGame(state, {
 		type: 'game-created',
 		actor: 'player1',
@@ -66,11 +84,11 @@ async function insertJourneyGame(journey: Journey): Promise<string> {
 		id,
 		'Leader',
 		hashToken(generateSeatToken()),
-		daysAgo(journey.ageInDays)
+		daysAgo(journey.ageInDays),
+		fixtureSetup()
 	);
-	state = requestJoin(state, 'Joiner', hashToken(generateSeatToken()));
+	state = requestJoin(state, 'Joiner', hashToken(generateSeatToken()), FIXTURE_ARMY);
 	state = acceptJoin(state);
-	state = selectMission(state, SEASON, MISSION_ID);
 	for (const seat of ['player1', 'player2'] as const) {
 		state = setSeatDraft(state, seat, { factionId: 'helian-league', intelligence: 14 });
 		state = setSeatDrawnSchemes(state, seat, [SCHEME_ID]);

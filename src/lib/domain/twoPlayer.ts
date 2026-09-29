@@ -25,7 +25,8 @@ export type SeatProgress = {
 
 /**
  * A hot-seat seat: the shared scoring state plus the army it fields on this device. Both extra
- * fields are local-only — online play has no armies, so its seats stay on `SeatProgress`.
+ * fields are local-only — an online seat keeps its registered army in server state instead
+ * (`OnlineSeatState.army`), so its seats stay on `SeatProgress`.
  */
 export type PlayerProgress = SeatProgress & {
 	/** The army this seat attached to the run; a snapshot, not a live save. */

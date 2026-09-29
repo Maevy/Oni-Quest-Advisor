@@ -41,7 +41,7 @@ Cross-cutting HTTP concerns live in `src/hooks.server.ts`, not in individual han
 
 ```
 id, status, player1: OnlineSeatState, player2: OnlineSeatState | null,
-pendingJoin: { nickname, tokenHash } | null,
+pendingJoin: { nickname, tokenHash, army } | null,
 season, missionId, currentRound, phase,
 roundSnapshots: Record<round, { player1, player2 }>,
 winner: 'player1' | 'player2' | 'draw' | null,
@@ -53,16 +53,29 @@ createdAt, updatedAt
 
 ```
 nickname, tokenHash,
+army: PickedArmy,
 progress: { checkedObjectiveCounts, scheme, schemeDraft, schemeRevealed },
 revealIntent: boolean,
 drawnSchemeIds: string[]
 ```
 
 `status` ∈ `lobby | active | finished | closed`; `phase` ∈ `reveal | scoring`;
-`currentRound` clamped to `MIN_ROUND..MAX_ROUND` (1–5); `MAX_NICKNAME_LENGTH` = 24.
+`currentRound` clamped to `MIN_ROUND..MAX_ROUND` (1–5); `MAX_NICKNAME_LENGTH` = 24 (the field is
+still named `nickname` throughout the wire protocol and the domain — only the **user-visible**
+labels say "Player Name").
 
-Note that a seat's `progress` is the **same `PlayerProgress` type hot-seat uses**, which is why
-`calculateTwoPlayerVP` is shared by both modes.
+`season` and `missionId` are set by `createOnlineGame` from its `OnlineGameSetup` argument
+(`{ season, missionId, army }`), so a game is born set up. They stay typed `| null` because the
+client resolves the id against the bundled content and must tolerate a mission that is not there.
+
+`army` is the seat's **registration**: a `PickedArmy` snapshot (`{ name, factionId, code,
+format? }`) supplied by the create/join payload. The code is that seat's secret and is only ever
+echoed back to its owner.
+
+Note that a seat's `progress` is the **same `SeatProgress` type hot-seat uses**, which is why
+`calculateTwoPlayerVP` is shared by both modes. The army is _not_ part of that shared type —
+hot-seat keeps its `pickedArmy` and live `vitality` on `PlayerProgress`, locally, while an online
+seat keeps its registration in server state.
 
 ### Transitions
 
@@ -72,13 +85,12 @@ turn a failed guard into `409`.
 
 | Function                                                   | Guard                                                                      | Side effects                                                                                              |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `createOnlineGame`                                         | —                                                                          | `lobby`, seat 1 filled, round 1, phase `reveal`                                                           |
-| `requestJoin`                                              | `lobby` ∧ no seat 2 ∧ no pending                                           | sets `pendingJoin`                                                                                        |
-| `acceptJoin`                                               | `lobby` ∧ no seat 2 ∧ pending exists                                       | seat 2 filled from pending; `pendingJoin` cleared                                                         |
+| `createOnlineGame`                                         | —                                                                          | `lobby`, seat 1 filled with its army, season + mission set, round 1, phase `reveal`                       |
+| `requestJoin`                                              | `lobby` ∧ no seat 2 ∧ no pending                                           | sets `pendingJoin` (name, token hash **and army**)                                                        |
+| `acceptJoin`                                               | `lobby` ∧ no seat 2 ∧ pending exists                                       | seat 2 filled from pending, army included; `pendingJoin` cleared                                          |
 | `denyJoin`                                                 | pending exists                                                             | `pendingJoin` cleared                                                                                     |
 | `setSeatDraft` / `setSeatDrawnSchemes` / `clearSeatScheme` | `canEditSetup`: `lobby` ∧ seat 2 present                                   | edits that seat                                                                                           |
 | `chooseSeatScheme`                                         | `canEditSetup` ∧ draft complete ∧ `schemeId ∈ drawnSchemeIds`              | sets `scheme`, **clears the hand**                                                                        |
-| `selectMission`                                            | `canSelectMission`: `lobby` ∧ seat 2 present                               | sets season + missionId                                                                                   |
 | `startGame`                                                | `canStartGame`: `lobby` ∧ mission ∧ seat 2 ∧ both schemes chosen           | `active`, round 1, `reveal`                                                                               |
 | `toggleRevealIntent`                                       | `active` ∧ `reveal` ∧ seat has a scheme                                    | flips `revealIntent`                                                                                      |
 | `advanceToScoring`                                         | `active` ∧ `reveal`                                                        | every seat with scheme ∧ intent → `schemeRevealed = true`; all intents cleared; phase `scoring`           |
@@ -87,6 +99,8 @@ turn a failed guard into `409`.
 | `snapshotAndProceed`                                       | `active` ∧ `scoring` ∧ round < 5                                           | writes the round snapshot; round + 1; phase `reveal`, or `scoring` when both schemes are already revealed |
 | `finishGame`                                               | `active` ∧ `scoring` ∧ round = 5                                           | snapshot round 5; **auto-reveal all**; compute winner; write `resultSummary`; `finished`                  |
 | `closeGame`                                                | not `finished` ∧ not `closed`                                              | `closed`                                                                                                  |
+
+There is no `selectMission` transition: the mission arrives with the creation and cannot change.
 
 **The reveal gate on scoring is enforced twice**: by `canScoreSeatScheme` in the domain and by an
 explicit check in the `/scheme-box` endpoint. `calculateTwoPlayerVP` itself does _not_ check
@@ -99,16 +113,27 @@ not itself the gate.
 returned **in full**, secrets included. The opponent goes through `toPublicSeat`, which exposes
 only:
 
-`nickname`, `factionId` (= `scheme?.factionId ?? schemeDraft.factionId`), `hasScheme`,
-`schemeRevealed`, `revealedScheme` (**null unless the scheme is both chosen and revealed**),
+`nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `factionId`
+(= `scheme?.factionId ?? schemeDraft.factionId`), `hasScheme`, `schemeRevealed`,
+`revealedScheme` (**null unless the scheme is both chosen and revealed**),
 `checkedObjectiveCounts`.
 
-It strips `tokenHash`, `drawnSchemeIds`, `revealIntent`, `intelligence` and the unrevealed
-`scheme` object. **The opponent's unrevealed scheme content never leaves the server** — this is
-the enforcement point, not the UI.
+It strips `tokenHash`, `drawnSchemeIds`, `revealIntent`, `intelligence`, the unrevealed
+`scheme` object **and the army's code**. **The opponent's unrevealed scheme content never leaves
+the server** — this is the enforcement point, not the UI.
+
+The two `factionId`s in that list are **different id spaces**: `army.factionId` is an
+`ArmyFactionId` (7 ids, `oni-clans` and `goblin-wartribes` among them) resolving against
+`contentStore.armyFactions`, while the seat-level `factionId` is a _scheme_ faction (6 ids,
+`monster-factions` among them) resolving against `contentStore.factions`. They overlap on five
+ids; conflating them mis-resolves exactly the two monster factions.
+
+`PublicArmy.format` is derived with `pickedArmyFormat()`, because the server never decodes a code
+— it has no army catalogs loaded — so the format has to travel explicitly in the payload.
 
 > Gap: `pendingJoinNickname` is placed in the view for _any_ seat and only hidden by the client.
-> It should be filtered to the leader.
+> It should be filtered to the leader. The pending join's army is not exposed at all, so the
+> leader's accept popup cannot show what list the joiner brought.
 
 ## API surface
 
@@ -117,28 +142,27 @@ matching `sha256(token)` against a seat's `tokenHash` · **leader** = seat auth 
 `player1` (otherwise 403) · **query-token** = the seat token in `?token=`, used only where
 `EventSource` cannot set a header.
 
-| Method | Path                             | Auth        | Purpose                                                                              |
-| ------ | -------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
-| POST   | `/api/games`                     | none        | create; returns `{ gameId, seat: 'player1', token }` — the plain token, exactly once |
-| GET    | `/api/health`                    | none        | ops probe: `{ ok, games: {status→count}, dbBytes, sseStreams }` — aggregates only    |
-| GET    | `/api/games/[id]/state`          | seat        | the per-seat filtered view                                                           |
-| GET    | `/api/games/[id]/events`         | query-token | SSE change notifications                                                             |
-| POST   | `/api/games/[id]/join`           | none        | request to join, carrying the joiner's own token                                     |
-| GET    | `/api/games/[id]/join/status`    | query-token | `accepted \| pending \| denied \| closed \| full`                                    |
-| POST   | `/api/games/[id]/join/accept`    | leader      | seat the joiner                                                                      |
-| POST   | `/api/games/[id]/join/deny`      | leader      | clear the pending request                                                            |
-| POST   | `/api/games/[id]/draft`          | seat        | set faction and/or intelligence                                                      |
-| POST   | `/api/games/[id]/draw`           | seat        | server-side scheme draw                                                              |
-| POST   | `/api/games/[id]/choose-scheme`  | seat        | commit a chosen scheme                                                               |
-| POST   | `/api/games/[id]/delete-scheme`  | seat        | clear the chosen scheme                                                              |
-| POST   | `/api/games/[id]/select-mission` | leader      | lock season + mission                                                                |
-| POST   | `/api/games/[id]/start`          | leader      | lobby → active                                                                       |
-| POST   | `/api/games/[id]/reveal-intent`  | seat        | toggle the reveal intent                                                             |
-| POST   | `/api/games/[id]/objective`      | seat        | set an objective's checked count                                                     |
-| POST   | `/api/games/[id]/scheme-box`     | seat        | set own scheme increments                                                            |
-| POST   | `/api/games/[id]/advance-phase`  | leader      | reveal → scoring, or scoring → next round                                            |
-| POST   | `/api/games/[id]/finish`         | leader      | finish after round-5 scoring                                                         |
-| POST   | `/api/games/[id]/close`          | leader      | close/abandon                                                                        |
+| Method | Path                            | Auth        | Purpose                                                                                                                           |
+| ------ | ------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/games`                    | none        | create from `{ nickname, season, missionId, army }`; returns `{ gameId, seat: 'player1', token }` — the plain token, exactly once |
+| GET    | `/api/health`                   | none        | ops probe: `{ ok, games: {status→count}, dbBytes, sseStreams }` — aggregates only                                                 |
+| GET    | `/api/games/[id]/state`         | seat        | the per-seat filtered view                                                                                                        |
+| GET    | `/api/games/[id]/events`        | query-token | SSE change notifications                                                                                                          |
+| POST   | `/api/games/[id]/join`          | none        | request to join, carrying the joiner's own token and their army                                                                   |
+| GET    | `/api/games/[id]/join/status`   | query-token | `accepted \| pending \| denied \| closed \| full`                                                                                 |
+| POST   | `/api/games/[id]/join/accept`   | leader      | seat the joiner                                                                                                                   |
+| POST   | `/api/games/[id]/join/deny`     | leader      | clear the pending request                                                                                                         |
+| POST   | `/api/games/[id]/draft`         | seat        | set faction and/or intelligence                                                                                                   |
+| POST   | `/api/games/[id]/draw`          | seat        | server-side scheme draw                                                                                                           |
+| POST   | `/api/games/[id]/choose-scheme` | seat        | commit a chosen scheme                                                                                                            |
+| POST   | `/api/games/[id]/delete-scheme` | seat        | clear the chosen scheme                                                                                                           |
+| POST   | `/api/games/[id]/start`         | leader      | lobby → active                                                                                                                    |
+| POST   | `/api/games/[id]/reveal-intent` | seat        | toggle the reveal intent                                                                                                          |
+| POST   | `/api/games/[id]/objective`     | seat        | set an objective's checked count                                                                                                  |
+| POST   | `/api/games/[id]/scheme-box`    | seat        | set own scheme increments                                                                                                         |
+| POST   | `/api/games/[id]/advance-phase` | leader      | reveal → scoring, or scoring → next round                                                                                         |
+| POST   | `/api/games/[id]/finish`        | leader      | finish after round-5 scoring                                                                                                      |
+| POST   | `/api/games/[id]/close`         | leader      | close/abandon                                                                                                                     |
 
 Error conventions: `400` malformed or unknown content ids · `401` missing/invalid token · `403`
 seat is not the leader · `404` unknown game · `409` a domain guard refused · `413` body too large
@@ -230,13 +254,12 @@ Append-only, written inside the same transaction as the state change. Actor is `
 
 | Type                                               | Payload                                                                            |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `game-created`                                     | `{ nickname }`                                                                     |
+| `game-created`                                     | `{ nickname, season, missionId }`                                                  |
 | `join-requested` / `join-accepted` / `join-denied` | `{ nickname }`                                                                     |
 | `faction-drafted`                                  | the **partial** draft — `{ factionId }`, `{ intelligence }`, or both               |
 | `schemes-drawn`                                    | `{ count }` — the hand itself stays in state and is private                        |
 | `scheme-chosen`                                    | `{ schemeId }`                                                                     |
 | `scheme-deleted`                                   | —                                                                                  |
-| `mission-selected`                                 | `{ season, missionId }`                                                            |
 | `game-started`                                     | —                                                                                  |
 | `reveal-intent-toggled`                            | `{ intent }`                                                                       |
 | `phase-changed`                                    | `{ round, phase }`                                                                 |

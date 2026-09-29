@@ -377,6 +377,21 @@
 		tournamentEventStore.peek?.canJoin === true && joinName.trim() !== '' && joinArmy !== null
 	);
 
+	// Online drafts: the army each of the two online screens attaches, chosen locally before
+	// any server call. Either format is allowed — a Roster list is cut down after the start.
+	let onlineCreateArmy = $state<PickedArmy | null>(null);
+	let onlineJoinArmy = $state<PickedArmy | null>(null);
+	let onlineCreateArmyFaction = $derived.by(() =>
+		onlineCreateArmy
+			? contentStore.armyFactions.find((faction) => faction.id === onlineCreateArmy?.factionId)
+			: undefined
+	);
+	let onlineJoinArmyFaction = $derived.by(() =>
+		onlineJoinArmy
+			? contentStore.armyFactions.find((faction) => faction.id === onlineJoinArmy?.factionId)
+			: undefined
+	);
+
 	// Entering the join screen: a device that already holds a seat goes to the lobby, everyone
 	// else gets the pre-join look at the tournament the code points at.
 	$effect(() => {
@@ -408,16 +423,23 @@
 	/** Which slot the picker is choosing for: a briefing seat, or the tournament organizer. */
 	let pickTarget = $state<string | null>(null);
 
-	/** Mission runs field standard lists; a playing organizer and a joiner bring a Roster one. */
-	function pickFormatFor(slotId: string | null): ArmyFormat {
-		return slotId === 'tournament' || slotId === 'tournament-join' ? 'roster' : 'standard';
+	/**
+	 * Mission runs field standard lists; a playing organizer and a tournament joiner bring a
+	 * Roster one; an online player may bring either, so their slots are unfiltered.
+	 */
+	function pickFormatFor(slotId: string | null): ArmyFormat | null {
+		if (slotId === 'tournament' || slotId === 'tournament-join') return 'roster';
+		if (slotId === 'online-create' || slotId === 'online-join') return null;
+		return 'standard';
 	}
 
 	async function openPickArmy(slotId: string): Promise<void> {
 		await contentStore.loadArmy();
 		armyBuilderStore.refreshSavedArmies();
 		const format = pickFormatFor(slotId);
-		const listed = armyBuilderStore.savedArmies.filter((army) => savedArmyFormat(army) === format);
+		const listed = armyBuilderStore.savedArmies.filter(
+			(army) => format === null || savedArmyFormat(army) === format
+		);
 		if (listed.length === 0) {
 			showCreateArmyPrompt = true;
 			return;
@@ -435,10 +457,13 @@
 		const picked: PickedArmy = {
 			name: army.name,
 			factionId: army.factionId,
-			code: army.code
+			code: army.code,
+			format: savedArmyFormat(army)
 		};
 		if (pickTarget === 'tournament') tournamentStore.setOrganizerArmy(picked);
 		else if (pickTarget === 'tournament-join') joinArmy = picked;
+		else if (pickTarget === 'online-create') onlineCreateArmy = picked;
+		else if (pickTarget === 'online-join') onlineJoinArmy = picked;
 		else if (isSeatSlot(pickTarget)) twoPlayerProgressStore.pickArmy(pickTarget, picked);
 		else missionProgressStore.pickArmy(picked);
 		showPickArmy = false;
@@ -447,6 +472,8 @@
 	function clearPickedArmy(slotId: string): void {
 		if (slotId === 'tournament') tournamentStore.clearOrganizerArmy();
 		else if (slotId === 'tournament-join') joinArmy = null;
+		else if (slotId === 'online-create') onlineCreateArmy = null;
+		else if (slotId === 'online-join') onlineJoinArmy = null;
 		else if (isSeatSlot(slotId)) twoPlayerProgressStore.clearPickedArmy(slotId);
 		else missionProgressStore.clearPickedArmy();
 	}
@@ -580,21 +607,33 @@
 	/>
 {:else if navigationStore.screen === 'online-create'}
 	<OnlineCreate
-		onCreate={async (nickname) => {
-			await onlineGameStore.createGame(nickname);
+		{seasons}
+		{missionsBySeason}
+		army={onlineCreateArmy}
+		armyFaction={onlineCreateArmyFaction}
+		onCreate={async (nickname, setup) => {
+			await onlineGameStore.createGame(nickname, setup);
+			onlineCreateArmy = null;
 			navigationStore.enterOnlineGame();
 		}}
+		onPickArmy={() => void openPickArmy('online-create')}
+		onClearArmy={() => clearPickedArmy('online-create')}
 		onReturn={() => navigationStore.returnToGameMode()}
 	/>
 {:else if navigationStore.screen === 'online-join'}
 	<OnlineJoin
 		gameCode={navigationStore.onlineJoinCode ?? ''}
 		pendingNickname={onlineGameStore.pendingJoin?.nickname ?? null}
-		onRequestJoin={(nickname) =>
-			onlineGameStore.requestJoin(navigationStore.onlineJoinCode ?? '', nickname)}
+		army={onlineJoinArmy}
+		armyFaction={onlineJoinArmyFaction}
+		onRequestJoin={(nickname, army) =>
+			onlineGameStore.requestJoin(navigationStore.onlineJoinCode ?? '', nickname, army)}
+		onPickArmy={() => void openPickArmy('online-join')}
+		onClearArmy={() => clearPickedArmy('online-join')}
 		onPollPending={() => onlineGameStore.pollPendingJoin()}
 		onAccepted={() => {
 			onlineGameStore.completePendingJoin();
+			onlineJoinArmy = null;
 			navigationStore.enterOnlineGame();
 		}}
 		onReturn={() => {
@@ -639,9 +678,8 @@
 			{inviteUrl}
 			error={onlineGameStore.error}
 			factions={contentStore.factions}
+			armyFactions={contentStore.armyFactions}
 			schemes={contentStore.schemes}
-			{seasons}
-			{missionsBySeason}
 			selectedMission={onlineMission}
 			resultsForMission={onlineResults}
 			onAcceptJoin={() => onlineGameStore.acceptJoin()}
@@ -656,7 +694,6 @@
 			onDrawSchemes={() => onlineGameStore.drawSchemes()}
 			onChooseScheme={(schemeId) => onlineGameStore.chooseScheme(schemeId)}
 			onDeleteScheme={() => onlineGameStore.deleteScheme()}
-			onSelectMission={(season, missionId) => onlineGameStore.selectMission(season, missionId)}
 			onStartGame={() => onlineGameStore.startGame()}
 		/>
 	{/if}
@@ -949,7 +986,9 @@
 		factions={contentStore.armyFactions}
 		note={pickTarget === 'tournament' || pickTarget === 'tournament-join'
 			? 'Roster-format armies (125 points). The list is attached as it is now.'
-			: undefined}
+			: pickTarget === 'online-create' || pickTarget === 'online-join'
+				? 'A Standard army is combat-ready at once; a Roster army is cut down to 85 points once the game starts.'
+				: undefined}
 		onPick={selectPickedArmy}
 		onCancel={() => (showPickArmy = false)}
 	/>

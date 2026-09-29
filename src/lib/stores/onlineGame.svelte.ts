@@ -15,7 +15,6 @@ import {
 	generateJoinToken,
 	OnlineApiError,
 	requestJoin as apiRequestJoin,
-	selectMission as apiSelectMission,
 	setObjectiveChecked as apiSetObjectiveChecked,
 	setSchemeBoxChecked as apiSetSchemeBoxChecked,
 	startGame as apiStartGame,
@@ -29,7 +28,7 @@ import {
 	type OnlineSession
 } from '$lib/data/onlineSession';
 import { calculateTwoPlayerVP } from '$lib/domain';
-import type { Mission, OnlineGameView, SchemeCard } from '$lib/domain';
+import type { Mission, OnlineGameSetup, OnlineGameView, PickedArmy, SchemeCard } from '$lib/domain';
 
 /** Pending join request from the perspective of the joining phone (no seat yet). */
 type PendingJoinAttempt = { gameId: string; nickname: string; token: string };
@@ -76,8 +75,9 @@ class OnlineGameStore {
 		}
 	}
 
-	async createGame(nickname: string): Promise<void> {
-		const created = await apiCreateGame(nickname);
+	/** Creates the game from the draft the create screen collected. */
+	async createGame(nickname: string, setup: OnlineGameSetup): Promise<void> {
+		const created = await apiCreateGame(nickname, setup);
 		this.session = { gameId: created.gameId, seat: created.seat, token: created.token };
 		saveOnlineSession(this.session);
 		this.error = null;
@@ -85,9 +85,9 @@ class OnlineGameStore {
 		this.subscribeToEvents();
 	}
 
-	async requestJoin(gameId: string, nickname: string): Promise<void> {
+	async requestJoin(gameId: string, nickname: string, army: PickedArmy): Promise<void> {
 		const token = generateJoinToken();
-		await apiRequestJoin(gameId, nickname, token);
+		await apiRequestJoin(gameId, nickname, token, army);
 		this.pendingJoin = { gameId, nickname, token };
 	}
 
@@ -164,10 +164,6 @@ class OnlineGameStore {
 
 	async deleteScheme(): Promise<void> {
 		await this.sendSetup((gameId, token) => apiDeleteScheme(gameId, token));
-	}
-
-	async selectMission(season: string, missionId: string): Promise<void> {
-		await this.sendSetup((gameId, token) => apiSelectMission(gameId, token, season, missionId));
 	}
 
 	async startGame(): Promise<void> {

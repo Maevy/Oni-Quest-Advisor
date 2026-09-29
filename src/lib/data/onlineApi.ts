@@ -1,4 +1,4 @@
-import type { OnlineGameView, PlayerKey } from '$lib/domain';
+import type { OnlineGameSetup, OnlineGameView, PickedArmy, PlayerKey } from '$lib/domain';
 
 const BASE = '/api/games';
 
@@ -28,11 +28,14 @@ async function parse<T>(response: Response): Promise<T> {
 	return body as T;
 }
 
-export async function createGame(nickname: string): Promise<CreateGameResponse> {
+export async function createGame(
+	nickname: string,
+	setup: OnlineGameSetup
+): Promise<CreateGameResponse> {
 	const response = await fetch(BASE, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ nickname })
+		body: JSON.stringify({ nickname, ...setup })
 	});
 	return parse<CreateGameResponse>(response);
 }
@@ -48,11 +51,16 @@ export function gameEventsUrl(gameId: string, token: string): string {
 	return `${BASE}/${gameId}/events?token=${encodeURIComponent(token)}`;
 }
 
-export async function requestJoin(gameId: string, nickname: string, token: string): Promise<void> {
+export async function requestJoin(
+	gameId: string,
+	nickname: string,
+	token: string,
+	army: PickedArmy
+): Promise<void> {
 	const response = await fetch(`${BASE}/${gameId}/join`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ nickname, token })
+		body: JSON.stringify({ nickname, token, army })
 	});
 	await parse<Record<string, never>>(response);
 }
@@ -125,20 +133,6 @@ export async function deleteScheme(gameId: string, token: string): Promise<void>
 	const response = await fetch(`${BASE}/${gameId}/delete-scheme`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
-	});
-	await parse<Record<string, never>>(response);
-}
-
-export async function selectMission(
-	gameId: string,
-	token: string,
-	season: string,
-	missionId: string
-): Promise<void> {
-	const response = await fetch(`${BASE}/${gameId}/select-mission`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-		body: JSON.stringify({ season, missionId })
 	});
 	await parse<Record<string, never>>(response);
 }

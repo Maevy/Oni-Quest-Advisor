@@ -365,8 +365,9 @@ Full detail in [09-tournament.md](./09-tournament.md).
 
 ## Online flow
 
-`online-create` (nickname → lobby) → `online-join` (invite code + nickname → request →
-pending) → `online-game` (lobby, setup, rounds, statistics — one screen driven by server
+`online-create` (a **local draft** — player name, mission and army — then **Open Lobby**, the
+first server call) → `online-join` (invite code + player name + army → request → pending) →
+`online-game` (lobby, setup, rounds, statistics — one screen driven by server
 status). `enterOnlineGame()` moves into it; `leaveOnline()` clears `onlineJoinCode` and returns
 to `game-mode`. Full journey in [07-online-two-player.md](./07-online-two-player.md).
 

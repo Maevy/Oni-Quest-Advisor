@@ -1,12 +1,17 @@
 <script lang="ts">
+	import { pickedArmyFormat } from '$lib/domain';
 	import type {
+		ArmyFactionConfig,
 		Faction,
 		Mission,
+		OnlineSeatState,
+		PublicArmy,
 		PublicSeatState,
 		ResultObjectiveDef,
 		SchemeCard,
 		OnlineGameView
 	} from '$lib/domain';
+	import ArmyBadge from './ArmyBadge.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import OnlineMissionView from './OnlineMissionView.svelte';
 	import OnlineSchemeSetup from './OnlineSchemeSetup.svelte';
@@ -17,9 +22,9 @@
 		inviteUrl: string;
 		error: string | null;
 		factions: Faction[];
+		/** Army factions — a different id space from the scheme factions above. */
+		armyFactions: ArmyFactionConfig[];
 		schemes: SchemeCard[];
-		seasons: string[];
-		missionsBySeason: Record<string, Mission[]>;
 		selectedMission: Mission | null;
 		resultsForMission: ResultObjectiveDef[];
 		onAcceptJoin: () => Promise<void>;
@@ -31,7 +36,6 @@
 		onDrawSchemes: () => void;
 		onChooseScheme: (schemeId: string) => void;
 		onDeleteScheme: () => void;
-		onSelectMission: (season: string, missionId: string) => void;
 		onStartGame: () => void;
 	};
 
@@ -41,9 +45,8 @@
 		inviteUrl,
 		error,
 		factions,
+		armyFactions,
 		schemes,
-		seasons,
-		missionsBySeason,
 		selectedMission,
 		resultsForMission,
 		onAcceptJoin,
@@ -55,23 +58,27 @@
 		onDrawSchemes,
 		onChooseScheme,
 		onDeleteScheme,
-		onSelectMission,
 		onStartGame
 	}: Props = $props();
 
 	let confirmingClose = $state(false);
 	let copied = $state(false);
 	let acting = $state(false);
-	let seasonPick = $state('');
-	let missionPick = $state('');
-
-	function handleSeasonChange(event: Event): void {
-		seasonPick = (event.target as HTMLSelectElement).value;
-		missionPick = '';
-	}
 
 	let setupUnlocked = $derived(view.status === 'lobby' && view.opponent !== null);
 	let opponent = $derived(view.opponent);
+
+	/** The own seat's army reduced to what a seat card shows — never the code. */
+	function ownArmy(seat: OnlineSeatState): PublicArmy {
+		return {
+			name: seat.army.name,
+			factionId: seat.army.factionId,
+			format: pickedArmyFormat(seat.army)
+		};
+	}
+
+	let p1Army = $derived(view.seat === 'player1' ? ownArmy(view.self) : (opponent?.army ?? null));
+	let p2Army = $derived(view.seat === 'player2' ? ownArmy(view.self) : (opponent?.army ?? null));
 
 	let drawnCards = $derived(
 		view.self.drawnSchemeIds
@@ -135,10 +142,6 @@
 		} finally {
 			acting = false;
 		}
-	}
-
-	function handleSelectMission() {
-		if (seasonPick && missionPick) onSelectMission(seasonPick, missionPick);
 	}
 </script>
 
@@ -223,52 +226,19 @@
 					</button>
 				</div>
 			</div>
+		{/if}
 
+		{#if view.status === 'lobby'}
 			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
-				<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">
-					Mission Selection
-				</p>
-				{#if view.missionId && selectedMission}
+				<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Mission</p>
+				{#if selectedMission}
 					<p class="text-slate-200">
 						{view.season} — <span class="font-semibold">{selectedMission.name}</span>
 					</p>
 				{:else}
-					<div class="flex flex-col gap-2">
-						<select
-							class="rounded-xl border-2 bg-slate-900/60 px-3 py-2.5 backdrop-blur enabled:border-sky-500/50 enabled:text-sky-100 disabled:border-slate-600/30 disabled:text-slate-500"
-							value={seasonPick}
-							disabled={!setupUnlocked}
-							onchange={handleSeasonChange}
-						>
-							<option value="" disabled>
-								{setupUnlocked ? 'Select a season…' : 'Season (locked until a player joins)'}
-							</option>
-							{#each seasons as season (season)}
-								<option value={season}>{season}</option>
-							{/each}
-						</select>
-						<select
-							class="rounded-xl border-2 bg-slate-900/60 px-3 py-2.5 backdrop-blur enabled:border-sky-500/50 enabled:text-sky-100 disabled:border-slate-600/30 disabled:text-slate-500"
-							value={missionPick}
-							disabled={!setupUnlocked || !seasonPick}
-							onchange={(event) => (missionPick = (event.target as HTMLSelectElement).value)}
-						>
-							<option value="" disabled>
-								{seasonPick ? 'Select a mission…' : 'Mission'}
-							</option>
-							{#each missionsBySeason[seasonPick] ?? [] as mission (mission.id)}
-								<option value={mission.id}>{mission.name}</option>
-							{/each}
-						</select>
-						<button
-							type="button"
-							disabled={!setupUnlocked || !seasonPick || !missionPick}
-							class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-6 py-2.5 font-medium text-sky-100 transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-							onclick={handleSelectMission}
-						>
-							Select Mission
-						</button>
-					</div>
+					<p class="text-sm text-slate-400 italic">
+						This game's mission is not in the bundled content.
+					</p>
 				{/if}
 			</div>
 		{/if}
@@ -286,6 +256,11 @@
 					{view.seat === 'player1' ? view.self.nickname : (opponent?.nickname ?? '')}
 				</span>
 			</div>
+			{#if p1Army}
+				<div class="mt-3">
+					<ArmyBadge {...p1Army} factions={armyFactions} />
+				</div>
+			{/if}
 			<div class="mt-3">
 				{#if view.seat === 'player1'}
 					{#if view.status === 'lobby' && setupUnlocked}
@@ -338,6 +313,11 @@
 					<span class="font-semibold text-orange-300">Player 2</span>
 					<span class="text-slate-100">{view.self.nickname}</span>
 				</div>
+				{#if p2Army}
+					<div class="mt-3">
+						<ArmyBadge {...p2Army} factions={armyFactions} />
+					</div>
+				{/if}
 				<div class="mt-3">
 					{#if view.status === 'lobby' && setupUnlocked}
 						<OnlineSchemeSetup
@@ -363,6 +343,11 @@
 					<span class="font-semibold text-orange-300">Player 2</span>
 					<span class="text-slate-100">{opponent.nickname}</span>
 				</div>
+				{#if p2Army}
+					<div class="mt-3">
+						<ArmyBadge {...p2Army} factions={armyFactions} />
+					</div>
+				{/if}
 				<div class="mt-3">
 					<p class="text-sm text-slate-300">Faction: {factionName(opponent) ?? '—'}</p>
 					<div class="mt-2">

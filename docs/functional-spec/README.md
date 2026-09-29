@@ -63,12 +63,17 @@ each `src/lib/` folder.
 ### Online
 
 - **Game** — a server-side match identified by a short code (`Game#K3FQZ2`), in one of four
-  statuses: `lobby`, `active`, `finished`, `closed`.
+  statuses: `lobby`, `active`, `finished`, `closed`. Born with its mission and its leader's army
+  already fixed, from the create screen's local draft.
+- **Player name** — the 1–24 character name a seat is known by (the field is still called
+  `nickname` in the domain and on the wire; only the labels say "Player Name").
+- **Registered army** — the `PickedArmy` snapshot a seat brings to the game: name, faction, code
+  and format. The server stores it and shows name, faction and a **Standard**/**Roster** tag to
+  both players; the code stays with its owner.
 - **Seat** — one of the two player slots, authenticated by a token whose hash only the server
   stores. A seat's view of the game is filtered: the opponent's unrevealed Scheme never reaches
   it.
-- **Leader** — the player who created the game. Alone may pick the mission, advance phases,
-  finish and close it.
+- **Leader** — the player who created the game. Alone may advance phases, finish and close it.
 - **Phase** — within an active game, each round is `reveal` then `scoring`. Objectives and scheme
   boxes are editable **only** during Scoring.
 - **Round snapshot** — each player's cumulative VP recorded at every round end; feeds the

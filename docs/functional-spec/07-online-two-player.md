@@ -20,43 +20,58 @@ Two design consequences follow from the server owning the game, and they shape e
 1. Mode select → **Online 2 Player Game** (the neon-bordered button). On the **first** press a
    one-time intro modal warns that the feature is experimental: **Continue** proceeds and
    persists the acknowledgement, **Back** returns to the mode select.
-2. **Nickname** screen: an input (1–24 characters after trimming, placeholder `e.g. johnDoe`) and
-   an **Open Lobby** button, disabled until a nickname is entered.
-3. Pressing it shows a full-screen **"Preparing the battlefield…"** overlay while the game is
-   created.
-4. The **lobby** appears, headed `Game#{code} Lobby` with the status line **Setup Phase**.
+2. The **create screen** is a local draft — nothing is sent until its button is pressed. Three
+   fields, all required:
+   - **Your Player Name** — 1–24 characters after trimming, placeholder `e.g. Konichan`.
+   - **Mission** — a season dropdown then a mission dropdown, with the note _"The mission is
+     fixed for the whole game — your opponent joins into it."_ There is no Random button here.
+   - **Your Army** — a **Pick Army** button opening the saved-army picker, which for this slot
+     lists **both** formats and says _"A Standard army is combat-ready at once; a Roster army is
+     cut down to 85 points once the game starts."_ Once picked it becomes a row with the list's
+     name, its faction in the faction's colour, a **Standard**/**Roster** tag, a tap to change it
+     and a ✕ to remove it.
+3. **Open Lobby** stays disabled until all three are set, with the hint _"Name, mission and army
+   open the lobby."_ beneath it. Pressing it shows a full-screen **"Preparing the battlefield…"**
+   overlay while the game is created.
+4. A failure (an unreachable server, the hourly creation limit) surfaces as an error line on the
+   same screen and **keeps the draft**, so nothing has to be re-entered.
+5. The **lobby** appears, headed `Game#{code} Lobby` with the status line **Setup Phase**.
 
-The creator is the **leader** for the whole game: only they pick the mission, advance phases,
-finish and close it. There is no leader handover.
+The creator is the **leader** for the whole game: only they advance phases, finish and close it.
+There is no leader handover. The mission is no longer theirs to pick in the lobby — it was fixed
+at creation.
 
 ## The lobby
 
 - **Close Game** (leader only) → a confirmation dialog. Available in the lobby and mid-game.
 - **Invite card** (leader only): `SHARE LINK TO INVITE PLAYER`, the (truncated) invite URL and a
   **copy to clipboard** button that reads **Copied!** for two seconds.
-- **Mission Selection** (leader only): season and mission dropdowns plus **Select Mission**. All
-  three are **disabled until Player 2 has joined** — the placeholder reads
-  `Season (locked until a player joins)`. Once picked, the card shows `{season} — {name}`.
-  There is no Random button here.
-- **Seat cards**: Player 1 (sky, with a **Game Leader** badge) and Player 2 (orange). Each holds
-  that player's faction/scheme area. Empty seat 2 reads **"No Player 2, invite someone"**.
-- Picking the mission loads a read-only **mission preview** below, with every panel collapsible
-  and its Results showing no boxes at all plus the note _"Objectives unlock once the game has
-  started."_
-- **Start Game** (leader only, at the bottom) — disabled until a mission is selected **and both**
-  players have chosen a Scheme. Player 2 sees no Start button.
-- When a join request arrives, the leader gets a popup: **"{nickname} wants to join your game"**
+- **Mission** (both players, read-only): `{season} — {name}`, the mission the creator fixed. If
+  the id is not in the bundled content the card says so rather than guessing.
+- **Seat cards**: Player 1 (sky, with a **Game Leader** badge) and Player 2 (orange). Each opens
+  with that player's **army** — name, faction in its colour and a **Standard**/**Roster** tag —
+  and holds their faction/scheme area below. Empty seat 2 reads **"No Player 2, invite someone"**.
+  The opponent's army **code never leaves the server**, so a seat card cannot be used to import
+  somebody else's list.
+- A read-only **mission preview** follows, with every panel collapsible and its Results showing
+  no boxes at all plus the note _"Objectives unlock once the game has started."_
+- **Start Game** (leader only, at the bottom) — disabled until **both** players have chosen a
+  Scheme. Player 2 sees no Start button.
+- When a join request arrives, the leader gets a popup: **"{name} wants to join your game"**
   with **Accept** / **Deny**.
 
 ## Joining (Player 2)
 
 1. Player 2 opens the invite link (`/join/{code}`), which hands the code to the app and continues
-   on `/`. The screen reads **"You are about to join Game#{code}, please type your Nickname"**
-   with a nickname input and **Request to Join**.
-2. The request goes **pending**: _"Waiting for the game leader to accept your request…"_ above a
+   on `/`. The screen reads **"You are about to join Game#{code}. Enter your player name and pick
+   the army you field."** with a player-name input (placeholder `e.g. Konichan`) and the same
+   **Your Army** row as the create screen — both formats, name, faction, tag, change and ✕.
+2. **Request to Join** stays disabled until a name **and** an army are set.
+3. The request goes **pending**: _"Waiting for the game leader to accept your request…"_ above a
    pulsing `Game#{code}`. The phone polls for a decision every 2 seconds.
-3. **Accept** → Player 2 takes seat 2 and lands in the same lobby, minus the leader-only controls.
-   **Deny** → Player 2 sees **"Your Request has been revoked"**.
+4. **Accept** → Player 2 takes seat 2, carrying the army they registered with, and lands in the
+   same lobby, minus the leader-only controls. **Deny** → Player 2 sees **"Your Request has been
+   revoked"**.
 
 Other rejection states: **"This game is already full."** and **"This game has been closed."**
 
@@ -122,12 +137,12 @@ since those boxes were never ticked.
 
 The statistics screen replaces the game view:
 
-- **Winner banner** — `Victory for` / faction name / nickname, in the winner's seat colour, or
+- **Winner banner** — `Victory for` / faction name / player name, in the winner's seat colour, or
   **Draw**.
 - **Round Statistics** — a table of rounds 1–5 × both players, each cell that player's
   **cumulative VP at the end of that round** (an em dash where no snapshot exists).
-- **Both seats' scheme cards** — nickname and faction, the (now revealed) card and its rule text,
-  and its increment boxes read-only; _No scheme_ if none was chosen.
+- **Both seats' scheme cards** — player name and faction, the (now revealed) card and its rule
+  text, and its increment boxes read-only; _No scheme_ if none was chosen.
 - **Return to Main Menu**.
 
 There is no rematch or room reuse — returning to the menu ends it.
@@ -162,7 +177,9 @@ add-on:
 
 | Data                              | Owner sees          | Opponent sees                 |
 | --------------------------------- | ------------------- | ----------------------------- |
-| Nicknames, seats, leader badge    | ✓                   | ✓                             |
+| Player names, seats, leader badge | ✓                   | ✓                             |
+| Army name, faction, format tag    | ✓                   | ✓                             |
+| Army **code**                     | own, to re-import   | **nothing**                   |
 | Faction (chosen or drafted)       | ✓                   | ✓                             |
 | Drawn scheme hand                 | own cards           | **nothing**                   |
 | Chosen scheme, unrevealed         | full card           | **"Hidden Scheme"**           |
@@ -170,6 +187,11 @@ add-on:
 | Own objective counts              | editable in Scoring | ✓ read-only                   |
 | Reveal intent                     | own, toggleable     | **nothing** (until committed) |
 | Invite link, pending join request | leader only         | —                             |
+
+The army's `factionId` in the filtered seat view is an **army** faction (7 ids, including
+`oni-clans` and `goblin-wartribes`) and is a separate field from the **scheme** faction (6 ids,
+including `monster-factions`). The two id spaces overlap on five ids and resolve against
+different catalogs, so reusing one field for both would mis-resolve exactly the monster factions.
 
 ## Differences from hot-seat
 
@@ -182,8 +204,12 @@ add-on:
 | Revealed scheme's boxes | owner only                                   | either player                 |
 | Objectives              | own column, Scoring phase only               | active seat's own sheet       |
 | Round                   | server phase engine, leader-driven           | manual, Player 1 only         |
-| Armies                  | none                                         | one per seat, tracked live    |
+| Armies                  | one registered per seat, server-side         | one per seat, tracked live    |
 | Finish / statistics     | yes                                          | none                          |
+
+An online seat's army is a **registration**, not a tracked force: the server stores the snapshot
+and shows its name, faction and format, but nothing scores damage against it. Hot-seat tracks
+Life, stamina and States per copy.
 
 ## Open questions
 
@@ -193,7 +219,9 @@ add-on:
 - **The pending-join nickname is not stripped server-side.** It is placed in every seat's view and
   merely _not rendered_ for a non-leader. Harmless today (a pending join only exists while seat 2
   is empty, so there is no second seat to receive it), but the visibility filter should not rely on
-  that coincidence.
+  that coincidence. The pending join also carries the joiner's army, and the leader's
+  **"{name} wants to join your game"** popup shows neither — so a leader accepts without seeing
+  what list the joiner brought. It appears on the seat card a moment later.
 - **Copy inconsistencies around closing.** The dialog text has a stray space before the question
   mark (_"…close the game ?"_), and the cancel button reads **Keep playing** in the lobby but
   **Cancel** in the game view. Pick one.

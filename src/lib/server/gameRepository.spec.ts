@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { acceptJoin, createOnlineGame, requestJoin } from '$lib/domain';
+import { acceptJoin, createOnlineGame, requestJoin, type PickedArmy } from '$lib/domain';
 import { getDb } from './db';
 import { ApiError } from './errors';
 import { getGame, insertGame, mutateAsLeader, mutateAsSeat, mutateOpen } from './gameRepository';
@@ -10,6 +10,13 @@ import { generateGameCode, generateSeatToken, hashToken } from './ids';
 
 // Point the file database at a throwaway directory before the lazy DB opens.
 process.env.DATA_DIR = mkdtempSync(join(tmpdir(), 'oni-quest-advisor-test-'));
+
+const FIXTURE_ARMY: PickedArmy = {
+	name: 'Fixture',
+	factionId: 'helian-league',
+	code: 'aaaaa:0s:0',
+	format: 'standard'
+};
 
 type Fixture = {
 	id: string;
@@ -23,8 +30,12 @@ async function createSeededGame(): Promise<Fixture> {
 	const leaderToken = generateSeatToken();
 	const player2Token = generateSeatToken();
 	const now = new Date().toISOString();
-	let state = createOnlineGame(id, 'Leader', hashToken(leaderToken), now);
-	state = requestJoin(state, 'Joiner', hashToken(player2Token));
+	let state = createOnlineGame(id, 'Leader', hashToken(leaderToken), now, {
+		season: 'Season 2',
+		missionId: 'obelisk-strike',
+		army: FIXTURE_ARMY
+	});
+	state = requestJoin(state, 'Joiner', hashToken(player2Token), FIXTURE_ARMY);
 	state = acceptJoin(state);
 	await insertGame(state, {
 		type: 'game-created',

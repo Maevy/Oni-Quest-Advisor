@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_ROUND, MIN_ROUND } from './progress';
+import type { PickedArmy } from './savedArmy';
 import {
 	acceptJoin,
 	advanceToScoring,
@@ -8,7 +9,6 @@ import {
 	canDrawSchemes,
 	canRequestJoin,
 	canScoreSeatScheme,
-	canSelectMission,
 	canStartGame,
 	chooseSeatScheme,
 	clearSeatScheme,
@@ -20,7 +20,6 @@ import {
 	normalizeNickname,
 	requestJoin,
 	seatForTokenHash,
-	selectMission,
 	setSeatDrawnSchemes,
 	setSeatDraft,
 	setSeatObjectiveChecked,
@@ -35,11 +34,33 @@ import {
 
 const CREATED_AT = '2026-08-20T18:00:00.000Z';
 
+const ALICE_ARMY: PickedArmy = {
+	name: 'Alice Standard',
+	factionId: 'helian-league',
+	code: 'aaaaa:0s:0',
+	format: 'standard'
+};
+
+const BOB_ARMY: PickedArmy = {
+	name: 'Bob Roster',
+	factionId: 'sand-kingdoms',
+	code: 'aaaaa:2r:0:0.1',
+	format: 'roster'
+};
+
+/** A fresh lobby — the mission and the leader's army arrive with the creation. */
+function newGame(): OnlineGameState {
+	return createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT, {
+		season: 'Season 2',
+		missionId: 'obelisk-strike',
+		army: ALICE_ARMY
+	});
+}
+
 function lobbyWithBothPlayers(): OnlineGameState {
-	let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
-	state = requestJoin(state, 'bob', 'hash-b');
+	let state = newGame();
+	state = requestJoin(state, 'bob', 'hash-b', BOB_ARMY);
 	state = acceptJoin(state);
-	state = selectMission(state, 'Season 2', 'obelisk-strike');
 	return state;
 }
 
@@ -91,7 +112,7 @@ describe('normalizeNickname', () => {
 
 describe('createOnlineGame', () => {
 	it('creates a lobby with the leader on seat player1', () => {
-		const state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		const state = newGame();
 		expect(state.id).toBe('K3FQZ2');
 		expect(state.status).toBe('lobby');
 		expect(state.player1.nickname).toBe('alice');
@@ -102,41 +123,53 @@ describe('createOnlineGame', () => {
 		expect(state.phase).toBe('reveal');
 		expect(state.winner).toBeNull();
 	});
+
+	it('is created already set up: the mission and the leader army are fixed', () => {
+		const state = newGame();
+		expect(state.season).toBe('Season 2');
+		expect(state.missionId).toBe('obelisk-strike');
+		expect(state.player1.army).toEqual(ALICE_ARMY);
+	});
 });
 
 describe('join flow', () => {
 	it('records a join request and answers canRequestJoin', () => {
-		const state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		const state = newGame();
 		expect(canRequestJoin(state)).toBe(true);
-		const requested = requestJoin(state, 'bob', 'hash-b');
-		expect(requested.pendingJoin).toEqual({ nickname: 'bob', tokenHash: 'hash-b' });
+		const requested = requestJoin(state, 'bob', 'hash-b', BOB_ARMY);
+		expect(requested.pendingJoin).toEqual({
+			nickname: 'bob',
+			tokenHash: 'hash-b',
+			army: BOB_ARMY
+		});
 		expect(canRequestJoin(requested)).toBe(false);
 	});
 
 	it('ignores a second request while one is pending', () => {
-		let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
-		state = requestJoin(state, 'bob', 'hash-b');
-		state = requestJoin(state, 'mallory', 'hash-m');
+		let state = newGame();
+		state = requestJoin(state, 'bob', 'hash-b', BOB_ARMY);
+		state = requestJoin(state, 'mallory', 'hash-m', BOB_ARMY);
 		expect(state.pendingJoin?.nickname).toBe('bob');
 	});
 
-	it('accept fills seat player2 with the pending nickname and token hash', () => {
-		let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
-		state = requestJoin(state, 'bob', 'hash-b');
+	it('accept fills seat player2 with the pending nickname, token hash and army', () => {
+		let state = newGame();
+		state = requestJoin(state, 'bob', 'hash-b', BOB_ARMY);
 		state = acceptJoin(state);
 		expect(state.player2?.nickname).toBe('bob');
 		expect(state.player2?.tokenHash).toBe('hash-b');
+		expect(state.player2?.army).toEqual(BOB_ARMY);
 		expect(state.pendingJoin).toBeNull();
 	});
 
 	it('accept without a pending request is a no-op', () => {
-		const state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		const state = newGame();
 		expect(acceptJoin(state)).toBe(state);
 	});
 
 	it('deny clears the pending request', () => {
-		let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
-		state = requestJoin(state, 'bob', 'hash-b');
+		let state = newGame();
+		state = requestJoin(state, 'bob', 'hash-b', BOB_ARMY);
 		state = denyJoin(state);
 		expect(state.pendingJoin).toBeNull();
 		expect(canRequestJoin(state)).toBe(true);
@@ -149,20 +182,6 @@ describe('seatForTokenHash', () => {
 		expect(seatForTokenHash(state, 'hash-a')).toBe('player1');
 		expect(seatForTokenHash(state, 'hash-b')).toBe('player2');
 		expect(seatForTokenHash(state, 'hash-x')).toBeNull();
-	});
-});
-
-describe('selectMission', () => {
-	it('requires player 2 to have joined', () => {
-		let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
-		expect(canSelectMission(state)).toBe(false);
-		expect(selectMission(state, 'Season 2', 'm1')).toBe(state);
-		state = requestJoin(state, 'bob', 'hash-b');
-		state = acceptJoin(state);
-		expect(canSelectMission(state)).toBe(true);
-		state = selectMission(state, 'Season 2', 'm1');
-		expect(state.season).toBe('Season 2');
-		expect(state.missionId).toBe('m1');
 	});
 });
 
@@ -222,7 +241,7 @@ describe('scheme setup', () => {
 	});
 
 	it('setup edits are locked until player 2 has joined', () => {
-		let state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		let state = newGame();
 		state = setSeatDraft(state, 'player1', { factionId: 'helian-league' });
 		expect(state.player1.progress.schemeDraft.factionId).toBeNull();
 		expect(canDrawSchemes(state, 'player1')).toBe(false);
@@ -388,7 +407,7 @@ describe('finishGame', () => {
 
 describe('closeGame', () => {
 	it('closes lobby and active games but never overrides finished', () => {
-		const lobby = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		const lobby = newGame();
 		expect(closeGame(lobby).status).toBe('closed');
 		expect(closeGame(activeScoringGame()).status).toBe('closed');
 		let finished = activeScoringGame();
@@ -408,6 +427,16 @@ describe('visibility', () => {
 		expect(view.hasScheme).toBe(true);
 		expect(view.schemeRevealed).toBe(false);
 		expect(view.revealedScheme).toBeNull();
+	});
+
+	it('toPublicSeat shows the army identity but never its code', () => {
+		const view = toPublicSeat(lobbyWithBothPlayers().player2!);
+		expect(view.army).toEqual({
+			name: 'Bob Roster',
+			factionId: 'sand-kingdoms',
+			format: 'roster'
+		});
+		expect(JSON.stringify(view)).not.toContain(BOB_ARMY.code);
 	});
 
 	it('toPublicSeat exposes the scheme once revealed', () => {
@@ -430,12 +459,15 @@ describe('visibility', () => {
 		expect(view).not.toBeNull();
 		expect(view!.seat).toBe('player1');
 		expect(view!.self.progress.scheme?.schemeId).toBe('head-hunt');
+		expect(view!.self.army).toEqual(ALICE_ARMY);
 		expect(view!.opponent?.revealedScheme).toBeNull();
 		expect(view!.opponent?.factionId).toBe('helian-league');
+		expect(view!.opponent?.army.name).toBe('Bob Roster');
+		expect(JSON.stringify(view!.opponent)).not.toContain(BOB_ARMY.code);
 	});
 
 	it('viewForSeat returns null for an empty seat', () => {
-		const state = createOnlineGame('K3FQZ2', 'alice', 'hash-a', CREATED_AT);
+		const state = newGame();
 		expect(viewForSeat(state, 'player2')).toBeNull();
 	});
 
