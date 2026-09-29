@@ -22,9 +22,11 @@
 <header class="sticky top-0 z-30 border-b border-slate-700/40 bg-slate-950/80 backdrop-blur">
 	<div class="mx-auto flex min-h-16 w-full max-w-xl items-center gap-2 px-4 py-2.5">
 		{#if onBack}
+			<!-- shrink-0: squeezed by a wide switcher, this button used to wrap "← Return" onto two
+			     lines and silently made every tracker header 13 px taller on narrow phones. -->
 			<button
 				type="button"
-				class="rounded-xl bg-red-500 px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-red-400 active:bg-red-400"
+				class="shrink-0 rounded-xl bg-red-500 px-3 py-2 text-sm font-bold whitespace-nowrap text-slate-950 transition hover:bg-red-400 active:bg-red-400"
 				onclick={onBack}
 			>
 				<span aria-hidden="true">←</span> Return

@@ -20,11 +20,16 @@
 
 	type TrackerView = 'p1' | 'p2' | 'army' | 'mission';
 
-	const VIEWS: Array<{ id: TrackerView; label: string }> = [
-		{ id: 'p1', label: 'P1 Scoring' },
-		{ id: 'p2', label: 'P2 Scoring' },
-		{ id: 'army', label: 'Army' },
-		{ id: 'mission', label: 'Mission' }
+	/**
+	 * The switcher labels carry a suffix only where there is room for it: at 320 px four
+	 * single-line labels do not fit beside Return, and nowrap would make them overlap rather
+	 * than wrap. The panes are titled in full, so the short form loses nothing.
+	 */
+	const VIEWS: Array<{ id: TrackerView; short: string; suffix: string }> = [
+		{ id: 'p1', short: 'P1', suffix: ' Scoring' },
+		{ id: 'p2', short: 'P2', suffix: ' Scoring' },
+		{ id: 'army', short: 'Army', suffix: '' },
+		{ id: 'mission', short: 'Mission', suffix: '' }
 	];
 
 	type Props = {
@@ -122,7 +127,10 @@
 	onpointerup={onPointerUp}
 	onpointercancel={() => (swipeStart = null)}
 >
-	<ScreenHeader title={mission.name} onBack={onReturn}>
+	<!-- No title: the two local trackers omit one for the same reason. The mission name is the
+	     Description panel's heading on the Mission view, and the switcher needs the row to itself
+	     at 320 px. -->
+	<ScreenHeader onBack={onReturn}>
 		{#snippet actions()}
 			<div
 				class="relative grid grid-cols-4 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5"
@@ -136,14 +144,14 @@
 				{#each VIEWS as item (item.id)}
 					<button
 						type="button"
-						class="relative z-10 rounded-lg px-1.5 py-2 text-xs font-semibold transition-colors duration-300 sm:px-2 sm:text-sm {activeView ===
+						class="relative z-10 rounded-lg px-1 py-2 text-[11px] leading-tight font-semibold whitespace-nowrap transition-colors duration-300 sm:px-2 sm:text-xs {activeView ===
 						item.id
 							? 'text-sky-100'
 							: 'text-slate-400 hover:text-slate-200'}"
 						aria-pressed={activeView === item.id}
 						onclick={() => (activeView = item.id)}
 					>
-						{item.label}
+						{item.short}<span class="hidden min-[340px]:inline">{item.suffix}</span>
 					</button>
 				{/each}
 			</div>
