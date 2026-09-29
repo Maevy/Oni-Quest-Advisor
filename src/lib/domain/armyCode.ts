@@ -20,12 +20,16 @@ import type {
  * codes built on a different roster fail loudly instead of decoding into
  * the wrong units.
  *
- * Layout: `A<fp3>:<faction36><s|t>:<entries>[:<picks>]` — entries joined by
+ * Layout: `A<fp3>:<faction36><s|r>:<entries>[:<picks>]` — entries joined by
  * `_`, one entry = `<unit36>[*][-<upgrade36>[=<choice>]...]`, a choice being
  * a spellcraft index, an option index or an option index plus an item/element
  * index, interpreted through the upgrade's effects. The optional picks
- * section (tournament format only) lists the roster equipment pool as
+ * section (roster format only) lists the roster equipment pool as
  * `<upgrade36>.<qty36>` tokens.
+ *
+ * The roster format's character was `t` while the format was still named
+ * 'tournament'; codes carrying it still decode, but new codes are written
+ * with `r`.
  */
 
 /** The serialized army: faction, format, every copy, and the roster pool. */
@@ -33,7 +37,7 @@ export type ArmyList = {
 	factionId: ArmyFactionId;
 	format: ArmyFormat;
 	entries: ArmyEntry[];
-	/** Roster (tournament) equipment pool; absent for standard armies. */
+	/** Roster equipment pool; absent for standard armies. */
 	picks?: ArmyRosterPick[];
 };
 
@@ -56,6 +60,14 @@ const CODE_VERSION = 'a';
 
 /** Elements an Affinity replacement can name, indexed in the code. */
 const CODE_ELEMENTS = ['elder', 'air', 'earth', 'divine', 'fire', 'profane', 'water'];
+
+/** Format characters. `t` is legacy: the roster format used to be named 'tournament'. */
+const FORMAT_CHAR_ROSTER = 'r';
+const FORMAT_CHAR_ROSTER_LEGACY = 't';
+
+function isRosterFormatChar(char: string): boolean {
+	return char === FORMAT_CHAR_ROSTER || char === FORMAT_CHAR_ROSTER_LEGACY;
+}
 
 /** Every recruitable unit across all factions plus the neutral pool, by id. */
 function codeUnitPool(units: ArmyUnitContent): ArmyUnitSpec[] {
@@ -195,7 +207,7 @@ export function encodeArmy(list: ArmyList, catalog: ArmyCodeCatalog): string {
 		throw new Error('Standard armies carry no roster picks');
 	}
 	const pickTokens =
-		list.format === 'tournament'
+		list.format === 'roster'
 			? (list.picks ?? []).map((pick) => {
 					const upgradeIndex = indexOfById(upgrades, pick.id);
 					if (upgradeIndex === -1) throw new Error('Unknown upgrade: ' + pick.id);
@@ -203,7 +215,7 @@ export function encodeArmy(list: ArmyList, catalog: ArmyCodeCatalog): string {
 					return to36(upgradeIndex) + '.' + to36(pick.qty);
 				})
 			: [];
-	const formatChar = list.format === 'standard' ? 's' : 't';
+	const formatChar = list.format === 'standard' ? 's' : FORMAT_CHAR_ROSTER;
 	return (
 		CODE_VERSION +
 		catalogFingerprint(catalog) +
@@ -212,7 +224,7 @@ export function encodeArmy(list: ArmyList, catalog: ArmyCodeCatalog): string {
 		formatChar +
 		':' +
 		entryTokens.join('_') +
-		(list.format === 'tournament' ? ':' + pickTokens.join('_') : '')
+		(list.format === 'roster' ? ':' + pickTokens.join('_') : '')
 	);
 }
 
@@ -314,8 +326,8 @@ export function decodeArmy(code: string, catalog: ArmyCodeCatalog): ArmyCodeDeco
 	const [entriesToken, picksToken] = payloadParts;
 	if (head.length < 2 || entriesToken === '') return invalid;
 	const formatChar = head[head.length - 1];
-	if (formatChar !== 's' && formatChar !== 't') return invalid;
-	if (picksToken !== undefined && formatChar !== 't') return invalid;
+	if (formatChar !== 's' && !isRosterFormatChar(formatChar)) return invalid;
+	if (picksToken !== undefined && !isRosterFormatChar(formatChar)) return invalid;
 	const factionIndex = from36(head.slice(0, -1));
 	if (factionIndex === null || factionIndex >= catalog.factions.length) return invalid;
 	const units = codeUnitPool(catalog.units);
@@ -346,7 +358,7 @@ export function decodeArmy(code: string, catalog: ArmyCodeCatalog): ArmyCodeDeco
 		ok: true,
 		list: {
 			factionId: catalog.factions[factionIndex].id,
-			format: formatChar === 's' ? 'standard' : 'tournament',
+			format: formatChar === 's' ? 'standard' : 'roster',
 			entries,
 			...(picks.length > 0 ? { picks } : {})
 		}

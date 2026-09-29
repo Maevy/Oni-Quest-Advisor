@@ -75,9 +75,8 @@
 			</button>
 			<button
 				type="button"
-				class={'flex-1 px-4 py-2 text-sm font-semibold transition ' +
-					filterTabClasses('tournament')}
-				onclick={() => onSetFilter('tournament')}
+				class={'flex-1 px-4 py-2 text-sm font-semibold transition ' + filterTabClasses('roster')}
+				onclick={() => onSetFilter('roster')}
 			>
 				Roster
 			</button>

@@ -21,12 +21,20 @@ export type SavedArmy = {
 	code: string;
 	/** ISO timestamp of when the army was saved. */
 	createdAt: string;
-	/** Absent on saves written before the roster format existed (= standard). */
+	/**
+	 * Absent on saves written before the roster format existed (= standard), and
+	 * the legacy string 'tournament' on saves written before it was renamed.
+	 * Always read through `savedArmyFormat()`.
+	 */
 	format?: ArmyFormat;
 };
 
+/** The roster format's id before it was renamed; still sitting in older saves. */
+const LEGACY_ROSTER_FORMAT = 'tournament';
+
 /** The format a save belongs to; saves predating the field are standard. */
 export function savedArmyFormat(army: SavedArmy): ArmyFormat {
+	if ((army.format as string | undefined) === LEGACY_ROSTER_FORMAT) return 'roster';
 	return army.format ?? 'standard';
 }
 

@@ -200,8 +200,8 @@
 			</button>
 			<button
 				type="button"
-				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('tournament')}
-				onclick={() => onSetFormat('tournament')}
+				class={'px-4 py-2 text-sm font-semibold transition ' + formatTabClasses('roster')}
+				onclick={() => onSetFormat('roster')}
 			>
 				Roster
 			</button>
@@ -346,7 +346,7 @@
 								</div>
 							</div>
 						{/each}
-						{#if format === 'tournament'}
+						{#if format === 'roster'}
 							<h3 class="pt-2 pb-1 text-xs font-semibold tracking-wide text-sky-300 uppercase">
 								Equipment
 							</h3>
@@ -557,7 +557,7 @@
 									{/if}
 								</div>
 							{/each}
-							{#if format === 'tournament' && rosterPicks.length > 0}
+							{#if format === 'roster' && rosterPicks.length > 0}
 								<h3 class="pt-2 pb-1 text-xs font-semibold tracking-wide text-sky-300 uppercase">
 									Equipment
 								</h3>

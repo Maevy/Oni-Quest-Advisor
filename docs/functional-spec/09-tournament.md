@@ -407,7 +407,7 @@ _Round 1 Scoring_ to _Round 2 Setup_.
 - **Identity beyond the seat token.** A device holds exactly one tournament seat session; whether a
   name can be reused across tournaments, whether a TO can hand their seat over, or whether players
   ever get an account, is open.
-- **Naming collision.** The army builder's 125-point Roster format is internally `'tournament'`
-  (`ArmyFormat`), and that string is baked into the army-code wire format and saved-army JSON —
-  so "tournament" currently means two unrelated things in the codebase. Worth renaming the
-  format's id (behind a decode migration) before this feature grows server payloads of its own.
+
+Resolved since the last revision: the army builder's Roster format is no longer internally named
+`'tournament'` — it is `'roster'`, with a decode migration for existing codes and saves (see
+`08-army-builder.md` §Formats).

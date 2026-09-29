@@ -189,7 +189,7 @@ class ArmyBuilderStore {
 				factionId: this.factionId,
 				format: this.format,
 				entries: this.entries,
-				...(this.format === 'tournament' && this.rosterPicks.length > 0
+				...(this.format === 'roster' && this.rosterPicks.length > 0
 					? { picks: this.rosterPicks }
 					: {})
 			},

@@ -141,7 +141,7 @@ These are the ordered/curated lists the rules depend on. Changing one is a rules
 ```
 ARMY_STAT_KEYS   STA, SPD, OFF, DEF, ACC, INT, AG, T, ARM, HP, M
 ARMY_UNIT_SIZES  small, medium, large, huge, gigantic, colossal, epic     (smallest first)
-ARMY_FORMAT_POINTS  standard 85 · tournament 125
+ARMY_FORMAT_POINTS  standard 85 · roster 125
 CODE_VERSION     'a'
 UPGRADE_FACTION_IDS     helian-league, empire-of-soga, coalition-of-thenion, sand-kingdoms
 NON_NEUTRAL_FACTION_IDS oni-clans, goblin-wartribes
@@ -182,17 +182,19 @@ would otherwise reintroduce the mismatch.
 `lib/domain/armyCode.ts`. Layout:
 
 ```
-a<fp3>:<faction36><s|t>:<entries>[:<picks>]
+a<fp3>:<faction36><s|r>:<entries>[:<picks>]
 ```
 
 - `a` — `CODE_VERSION`, **lowercase**. (The file's header comment says `A<fp3>`; the comment is
   wrong. Decoding lowercases its input, so uppercase codes still work.)
 - `<fp3>` — a 3-character base36 roster fingerprint.
-- `<faction36>` — index into `catalog.factions` order; `s` or `t` selects standard / tournament.
+- `<faction36>` — index into `catalog.factions` order; `s` or `r` selects standard / roster.
+  `r` replaced `t` when the format was renamed from `tournament`; **decoding still accepts `t`**
+  as roster, so codes shared before the rename keep working, while encoding always writes `r`.
 - entries joined by `_`; one entry is `<unit36>[*]` (`*` = mounted) followed by
   `-<upgrade36>[=<choice>]` per upgrade. A choice is a spellcraft group index, an option index, or
   an option index plus `,` and an item index (inscribe) or element index (replace Affinity).
-- picks (tournament only) joined by `_`, each `<upgrade36>.<qty36>`.
+- picks (roster only) joined by `_`, each `<upgrade36>.<qty36>`.
 
 Index pools are **sorted by id** (`localeCompare`): units = the faction's units plus neutrals;
 upgrades, spellcrafts and items likewise. Imported entries get deterministic ids
@@ -232,6 +234,9 @@ Saved armies live under `oni-quest-advisor:saved-armies` as a newest-first array
 `SavedArmy`: `{ id, name, factionId, code, createdAt, format? }`. The metadata exists only so
 saves can be listed without decoding; the **code carries the whole list**. `format` is absent on
 saves written before the Roster format existed, and `savedArmyFormat()` reads that as `standard`.
+It is the string `'tournament'` on saves written before the format was renamed to `roster`, and
+`savedArmyFormat()` folds that to `roster` — the accessor is the migration, so nothing rewrites
+the stored records.
 
 A mission run attaches one of them as a **snapshot**, `PickedArmy` = `{ name, factionId, code }`,
 stored on `MissionProgress.pickedArmy` and therefore persisted with the run, restored on resume,

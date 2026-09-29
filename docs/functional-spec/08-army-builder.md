@@ -48,10 +48,15 @@ Below the grid:
 
 Two formats, switched by tabs in the builder header:
 
-| UI label     | Internal id  | Point cap | Upgrades                            |
-| ------------ | ------------ | --------- | ----------------------------------- |
-| **Standard** | `standard`   | 85        | per model, through slots            |
-| **Roster**   | `tournament` | 125       | a shared **equipment pool** instead |
+| UI label     | Internal id | Point cap | Upgrades                            |
+| ------------ | ----------- | --------- | ----------------------------------- |
+| **Standard** | `standard`  | 85        | per model, through slots            |
+| **Roster**   | `roster`    | 125       | a shared **equipment pool** instead |
+
+The Roster format's internal id used to be `tournament`, which collided with the tournament
+feature's own vocabulary. It was renamed; `savedArmyFormat()` folds the old string in saved-army
+JSON to `roster`, and `decodeArmy` still reads the old `t` format character, so neither an
+existing save nor a code shared before the rename breaks. Encoding always writes `r`.
 
 Switching with a non-empty list asks for confirmation — _"Switch to {Standard|Roster}? The
 current list will be deleted."_ (**Yes** / **No**) — and then clears the units **and** the

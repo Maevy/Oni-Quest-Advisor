@@ -216,7 +216,7 @@ const SAND_ARMY: ArmyList = {
 
 const HELIAN_ARMY: ArmyList = {
 	factionId: 'helian-league',
-	format: 'tournament',
+	format: 'roster',
 	entries: [
 		{
 			id: 'e1',
@@ -255,6 +255,12 @@ function codeHead(code: string): string {
 	return code.slice(0, code.indexOf(':', 5) + 1);
 }
 
+/** Replaces the format character in an encoded code's head. */
+function withFormatChar(code: string, char: string): string {
+	const separator = code.indexOf(':', 5);
+	return code.slice(0, separator - 1) + char + code.slice(separator);
+}
+
 describe('encodeArmy', () => {
 	it('produces a short, versioned code with the roster fingerprint', () => {
 		const code = encodeArmy(SAND_ARMY, CATALOG);
@@ -266,8 +272,8 @@ describe('encodeArmy', () => {
 		expect(encodeArmy(SAND_ARMY, CATALOG)).toBe(encodeArmy(SAND_ARMY, CATALOG));
 	});
 
-	it('marks the tournament format', () => {
-		expect(encodeArmy(HELIAN_ARMY, CATALOG)).toMatch(/^a[0-9a-z]{3}:[0-9a-z]+t:/);
+	it('marks the roster format', () => {
+		expect(encodeArmy(HELIAN_ARMY, CATALOG)).toMatch(/^a[0-9a-z]{3}:[0-9a-z]+r:/);
 	});
 });
 
@@ -285,8 +291,22 @@ describe('decodeArmy', () => {
 		const decoded = decodeArmy(encodeArmy(HELIAN_ARMY, CATALOG), CATALOG);
 		if (!decoded.ok) throw new Error('expected the code to decode');
 		expect(decoded.list.factionId).toBe('helian-league');
-		expect(decoded.list.format).toBe('tournament');
+		expect(decoded.list.format).toBe('roster');
 		expect(semantic(decoded.list.entries)).toEqual(semantic(HELIAN_ARMY.entries));
+	});
+
+	it('decodes the legacy roster format character', () => {
+		const decoded = decodeArmy(withFormatChar(encodeArmy(HELIAN_ARMY, CATALOG), 't'), CATALOG);
+		if (!decoded.ok) throw new Error('expected the legacy code to decode');
+		expect(decoded.list.format).toBe('roster');
+		expect(semantic(decoded.list.entries)).toEqual(semantic(HELIAN_ARMY.entries));
+	});
+
+	it('rejects an unknown format character', () => {
+		expect(decodeArmy(withFormatChar(encodeArmy(SAND_ARMY, CATALOG), 'x'), CATALOG)).toEqual({
+			ok: false,
+			error: 'invalid'
+		});
 	});
 
 	it('assigns stable imported entry ids in code order', () => {
@@ -369,7 +389,7 @@ describe('decodeArmy', () => {
 	it('round-trips the roster equipment pool', () => {
 		const roster: ArmyList = {
 			factionId: 'helian-league',
-			format: 'tournament',
+			format: 'roster',
 			entries: [
 				{ id: 'e1', unitId: 'alpha' },
 				{ id: 'e2', unitId: 'nomad' }
@@ -381,7 +401,20 @@ describe('decodeArmy', () => {
 		};
 		const decoded = decodeArmy(encodeArmy(roster, CATALOG), CATALOG);
 		if (!decoded.ok) throw new Error('expected the code to decode');
-		expect(decoded.list.format).toBe('tournament');
+		expect(decoded.list.format).toBe('roster');
+		expect(decoded.list.picks).toEqual(roster.picks);
+	});
+
+	it('keeps the equipment pool on a legacy roster code', () => {
+		const roster: ArmyList = {
+			factionId: 'helian-league',
+			format: 'roster',
+			entries: [{ id: 'e1', unitId: 'alpha' }],
+			picks: [{ id: 'additional-protection', qty: 2 }]
+		};
+		const decoded = decodeArmy(withFormatChar(encodeArmy(roster, CATALOG), 't'), CATALOG);
+		if (!decoded.ok) throw new Error('expected the legacy code to decode');
+		expect(decoded.list.format).toBe('roster');
 		expect(decoded.list.picks).toEqual(roster.picks);
 	});
 

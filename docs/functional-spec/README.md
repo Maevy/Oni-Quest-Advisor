@@ -78,8 +78,9 @@ each `src/lib/` folder.
 
 - **Army** — an in-memory list built for one faction under a format's point cap. Not persisted
   except as a code or a save.
-- **Format** — `standard` (85 points, per-model upgrades) or the UI's **Roster** (internally
-  `tournament`, 125 points, upgrades become a shared equipment pool instead).
+- **Format** — `standard` (85 points, per-model upgrades) or `roster` (the UI's **Roster**, 125
+  points, upgrades become a shared equipment pool instead). The roster format's id used to be
+  `tournament`; codes and saves carrying the old value still read as roster.
 - **Army entry** — **one copy** of a unit. Every copy is its own entry with its own id, so a
   single copy can be mounted, upgraded or removed independently.
 - **Upgrade slot** — a per-copy budget for upgrades: 1 + the unit's Resourceful level + its Pouch

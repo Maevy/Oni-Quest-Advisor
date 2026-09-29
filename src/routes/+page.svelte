@@ -410,7 +410,7 @@
 
 	/** Mission runs field standard lists; a playing organizer and a joiner bring a Roster one. */
 	function pickFormatFor(slotId: string | null): ArmyFormat {
-		return slotId === 'tournament' || slotId === 'tournament-join' ? 'tournament' : 'standard';
+		return slotId === 'tournament' || slotId === 'tournament-join' ? 'roster' : 'standard';
 	}
 
 	async function openPickArmy(slotId: string): Promise<void> {

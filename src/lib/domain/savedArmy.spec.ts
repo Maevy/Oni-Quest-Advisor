@@ -1,9 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { groupSavedArmies, type SavedArmy } from './savedArmy';
+import { groupSavedArmies, savedArmyFormat, type SavedArmy } from './savedArmy';
 
 function saved(id: string, factionId: SavedArmy['factionId'], createdAt: string): SavedArmy {
 	return { id, name: id, factionId, code: 'a' + id, createdAt };
 }
+
+/** A save whose `format` holds a string the current type no longer names. */
+function legacySaved(format: string): SavedArmy {
+	const army = saved('legacy', 'helian-league', '2026-09-01T10:00:00.000Z');
+	return { ...army, format: format as SavedArmy['format'] };
+}
+
+describe('savedArmyFormat', () => {
+	it('reads a save without the field as standard', () => {
+		expect(savedArmyFormat(saved('s1', 'helian-league', '2026-09-01T10:00:00.000Z'))).toBe(
+			'standard'
+		);
+	});
+
+	it('reads the stored format', () => {
+		expect(savedArmyFormat(legacySaved('roster'))).toBe('roster');
+		expect(savedArmyFormat(legacySaved('standard'))).toBe('standard');
+	});
+
+	it('reads the pre-rename tournament format as roster', () => {
+		expect(savedArmyFormat(legacySaved('tournament'))).toBe('roster');
+	});
+});
 
 describe('groupSavedArmies', () => {
 	it('returns no groups for no armies', () => {

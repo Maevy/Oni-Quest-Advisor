@@ -369,9 +369,9 @@ describe('isOverArmyLimit', () => {
 		expect(isOverArmyLimit(86, 'standard')).toBe(true);
 	});
 
-	it('allows exactly the tournament cap but not more', () => {
-		expect(isOverArmyLimit(125, 'tournament')).toBe(false);
-		expect(isOverArmyLimit(126, 'tournament')).toBe(true);
+	it('allows exactly the roster cap but not more', () => {
+		expect(isOverArmyLimit(125, 'roster')).toBe(false);
+		expect(isOverArmyLimit(126, 'roster')).toBe(true);
 	});
 });
 

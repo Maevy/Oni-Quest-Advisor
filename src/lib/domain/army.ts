@@ -1,9 +1,9 @@
-export type ArmyFormat = 'standard' | 'tournament';
+export type ArmyFormat = 'standard' | 'roster';
 
 /** Points cap per army format. */
 export const ARMY_FORMAT_POINTS: Record<ArmyFormat, number> = {
 	standard: 85,
-	tournament: 125
+	roster: 125
 };
 
 export type ArmyFactionId =
@@ -717,7 +717,7 @@ export function upgradesForFaction(
 	return upgrades.filter((upgrade) => upgrade.factionId === undefined || upgrade.factionId === own);
 }
 
-/** A roster (tournament format) equipment pick: copies of one upgrade in the pool. */
+/** A roster-format equipment pick: copies of one upgrade in the pool. */
 export type ArmyRosterPick = { id: string; qty: number };
 
 /**
