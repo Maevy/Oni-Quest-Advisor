@@ -10,6 +10,7 @@ import {
 	canChooseSeatScheme,
 	canDrawSchemes,
 	canEditSetup,
+	canLeaveArmies,
 	canLeavePrep,
 	canRequestJoin,
 	canScoreSeatScheme,
@@ -23,6 +24,8 @@ import {
 	createOnlineGame,
 	denyJoin,
 	finishGame,
+	isRosterRevealed,
+	leaveArmies,
 	leavePrep,
 	MAX_NICKNAME_LENGTH,
 	normalizeNickname,
@@ -88,9 +91,14 @@ function readyUp(state: OnlineGameState): OnlineGameState {
 	return toggleReady(toggleReady(state, 'player1'), 'player2');
 }
 
-/** Start Game opens the preparation step, with Bob's roster not cut down yet. */
-function atPrepStart(): OnlineGameState {
+/** Start Game opens the army reveal, with Bob's roster not cut down yet. */
+function atRevealStart(): OnlineGameState {
 	return startGame(readyUp(lobbyWithBothPlayers()));
+}
+
+/** The preparation step, with Bob's roster not cut down yet. */
+function atPrepStart(): OnlineGameState {
+	return leaveArmies(atRevealStart());
 }
 
 /** Preparation with both seats combat-ready: Alice registered Standard, Bob has cut his roster. */
@@ -343,9 +351,9 @@ describe('readiness', () => {
 
 	it('survives into the public seat view', () => {
 		let state = lobbyWithBothPlayers();
-		expect(toPublicSeat(state.player2!).ready).toBe(false);
+		expect(toPublicSeat(state.player2!, false).ready).toBe(false);
 		state = toggleReady(state, 'player2');
-		expect(toPublicSeat(state.player2!).ready).toBe(true);
+		expect(toPublicSeat(state.player2!, false).ready).toBe(true);
 	});
 });
 
@@ -360,7 +368,7 @@ describe('startGame', () => {
 		state = startGame(state);
 		expect(state.status).toBe('active');
 		expect(state.currentRound).toBe(MIN_ROUND);
-		expect(state.phase, 'Start Game opens preparation, not round 1').toBe('prep');
+		expect(state.phase, 'Start Game opens the army reveal, not round 1').toBe('armies');
 	});
 
 	it('no longer asks for Schemes, which are chosen after preparation', () => {
@@ -371,18 +379,51 @@ describe('startGame', () => {
 	});
 });
 
+describe('the army reveal', () => {
+	it('keeps the rosters shut in the lobby and opens them once the game runs', () => {
+		const lobby = lobbyWithBothPlayers();
+		expect(isRosterRevealed(lobby)).toBe(false);
+		expect(toPublicSeat(lobby.player2!, false).rosterCode).toBeNull();
+		const reveal = atRevealStart();
+		expect(reveal.phase).toBe('armies');
+		expect(isRosterRevealed(reveal)).toBe(true);
+	});
+
+	it('publishes a roster code once revealed, and never a Standard list', () => {
+		const reveal = atRevealStart();
+		expect(toPublicSeat(reveal.player2!, true).rosterCode).toBe(BOB_ARMY.code);
+		expect(
+			toPublicSeat(reveal.player1, true).rosterCode,
+			'a Standard registration is the match list'
+		).toBeNull();
+	});
+
+	it('stays revealed after the game ends', () => {
+		const finished = finishGame(activeScoringGame(), { player1: 1, player2: 0 });
+		expect(isRosterRevealed(finished)).toBe(true);
+	});
+
+	it('leaves the reveal only forward', () => {
+		const reveal = atRevealStart();
+		expect(canLeaveArmies(reveal)).toBe(true);
+		expect(leaveArmies(reveal).phase).toBe('prep');
+		expect(canLeaveArmies(inPrep()), 'there is no way back').toBe(false);
+		expect(leaveArmies(lobbyWithBothPlayers())).toEqual(lobbyWithBothPlayers());
+	});
+});
+
 describe('preparation', () => {
 	it('a Standard registration is its own combat army from the start', () => {
 		const state = lobbyWithBothPlayers();
 		expect(state.player1.combatArmy).toEqual(ALICE_ARMY);
-		expect(toPublicSeat(state.player1).combatReady).toBe(true);
+		expect(toPublicSeat(state.player1, false).combatReady).toBe(true);
 	});
 
 	it('a Roster registration has none until it is cut down', () => {
 		const state = lobbyWithBothPlayers();
 		expect(state.player2?.combatArmy).toBeNull();
 		expect(bothCombatReady(state)).toBe(false);
-		expect(toPublicSeat(state.player2!).combatReady).toBe(false);
+		expect(toPublicSeat(state.player2!, false).combatReady).toBe(false);
 	});
 
 	it('only the seat that brought a Roster may set a combat army', () => {
@@ -571,7 +612,7 @@ describe('closeGame', () => {
 describe('visibility', () => {
 	it('toPublicSeat hides an unrevealed scheme but shows the faction', () => {
 		const state = draftAndChooseScheme(inSetup(), 'player2');
-		const view = toPublicSeat(state.player2!);
+		const view = toPublicSeat(state.player2!, true);
 		expect(view.nickname).toBe('bob');
 		expect(view.factionId).toBe('sand-kingdoms');
 		expect(view.hasScheme).toBe(true);
@@ -580,19 +621,20 @@ describe('visibility', () => {
 	});
 
 	it('toPublicSeat shows the army identity but never its code', () => {
-		const view = toPublicSeat(lobbyWithBothPlayers().player2!);
+		const view = toPublicSeat(lobbyWithBothPlayers().player2!, false);
 		expect(view.army).toEqual({
 			name: 'Bob Roster',
 			factionId: 'sand-kingdoms',
 			format: 'roster'
 		});
+		expect(view.rosterCode, 'the lobby is before the reveal').toBeNull();
 		expect(JSON.stringify(view)).not.toContain(BOB_ARMY.code);
 	});
 
 	it('toPublicSeat exposes the scheme once revealed', () => {
 		let state = toggleRevealIntent(roundsBegun(), 'player1');
 		state = advanceToScoring(state);
-		const view = toPublicSeat(state.player1);
+		const view = toPublicSeat(state.player1, true);
 		expect(view.schemeRevealed).toBe(true);
 		expect(view.revealedScheme?.schemeId).toBe('head-hunt');
 	});
@@ -608,7 +650,9 @@ describe('visibility', () => {
 		expect(view!.opponent?.revealedScheme).toBeNull();
 		expect(view!.opponent?.factionId).toBe('sand-kingdoms');
 		expect(view!.opponent?.army.name).toBe('Bob Roster');
-		expect(JSON.stringify(view!.opponent)).not.toContain(BOB_ARMY.code);
+		expect(view!.opponent?.rosterCode, 'the roster is public once the game is running').toBe(
+			BOB_ARMY.code
+		);
 	});
 
 	it('viewForSeat keeps the cut match list with its owner', () => {

@@ -9,9 +9,11 @@
 		groupResults,
 		groupSavedArmies,
 		indexArmyRules,
+		pickedArmyFormat,
 		resolveArmyEntries,
 		savedArmyFormat,
 		type ArmyFormat,
+		type ArmyView,
 		type Mission,
 		type OpenGame,
 		type PickedArmy,
@@ -45,6 +47,7 @@
 	import OnlineJoin from '$lib/components/OnlineJoin.svelte';
 	import OnlineLobby from '$lib/components/OnlineLobby.svelte';
 	import OnlineArmyPrep from '$lib/components/OnlineArmyPrep.svelte';
+	import OnlineArmyReveal from '$lib/components/OnlineArmyReveal.svelte';
 	import OnlineSchemeSelect from '$lib/components/OnlineSchemeSelect.svelte';
 	import OnlineStats from '$lib/components/OnlineStats.svelte';
 	import PickArmyDialog from '$lib/components/PickArmyDialog.svelte';
@@ -212,6 +215,37 @@
 			: null
 	);
 	let onlineMyVP = $derived(onlineMission ? onlineGameStore.myVP(onlineMission, onlineMyCard) : 0);
+
+	/**
+	 * The roster a seat may browse. A Roster registration's contents are public once the game is
+	 * running and never before; a Standard registration has no roster to reveal, because its
+	 * registered list is the match list.
+	 */
+	function rosterViewFor(seat: PlayerKey): ArmyView | null {
+		const view = onlineGameStore.view;
+		if (view === null) return null;
+		if (view.seat === seat) {
+			const registered = view.self.army;
+			if (pickedArmyFormat(registered) !== 'roster') return null;
+			return contentStore.armyView(registered, {});
+		}
+		const opponent = view.opponent;
+		if (opponent === null || opponent.rosterCode === null) return null;
+		return contentStore.armyView(
+			{
+				name: opponent.army.name,
+				factionId: opponent.army.factionId,
+				code: opponent.rosterCode,
+				format: 'roster'
+			},
+			{}
+		);
+	}
+
+	let onlineRosterViews = $derived<Record<PlayerKey, ArmyView | null>>({
+		player1: rosterViewFor('player1'),
+		player2: rosterViewFor('player2')
+	});
 
 	// --- cutting a registered Roster army down to a match list ---
 	let onlineCutError = $state<string | null>(null);
@@ -690,13 +724,25 @@
 		}}
 	/>
 {:else if navigationStore.screen === 'online-game' && onlineGameStore.view}
-	{#if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'prep'}
+	{#if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'armies'}
+		<OnlineArmyReveal
+			view={onlineGameStore.view}
+			isLeader={onlineGameStore.isLeader}
+			error={onlineGameStore.error}
+			missionName={onlineMission?.name ?? null}
+			armyFactions={contentStore.armyFactions}
+			rosterViews={onlineRosterViews}
+			onAdvance={() => onlineGameStore.advancePhase()}
+			onCloseGame={() => onlineGameStore.closeGame()}
+		/>
+	{:else if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'prep'}
 		<OnlineArmyPrep
 			view={onlineGameStore.view}
 			isLeader={onlineGameStore.isLeader}
 			error={onlineGameStore.error ?? onlineCutError}
 			missionName={onlineMission?.name ?? null}
 			armyFactions={contentStore.armyFactions}
+			rosterViews={onlineRosterViews}
 			onCutArmy={() => void openRosterCut()}
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}

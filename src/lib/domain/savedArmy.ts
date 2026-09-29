@@ -2,10 +2,12 @@ import type { ArmyFactionId, ArmyFormat } from './army';
 import type {
 	ArmyFactionConfig,
 	ArmyItemSpec,
+	ArmyRosterPick,
 	ArmyRosterRow,
 	ArmyRulesSpec,
 	ArmySpellSpec,
 	ArmyStratagemSpec,
+	ArmyUpgradeSpec,
 	UnitVitality
 } from './army';
 
@@ -72,7 +74,10 @@ export function pickedArmyFormat(army: PickedArmy): ArmyFormat {
 export type ArmyView = {
 	army: PickedArmy;
 	rows: ArmyRosterRow[];
+	/** The roster's equipment pool; empty for Standard lists, which carry no pool. */
+	picks: ArmyRosterPick[];
 	faction: ArmyFactionConfig;
+	upgradeIndex: Record<string, ArmyUpgradeSpec>;
 	classIndex: Record<string, ArmyRulesSpec>;
 	skillIndex: Record<string, ArmyRulesSpec>;
 	traitIndex: Record<string, ArmyRulesSpec>;

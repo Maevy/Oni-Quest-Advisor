@@ -126,16 +126,19 @@ class ContentStore {
 		if (!decoded.ok) return null;
 		const faction = this.armyFactions.find((candidate) => candidate.id === decoded.list.factionId);
 		if (!faction) return null;
+		const upgradeIndex = indexArmyRules(this.armyUpgrades);
 		return {
 			army: picked,
 			rows: resolveArmyEntries(
 				decoded.list.entries,
 				unitsForFaction(decoded.list.factionId, this.armyUnits),
 				this.armyUnits.mounts,
-				indexArmyRules(this.armyUpgrades),
+				upgradeIndex,
 				indexArmyRules(this.armyItems)
 			),
+			picks: decoded.list.picks ?? [],
 			faction,
+			upgradeIndex,
 			classIndex: indexArmyRules(this.armyClasses),
 			skillIndex: indexArmyRules(this.armySkills),
 			traitIndex: indexArmyRules(this.armyTraits),

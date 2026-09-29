@@ -7,12 +7,12 @@ import type { PlayerKey, SeatProgress } from './twoPlayer';
 
 export type OnlineGameStatus = 'lobby' | 'active' | 'finished' | 'closed';
 /**
- * `prep` cuts a registered Roster army down to a match list, `setup` chooses Schemes, then each
- * round runs `reveal` → `scoring`. The two preparation steps live in the phase rather than in a
- * status of their own because `cleanup.ts` buckets retention by status literal — a new status
- * would match no bucket and never be collected.
+ * `armies` reveals both rosters, `prep` cuts a registered Roster army down to a match list,
+ * `setup` chooses Schemes, then each round runs `reveal` → `scoring`. The preparation steps live in
+ * the phase rather than in a status of their own because `cleanup.ts` buckets retention by status
+ * literal — a new status would match no bucket and never be collected.
  */
-export type OnlineGamePhase = 'prep' | 'setup' | 'reveal' | 'scoring';
+export type OnlineGamePhase = 'armies' | 'prep' | 'setup' | 'reveal' | 'scoring';
 
 export const MAX_NICKNAME_LENGTH = 24;
 
@@ -85,6 +85,11 @@ export type PublicArmy = {
 export type PublicSeatState = {
 	nickname: string;
 	army: PublicArmy;
+	/**
+	 * The roster's code, once the reveal has happened — null in the lobby, and null forever for a
+	 * Standard registration, whose list is the match list and stays secret until deployment.
+	 */
+	rosterCode: string | null;
 	/** Whether the opponent has a match list to field — not the list itself, and never its code. */
 	combatReady: boolean;
 	/** Lobby readiness — public, since the leader's Start Game is gated on both seats. */
@@ -414,12 +419,34 @@ export function canStartGame(state: OnlineGameState): boolean {
 }
 
 /**
- * Start Game opens the preparation step, not round 1 — a Roster registration still has to be cut
- * down to a match list, and Schemes are drawn after that.
+ * Start Game opens the army reveal, not round 1 — the rulebook shows both factions and rosters
+ * before anyone builds a party from theirs.
  */
 export function startGame(state: OnlineGameState): OnlineGameState {
 	if (!canStartGame(state)) return state;
-	return { ...state, status: 'active', currentRound: MIN_ROUND, phase: 'prep' };
+	return { ...state, status: 'active', currentRound: MIN_ROUND, phase: 'armies' };
+}
+
+// --- armies: the roster reveal ---
+
+/**
+ * A roster is revealed once the game is running, and stays revealed — including after it finishes,
+ * so the statistics screen can still show what was brought. A Standard registration is never
+ * revealed here: for it the registered list *is* the match list, and the rulebook keeps parties
+ * secret until deployment.
+ */
+export function isRosterRevealed(state: OnlineGameState): boolean {
+	return state.status !== 'lobby';
+}
+
+export function canLeaveArmies(state: OnlineGameState): boolean {
+	return state.status === 'active' && state.phase === 'armies';
+}
+
+/** The reveal → preparation. There is no way back: what was shown stays shown. */
+export function leaveArmies(state: OnlineGameState): OnlineGameState {
+	if (!canLeaveArmies(state)) return state;
+	return { ...state, phase: 'prep' };
 }
 
 export function canStartRounds(state: OnlineGameState): boolean {
@@ -565,7 +592,7 @@ export function closeGame(state: OnlineGameState): OnlineGameState {
 
 // --- visibility ---
 
-export function toPublicSeat(seat: OnlineSeatState): PublicSeatState {
+export function toPublicSeat(seat: OnlineSeatState, rosterRevealed: boolean): PublicSeatState {
 	const { progress } = seat;
 	return {
 		nickname: seat.nickname,
@@ -574,6 +601,9 @@ export function toPublicSeat(seat: OnlineSeatState): PublicSeatState {
 			factionId: seat.army.factionId,
 			format: pickedArmyFormat(seat.army)
 		},
+		// The roster's contents are public once revealed — but only a roster's. A Standard
+		// registration is the match list itself and stays secret until deployment.
+		rosterCode: rosterRevealed && pickedArmyFormat(seat.army) === 'roster' ? seat.army.code : null,
 		ready: seat.ready,
 		combatReady: seat.combatArmy !== null,
 		factionId: progress.scheme?.factionId ?? progress.schemeDraft.factionId,
@@ -589,6 +619,7 @@ export function viewForSeat(state: OnlineGameState, seat: PlayerKey): OnlineGame
 	const self = state[seat];
 	if (!self) return null;
 	const opponent = seat === 'player1' ? state.player2 : state.player1;
+	const revealed = isRosterRevealed(state);
 	return {
 		id: state.id,
 		status: state.status,
@@ -602,6 +633,6 @@ export function viewForSeat(state: OnlineGameState, seat: PlayerKey): OnlineGame
 		winner: state.winner,
 		resultSummary: state.resultSummary,
 		self,
-		opponent: opponent ? toPublicSeat(opponent) : null
+		opponent: opponent ? toPublicSeat(opponent, revealed) : null
 	};
 }

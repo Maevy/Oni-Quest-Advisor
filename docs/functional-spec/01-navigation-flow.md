@@ -380,11 +380,12 @@ Full detail in [09-tournament.md](./09-tournament.md).
 
 `online-create` (a **local draft** — player name, mission and army — then **Open Lobby**, the
 first server call) → `online-join` (invite code + player name + army → request → pending) →
-`online-game`. That one screen id renders five different views, chosen by the fetched server state
-rather than by any click: the lobby, **Army Preparation** (`status active`, `phase prep`), **Scheme
-Selection** (`phase setup`), the game view (`phase reveal`/`scoring`, and only when the mission
-content resolves) and the statistics view (`status finished`). Because the switch follows the
-state, a leader's Start Game / Proceed / Begin Round 1 moves **every** device without a reload.
+`online-game`. That one screen id renders six different views, chosen by the fetched server state
+rather than by any click: the lobby, the **Army Reveal** (`status active`, `phase armies`),
+**Army Preparation** (`phase prep`), **Scheme Selection** (`phase setup`), the game view
+(`phase reveal`/`scoring`, and only when the mission content resolves) and the statistics view
+(`status finished`). Because the switch follows the state, a leader's Start Game / Continue /
+Proceed / Begin Round 1 moves **every** device without a reload.
 `enterOnlineGame()` moves into it; `leaveOnline()` clears `onlineJoinCode` and returns to
 `game-mode`.
 

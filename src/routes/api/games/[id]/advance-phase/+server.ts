@@ -1,8 +1,10 @@
 import { json } from '@sveltejs/kit';
 import {
 	advanceToScoring,
+	canLeaveArmies,
 	canLeavePrep,
 	canStartRounds,
+	leaveArmies,
 	leavePrep,
 	MAX_ROUND,
 	snapshotAndProceed,
@@ -16,13 +18,22 @@ import { computeRoundVp } from '$lib/server/vp';
 
 /**
  * Leader advances the game one step:
- * Prep → Scheme setup (both seats combat-ready), Scheme setup → Round 1 Reveal (both Schemes
- * chosen), Reveal → Scoring (commits reveal intents), or Scoring → next round (VP snapshot;
- * skips the next Reveal phase when both schemes are already revealed).
+ * Armies → Preparation (the reveal is over), Preparation → Scheme setup (both seats
+ * combat-ready), Scheme setup → Round 1 Reveal (both Schemes chosen), Reveal → Scoring (commits
+ * reveal intents), or Scoring → next round (VP snapshot; skips the next Reveal phase when both
+ * schemes are already revealed).
  */
 export const POST = api(async ({ params, request }) => {
 	await mutateAsLeader(params.id, bearerToken(request), (game) => {
 		if (game.status !== 'active') throw new ApiError(409, 'The game is not running');
+
+		if (game.phase === 'armies') {
+			if (!canLeaveArmies(game)) {
+				throw new ApiError(409, 'The armies are not revealed yet');
+			}
+			const next = leaveArmies(game);
+			return { next, events: phaseEvent(next) };
+		}
 
 		if (game.phase === 'prep') {
 			if (!canLeavePrep(game)) {

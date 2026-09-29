@@ -11,6 +11,7 @@ import {
 	createOnlineGame,
 	createTournamentEvent,
 	finishGame,
+	leaveArmies,
 	leavePrep,
 	requestJoin,
 	setSeatDraft,
@@ -94,6 +95,7 @@ async function insertJourneyGame(journey: Journey): Promise<string> {
 	state = acceptJoin(state);
 	for (const seat of ['player1', 'player2'] as const) state = toggleReady(state, seat);
 	state = startGame(state);
+	state = leaveArmies(state);
 	// Both fixture seats registered Standard lists, so preparation is already satisfied.
 	state = leavePrep(state);
 	for (const seat of ['player1', 'player2'] as const) {

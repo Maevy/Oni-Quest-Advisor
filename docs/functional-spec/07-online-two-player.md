@@ -85,10 +85,27 @@ Other rejection states: **"This game is already full."** and **"This game has be
 The joiner's seat credential is generated **on their own phone** and only its hash is ever
 stored, so no secret travels back to them at accept time.
 
+## The army reveal
+
+**Start Game** opens the **Army Reveal** — the rulebook's "players reveal their Faction" and "reveal
+their Roster" as one moment. Both seats' registered armies flip open at once and stay open for the
+rest of the game. Each panel shows the army badge and, for a **Roster** registration, a **View your
+roster** / **View their roster** button opening a read-only browse of the full 125-point list:
+units, mounts and the equipment pool, every row and pool entry opening its rule card. The browse
+says plainly that it is _"the roster as it was registered — not the match list built from it."_
+
+A **Standard** registration gets no browse button, only the note _"Fields a Standard list — its
+contents stay secret until deployment."_ That asymmetry is the rulebook's, not ours: step 4 reveals
+the _roster_, and for a Standard player the registered list **is** the party, which step 5 keeps
+private. Revealing it here would hand over the match list before deployment.
+
+**Continue to army preparation** belongs to the leader and is the only way out; there is no way
+back, and what was revealed stays revealed — the browse buttons follow onto the preparation screen.
+
 ## Preparing the armies
 
-**Start Game** does not open round 1 — it opens **Army Preparation**, because a match is 85 points
-and a seat may have registered a 125-point Roster.
+**Continue to army preparation** opens **Army Preparation**, because a match is 85 points and a
+seat may have registered a 125-point Roster.
 
 The screen shows both seats. Each panel carries the registered army's badge (name, faction, its
 **Standard**/**Roster** tag) and a status: **Combat ready** in emerald, or **Needs a match list** in
@@ -229,9 +246,10 @@ add-on:
 | --------------------------------- | ------------------- | ----------------------------- |
 | Player names, seats, leader badge | ✓                   | ✓                             |
 | Army name, faction, format tag    | ✓                   | ✓                             |
-| Army **code**                     | own, to re-import   | **nothing**                   |
-| Combat-ready flag                 | ✓                   | ✓                             |
+| Roster contents (units, pool)     | own, always         | from the reveal on            |
 | The cut match list                | own, with its code  | **only the flag**             |
+| A Standard list's contents        | own, always         | **nothing until deployment**  |
+| Combat-ready flag                 | ✓                   | ✓                             |
 | Scheme faction (from the army)    | ✓                   | ✓                             |
 | Drawn scheme hand                 | own cards           | **nothing**                   |
 | Chosen scheme, unrevealed         | full card           | **"Hidden Scheme"**           |
@@ -250,6 +268,13 @@ monster army factions to the deck they share.
 Readiness and combat-readiness are public even though nothing else about the preparation is,
 because both gate a **leader** button — hiding them would leave that button locked for a reason no
 client could name.
+
+The one code that does travel is a **roster's**, and only once the game is running: the reveal is
+the rulebook's step 4, and a roster is not a match list, so publishing it leaks nothing about the
+party being cut from it. A Standard registration's code never travels, because for it the two are
+the same list. The cut's code never travels either. Deployment — the rulebook's step 10, where a
+physical table would see both parties — is not modelled, so a Standard player's list stays secret
+for the whole match; that is recorded as an open question below.
 
 ## Differences from hot-seat
 
@@ -299,6 +324,11 @@ Hot-seat tracks Life, stamina and States per copy.
   catalogs, so "≤ 85 points" and "only what the roster held" are enforced by the borrowed builder
   alone. The code is only ever echoed back to its owner, so a tampered client hurts nobody but
   itself — the same ruling the tournament join already made.
+- **Deployment never reveals a party.** The rulebook's step 10 puts both armies on the table, but
+  our mission screen shows no armies at all — so a Standard player's list stays secret for the
+  whole match and a cut stays secret forever. Whether the game view should show both combat lists
+  once round 1 begins (the physical-table equivalent) is open, and it is the reason a Standard
+  registration has no browse button on the reveal screen.
 
 Resolved since the last revision: the lobby's stale _"Round controls arrive in the next update."_
 placeholder is gone (an `active` game with missing mission content now says so), and the close

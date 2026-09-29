@@ -61,7 +61,8 @@ revealIntent: boolean,
 drawnSchemeIds: string[]
 ```
 
-`status` ∈ `lobby | active | finished | closed`; `phase` ∈ `prep | setup | reveal | scoring`;
+`status` ∈ `lobby | active | finished | closed`; `phase` ∈ `armies | prep | setup | reveal |
+scoring`;
 `currentRound` clamped to `MIN_ROUND..MAX_ROUND` (1–5); `MAX_NICKNAME_LENGTH` = 24 (the field is
 still named `nickname` throughout the wire protocol and the domain — only the **user-visible**
 labels say "Player Name").
@@ -107,7 +108,8 @@ turn a failed guard into `409`.
 | `acceptJoin`                                               | `lobby` ∧ no seat 2 ∧ pending exists                                       | seat 2 filled from pending, army included; `pendingJoin` cleared                                                                            |
 | `denyJoin`                                                 | pending exists                                                             | `pendingJoin` cleared                                                                                                                       |
 | `toggleReady`                                              | `canToggleReady`: `lobby` ∧ that seat is filled                            | flips that seat's `ready`; a seat can only flip its own                                                                                     |
-| `startGame`                                                | `canStartGame`: `lobby` ∧ mission ∧ seat 2 ∧ `bothReady`                   | `active`, round 1, **phase `prep`**                                                                                                         |
+| `startGame`                                                | `canStartGame`: `lobby` ∧ mission ∧ seat 2 ∧ `bothReady`                   | `active`, round 1, **phase `armies`**                                                                                                       |
+| `leaveArmies`                                              | `canLeaveArmies`: `active` ∧ `armies`                                      | phase `prep`; the reveal is one-way                                                                                                         |
 | `setCombatArmy`                                            | `canSetCombatArmy`: `active` ∧ `prep` ∧ that seat registered a **Roster**  | stores the cut Standard list on that seat                                                                                                   |
 | `leavePrep`                                                | `canLeavePrep`: `active` ∧ `prep` ∧ `bothCombatReady`                      | phase `setup`, **and each seat's `schemeDraft.factionId` seeded from its combat army**                                                      |
 | `setSeatDraft` / `setSeatDrawnSchemes` / `clearSeatScheme` | `canEditSetup`: `active` ∧ `setup`                                         | edits that seat                                                                                                                             |
@@ -144,15 +146,23 @@ not itself the gate.
 returned **in full**, secrets included. The opponent goes through `toPublicSeat`, which exposes
 only:
 
-`nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `ready`, `combatReady`,
+`nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `rosterCode`, `ready`,
+`combatReady`,
 `factionId` (= `scheme?.factionId ?? schemeDraft.factionId`), `hasScheme`, `schemeRevealed`,
 `revealedScheme` (**null unless the scheme is both chosen and revealed**),
 `checkedObjectiveCounts`.
 
 It strips `tokenHash`, `drawnSchemeIds`, `revealIntent`, `intelligence`, the unrevealed
-`scheme` object **and both armies' codes**. `combatReady` is a bare boolean: the opponent learns
+`scheme` object **and the cut's code**. `combatReady` is a bare boolean: the opponent learns
 that a match list exists, never what is in it. **The opponent's unrevealed scheme content never
 leaves the server** — this is the enforcement point, not the UI.
+
+`rosterCode` is the one code that travels, and only under two conditions: the game is no longer in
+the lobby (`isRosterRevealed`, i.e. the reveal step has been reached) **and** the registration's
+format is `roster`. A Standard registration's code is withheld forever, because for it the
+registered list is the match list and the rulebook keeps parties secret until deployment. The
+filter takes the reveal flag as a parameter rather than reading a field, so a caller cannot forget
+to decide.
 
 The two `factionId`s in that list are **different id spaces**: `army.factionId` is an
 `ArmyFactionId` (7 ids, `oni-clans` and `goblin-wartribes` among them) resolving against
@@ -194,7 +204,7 @@ matching `sha256(token)` against a seat's `tokenHash` · **leader** = seat auth 
 | POST   | `/api/games/[id]/reveal-intent` | seat        | toggle the reveal intent                                                                                                          |
 | POST   | `/api/games/[id]/objective`     | seat        | set an objective's checked count                                                                                                  |
 | POST   | `/api/games/[id]/scheme-box`    | seat        | set own scheme increments                                                                                                         |
-| POST   | `/api/games/[id]/advance-phase` | leader      | prep → setup → round 1 reveal, then reveal → scoring, or scoring → next round                                                     |
+| POST   | `/api/games/[id]/advance-phase` | leader      | armies → prep → setup → round 1 reveal, then reveal → scoring, or scoring → next round                                            |
 | POST   | `/api/games/[id]/finish`        | leader      | finish after round-5 scoring                                                                                                      |
 | POST   | `/api/games/[id]/close`         | leader      | close/abandon                                                                                                                     |
 

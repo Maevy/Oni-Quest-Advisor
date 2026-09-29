@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ArmyRosterRow, ArmyUpgradeSpec, ArmyView } from '$lib/domain';
-	import { unitStatuses } from '$lib/domain';
+	import { rosterPickPoints, unitStatuses } from '$lib/domain';
 	import Panel from './Panel.svelte';
 	import StatusGlyph from './StatusGlyph.svelte';
 	import VitalityTrack from './VitalityTrack.svelte';
@@ -38,7 +38,10 @@
 	}: Props = $props();
 
 	let accent = $derived(seatAccent(hue));
-	let totalPoints = $derived(view.rows.reduce((sum, row) => sum + row.points, 0));
+	let totalPoints = $derived(
+		view.rows.reduce((sum, row) => sum + row.points, 0) +
+			rosterPickPoints(view.picks, view.upgradeIndex)
+	);
 
 	function openVitality(row: ArmyRosterRow): void {
 		if (!readOnly) onOpenVitality?.(row);
@@ -157,4 +160,25 @@
 			<li class="text-sm text-slate-300">This army has no units.</li>
 		{/each}
 	</ul>
+
+	{#if view.picks.length > 0}
+		<h3 class="mt-3 text-xs font-semibold tracking-wide text-sky-300 uppercase">Equipment pool</h3>
+		<ul class="mt-1.5 flex flex-wrap gap-1.5">
+			{#each view.picks as pick (pick.id)}
+				{@const upgrade = view.upgradeIndex[pick.id]}
+				{#if upgrade}
+					<li>
+						<button
+							type="button"
+							aria-label={'Show details for ' + upgrade.name}
+							class="rounded-md border border-slate-600/60 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-100 transition hover:bg-slate-800/60 active:bg-slate-800/60"
+							onclick={() => onShowUpgrade(upgrade)}
+						>
+							{upgrade.name} ×{pick.qty}
+						</button>
+					</li>
+				{/if}
+			{/each}
+		</ul>
+	{/if}
 </Panel>
