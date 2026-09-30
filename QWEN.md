@@ -195,26 +195,36 @@ native/platform-specific one. Used on a phone screen during a game session.
   independently via `calculateTwoPlayerVP`; each is capped at `MAX_TOTAL_VP`.
 - **OnlineGameState** (online 2-player, server-authoritative; `domain/online.ts`) →
   statuses `lobby`/`active`/`finished`/`closed`; two seats (nickname, seat-token
-  hash, a **registered `army`** and a **`combatArmy`**, `ready`, a `SeatProgress`,
-  `revealIntent`, private `drawnSchemeIds`); `pendingJoin` (which also carries the
-  joiner's army); season/mission **fixed at creation**; round × phase
-  (`prep`/`setup`/`reveal`/`scoring`); round VP snapshots; winner. A game is born
+  hash, a **registered `army`** and a **`combatArmy`**, a private **`leader`**
+  (entry id plus the model's M and INT), `ready`, a `SeatProgress`, private
+  `drawnSchemeIds`); `pendingJoin` (which also carries the joiner's army);
+  season/mission **fixed at creation**; round × phase
+  (`armies`/`prep`/`setup`/`playing`); round VP snapshots; winner. A game is born
   set up — the creator picks the mission and their army on a **frontend-only draft
   screen** and **Open Lobby** is the first server call — and Start Game (leader-only,
-  gated on both seats' **Ready**) opens `prep`, not round 1. In `prep` a seat that
+  gated on both seats' **Ready**) opens `armies`, the army-reveal step: both seats'
+  registered lists become visible to each other (a Roster registration as the full
+  125-point list) and **Continue** (`leaveArmies`) moves on. In `prep` a seat that
   registered a **Roster** cuts it down to a Standard ≤85 list in the borrowed army
   builder and registers it through `/combat-army`; a Standard registration _is_ its
-  own combat army from `createEmptySeat`. `leavePrep` (leader, needs both combat-ready)
-  seeds each seat's Scheme **faction from its combat army** via `schemeFactionForArmy()`
-  and moves to `setup`, where only the intelligence is drafted (`/draft` refuses a
-  `factionId`); `startRounds` then opens round 1's `reveal`. The two preparation steps
-  are **phases, not statuses**, because `cleanup.ts` buckets retention by status
-  literal — a new status would match no bucket and leak forever. Scheme boxes are
-  scoreable **only once revealed** (hidden schemes earn no scheme VP); `finishGame`
-  auto-reveals everything and writes a `resultSummary` (winner, final VP, factions,
-  mission) onto the state for later statistics export. Pure transition functions with
-  `can*` guards plus the per-seat visibility filter (`viewForSeat` — the opponent's
-  unrevealed scheme **and both armies' codes** never leave the server; `ready` and
+  own combat army from `createEmptySeat`. Each seat also names its **Leader** through
+  `/leader` (any model may lead — only leaders may use stratagems), and `leavePrep`
+  (leader-only, needs both combat-ready **and** both leaders assigned) seeds each
+  seat's Scheme **faction from its combat army** via `schemeFactionForArmy()` and its
+  **intelligence from the leader's INT**, then moves to `setup`, where the draft is
+  read-only (there is no `/draft` — the app knows both numbers); `startRounds` opens
+  round 1 as `playing`. In any `playing` round each seat may **reveal** its scheme
+  once and irreversibly (`/reveal-scheme`, behind a confirmation) — hidden schemes
+  earn no scheme VP, revealed ones become scoreable; rounds advance through
+  `/advance-phase` (leader-only), which at MAX_ROUND concludes the game: `finishGame`
+  writes a `resultSummary` (winner, final VP, factions, mission) onto the state for
+  later statistics export. The preparation steps are **phases, not statuses**,
+  because `cleanup.ts` buckets retention by status literal — a new status would match
+  no bucket and leak forever. Pure transition functions with `can*` guards plus the
+  per-seat visibility filter (`viewForSeat`/`toPublicSeat` — the opponent's unrevealed
+  scheme and the **cut army's code** never leave the server; the _roster_ code _is_
+  published once the lobby ends, because showing the registered list is the point of
+  the `armies` phase, and the leader's M/INT from `setup` on; `ready` and
   `combatReady` _are_ public because leader buttons are gated on them). Note
   `PublicSeatState.factionId` is a **scheme** faction while `army.factionId` is an
   `ArmyFactionId` — different id spaces, overlapping on five of seven. The full player
@@ -381,11 +391,13 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   game and enters `mission-detail`, rendering `MissionDetail` or
   `MissionDetailTwoPlayer` by `navigationStore.gameMode`;
   army builder is `army-faction-select` → `army-builder`) plus the online screens
-  (`online-create` → `online-join` → `online-game`; that last id renders **five**
+  (`online-create` → `online-join` → `online-game`; that last id renders **six**
   different views chosen by the fetched state rather than by a click — the lobby,
-  Army Preparation (`phase prep`), Scheme Selection (`phase setup`), the game view
-  and the statistics view — so a leader's Start Game / Proceed / Begin Round 1 moves
-  every device without a reload, and `army-builder` is borrowed mid-flow for a cut)
+  Army Reveal (`phase armies`), Army Preparation (`phase prep`), Scheme Selection
+  (`phase setup`), the tracker (`phase playing`) and the statistics view
+  (`status finished`) — so a leader's Start Game / Continue / Proceed / Begin
+  Round 1 / Advance moves every device without a reload, and `army-builder` is
+  borrowed mid-flow for a cut)
   and the tournament flow
   (`tournament-setup`, all three panes on one screen id → `tournament-lobby` →
   `tournament-round` once the event is active, with `tournament-join` reached
@@ -421,11 +433,16 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   `IncrementBoxes`). Seat colours (P1 sky / P2 orange) come from
   `playerAccent.ts` as literal class strings — never build them by interpolation,
   Tailwind only sees whole names. Online mode has its own set (`OnlineCreate` — the
-  local three-field draft, `OnlineJoin`, `OnlineLobby`, `OnlineArmyPrep`,
-  `OnlineSchemeSelect`, `OnlineGameView`, `OnlineStats`, `OnlineSchemeSetup` — the
-  per-seat draw-and-choose area, faction read-only, `OnlineMissionView`,
-  `OnlineResultsPanel`, `OnlineSchemesPanel`, `ConfirmDialog`, plus the one-time
-  `OnlineIntroNotice` shown before first entry), also reusing the
+  local draft carrying mission and army, `OnlineJoin`, `OnlineLobby` with its
+  `OnlineMissionView` mission preview, `OnlineArmyReveal` — the `armies` phase,
+  whose `RosterBrowseDialog` pages through a registered 125-point list,
+  `OnlineArmyPrep`, `OnlineSchemeSelect` wrapping the per-seat `OnlineSchemeSetup`
+  (faction and intelligence read-only, drawn from the combat army and the Leader),
+  `OnlineTracker` — the `playing`/`finished` screen, a four-view sliding strip
+  (P1 Scoring / P2 Scoring / Army / Mission) whose scoring panes are
+  `OnlineScoringPanel` (seat identity, `ResultsPanel`, and a separate Scheme
+  Results panel with the one-way reveal), `OnlineStats`, `ConfirmDialog`, plus the
+  one-time `OnlineIntroNotice` shown before first entry), also reusing the
   shared panels (collapsible there via `Panel`'s `collapsible` prop) and `ArmyBadge`
   (an army's name, faction colour and Standard/Roster tag — never its code).
   `OnlineArmyPrep` and `OnlineSchemeSelect` render both seats from one `{#snippet}`,

@@ -74,16 +74,18 @@ Handoff notes for picking this project back up. See `QWEN.md` and the per-layer
 
 ## What was done in the last session (online mode redesigned: a game is born set up, both seats bring an army, and a match starts by cutting the armies)
 
-The online mode's front door was inverted and its opening grew two preparation steps. This is
-**unreleased** work on `develop` — five commits, `da407c1`…`abf7779` — and it is the groundwork the
-tournament's match phase will sit on, since a tournament round is going to be several of these games
-running under tournament overwatch.
+The online mode's front door was inverted, its opening grew two preparation steps, its rounds lost
+their sub-phases, and its game view became a tracker. This is **unreleased** work on `develop` —
+twelve commits, `da407c1`…`a67a71a`, pushed to GitHub but not deployed — and it is the groundwork
+the tournament's match phase will sit on, since a tournament round is going to be several of these
+games running under tournament overwatch.
 
-> **Deploying this needs the production database wiped.** `combatArmy` is a new required field on a
-> seat and there is no `hydrateOnlineGameState`, so a row written before the change would read
-> `undefined !== null` as combat-ready with no army behind it. The dev `.data/oni-quest.db` was
-> deleted twice for exactly this reason (once for `army`, once for `combatArmy`). Nothing has been
-> run against Fly yet.
+> **Deploying this needs the production database wiped.** `combatArmy` and `leader` are new
+> required fields on a seat, the phase union changed, and there is no `hydrateOnlineGameState`, so
+> a row written before the change would read `undefined !== null` as combat-ready with no army
+> behind it. The dev `.data/oni-quest.db` was deleted four times for exactly this reason. Nothing
+> has been run against Fly yet — and a wipe is database-wide, so it takes the tournament tables
+> with it; decide before deploying whether that is acceptable or the wipe should be games-only.
 
 1. **The Roster format is no longer internally named `'tournament'`** (`da407c1`). `ArmyFormat`'s
    second value collided with the tournament feature's own vocabulary, and the redesign was about to
@@ -160,6 +162,77 @@ running under tournament overwatch.
    faction (6 ids) while an army's is an `ArmyFactionId` (7 ids), they overlap on five, and they
    resolve against different catalogs — so the army faction had to be its own field or the prep
    screen would mis-resolve precisely the monster factions.
+7. **Muted text moved up two steps, app-wide** (`4829725`). Grey body copy sat on a photograph: the
+   scrim over the key art falls to 15% opacity across the middle of the screen, so anything outside
+   a panel is grey-on-artwork, and `text-slate-400` captions over a bright burst of it were the
+   app's most common legibility complaint. 211 utilities across 50 files shifted 300→100, 400→200
+   and 500→300, placeholders up one; nothing readable sits below `slate-300` now. `slate-400/500`
+   survive only as **state** colours — inactive tab segments, off-state glyphs, the locked-round
+   chip, the "Not ready" chip, disabled buttons — eight sites restored by hand after the bulk pass,
+   because a find-replace that brightens an inactive tab also deletes the distinction it exists to
+   draw. `01-visual-theme` gained a "muted text scale" subsection recording the floor and the
+   exception list.
+8. **The army reveal** (`d70a853`), rulebook steps 3–4. `startGame` opens a new `armies` phase
+   where both rosters flip open at once and stay open; `leaveArmies` (leader-only, through
+   `/advance-phase`) moves to prep and there is no way back. The substance is in the visibility
+   filter: `toPublicSeat` takes a `SeatReveal` record — so a caller cannot forget to decide either
+   half — and publishes `rosterCode` only when the game is out of the lobby **and** the
+   registration is a Roster. A Standard registration's code is withheld forever, because for it the
+   registered list _is_ the match list and the rulebook keeps parties secret until deployment;
+   hence the deliberate asymmetry on screen, a browse button for Roster seats and _"Fields a
+   Standard list — its contents stay secret until deployment."_ for the others. Browsing reuses the
+   read-only army machinery, which needed one honest addition: `ArmyView` never carried the
+   equipment pool (the tracker only ever rendered Standard lists), so a browsed roster showed its
+   units and silently dropped half its points — it carries `picks` and an `upgradeIndex` now.
+9. **The Leader** (`cdeb5ce`), rulebook step 6. Any copy of the combat army may be the Leader —
+   Stratagems are restricted _to_ the Leader, not the Leader to Stratagem-bearers, so eligibility
+   needs no computation. Assigned in private during prep, editable until prep ends, cleared by any
+   re-cut (a new list renumbers its copies on decode and the old `entryId` would dangle). The
+   client **declares** the leader's M and INT with the assignment, because the server loads no army
+   catalogs and cannot compute effective stats from a code — the same "client's word" ruling army
+   legality rests on. Only those two numbers are published, and only from `setup` on; the identity
+   never travels.
+10. **The intelligence is the Leader's, so nobody types it** (`d473b25`). The draw count is keyed on
+    intelligence and the Leader's INT was already declared — and published — at assignment, so the
+    setup screen's input was a second, private, contradictable copy of a number the app knew: a
+    player could type 20, draw four cards, and the opponent would never see it, because
+    `toPublicSeat` strips the draft's intelligence. `leavePrep` now seeds **both** halves of the
+    draft (faction from the combat army, intelligence from `leader.int`) and `/draw` counts from
+    what the server seeded. Following the point to its end deleted `/draft`, `draftIntelligence`,
+    `setSeatDraft` and the draft event; the input became a read-only value titled _"Your Leader's
+    INT, fixed when you assigned them"_; and `canLeavePrep` gained `bothLeadersAssigned`, because a
+    seat without a Leader has no intelligence and would reach the draw unable to draw. No bundled
+    model lacks an INT (all 56 checked), so a null-INT Leader is unreachable in practice.
+11. **The match became a tracker, and rounds lost their sub-phases** (`a03faaf`). The old game view
+    was a single scrolling page with a reveal/scoring banner; it is now `OnlineTracker` on the
+    shared groundwork — `ScreenHeader`, the four-way sliding spotlight switcher (**P1 Scoring /
+    P2 Scoring / Army / Mission**, swipeable), four self-scrolling panes, and a shared score bar
+    carrying `Round n / 5`, the running score in the seat colours and the leader's single button.
+    `OnlineGamePhase` collapsed to `armies | prep | setup | playing`: objectives and scheme boxes
+    are editable throughout a running round, and revealing a scheme is a **one-way seat action at
+    any moment** behind a confirm (_"Reveal your scheme? Your opponent will see it and its boxes
+    unlock. This cannot be undone."_), so `revealIntent`, `toggleRevealIntent`,
+    `advanceToScoring`, `bothSchemesRevealed`, `/reveal-intent` and `/finish` are all gone. The
+    leader's button reads **Advance to next round** on 1–4 and **Conclude game** on 5, where
+    `/advance-phase` snapshots, auto-reveals, computes the winner and finishes; the scoring board's
+    button is **End game**, a per-player local leave. The Army view is an empty list on purpose —
+    a placeholder for per-copy tracking still to come.
+12. **One top bar everywhere, and three bugs the measuring found** (`f23ec18`, `a67a71a`). The
+    scoring pane became three panels — the identity as its centred, seat-coloured heading
+    (_"Konichan is Player 1"_), a boxed **Scheme Results**, then Results — because the pane's job on
+    a swipeable strip is to say whose sheet it is, and the VP total already sits in the score bar.
+    Then every online screen and both builder screens joined `ScreenHeader` with the red ← Return,
+    their screen-specific control in the action slot. Measuring the result at 320/360/390 px found
+    that **every header on every screen was 13 px too tall**: the Return button squeezed until
+    "← Return" wrapped onto two lines, a pre-existing defect on all six consumers — `shrink-0
+whitespace-nowrap` fixes it globally, and at 320 the switcher's " Scoring" suffix now hides
+    below 340 px rather than overlapping its neighbour. Wiring Return to the store's `leave()`
+    would have **stranded seats** (session token cleared, server game alive), so Return on a live
+    screen keeps the session and only terminal exits drop it. And a reload into a live game never
+    loaded the army catalogs — nothing but the create/join pickers did — leaving the roster browse
+    and the Leader picker silently empty; an effect on the online screen loads them now. A fourth,
+    smaller: the palette pass had left a literal `@@PH` in six placeholder utilities, an unknown
+    class that rendered every placeholder at full brightness.
 
 Also worth keeping: **stores are unit-testable.** The `sveltekit()` vite plugin applies the runes
 transform under vitest too, so a `$state` class instantiates and behaves in the node environment —
@@ -172,31 +245,43 @@ the memory notes — Playwright's `hasText`/`text=` matching is **case-insensiti
 `'Game Leader'` also matched "waiting for _the game leader_", and the first unit in the Helian
 catalog is `upgradesLocked` so it renders no upgrade slot at all.
 
-**Verification:** 592 tests (73 new across the session), `svelte-check` 0/0, lint clean. Plus four
+**Verification:** 605 tests (90 new across the session), `svelte-check` 0/0, lint clean. Plus ten
 throwaway passes, all deleted afterwards: a 17-assertion browser pass for the format migration (a
 forged pre-rename save with `format: 'tournament'` and a `t` code files under the Roster tab and
 loads at the 125 cap with its equipment pool intact), a 34-assertion two-context pass for the new
-front door ending on the regression that scheme setup → Start Game still reached Round 1, a
-19-assertion + 21-assertion pair for readiness (API and two-device), and a 36-assertion +
-44-assertion pair for the preparation phases — the browser one driving the whole journey: create
-with a Roster and join with a Standard, both ready, Start Game, the borrowed builder (Back instead
-of Main Menu, no format tabs, no Copy or Save, the 85 cap, a catalog narrowed to the one unit the
-roster held, the picker offering only its pool upgrade), Accept returning to a combat-ready seat
-with Edit match list, Proceed, Scheme selection with the faction shown rather than chosen, Begin
-Round 1, both devices in Round 1, and a reload resuming into it.
+front door, a 19 + 21 pair for readiness (API and two-device), a 36 + 44 pair for the preparation
+phases — the browser one driving create-with-Roster / join-with-Standard through the borrowed
+builder and back — an 18-assertion pass for the army reveal (the joiner browsing the leader's
+roster with its unit, its pool and the "not the match list" line), a 15 + 13 pair for the Leader
+(the identity absent from every opponent view while M/INT appear exactly at Scheme selection), a
+12-assertion pass for the seeded intelligence (no number input anywhere, Draw enabled with nothing
+typed), a 31-assertion pass for the tracker lifecycle (the confirm's two warnings and its cancel
+branch, a ticked objective moving the shared bar on both phones, four advances, Conclude, and each
+player ending separately), a 21-assertion geometry pass reading header heights and label bounding
+boxes back out of the page at three widths, and an 8-assertion smoke proving that header Return
+keeps the session across a reload. Two harness traps cost a run each and are in the memory notes:
+Playwright's `hasText`/`text=` matching is **case-insensitive substring** (so `'Game Leader'`
+matched "waiting for _the game leader_", and a prep screen's own note mentioning "Scheme selection"
+matched the next screen's title), and CSS `uppercase` means `innerText` returns headings in caps.
 
 **New open questions** (all recorded in `docs/functional-spec/07-online-two-player.md`): the cut
 keeps its registration's name, so the two badges on the prep screen read identically apart from the
 format tag; a combat army's **legality is the client's word**, since the server has no army catalogs
-and cannot check ≤85 or subset-of-roster (the same ruling the tournament join already made); and a
-vanished leader now strands a table in **two more places**, neither with a timeout. Still deferred
-from before: the leader's accept popup cannot show the joiner's army, and
-`pendingJoinNickname` is only hidden client-side.
+and cannot check ≤85 or subset-of-roster (the same ruling the tournament join already made); a
+vanished leader now strands a table in **two more places**, neither with a timeout; **deployment
+never reveals a party** — the rulebook's step 10 puts both armies on the table, but our mission
+screen shows none, so a Standard player's list stays secret for the whole match; and the
+**initiative roll** (step 8) is still unmodelled — its formula and what winning it grants are
+rulebook text we do not have, though the exposure it exists for (the Leader's M and INT) is already
+in place. Still deferred from before: the leader's accept popup cannot show the joiner's army,
+`pendingJoinNickname` is only hidden client-side, and online's resume/leave flow is not aligned
+with the tournament's prompt-and-abandon pattern.
 
 **Next:** the tournament's match phase — a round's tables become N online games, which is why this
 redesign came first. Note what a tournament will need that online does not have yet: an army
 registered per **round** rather than per game, and a scoring path back into the tournament's VP
-standing.
+standing. Before that, two smaller threads are open: the initiative roll once the rulebook text
+arrives, and the **Army view**, which is an empty list on purpose and has bigger plans behind it.
 
 ## What was done in the session before (Tournament: starting the event, the match-prep screen and its roadmap)
 
