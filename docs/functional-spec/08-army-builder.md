@@ -22,9 +22,9 @@ army-code import keep a synchronous contract.
 
 ## Faction select
 
-**← Back** (top-left) returns to the main menu. Headed **Army Builder** / _"Choose your
-faction."_, then the **seven** factions in a three-column grid, each button bordered and labelled
-in that faction's RAL colour over its logo.
+The shared top bar's red **← Return** returns to the main menu. Headed **Army Builder** /
+_"Choose your faction."_, then the **seven** factions in a three-column grid, each button bordered
+and labelled in that faction's RAL colour over its logo.
 
 Order and colours: Helian League, Coalition of Thenion, Sand Kingdoms, Empire of Soga, Oni
 Clans, Goblin Wartribes, Adventurers' Guild.
@@ -263,15 +263,15 @@ Three consequences worth knowing:
 The cut is an ordinary Standard list, so it encodes to a normal `s` code with no picks section and
 replays through an import unchanged.
 
-While borrowed the builder looks different: **← Back** instead of ← Main Menu, a
-_"Cut down from your roster"_ tag where the Standard/Roster tabs were (there is no format to
-choose), **Accept** where Copy Army Code and Save Army were, and a **Still in your roster** chip
-list in Your Army showing what the pool has left unassigned. The point badge keeps its normal
-behaviour — the builder never blocks an over-cap pick, it shows the total in red — and **Accept
-refuses** instead, naming what is wrong: _"Add at least one model from your roster."_ or _"Over
-the 85-point cap — remove {n} more."_
+While borrowed the builder looks different: the top bar's **← Return** goes back to the match
+instead of the main menu, a _"Cut down from your roster"_ tag sits in the bar's action slot where
+the Standard/Roster tabs were (there is no format to choose), **Accept** replaces Copy Army Code
+and Save Army, and a **Still in your roster** chip list in Your Army shows what the pool has left
+unassigned. The point badge keeps its normal behaviour — the builder never blocks an over-cap pick,
+it shows the total in red — and **Accept refuses** instead, naming what is wrong: _"Add at least
+one model from your roster."_ or _"Over the 85-point cap — remove {n} more."_
 
-Leaving through **← Back** abandons the cut and resets the builder; both exits return to whichever
+Leaving through **← Return** abandons the cut and resets the builder; both exits return to whichever
 screen borrowed it rather than the main menu.
 
 ## Army codes

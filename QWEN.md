@@ -451,10 +451,16 @@ Rule of thumb: **routes → components/stores → domain/data**; for the online 
   back to `min-h-dvh` lets the root grow to the length of the longest panel, which
   makes the document the one scroller shared by all panels and strands the
   player far below a short panel after scrolling a long one; every other screen
-  scrolls the document normally. `ScreenHeader` is the shared top bar those six
-  screens use (season/mission select, briefing ×2, tracker ×2); its actions
-  container wraps so the briefing's four buttons and the four-up switcher fit a
-  320 px phone.
+  scrolls the document normally. `ScreenHeader` is the shared top bar every
+  screen with somewhere to go back to uses — the selects, briefings and
+  trackers, all six online screens, and the army builder (whose format tabs, or
+  the cut's tag, live in its action slot); its actions container wraps so a
+  four-up switcher or a tab pair fits a 320 px phone. Its red ← Return is
+  `shrink-0 whitespace-nowrap`: squeezed by a wide switcher it used to wrap onto
+  two lines and silently grow every header. On a live online screen Return
+  **keeps the seat session** (the next launch resumes); only terminal exits —
+  End game, a closed/finished lobby's Return to Main Menu, the reconnect-error
+  button — drop it.
 
 Each layer folder has its own `CLAUDE.md` with the specific rules for that layer —
 read it before adding files there.

@@ -11,6 +11,7 @@
 	import ArmyBadge from './ArmyBadge.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import OnlineMissionView from './OnlineMissionView.svelte';
+	import ScreenHeader from './ScreenHeader.svelte';
 
 	type Props = {
 		view: OnlineGameView;
@@ -24,6 +25,8 @@
 		onDenyJoin: () => Promise<void>;
 		onCloseGame: () => Promise<void>;
 		onReturnToMenu: () => void;
+		/** Header Return on a live lobby: leaves the screen, keeps the seat session. */
+		onReturn: () => void;
 		onToggleReady: () => Promise<void>;
 		onStartGame: () => void;
 	};
@@ -40,6 +43,7 @@
 		onDenyJoin,
 		onCloseGame,
 		onReturnToMenu,
+		onReturn,
 		onToggleReady,
 		onStartGame
 	}: Props = $props();
@@ -160,175 +164,180 @@
 	</div>
 {/snippet}
 
-<div class="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-3 px-4 py-4">
-	{#if isLeader && view.status !== 'closed' && view.status !== 'finished'}
-		<button
-			type="button"
-			class="self-start rounded-lg border-2 border-red-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
-			onclick={() => (confirmingClose = true)}
-		>
-			Close Game
-		</button>
-	{/if}
-
-	<div class="text-center">
-		<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id} Lobby</h1>
-		<p class="text-slate-200">
-			{#if view.status === 'lobby'}
-				Setup Phase
-			{:else if view.status === 'finished'}
-				Finished
-			{:else if view.status === 'closed'}
-				Closed
-			{:else}
-				Round {view.currentRound}
-			{/if}
-		</p>
-	</div>
-
-	{#if error}
-		<div
-			class="rounded-xl border border-red-500/40 bg-slate-800/40 p-3 text-sm text-red-300 backdrop-blur"
-			role="alert"
-		>
-			{error}
-		</div>
-	{/if}
-
-	{#if view.status === 'closed'}
-		<div
-			class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 text-center backdrop-blur"
-		>
-			<p class="text-slate-200">This game has been closed.</p>
-			<button
-				type="button"
-				class="mt-4 rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
-				onclick={onReturnToMenu}
-			>
-				Return to Main Menu
-			</button>
-		</div>
-	{:else if view.status === 'finished'}
-		<div
-			class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 text-center backdrop-blur"
-		>
-			<p class="text-slate-200">This game has finished.</p>
-			<button
-				type="button"
-				class="mt-4 rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
-				onclick={onReturnToMenu}
-			>
-				Return to Main Menu
-			</button>
-		</div>
-	{:else}
-		{#if view.status === 'lobby' && isLeader}
-			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
-				<div class="flex items-center justify-between gap-2">
-					<div class="min-w-0">
-						<p class="text-sm font-semibold tracking-wide text-sky-300 uppercase">
-							Share link to invite player
-						</p>
-						<p class="truncate font-mono text-sm text-slate-200" title={inviteUrl}>
-							{inviteUrl}
-						</p>
-					</div>
-					<button
-						type="button"
-						class="shrink-0 rounded-lg border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20"
-						onclick={copyInvite}
-					>
-						{copied ? 'Copied!' : 'copy to clipboard'}
-					</button>
-				</div>
-			</div>
-		{/if}
-
-		<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
-			<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Mission</p>
-			{#if selectedMission}
-				<p class="text-slate-200">
-					{view.season} — <span class="font-semibold">{selectedMission.name}</span>
-				</p>
-			{:else}
-				<p class="text-sm text-slate-200 italic">
-					This game's mission is not in the bundled content.
-				</p>
-			{/if}
-		</div>
-
-		<!-- Player 1 seat -->
-		<div class="rounded-2xl border border-sky-500/30 bg-slate-800/40 p-4 backdrop-blur">
-			<div class="flex items-center justify-between gap-2">
-				<div class="flex items-center gap-2">
-					<span class="font-semibold text-sky-300">Player 1</span>
-					<span class="rounded-full border border-sky-500/50 px-2 py-0.5 text-xs text-sky-200">
-						Game Leader
-					</span>
-				</div>
-				<span class="text-slate-100">
-					{view.seat === 'player1' ? view.self.nickname : (opponent?.nickname ?? '')}
-				</span>
-			</div>
-			{#if p1Army}
-				<div class="mt-3">
-					<ArmyBadge {...p1Army} factions={armyFactions} />
-				</div>
-			{/if}
-			{#if view.status === 'lobby'}
-				{@render readyRow(view.seat === 'player1', p1Ready)}
-			{/if}
-		</div>
-
-		<!-- Player 2 seat -->
-		<div class="rounded-2xl border border-orange-500/30 bg-slate-800/40 p-4 backdrop-blur">
-			<div class="flex items-center justify-between gap-2">
-				<span class="font-semibold text-orange-300">Player 2</span>
-				<span class="text-slate-100">
-					{view.seat === 'player2' ? view.self.nickname : (opponent?.nickname ?? '')}
-				</span>
-			</div>
-			{#if p2Army}
-				<div class="mt-3">
-					<ArmyBadge {...p2Army} factions={armyFactions} />
-				</div>
-			{/if}
-			{#if view.status === 'lobby' && p2Army}
-				{@render readyRow(view.seat === 'player2', p2Ready)}
-			{/if}
-			{#if !p2Army}
-				<p class="mt-3 text-center text-slate-200">No Player 2, invite someone</p>
-			{/if}
-		</div>
-
-		{#if selectedMission}
-			<OnlineMissionView mission={selectedMission} results={resultsForMission} />
-		{/if}
-
-		{#if view.status === 'lobby'}
-			{#if isLeader}
+<div class="flex min-h-dvh flex-col">
+	<ScreenHeader onBack={onReturn}>
+		{#snippet actions()}
+			{#if isLeader && view.status !== 'closed' && view.status !== 'finished'}
 				<button
 					type="button"
-					disabled={!canStart || acting}
-					class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-					onclick={onStartGame}
+					class="rounded-lg border-2 border-red-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+					onclick={() => (confirmingClose = true)}
 				>
-					Start Game
+					Close Game
 				</button>
-				{#if !canStart}
-					<p class="-mt-1 text-center text-xs text-slate-200">{startHint}</p>
+			{/if}
+		{/snippet}
+	</ScreenHeader>
+	<div class="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3 px-4 py-4">
+		<div class="text-center">
+			<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id} Lobby</h1>
+			<p class="text-slate-200">
+				{#if view.status === 'lobby'}
+					Setup Phase
+				{:else if view.status === 'finished'}
+					Finished
+				{:else if view.status === 'closed'}
+					Closed
+				{:else}
+					Round {view.currentRound}
+				{/if}
+			</p>
+		</div>
+
+		{#if error}
+			<div
+				class="rounded-xl border border-red-500/40 bg-slate-800/40 p-3 text-sm text-red-300 backdrop-blur"
+				role="alert"
+			>
+				{error}
+			</div>
+		{/if}
+
+		{#if view.status === 'closed'}
+			<div
+				class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 text-center backdrop-blur"
+			>
+				<p class="text-slate-200">This game has been closed.</p>
+				<button
+					type="button"
+					class="mt-4 rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
+					onclick={onReturnToMenu}
+				>
+					Return to Main Menu
+				</button>
+			</div>
+		{:else if view.status === 'finished'}
+			<div
+				class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 text-center backdrop-blur"
+			>
+				<p class="text-slate-200">This game has finished.</p>
+				<button
+					type="button"
+					class="mt-4 rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
+					onclick={onReturnToMenu}
+				>
+					Return to Main Menu
+				</button>
+			</div>
+		{:else}
+			{#if view.status === 'lobby' && isLeader}
+				<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
+					<div class="flex items-center justify-between gap-2">
+						<div class="min-w-0">
+							<p class="text-sm font-semibold tracking-wide text-sky-300 uppercase">
+								Share link to invite player
+							</p>
+							<p class="truncate font-mono text-sm text-slate-200" title={inviteUrl}>
+								{inviteUrl}
+							</p>
+						</div>
+						<button
+							type="button"
+							class="shrink-0 rounded-lg border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:bg-sky-500/10 active:bg-sky-500/20"
+							onclick={copyInvite}
+						>
+							{copied ? 'Copied!' : 'copy to clipboard'}
+						</button>
+					</div>
+				</div>
+			{/if}
+
+			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
+				<p class="mb-3 text-sm font-semibold tracking-wide text-sky-300 uppercase">Mission</p>
+				{#if selectedMission}
+					<p class="text-slate-200">
+						{view.season} — <span class="font-semibold">{selectedMission.name}</span>
+					</p>
+				{:else}
+					<p class="text-sm text-slate-200 italic">
+						This game's mission is not in the bundled content.
+					</p>
+				{/if}
+			</div>
+
+			<!-- Player 1 seat -->
+			<div class="rounded-2xl border border-sky-500/30 bg-slate-800/40 p-4 backdrop-blur">
+				<div class="flex items-center justify-between gap-2">
+					<div class="flex items-center gap-2">
+						<span class="font-semibold text-sky-300">Player 1</span>
+						<span class="rounded-full border border-sky-500/50 px-2 py-0.5 text-xs text-sky-200">
+							Game Leader
+						</span>
+					</div>
+					<span class="text-slate-100">
+						{view.seat === 'player1' ? view.self.nickname : (opponent?.nickname ?? '')}
+					</span>
+				</div>
+				{#if p1Army}
+					<div class="mt-3">
+						<ArmyBadge {...p1Army} factions={armyFactions} />
+					</div>
+				{/if}
+				{#if view.status === 'lobby'}
+					{@render readyRow(view.seat === 'player1', p1Ready)}
+				{/if}
+			</div>
+
+			<!-- Player 2 seat -->
+			<div class="rounded-2xl border border-orange-500/30 bg-slate-800/40 p-4 backdrop-blur">
+				<div class="flex items-center justify-between gap-2">
+					<span class="font-semibold text-orange-300">Player 2</span>
+					<span class="text-slate-100">
+						{view.seat === 'player2' ? view.self.nickname : (opponent?.nickname ?? '')}
+					</span>
+				</div>
+				{#if p2Army}
+					<div class="mt-3">
+						<ArmyBadge {...p2Army} factions={armyFactions} />
+					</div>
+				{/if}
+				{#if view.status === 'lobby' && p2Army}
+					{@render readyRow(view.seat === 'player2', p2Ready)}
+				{/if}
+				{#if !p2Army}
+					<p class="mt-3 text-center text-slate-200">No Player 2, invite someone</p>
+				{/if}
+			</div>
+
+			{#if selectedMission}
+				<OnlineMissionView mission={selectedMission} results={resultsForMission} />
+			{/if}
+
+			{#if view.status === 'lobby'}
+				{#if isLeader}
+					<button
+						type="button"
+						disabled={!canStart || acting}
+						class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+						onclick={onStartGame}
+					>
+						Start Game
+					</button>
+					{#if !canStart}
+						<p class="-mt-1 text-center text-xs text-slate-200">{startHint}</p>
+					{/if}
+				{:else}
+					<p class="text-center text-xs text-slate-200">
+						The game leader starts the game once both players are ready.
+					</p>
 				{/if}
 			{:else}
-				<p class="text-center text-xs text-slate-200">
-					The game leader starts the game once both players are ready.
+				<p class="text-center text-xs text-slate-300">
+					This game is running, but its mission content is missing on this device.
 				</p>
 			{/if}
-		{:else}
-			<p class="text-center text-xs text-slate-300">
-				This game is running, but its mission content is missing on this device.
-			</p>
 		{/if}
-	{/if}
+	</div>
 </div>
 
 <!-- Join request popup (leader) -->

@@ -272,6 +272,12 @@ add-on:
   or a round — because the screen follows the fetched state rather than the last click. An
   in-progress **cut** is the exception: it lives only in the borrowed builder, so a reload during
   one abandons it and the seat is back to "needs a match list".
+- Every live online screen carries the shared top bar's red **← Return**, and it **keeps the seat
+  session**: it only steps off the screen, so the next app launch resumes into the same game.
+  Clearing the session there would strand the seat — the server game lives on but the token that
+  authenticates this device is gone. The session is dropped only by terminal exits: **End game** on
+  the scoring board, **Return to Main Menu** on a closed or finished lobby, and the reconnect-error
+  button.
 
 ## Visibility rules (server-enforced)
 

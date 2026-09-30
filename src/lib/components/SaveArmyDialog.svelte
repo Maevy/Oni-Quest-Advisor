@@ -40,7 +40,7 @@
 			autocomplete="off"
 			autocapitalize="words"
 			spellcheck="false"
-			class="placeholder:text-slate-300@@PH mt-4 w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-center text-sm text-sky-100 outline-none focus:border-sky-400"
+			class="mt-4 w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-center text-sm text-sky-100 outline-none placeholder:text-slate-400 focus:border-sky-400"
 		/>
 		{#if error}
 			<p class="mt-2 text-center text-sm text-red-400" role="alert">{error}</p>

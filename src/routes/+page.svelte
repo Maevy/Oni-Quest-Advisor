@@ -269,6 +269,15 @@
 		player2: rosterViewFor('player2')
 	});
 
+	// The online screens decode army codes — the roster browse, the Leader picker, the cut — and a
+	// reload lands straight on them without ever passing a picker that loads the catalogs.
+	$effect(() => {
+		if (navigationStore.screen !== 'online-game') return;
+		if (onlineGameStore.view === null) return;
+		if (contentStore.armyLoaded) return;
+		void contentStore.loadArmy();
+	});
+
 	/** This seat's own match list resolved into rows: what the Leader is chosen from. */
 	let onlineCombatView = $derived.by(() =>
 		onlineGameStore.view?.self.combatArmy
@@ -308,6 +317,21 @@
 			return;
 		}
 		navigationStore.borrowArmyBuilder('online-game');
+	}
+
+	/** Leaves the online game on this device only; the stored seat session resumes it later. */
+	function leaveOnlineGame(): void {
+		onlineGameStore.leave();
+		navigationStore.leaveOnline();
+	}
+
+	/**
+	 * Steps off a live online screen without dropping the seat session, so the next app launch
+	 * resumes into the same game. Clearing the session here would strand the seat: the server game
+	 * lives on but the token that authenticates this device is gone.
+	 */
+	function stepAwayFromOnlineGame(): void {
+		navigationStore.leaveOnline();
 	}
 
 	/** Hands the finished cut to the match. The code is read before leaving wipes the builder. */
@@ -772,6 +796,7 @@
 			rosterViews={onlineRosterViews}
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
+			onReturn={stepAwayFromOnlineGame}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'prep'}
 		<OnlineArmyPrep
@@ -786,6 +811,7 @@
 			onSetLeader={assignLeader}
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
+			onReturn={stepAwayFromOnlineGame}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'setup'}
 		<OnlineSchemeSelect
@@ -802,6 +828,7 @@
 			onDeleteScheme={() => onlineGameStore.deleteScheme()}
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
+			onReturn={stepAwayFromOnlineGame}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineMission}
 		<OnlineTracker
@@ -820,20 +847,14 @@
 				onlineGameStore.setSchemeChecked(checkedIncrements)}
 			onRevealScheme={() => onlineGameStore.revealScheme()}
 			onAdvance={() => onlineGameStore.advancePhase()}
-			onReturn={() => {
-				onlineGameStore.leave();
-				navigationStore.leaveOnline();
-			}}
+			onReturn={stepAwayFromOnlineGame}
 		/>
 	{:else if onlineGameStore.view.status === 'finished'}
 		<OnlineStats
 			view={onlineGameStore.view}
 			factions={contentStore.factions}
 			schemes={contentStore.schemes}
-			onReturnToMenu={() => {
-				onlineGameStore.leave();
-				navigationStore.leaveOnline();
-			}}
+			onReturnToMenu={leaveOnlineGame}
 		/>
 	{:else}
 		<OnlineLobby
@@ -847,10 +868,8 @@
 			onAcceptJoin={() => onlineGameStore.acceptJoin()}
 			onDenyJoin={() => onlineGameStore.denyJoin()}
 			onCloseGame={() => onlineGameStore.closeGame()}
-			onReturnToMenu={() => {
-				onlineGameStore.leave();
-				navigationStore.leaveOnline();
-			}}
+			onReturnToMenu={leaveOnlineGame}
+			onReturn={stepAwayFromOnlineGame}
 			onToggleReady={() => onlineGameStore.toggleReady()}
 			onStartGame={() => onlineGameStore.startGame()}
 		/>
@@ -864,10 +883,7 @@
 			<button
 				type="button"
 				class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
-				onclick={() => {
-					onlineGameStore.leave();
-					navigationStore.leaveOnline();
-				}}
+				onclick={leaveOnlineGame}
 			>
 				Return to Main Menu
 			</button>

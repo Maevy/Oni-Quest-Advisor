@@ -41,7 +41,7 @@
 
 	const label = 'text-sm font-semibold tracking-wide text-sky-300 uppercase';
 	const field =
-		'w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-base text-sky-100 backdrop-blur outline-none placeholder:text-slate-300@@PH focus:border-sky-400';
+		'w-full rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-base text-sky-100 backdrop-blur outline-none placeholder:text-slate-400 focus:border-sky-400';
 </script>
 
 <div class="min-h-dvh pb-6">

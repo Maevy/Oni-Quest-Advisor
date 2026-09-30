@@ -12,6 +12,7 @@
 	import ArmyBadge from './ArmyBadge.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import RosterBrowseDialog from './RosterBrowseDialog.svelte';
+	import ScreenHeader from './ScreenHeader.svelte';
 	import { PLAYER_SEATS, playerAccent } from './playerAccent';
 
 	type Props = {
@@ -29,6 +30,7 @@
 		onSetLeader: (row: ArmyRosterRow) => void;
 		onAdvance: () => Promise<void>;
 		onCloseGame: () => Promise<void>;
+		onReturn: () => void;
 	};
 
 	let {
@@ -42,7 +44,8 @@
 		onCutArmy,
 		onSetLeader,
 		onAdvance,
-		onCloseGame
+		onCloseGame,
+		onReturn
 	}: Props = $props();
 
 	let confirmingClose = $state(false);
@@ -238,59 +241,64 @@
 	</div>
 {/snippet}
 
-<div class="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-3 px-4 py-4">
-	{#if isLeader}
-		<button
-			type="button"
-			class="self-start rounded-lg border-2 border-red-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
-			onclick={() => (confirmingClose = true)}
-		>
-			Close Game
-		</button>
-	{/if}
+<div class="flex min-h-dvh flex-col">
+	<ScreenHeader onBack={onReturn}>
+		{#snippet actions()}
+			{#if isLeader}
+				<button
+					type="button"
+					class="rounded-lg border-2 border-red-500/50 bg-slate-900/60 px-4 py-1.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 active:bg-red-500/20"
+					onclick={() => (confirmingClose = true)}
+				>
+					Close Game
+				</button>
+			{/if}
+		{/snippet}
+	</ScreenHeader>
+	<div class="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3 px-4 py-4">
+		<div class="text-center">
+			<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id}</h1>
+			<p class="text-slate-200">Army Preparation</p>
+			{#if missionName}
+				<p class="mt-1 text-sm text-slate-100">{view.season} — {missionName}</p>
+			{/if}
+		</div>
 
-	<div class="text-center">
-		<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id}</h1>
-		<p class="text-slate-200">Army Preparation</p>
-		{#if missionName}
-			<p class="mt-1 text-sm text-slate-100">{view.season} — {missionName}</p>
+		{#if error}
+			<div
+				class="rounded-xl border border-red-500/40 bg-slate-800/40 p-3 text-sm text-red-300 backdrop-blur"
+				role="alert"
+			>
+				{error}
+			</div>
+		{/if}
+
+		<p class="text-sm text-slate-200">
+			A match is 85 points. A Standard army is combat-ready as registered; a Roster army is cut down
+			to the list you field, out of nothing but what it held.
+		</p>
+
+		{@render seatPanel('player1')}
+		{@render seatPanel('player2')}
+
+		{#if isLeader}
+			<button
+				type="button"
+				disabled={!canProceed || acting}
+				class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+				onclick={handleAdvance}
+			>
+				Proceed to the mission
+			</button>
+			{#if !canProceed}
+				<p class="-mt-1 text-center text-xs text-slate-200">{proceedHint}</p>
+			{/if}
+		{:else}
+			<p class="text-center text-xs text-slate-200">
+				The game leader continues once both armies are combat-ready.
+			</p>
 		{/if}
 	</div>
-
-	{#if error}
-		<div
-			class="rounded-xl border border-red-500/40 bg-slate-800/40 p-3 text-sm text-red-300 backdrop-blur"
-			role="alert"
-		>
-			{error}
-		</div>
-	{/if}
-
-	<p class="text-sm text-slate-200">
-		A match is 85 points. A Standard army is combat-ready as registered; a Roster army is cut down
-		to the list you field, out of nothing but what it held.
-	</p>
-
-	{@render seatPanel('player1')}
-	{@render seatPanel('player2')}
-
-	{#if isLeader}
-		<button
-			type="button"
-			disabled={!canProceed || acting}
-			class="rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-			onclick={handleAdvance}
-		>
-			Proceed to the mission
-		</button>
-		{#if !canProceed}
-			<p class="-mt-1 text-center text-xs text-slate-200">{proceedHint}</p>
-		{/if}
-	{:else}
-		<p class="text-center text-xs text-slate-200">
-			The game leader continues once both armies are combat-ready.
-		</p>
-	{/if}
 </div>
 
 {#if browsing}

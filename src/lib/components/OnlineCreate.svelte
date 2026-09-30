@@ -1,6 +1,7 @@
 <script lang="ts">
 	import chiohime from '$lib/assets/Chiohime.png';
 	import rasetsu from '$lib/assets/Rasetsu.png';
+	import ScreenHeader from './ScreenHeader.svelte';
 	import {
 		MAX_NICKNAME_LENGTH,
 		pickedArmyFormat,
@@ -69,138 +70,138 @@
 		'rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2.5 text-sky-100 backdrop-blur outline-none focus:border-sky-400';
 </script>
 
-<div class="flex min-h-dvh flex-col items-center gap-6 px-4 py-6">
-	<button
-		type="button"
-		class="fixed top-4 left-4 rounded-lg bg-sky-300 px-3 py-1.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
-		onclick={onReturn}
-	>
-		← Back
-	</button>
+<div class="flex min-h-dvh flex-col">
+	<ScreenHeader onBack={onReturn} />
 
-	<div class="mt-10 flex w-full max-w-xl flex-col items-center gap-6">
-		<div class="flex w-full flex-col items-center gap-2">
-			<div
-				class="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-700/50 bg-slate-800/40 px-3 py-5 backdrop-blur"
-			>
-				<img src={chiohime} alt="Chiohime" class="w-[70px] shrink-0 object-contain sm:w-[106px]" />
-				<h1
-					class="flex-1 text-3xl font-extrabold tracking-tight text-slate-100 drop-shadow-[0_0_16px_rgba(56,189,248,0.55)] sm:text-4xl"
-				>
-					Oni Quest Advisor
-				</h1>
-				<img src={rasetsu} alt="Rasetsu" class="w-16 shrink-0 object-contain sm:w-24" />
-			</div>
-			<p class="text-slate-200">Online 2 Player Game</p>
-		</div>
-
-		<div class={panel}>
-			<label for="create-nickname" class={label}>Your Player Name</label>
-			<input
-				id="create-nickname"
-				type="text"
-				maxlength={MAX_NICKNAME_LENGTH}
-				bind:value={nickname}
-				placeholder="e.g. Konichan"
-				autocomplete="off"
-				class="placeholder:text-slate-300@@PH rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-lg text-sky-100 backdrop-blur outline-none focus:border-sky-400"
-			/>
-		</div>
-
-		<div class={panel}>
-			<label for="create-season" class={label}>Mission</label>
-			<select
-				id="create-season"
-				class={select}
-				value={season}
-				onchange={handleSeasonChange}
-				aria-label="Season"
-			>
-				<option value="" disabled>Select a season…</option>
-				{#each seasons as entry (entry)}
-					<option value={entry}>{entry}</option>
-				{/each}
-			</select>
-			<select
-				class={select}
-				value={missionId}
-				disabled={season === ''}
-				onchange={(event) => (missionId = (event.target as HTMLSelectElement).value)}
-				aria-label="Mission"
-			>
-				<option value="" disabled>{season ? 'Select a mission…' : 'Mission'}</option>
-				{#each missionsBySeason[season] ?? [] as mission (mission.id)}
-					<option value={mission.id}>{mission.name}</option>
-				{/each}
-			</select>
-			<p class="text-left text-xs text-slate-200">
-				The mission is fixed for the whole game — your opponent joins into it.
-			</p>
-		</div>
-
-		<div class={panel}>
-			<span class={label}>Your Army</span>
-			{#if army}
+	<div class="flex flex-1 flex-col items-center gap-6 px-4 py-6">
+		<div class="flex w-full max-w-xl flex-col items-center gap-6">
+			<div class="flex w-full flex-col items-center gap-2">
 				<div
-					class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+					class="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-700/50 bg-slate-800/40 px-3 py-5 backdrop-blur"
 				>
+					<img
+						src={chiohime}
+						alt="Chiohime"
+						class="w-[70px] shrink-0 object-contain sm:w-[106px]"
+					/>
+					<h1
+						class="flex-1 text-3xl font-extrabold tracking-tight text-slate-100 drop-shadow-[0_0_16px_rgba(56,189,248,0.55)] sm:text-4xl"
+					>
+						Oni Quest Advisor
+					</h1>
+					<img src={rasetsu} alt="Rasetsu" class="w-16 shrink-0 object-contain sm:w-24" />
+				</div>
+				<p class="text-slate-200">Online 2 Player Game</p>
+			</div>
+
+			<div class={panel}>
+				<label for="create-nickname" class={label}>Your Player Name</label>
+				<input
+					id="create-nickname"
+					type="text"
+					maxlength={MAX_NICKNAME_LENGTH}
+					bind:value={nickname}
+					placeholder="e.g. Konichan"
+					autocomplete="off"
+					class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-4 py-3 text-lg text-sky-100 backdrop-blur outline-none placeholder:text-slate-400 focus:border-sky-400"
+				/>
+			</div>
+
+			<div class={panel}>
+				<label for="create-season" class={label}>Mission</label>
+				<select
+					id="create-season"
+					class={select}
+					value={season}
+					onchange={handleSeasonChange}
+					aria-label="Season"
+				>
+					<option value="" disabled>Select a season…</option>
+					{#each seasons as entry (entry)}
+						<option value={entry}>{entry}</option>
+					{/each}
+				</select>
+				<select
+					class={select}
+					value={missionId}
+					disabled={season === ''}
+					onchange={(event) => (missionId = (event.target as HTMLSelectElement).value)}
+					aria-label="Mission"
+				>
+					<option value="" disabled>{season ? 'Select a mission…' : 'Mission'}</option>
+					{#each missionsBySeason[season] ?? [] as mission (mission.id)}
+						<option value={mission.id}>{mission.name}</option>
+					{/each}
+				</select>
+				<p class="text-left text-xs text-slate-200">
+					The mission is fixed for the whole game — your opponent joins into it.
+				</p>
+			</div>
+
+			<div class={panel}>
+				<span class={label}>Your Army</span>
+				{#if army}
+					<div
+						class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-900/50 px-3 py-2.5"
+					>
+						<button
+							type="button"
+							class="min-w-0 flex-1 text-left"
+							aria-label="Change your army"
+							onclick={onPickArmy}
+						>
+							<span class="block truncate text-sm font-semibold text-slate-100">{army.name}</span>
+							<span
+								class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-200'}"
+								style={armyFaction ? `color: ${armyFaction.color}` : undefined}
+							>
+								{armyFaction?.name ?? army.factionId}
+							</span>
+						</button>
+						<span
+							class="shrink-0 rounded-md border border-sky-500/50 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-300 uppercase"
+						>
+							{pickedArmyFormat(army) === 'roster' ? 'Roster' : 'Standard'}
+						</span>
+						<button
+							type="button"
+							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-500/50 bg-slate-900/60 text-sm font-bold text-red-300 transition enabled:hover:bg-red-500/10 enabled:active:bg-red-500/20"
+							aria-label="Remove your army"
+							onclick={onClearArmy}
+						>
+							<span aria-hidden="true">✕</span>
+						</button>
+					</div>
+				{:else}
 					<button
 						type="button"
-						class="min-w-0 flex-1 text-left"
-						aria-label="Change your army"
+						class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2.5 text-sm font-medium text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20"
 						onclick={onPickArmy}
 					>
-						<span class="block truncate text-sm font-semibold text-slate-100">{army.name}</span>
-						<span
-							class="mt-0.5 block truncate text-xs {armyFaction ? '' : 'text-slate-200'}"
-							style={armyFaction ? `color: ${armyFaction.color}` : undefined}
-						>
-							{armyFaction?.name ?? army.factionId}
-						</span>
+						Pick Army
 					</button>
-					<span
-						class="shrink-0 rounded-md border border-sky-500/50 bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold text-sky-300 uppercase"
-					>
-						{pickedArmyFormat(army) === 'roster' ? 'Roster' : 'Standard'}
-					</span>
-					<button
-						type="button"
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-500/50 bg-slate-900/60 text-sm font-bold text-red-300 transition enabled:hover:bg-red-500/10 enabled:active:bg-red-500/20"
-						aria-label="Remove your army"
-						onclick={onClearArmy}
-					>
-						<span aria-hidden="true">✕</span>
-					</button>
-				</div>
-			{:else}
-				<button
-					type="button"
-					class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-3 py-2.5 text-sm font-medium text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20"
-					onclick={onPickArmy}
-				>
-					Pick Army
-				</button>
-				<p class="text-left text-xs text-slate-200">
-					A Standard army (85 points) is combat-ready at once. A Roster army (125 points) is cut
-					down to 85 after the game starts.
-				</p>
+					<p class="text-left text-xs text-slate-200">
+						A Standard army (85 points) is combat-ready at once. A Roster army (125 points) is cut
+						down to 85 after the game starts.
+					</p>
+				{/if}
+			</div>
+
+			<button
+				type="button"
+				disabled={!valid || preparing}
+				class="w-full max-w-xl rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
+				onclick={handleCreate}
+			>
+				Open Lobby
+			</button>
+			{#if !valid}
+				<p class="-mt-3 text-xs text-slate-200">Name, mission and army open the lobby.</p>
+			{/if}
+			{#if error}
+				<p class="text-sm text-red-400" role="alert">{error}</p>
 			{/if}
 		</div>
-
-		<button
-			type="button"
-			disabled={!valid || preparing}
-			class="w-full max-w-xl rounded-xl border-2 border-emerald-500/50 bg-slate-900/60 px-8 py-3 text-lg font-medium text-emerald-100 backdrop-blur transition enabled:hover:bg-emerald-500/10 enabled:active:bg-emerald-500/20 disabled:cursor-not-allowed disabled:border-slate-600/30 disabled:text-slate-600"
-			onclick={handleCreate}
-		>
-			Open Lobby
-		</button>
-		{#if !valid}
-			<p class="-mt-3 text-xs text-slate-200">Name, mission and army open the lobby.</p>
-		{/if}
-		{#if error}
-			<p class="text-sm text-red-400" role="alert">{error}</p>
-		{/if}
 	</div>
 </div>
 
