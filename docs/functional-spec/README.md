@@ -6,10 +6,10 @@ shapes, rendering geometry, colours and server architecture see
 rules each layer must follow, see the root [QWEN.md](../../QWEN.md) and the `CLAUDE.md` inside
 each `src/lib/` folder.
 
-> These specs describe the app **as built**, verified against the code at v0.6.4 plus the
-> unreleased solo Mission Briefing on `develop`. Where the app is mid-iteration or internally
-> inconsistent, the relevant document says so explicitly and lists it under **Open questions** —
-> those sections are live to-do lists, not rhetorical.
+> These specs describe the app **as built**, verified against the code at v0.8.0 plus the
+> unreleased tournament and online-mode redesign on `develop`. Where the app is mid-iteration
+> or internally inconsistent, the relevant document says so explicitly and lists it under
+> **Open questions** — those sections are live to-do lists, not rhetorical.
 
 ## Entity glossary
 
