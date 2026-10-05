@@ -1,16 +1,22 @@
 import {
 	assignTournamentOccupant as apiAssignOccupant,
 	cancelTournament as apiCancelTournament,
+	concludeTournament as apiConcludeTournament,
 	createTournament as apiCreateTournament,
+	enterTournamentTableGame as apiEnterTableGame,
 	fetchTournamentPeek,
 	fetchTournamentView,
 	generateTournamentToken,
 	joinTournament as apiJoinTournament,
 	leaveTournament as apiLeaveTournament,
+	markTournamentMessagesRead as apiMarkMessagesRead,
+	nextTournamentRound as apiNextRound,
+	sendTournamentMessage as apiSendMessage,
 	startTournament as apiStartTournament,
 	startTournamentRound as apiStartRound,
 	tournamentEventsUrl,
 	TournamentApiError,
+	type TableGameSession,
 	type TournamentConfiguration
 } from '$lib/data/tournamentApi';
 import {
@@ -222,6 +228,93 @@ class TournamentEventStore {
 	}
 
 	/**
+	 * A player sits down at the match their table plays. The session that comes back is an
+	 * ordinary online game seat, which the page hands to `onlineGameStore` — from there the match
+	 * is an ordinary online game, mission already set, and both players follow the online flow.
+	 */
+	async enterTableGame(tableIndex: number): Promise<TableGameSession | null> {
+		if (!this.session) return null;
+		this.error = null;
+		try {
+			const session = await apiEnterTableGame(this.session.code, this.session.token, tableIndex);
+			// The board changed for everybody: this table's match exists now.
+			await this.refreshState();
+			return session;
+		} catch (error) {
+			this.error = messageOf(error);
+			return null;
+		}
+	}
+
+	/** The organizer opens the next round once every table has reported. */
+	async nextRound(): Promise<boolean> {
+		if (!this.session) return false;
+		this.error = null;
+		try {
+			await apiNextRound(this.session.code, this.session.token);
+			await this.refreshState();
+			return true;
+		} catch (error) {
+			this.error = messageOf(error);
+			return false;
+		}
+	}
+
+	/** The organizer ends the event after its last round; every device moves to the standing. */
+	async conclude(): Promise<boolean> {
+		if (!this.session) return false;
+		this.error = null;
+		try {
+			await apiConcludeTournament(this.session.code, this.session.token);
+			await this.refreshState();
+			return true;
+		} catch (error) {
+			this.error = messageOf(error);
+			return false;
+		}
+	}
+
+	/**
+	 * The organizer's megaphone: a shout at one table, or at every table when `tableIndex` is
+	 * null. It reaches the players wherever they are, including inside the match it interrupts.
+	 */
+	async sendMessage(tableIndex: number | null, text: string): Promise<boolean> {
+		if (!this.session) return false;
+		this.error = null;
+		try {
+			await apiSendMessage(this.session.code, this.session.token, tableIndex, text);
+			await this.refreshState();
+			return true;
+		} catch (error) {
+			this.error = messageOf(error);
+			return false;
+		}
+	}
+
+	/**
+	 * The inbox closes, so the megaphone stops glowing. A failure is swallowed: all it would mean
+	 * is a badge that stays lit, and the next refetch tries again.
+	 */
+	async readMessages(): Promise<void> {
+		if (!this.session) return;
+		try {
+			await apiMarkMessagesRead(this.session.code, this.session.token);
+			await this.refreshState();
+		} catch {
+			// Nothing worth telling the player about — the messages are already on screen.
+		}
+	}
+
+	/**
+	 * Walks out of an event that has concluded. Unlike every other exit this one is local: there
+	 * is no seat left to free, and freeing one would drop that player out of the archived standing
+	 * the report window exists to keep.
+	 */
+	leaveConcluded(): void {
+		this.teardown();
+	}
+
+	/**
 	 * Gives up this device's place in the tournament — the only way out, and it always reaches
 	 * the server: a player frees their seat for the next joiner, the organizer cancels the event
 	 * for everyone. False (with the reason in `error`) when the server could not be told, in
@@ -230,6 +323,12 @@ class TournamentEventStore {
 	async abandon(): Promise<boolean> {
 		if (!this.session) return true;
 		this.error = null;
+		// A concluded event has nothing left to free — and freeing a seat would drop that player
+		// out of the archived standing the report window exists to keep.
+		if (this.view?.status === 'concluded') {
+			this.leaveConcluded();
+			return true;
+		}
 		try {
 			if (this.session.role === 'organizer') {
 				await apiCancelTournament(this.session.code, this.session.token);

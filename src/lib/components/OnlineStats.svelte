@@ -4,15 +4,30 @@
 	import IncrementBoxes from './IncrementBoxes.svelte';
 	import Panel from './Panel.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
+	import type { MegaphoneInbox } from './toMegaphone';
 
 	type Props = {
 		view: OnlineGameView;
 		factions: Faction[];
 		schemes: SchemeCard[];
 		onReturnToMenu: () => void;
+		/** The organizer's announcements, when this match belonged to a tournament table. */
+		megaphone?: MegaphoneInbox | null;
 	};
 
-	let { view, factions, schemes, onReturnToMenu }: Props = $props();
+	let { view, factions, schemes, onReturnToMenu, megaphone = null }: Props = $props();
+
+	/**
+	 * A tournament table's match ends at its table, not at the main menu: the event is still
+	 * running, the standing has just taken this score, and the next round waits on the board.
+	 */
+	let table = $derived(view.tournament);
+	let exitLabel = $derived(table ? 'Return to Tournament' : 'End game');
+	let exitNote = $derived(
+		table
+			? 'Your score is in the tournament standing — the round board shows your table as finished.'
+			: 'The game is concluded; this only leaves the scoring board on your device.'
+	);
 
 	type SeatInfo = {
 		nickname: string;
@@ -57,7 +72,7 @@
 </script>
 
 <div class="flex min-h-dvh flex-col">
-	<ScreenHeader onBack={onReturnToMenu} />
+	<ScreenHeader onBack={onReturnToMenu} {megaphone} />
 	<div class="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3 px-4 py-6">
 		<div class="text-center">
 			{#if view.winner === 'draw'}
@@ -145,10 +160,8 @@
 			class="mt-2 rounded-xl bg-sky-300 px-6 py-2.5 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 			onclick={onReturnToMenu}
 		>
-			End game
+			{exitLabel}
 		</button>
-		<p class="mt-1 text-center text-xs text-slate-200">
-			The game is concluded; this only leaves the scoring board on your device.
-		</p>
+		<p class="mt-1 text-center text-xs text-slate-200">{exitNote}</p>
 	</div>
 </div>

@@ -93,6 +93,20 @@ class OnlineGameStore {
 		this.subscribeToEvents();
 	}
 
+	/**
+	 * Takes over a seat this device never created: a tournament table's match, which the server
+	 * built from the pairing and handed back as an ordinary session. Whatever sat here before is
+	 * dropped first — one device plays one game at a time.
+	 */
+	async adoptSession(session: OnlineSession): Promise<void> {
+		this.teardown();
+		this.session = session;
+		saveOnlineSession(session);
+		this.error = null;
+		await this.refreshState();
+		this.subscribeToEvents();
+	}
+
 	async requestJoin(gameId: string, nickname: string, army: PickedArmy): Promise<void> {
 		const token = generateJoinToken();
 		await apiRequestJoin(gameId, nickname, token, army);

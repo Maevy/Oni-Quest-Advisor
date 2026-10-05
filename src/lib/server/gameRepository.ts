@@ -29,6 +29,33 @@ export async function getGame(id: string): Promise<OnlineGameState | null> {
 	return JSON.parse(String(result.rows[0][0])) as OnlineGameState;
 }
 
+/**
+ * The live state of a set of games, keyed by id and missing the ones that do not exist — what a
+ * tournament's table board reads per fetch to tell a match nobody entered from one under way.
+ * Reading whole documents for two fields is deliberate: the state column is the only place the
+ * phase lives, and one query beats one per table.
+ */
+export async function getGameStatuses(
+	ids: string[]
+): Promise<Record<string, { status: OnlineGameState['status']; phase: OnlineGameState['phase'] }>> {
+	if (ids.length === 0) return {};
+	const db = await getDb();
+	const placeholders = ids.map(() => '?').join(', ');
+	const result = await db.execute({
+		sql: `SELECT state FROM games WHERE id IN (${placeholders})`,
+		args: ids
+	});
+	const statuses: Record<
+		string,
+		{ status: OnlineGameState['status']; phase: OnlineGameState['phase'] }
+	> = {};
+	for (const row of result.rows) {
+		const game = JSON.parse(String(row[0])) as OnlineGameState;
+		statuses[game.id] = { status: game.status, phase: game.phase };
+	}
+	return statuses;
+}
+
 export async function insertGame(state: OnlineGameState, event: GameEventInput): Promise<void> {
 	const db = await getDb();
 	await db.batch([

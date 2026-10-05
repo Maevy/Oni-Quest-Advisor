@@ -26,6 +26,7 @@ export type Screen =
 	| 'tournament-setup'
 	| 'tournament-lobby'
 	| 'tournament-round'
+	| 'tournament-results'
 	| 'tournament-join';
 
 class NavigationStore {
@@ -160,6 +161,21 @@ class NavigationStore {
 	 * every participant here over SSE.
 	 */
 	enterTournamentRound(): void {
+		this.screen = 'tournament-round';
+	}
+
+	/** The final standing, which a concluded event shows every device that is still in it. */
+	enterTournamentResults(): void {
+		this.screen = 'tournament-results';
+	}
+
+	/**
+	 * Leaves an online screen for the tournament that owns the match instead of the main menu: a
+	 * table's game is a detour from the event, and this device still holds a seat in it. Which
+	 * tournament screen it lands on is the status effect's business, as everywhere else.
+	 */
+	leaveOnlineToTournament(): void {
+		this.onlineJoinCode = null;
 		this.screen = 'tournament-round';
 	}
 

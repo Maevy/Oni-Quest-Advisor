@@ -1,32 +1,53 @@
 import { describe, expect, it } from 'vitest';
 import {
+	BYE_VICTORY_POINTS,
+	MAX_TOURNAMENT_MESSAGES,
 	TOURNAMENT_ROUND_PHASES,
+	advanceRound,
 	assignOccupant,
+	canAdvanceRound,
 	canAssignOccupants,
 	canCancelTournament,
+	canConcludeTournament,
 	canJoinTournament,
 	canLeaveTournament,
+	canSendTournamentMessage,
 	canStartRound,
 	canStartTournament,
 	cancelTournament,
+	concludeTournament,
 	createTournamentEvent,
 	createTournamentRound,
+	cumulativeVictoryPoints,
 	fieldNeedsBye,
 	hydrateTournamentState,
 	isRoundReady,
+	isRoundScored,
 	isTournamentFull,
 	joinTournament,
 	joinedCount,
 	leaveTournament,
+	markMessagesRead,
+	messagesForSeat,
 	peekTournament,
+	recordTableResult,
 	registeredSeatIndexes,
+	replayTable,
 	seatIndexForTokenHash,
+	seatsAtTable,
+	sendTournamentMessage,
 	startRound,
 	startTournament,
+	tableForSeat,
+	tablePlaysAGame,
+	tournamentGameId,
 	tournamentRoadmap,
+	tournamentStandings,
 	unassignedOccupants,
+	unreadMessageCount,
 	viewForTournamentToken,
 	type TournamentCreation,
+	type TournamentMatchResult,
 	type TournamentRoundPhase,
 	type TournamentState
 } from './tournamentEvent';
@@ -491,6 +512,7 @@ describe('startTournament', () => {
 			missionId: 'treasure-hunt',
 			phase: 'setup',
 			tables: [[], []],
+			matches: [null, null],
 			victoryPoints: [0, 0, 0, 0]
 		});
 		expect(started.updatedAt).toBe(LATER);
@@ -702,9 +724,9 @@ describe('the round in the view', () => {
 		expect(view?.round?.pool).toHaveLength(4); // three players plus the BYE
 		expect(view?.round?.ready).toBe(false);
 		expect(view?.round?.standings).toEqual([
-			{ seatIndex: 0, name: 'P1', victoryPoints: 0 },
-			{ seatIndex: 1, name: 'P2', victoryPoints: 0 },
-			{ seatIndex: 2, name: 'P3', victoryPoints: 0 }
+			{ seatIndex: 0, name: 'P1', victoryPoints: 0, place: 1 },
+			{ seatIndex: 1, name: 'P2', victoryPoints: 0, place: 1 },
+			{ seatIndex: 2, name: 'P3', victoryPoints: 0, place: 1 }
 		]);
 		expect(view?.needsBye).toBe(true);
 	});
@@ -888,5 +910,381 @@ describe('hydrating a legacy round', () => {
 
 		expect((legacy.round as { phase?: string }).phase).toBeUndefined();
 		expect(hydrateTournamentState(legacy).round?.phase).toBe('setup');
+	});
+
+	it('gives a round written before tables could play an empty match list', () => {
+		const legacy = JSON.parse(
+			JSON.stringify({ ...roundWith(4), completedRounds: undefined, messages: undefined })
+		) as TournamentState;
+
+		const hydrated = hydrateTournamentState(legacy);
+		expect(hydrated.round?.matches).toEqual([null, null]);
+		expect(hydrated.completedRounds).toEqual([]);
+		expect(hydrated.messages).toEqual([]);
+	});
+});
+
+/** A round whose tables are paired and playing — the state Enter Game meets. */
+function playingRound(players = 4, overrides: Partial<TournamentCreation> = {}): TournamentState {
+	return startRound(pairedRound(players, overrides), LATER);
+}
+
+/** A finished match's score, shaped the way a game's result summary hands it over. */
+function played(
+	player1: number,
+	player2: number,
+	winner: 'player1' | 'player2' | 'draw' = 'player1'
+): Extract<TournamentMatchResult, { kind: 'played' }> {
+	return { kind: 'played', winner, vp: { player1, player2 } };
+}
+
+/** Both tables of a round reported, so the round waits on the organizer. */
+function scoredRound(players = 4, overrides: Partial<TournamentCreation> = {}): TournamentState {
+	let event = playingRound(players, overrides);
+	event = recordTableResult(event, 0, played(7, 4), LATER);
+	const tables = event.round?.tables.length ?? 2;
+	if (tables < 2) return event;
+	return recordTableResult(event, 1, played(2, 9, 'player2'), LATER);
+}
+
+describe('the tables a round starts', () => {
+	it('settles the BYE table at once, and pays its player for the sit-out', () => {
+		const event = playingRound(3); // P1 v P2 at table 0, P3 with the BYE at table 1
+
+		expect(tablePlaysAGame(event.round?.tables[1] ?? [])).toBe(false);
+		expect(event.round?.matches[1]).toEqual({ attempt: 0, result: { kind: 'bye' } });
+		expect(event.round?.victoryPoints).toEqual([0, 0, BYE_VICTORY_POINTS, 0]);
+		// The BYE never holds a round open, but the real match still has to report.
+		expect(isRoundScored(event)).toBe(false);
+	});
+
+	it('leaves a fully paired field with nothing settled', () => {
+		expect(playingRound(4).round?.matches).toEqual([null, null]);
+	});
+
+	it('lists a table’s seats in occupant order, which is the game’s seat order', () => {
+		const event = playingRound(4);
+
+		expect(seatsAtTable(event.round?.tables[0] ?? [])).toEqual([0, 1]);
+		expect(seatsAtTable(event.round?.tables[1] ?? [])).toEqual([2, 3]);
+		expect(seatsAtTable(playingRound(3).round?.tables[1] ?? [])).toEqual([2]);
+	});
+
+	it('finds the table a seat plays at', () => {
+		const event = playingRound(4);
+
+		expect(tableForSeat(event, 0)).toBe(0);
+		expect(tableForSeat(event, 3)).toBe(1);
+		expect(tableForSeat(roundWith(4), 0)).toBeNull(); // still in the pool
+	});
+});
+
+describe('recordTableResult', () => {
+	it('adds the score to the two players at that table and nobody else', () => {
+		const event = recordTableResult(playingRound(4), 0, played(7, 4), LATER);
+
+		expect(event.round?.victoryPoints).toEqual([7, 4, 0, 0]);
+		expect(event.round?.matches[0]?.result).toEqual(played(7, 4));
+		expect(event.round?.phase).toBe('game'); // the other table is still playing
+	});
+
+	it('moves the round to scoring once every table has reported', () => {
+		const event = scoredRound();
+
+		expect(event.round?.victoryPoints).toEqual([7, 4, 2, 9]);
+		expect(isRoundScored(event)).toBe(true);
+		expect(event.round?.phase).toBe('scoring');
+	});
+
+	it('scores a report once, however often it arrives', () => {
+		const once = recordTableResult(playingRound(4), 0, played(7, 4), LATER);
+
+		// An auto-finished stale game and a leader's last click can both report the same match.
+		expect(recordTableResult(once, 0, played(7, 4), LATER)).toEqual(once);
+		expect(recordTableResult(once, 0, played(10, 10), LATER)).toEqual(once);
+	});
+
+	it('refuses a round that is not being played', () => {
+		expect(() => recordTableResult(pairedRound(4), 0, played(1, 1), LATER)).toThrow(
+			'not being played'
+		);
+		expect(() => recordTableResult(playingRound(4), 5, played(1, 1), LATER)).toThrow(
+			'Unknown table'
+		);
+	});
+
+	it('needs a round that scores the BYE to be complete without it', () => {
+		const event = recordTableResult(playingRound(3), 0, played(6, 3), LATER);
+
+		expect(event.round?.victoryPoints).toEqual([6, 3, BYE_VICTORY_POINTS, 0]);
+		expect(event.round?.phase).toBe('scoring');
+	});
+});
+
+describe('a dead table replays', () => {
+	it('moves the attempt on, which is what gives the replay a game of its own', () => {
+		const event = replayTable(playingRound(4), 0, LATER);
+
+		expect(event.round?.matches[0]).toEqual({ attempt: 1, result: null });
+		expect(tournamentGameId('ABC234', 1, 0, 1)).not.toBe(tournamentGameId('ABC234', 1, 0, 0));
+	});
+
+	it('refuses a table that plays no game or already reported', () => {
+		const partial = recordTableResult(playingRound(4), 0, played(7, 4), LATER);
+
+		expect(() => replayTable(playingRound(3), 1, LATER)).toThrow('plays no game');
+		expect(() => replayTable(partial, 0, LATER)).toThrow('already reported');
+	});
+});
+
+describe('the game id a table plays', () => {
+	it('is derived, so two devices pressing Enter Game aim at the same row', () => {
+		expect(tournamentGameId('ABC234', 2, 1, 0)).toBe('ABC234-R2T2A0');
+	});
+});
+
+describe('advancing and concluding', () => {
+	it('carries the standing into the next round and archives the one it closes', () => {
+		const scored = scoredRound();
+		const next = advanceRound(scored, LATER);
+
+		expect(next.round?.number).toBe(2);
+		expect(next.round?.missionId).toBe('quarter-war');
+		expect(next.round?.phase).toBe('setup');
+		expect(next.round?.tables).toEqual([[], []]);
+		expect(next.round?.matches).toEqual([null, null]);
+		// Cumulative: round 2 starts on round 1's totals, not on zero.
+		expect(next.round?.victoryPoints).toEqual(scored.round?.victoryPoints);
+		expect(next.completedRounds).toHaveLength(1);
+		expect(next.completedRounds[0]).toEqual({
+			number: 1,
+			missionId: 'treasure-hunt',
+			tables: scored.round?.tables,
+			matches: scored.round?.matches,
+			victoryPoints: scored.round?.victoryPoints
+		});
+	});
+
+	it('refuses to advance while a table has not reported', () => {
+		const open = recordTableResult(playingRound(4), 0, played(7, 4), LATER);
+
+		expect(canAdvanceRound(open)).toBe(false);
+		expect(() => advanceRound(open, LATER)).toThrow('cannot be advanced');
+	});
+
+	it('ends at the mission list: the last round concludes instead of advancing', () => {
+		const scored = scoredRound(4, { missionIds: ['treasure-hunt'] });
+
+		expect(canAdvanceRound(scored)).toBe(false);
+		expect(canConcludeTournament(scored)).toBe(true);
+	});
+
+	it('concludes the event and keeps the standing the archive holds', () => {
+		const scored = scoredRound(4, { missionIds: ['treasure-hunt'] });
+		const concluded = concludeTournament(scored, LATER);
+
+		expect(concluded.status).toBe('concluded');
+		expect(concluded.round).toBeNull();
+		expect(concluded.concludedAt).toBe(LATER);
+		expect(concluded.completedRounds).toHaveLength(1);
+		expect(cumulativeVictoryPoints(concluded)).toEqual([7, 4, 2, 9]);
+		expect(canConcludeTournament(concluded)).toBe(false);
+		expect(canCancelTournament(concluded)).toBe(false);
+	});
+
+	it('ranks the field by points, and lets a tie share the higher place', () => {
+		let event = playingRound(4);
+		event = recordTableResult(event, 0, played(9, 5), LATER);
+		event = recordTableResult(event, 1, played(9, 3), LATER);
+
+		expect(tournamentStandings(event).map((row) => [row.name, row.place])).toEqual([
+			['P1', 1],
+			['P3', 1],
+			['P2', 3], // the tie skips 2nd, as competition ranking does
+			['P4', 4]
+		]);
+	});
+});
+
+describe('the organizer’s megaphone', () => {
+	it('shouts at one table, or at all of them', () => {
+		const event = playingRound(4);
+		const table0 = sendTournamentMessage(
+			event,
+			{ id: 'm1', tableIndex: 0, text: 'Time is up' },
+			LATER
+		);
+
+		expect(table0.messages[0]).toEqual({
+			id: 'm1',
+			tableIndex: 0,
+			round: 1,
+			text: 'Time is up',
+			sentAt: LATER,
+			readBy: []
+		});
+		expect(messagesForSeat(table0, 0)).toHaveLength(1);
+		expect(messagesForSeat(table0, 2)).toHaveLength(0);
+
+		const all = sendTournamentMessage(
+			event,
+			{ id: 'm2', tableIndex: null, text: 'Last round' },
+			LATER
+		);
+		expect(messagesForSeat(all, 0)).toHaveLength(1);
+		expect(messagesForSeat(all, 2)).toHaveLength(1);
+	});
+
+	it('counts what a seat has not opened, and stops counting once it has', () => {
+		let event = sendTournamentMessage(
+			playingRound(4),
+			{ id: 'm1', tableIndex: null, text: 'Time is up' },
+			LATER
+		);
+
+		expect(unreadMessageCount(event, 0)).toBe(1);
+		event = markMessagesRead(event, 0, LATER);
+		expect(unreadMessageCount(event, 0)).toBe(0);
+		expect(unreadMessageCount(event, 1)).toBe(1); // reading is per seat, not per event
+		expect(event.messages[0].readBy).toEqual([0]);
+		// Nothing left to read: the state comes back as it was, so no pointless write follows.
+		expect(markMessagesRead(event, 0, LATER)).toBe(event);
+	});
+
+	it('belongs to the round it was sent in', () => {
+		const shouted = sendTournamentMessage(
+			playingRound(4),
+			{ id: 'm1', tableIndex: null, text: 'Time is up' },
+			LATER
+		);
+		const advanced = advanceRound(scoredRound(4), LATER);
+
+		expect(messagesForSeat(shouted, 0)).toHaveLength(1);
+		expect(messagesForSeat({ ...advanced, messages: shouted.messages }, 0)).toHaveLength(0);
+	});
+
+	it('keeps the newest and drops the oldest past the cap', () => {
+		let event = playingRound(4);
+		for (let index = 0; index < MAX_TOURNAMENT_MESSAGES + 5; index += 1) {
+			event = sendTournamentMessage(
+				event,
+				{ id: `m${index}`, tableIndex: null, text: `Message ${index}` },
+				LATER
+			);
+		}
+
+		expect(event.messages).toHaveLength(MAX_TOURNAMENT_MESSAGES);
+		expect(event.messages[0].id).toBe(`m${MAX_TOURNAMENT_MESSAGES + 4}`);
+	});
+
+	it('runs while the event is active, and not before or after', () => {
+		expect(canSendTournamentMessage(lobbyWith(4))).toBe(false);
+		expect(canSendTournamentMessage(playingRound(4))).toBe(true);
+		expect(
+			canSendTournamentMessage(
+				concludeTournament(scoredRound(4, { missionIds: ['treasure-hunt'] }), LATER)
+			)
+		).toBe(false);
+	});
+
+	it('refuses an empty shout, an overlong one and a table that does not exist', () => {
+		const event = playingRound(4);
+
+		expect(() =>
+			sendTournamentMessage(event, { id: 'm1', tableIndex: null, text: '   ' }, LATER)
+		).toThrow('Invalid message');
+		expect(() =>
+			sendTournamentMessage(event, { id: 'm1', tableIndex: null, text: 'x'.repeat(241) }, LATER)
+		).toThrow('Invalid message');
+		expect(() =>
+			sendTournamentMessage(event, { id: 'm1', tableIndex: 7, text: 'Hello' }, LATER)
+		).toThrow('Unknown table');
+	});
+
+	it('reaches a player’s view, and never the organizer’s', () => {
+		const event = sendTournamentMessage(
+			playingRound(4),
+			{ id: 'm1', tableIndex: 0, text: 'Time is up' },
+			LATER
+		);
+
+		const player = viewForTournamentToken(event, 't0');
+		expect(player?.messages).toEqual([
+			{
+				id: 'm1',
+				tableIndex: 0,
+				round: 1,
+				text: 'Time is up',
+				sentAt: LATER,
+				read: false
+			}
+		]);
+		expect(player?.unreadMessages).toBe(1);
+		expect(player?.tableIndex).toBe(0);
+		// The other table's player sees nothing, and the organizer — who sent it — has no inbox.
+		expect(viewForTournamentToken(event, 't2')?.messages).toEqual([]);
+		expect(viewForTournamentToken(event, 'org-hash')?.messages).toEqual([]);
+		expect(viewForTournamentToken(event, 'org-hash')?.unreadMessages).toBe(0);
+	});
+});
+
+describe('the tables in the view', () => {
+	it('carries the derived game id and nothing about a game nobody entered', () => {
+		const view = viewForTournamentToken(playingRound(4), 'org-hash');
+
+		expect(view?.round?.tables[0].match).toEqual({
+			gameId: tournamentGameId('ABC234', 1, 0, 0),
+			status: null,
+			phase: null,
+			result: null,
+			scores: []
+		});
+		expect(view?.round?.tables[0].plays).toBe(true);
+	});
+
+	it('takes a match’s live status from the server, which is the only place it exists', () => {
+		const event = playingRound(4);
+		const gameId = tournamentGameId('ABC234', 1, 0, 0);
+		const view = viewForTournamentToken(event, 'org-hash', {
+			[gameId]: { status: 'active', phase: 'playing' }
+		});
+
+		expect(view?.round?.tables[0].match.status).toBe('active');
+		expect(view?.round?.tables[0].match.phase).toBe('playing');
+		expect(view?.round?.tables[1].match.status).toBeNull();
+	});
+
+	it('hands a finished table’s score back per seat, in occupant order', () => {
+		const event = recordTableResult(playingRound(4), 0, played(7, 4), LATER);
+		const view = viewForTournamentToken(event, 't0');
+
+		expect(view?.round?.tables[0].match.scores).toEqual([
+			{ seatIndex: 0, vp: 7 },
+			{ seatIndex: 1, vp: 4 }
+		]);
+		expect(view?.round?.scored).toBe(false);
+	});
+
+	it('says what the BYE table paid, without a game behind it', () => {
+		const view = viewForTournamentToken(playingRound(3), 't2');
+
+		expect(view?.round?.tables[1].plays).toBe(false);
+		expect(view?.round?.tables[1].match.result).toEqual({ kind: 'bye' });
+		expect(view?.round?.tables[1].match.scores).toEqual([{ seatIndex: 2, vp: BYE_VICTORY_POINTS }]);
+	});
+
+	it('follows the attempt a replay moved, so the panel points at the new game', () => {
+		const event = replayTable(playingRound(4), 0, LATER);
+		const view = viewForTournamentToken(event, 'org-hash');
+
+		expect(view?.round?.tables[0].match.gameId).toBe(tournamentGameId('ABC234', 1, 0, 1));
+	});
+
+	it('counts the rounds played for the conclusion screen', () => {
+		expect(viewForTournamentToken(playingRound(4), 'org-hash')?.roundsPlayed).toBe(0);
+		expect(viewForTournamentToken(scoredRound(4), 'org-hash')?.roundsPlayed).toBe(0);
+		expect(
+			viewForTournamentToken(advanceRound(scoredRound(4), LATER), 'org-hash')?.roundsPlayed
+		).toBe(1);
 	});
 });

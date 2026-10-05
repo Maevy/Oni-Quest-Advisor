@@ -16,6 +16,7 @@
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
+	import type { MegaphoneInbox } from './toMegaphone';
 	import SetupPanel from './SetupPanel.svelte';
 
 	type TrackerView = 'p1' | 'p2' | 'army' | 'mission';
@@ -49,6 +50,8 @@
 		onRevealScheme: () => void;
 		onAdvance: () => void;
 		onReturn: () => void;
+		/** The organizer's announcements, when this match belongs to a tournament table. */
+		megaphone?: MegaphoneInbox | null;
 	};
 
 	let {
@@ -65,7 +68,8 @@
 		onSetSchemeChecked,
 		onRevealScheme,
 		onAdvance,
-		onReturn
+		onReturn,
+		megaphone = null
 	}: Props = $props();
 
 	let activeView = $state<TrackerView>('p1');
@@ -129,7 +133,7 @@
 	<!-- No title: the two local trackers omit one for the same reason. The mission name is the
 	     Description panel's heading on the Mission view, and the switcher needs the row to itself
 	     at 320 px. -->
-	<ScreenHeader onBack={onReturn}>
+	<ScreenHeader onBack={onReturn} {megaphone}>
 		{#snippet actions()}
 			<div
 				class="relative grid grid-cols-4 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5"

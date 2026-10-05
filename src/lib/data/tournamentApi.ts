@@ -1,4 +1,5 @@
 import type {
+	PlayerKey,
 	PickedArmy,
 	TournamentEventView,
 	TournamentOccupant,
@@ -9,6 +10,11 @@ const BASE = '/api/tournaments';
 
 export type CreateTournamentResponse = { code: string; token: string };
 export type JoinTournamentResponse = { seatIndex: number };
+/**
+ * The online seat a table's match handed back. Shaped exactly like `CreateGameResponse` in
+ * `onlineApi`, because that is what it is: from here on the match is an ordinary online game.
+ */
+export type TableGameSession = { gameId: string; seat: PlayerKey; token: string };
 
 export class TournamentApiError extends Error {
 	constructor(
@@ -137,6 +143,68 @@ export async function assignTournamentOccupant(
 /** The organizer starts the round: setup becomes game and the tables lock. */
 export async function startTournamentRound(code: string, token: string): Promise<void> {
 	const response = await fetch(`${BASE}/${code}/start-round`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/**
+ * A player sits down at their table's match. The response is an ordinary online game session — the
+ * same three fields a game this device had created itself would return — because from here on the
+ * match *is* an ordinary online game.
+ */
+export async function enterTournamentTableGame(
+	code: string,
+	token: string,
+	tableIndex: number
+): Promise<TableGameSession> {
+	const response = await fetch(`${BASE}/${code}/enter-game`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+		body: JSON.stringify({ tableIndex })
+	});
+	return parse<TableGameSession>(response);
+}
+
+/** The organizer opens the next round on the next mission, carrying the standing forward. */
+export async function nextTournamentRound(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/next-round`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/** The organizer ends the event; every device moves to the final standing. */
+export async function concludeTournament(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/conclude`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/**
+ * The organizer's megaphone: a shout at one table, or at every table when `tableIndex` is null.
+ */
+export async function sendTournamentMessage(
+	code: string,
+	token: string,
+	tableIndex: number | null,
+	text: string
+): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/message`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+		body: JSON.stringify({ tableIndex, text })
+	});
+	await parse<{ ok: boolean }>(response);
+}
+
+/** The inbox closes, so the megaphone stops glowing. Only the caller's own view changes. */
+export async function markTournamentMessagesRead(code: string, token: string): Promise<void> {
+	const response = await fetch(`${BASE}/${code}/read-messages`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
 	});

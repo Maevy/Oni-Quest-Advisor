@@ -18,6 +18,14 @@ export function generateSeatToken(): string {
 	return randomBytes(32).toString('hex');
 }
 
+/**
+ * Id for a record that lives inside an entity's document — a megaphone announcement. Unlike a game
+ * code nobody ever types it or reads it aloud, so it needs no unambiguous alphabet.
+ */
+export function generateMessageId(): string {
+	return randomBytes(8).toString('hex');
+}
+
 export function hashToken(token: string): string {
 	return createHash('sha256').update(token).digest('hex');
 }

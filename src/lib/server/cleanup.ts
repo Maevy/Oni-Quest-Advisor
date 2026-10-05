@@ -3,6 +3,7 @@ import { MAX_ROUND, finishGame, type OnlineGameState } from '$lib/domain';
 import { ApiError } from './errors';
 import { mutateOpen } from './gameRepository';
 import { notifyGameChanged } from './sse';
+import { reportFinishedGame } from './tournamentGames';
 import { computeRoundVp } from './vp';
 
 const LOBBY_RETENTION_DAYS = 7;
@@ -95,7 +96,7 @@ export async function cleanupStaleTournaments(db: Client): Promise<number> {
  */
 async function autoFinishStaleGame(id: string, cutoff: string): Promise<boolean> {
 	try {
-		await mutateOpen(id, (game) => {
+		const finished = await mutateOpen(id, (game) => {
 			if (game.status !== 'active' || game.currentRound !== MAX_ROUND || game.updatedAt >= cutoff) {
 				throw new ApiError(409, 'Game is no longer eligible for auto-finish');
 			}
@@ -127,6 +128,9 @@ async function autoFinishStaleGame(id: string, cutoff: string): Promise<boolean>
 			};
 		});
 		notifyGameChanged(id, 'game-finished');
+		// A stale tournament match counts exactly like one its leader concluded: the round is
+		// waiting on its score, and only this path can hand it over.
+		await reportFinishedGame(finished);
 		return true;
 	} catch (error) {
 		if (error instanceof ApiError) return false;

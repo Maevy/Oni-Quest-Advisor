@@ -11,6 +11,7 @@
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import RosterBrowseDialog from './RosterBrowseDialog.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
+	import type { MegaphoneInbox } from './toMegaphone';
 	import { PLAYER_SEATS, playerAccent } from './playerAccent';
 
 	type Props = {
@@ -24,6 +25,8 @@
 		onAdvance: () => Promise<void>;
 		onCloseGame: () => Promise<void>;
 		onReturn: () => void;
+		/** The organizer's announcements, when this screen belongs to a tournament table. */
+		megaphone?: MegaphoneInbox | null;
 	};
 
 	let {
@@ -35,7 +38,8 @@
 		rosterViews,
 		onAdvance,
 		onCloseGame,
-		onReturn
+		onReturn,
+		megaphone = null
 	}: Props = $props();
 
 	let confirmingClose = $state(false);
@@ -133,7 +137,7 @@
 {/snippet}
 
 <div class="flex min-h-dvh flex-col">
-	<ScreenHeader onBack={onReturn}>
+	<ScreenHeader onBack={onReturn} {megaphone}>
 		{#snippet actions()}
 			{#if isLeader}
 				<button

@@ -220,7 +220,7 @@
 </script>
 
 <div class="flex h-dvh flex-col overflow-hidden">
-	<ScreenHeader onBack={onReturn}>
+	<ScreenHeader wide onBack={onReturn}>
 		{#snippet actions()}
 			{#if constrained}
 				<span

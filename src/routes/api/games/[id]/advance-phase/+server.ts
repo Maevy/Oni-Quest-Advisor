@@ -14,6 +14,7 @@ import {
 import { ApiError, api, bearerToken } from '$lib/server/http';
 import { mutateAsLeader } from '$lib/server/gameRepository';
 import { notifyGameChanged } from '$lib/server/sse';
+import { reportFinishedGame } from '$lib/server/tournamentGames';
 import { computeRoundVp } from '$lib/server/vp';
 
 /**
@@ -23,7 +24,7 @@ import { computeRoundVp } from '$lib/server/vp';
  * snapshot), Round 5 → concluded (final snapshot, winner, result summary, status finished).
  */
 export const POST = api(async ({ params, request }) => {
-	await mutateAsLeader(params.id, bearerToken(request), (game) => {
+	const advanced = await mutateAsLeader(params.id, bearerToken(request), (game) => {
 		if (game.status !== 'active') throw new ApiError(409, 'The game is not running');
 
 		if (game.phase === 'armies') {
@@ -71,6 +72,10 @@ export const POST = api(async ({ params, request }) => {
 		return { next, events: [snapshotted, phaseEvent(next)] };
 	});
 	notifyGameChanged(params.id, 'phase-changed');
+	// A tournament table's match reports its score into the round the moment it concludes — after
+	// the game's own transaction committed, so a bookkeeping failure can never undo the result the
+	// players just played for (and never fails their request either).
+	await reportFinishedGame(advanced);
 	return json({ ok: true });
 });
 

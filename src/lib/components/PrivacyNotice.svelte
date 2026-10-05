@@ -6,9 +6,16 @@
 	let { onDismiss }: Props = $props();
 </script>
 
-<div class="fixed inset-x-0 bottom-0 z-50 px-4 pb-4">
+<!--
+	A modal, not a strip: as a bare `fixed bottom-0` card this notice sat over the bottom of
+	whatever screen was underneath — which on a phone is exactly where that screen's primary
+	button lives — and silently swallowed every tap aimed at it, reading as page chrome rather
+	than as something in the way. Dimming the whole viewport says "answer me first", the same
+	way every other acknowledgement in the app does.
+-->
+<div class="fixed inset-0 z-50 flex items-end bg-slate-950/80 px-4 pb-4 backdrop-blur-sm">
 	<div
-		class="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-2xl border border-slate-700/50 bg-slate-800/90 p-4 backdrop-blur"
+		class="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-2xl border border-slate-700/50 bg-slate-800/95 p-4 backdrop-blur"
 	>
 		<p class="text-sm leading-relaxed text-slate-200">
 			This app stores your game progress and online sessions locally on your device (browser local

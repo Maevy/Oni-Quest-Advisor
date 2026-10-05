@@ -12,6 +12,7 @@
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import OnlineMissionView from './OnlineMissionView.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
+	import type { MegaphoneInbox } from './toMegaphone';
 
 	type Props = {
 		view: OnlineGameView;
@@ -29,6 +30,8 @@
 		onReturn: () => void;
 		onToggleReady: () => Promise<void>;
 		onStartGame: () => void;
+		/** The organizer's announcements, when this lobby is a tournament table's match. */
+		megaphone?: MegaphoneInbox | null;
 	};
 
 	let {
@@ -45,7 +48,8 @@
 		onReturnToMenu,
 		onReturn,
 		onToggleReady,
-		onStartGame
+		onStartGame,
+		megaphone = null
 	}: Props = $props();
 
 	let confirmingClose = $state(false);
@@ -53,6 +57,9 @@
 	let acting = $state(false);
 
 	let opponent = $derived(view.opponent);
+	/** A tournament table's match: paired by the event, so there is nobody left to invite. */
+	let table = $derived(view.tournament);
+	let exitLabel = $derived(table ? 'Return to Tournament' : 'Return to Main Menu');
 
 	/** The own seat's army reduced to what a seat card shows — never the code. */
 	function ownArmy(seat: OnlineSeatState): PublicArmy {
@@ -165,7 +172,7 @@
 {/snippet}
 
 <div class="flex min-h-dvh flex-col">
-	<ScreenHeader onBack={onReturn}>
+	<ScreenHeader onBack={onReturn} {megaphone}>
 		{#snippet actions()}
 			{#if isLeader && view.status !== 'closed' && view.status !== 'finished'}
 				<button
@@ -180,9 +187,17 @@
 	</ScreenHeader>
 	<div class="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3 px-4 py-4">
 		<div class="text-center">
-			<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">Game#{view.id} Lobby</h1>
+			<h1 class="text-2xl font-extrabold tracking-tight text-slate-100">
+				{#if table}
+					Table Match Lobby
+				{:else}
+					Game#{view.id} Lobby
+				{/if}
+			</h1>
 			<p class="text-slate-200">
-				{#if view.status === 'lobby'}
+				{#if table}
+					{table.code} · Round {table.round} · Table {table.tableIndex + 1}
+				{:else if view.status === 'lobby'}
 					Setup Phase
 				{:else if view.status === 'finished'}
 					Finished
@@ -208,12 +223,17 @@
 				class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 text-center backdrop-blur"
 			>
 				<p class="text-slate-200">This game has been closed.</p>
+				{#if table}
+					<p class="mt-1 text-xs text-slate-200">
+						Your table can play it again from the top — the round board offers it.
+					</p>
+				{/if}
 				<button
 					type="button"
 					class="mt-4 rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 					onclick={onReturnToMenu}
 				>
-					Return to Main Menu
+					{exitLabel}
 				</button>
 			</div>
 		{:else if view.status === 'finished'}
@@ -226,11 +246,13 @@
 					class="mt-4 rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 					onclick={onReturnToMenu}
 				>
-					Return to Main Menu
+					{exitLabel}
 				</button>
 			</div>
 		{:else}
-			{#if view.status === 'lobby' && isLeader}
+			<!-- A tournament table is paired by the event, so its game code invites nobody: the
+			     opponent is already seated, and a shared link would only let a stranger in. -->
+			{#if view.status === 'lobby' && isLeader && !table}
 				<div class="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-4 backdrop-blur">
 					<div class="flex items-center justify-between gap-2">
 						<div class="min-w-0">
