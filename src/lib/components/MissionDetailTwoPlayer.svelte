@@ -1,25 +1,23 @@
 <script lang="ts">
 	import type {
-		ArmyRosterRow,
-		ArmyUpgradeSpec,
 		ArmyView,
+		BattleFlowerSpec,
 		Faction,
 		Mission,
 		PlayerKey,
 		ResultsEntry,
 		RuleCallout,
 		SchemeCard,
-		TwoPlayerMissionProgress,
-		UnitVitality
+		TwoPlayerMissionProgress
 	} from '$lib/domain';
 	import ActivePlayerPanel from './ActivePlayerPanel.svelte';
-	import ArmyReadonlyPanel from './ArmyReadonlyPanel.svelte';
-	import ArmyUpgradeDetail from './ArmyUpgradeDetail.svelte';
+	import BattleFlowerFocus from './BattleFlowerFocus.svelte';
+	import type { FlowerRect } from './BattleFlower.svelte';
+	import BattleFlowersPanel from './BattleFlowersPanel.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import CountdownOverlay from './CountdownOverlay.svelte';
 	import DescriptionPanel from './DescriptionPanel.svelte';
 	import MissionMap from './MissionMap.svelte';
-	import Panel from './Panel.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
 	import RuleCalloutDialog from './RuleCalloutDialog.svelte';
@@ -27,16 +25,12 @@
 	import ScoreSummaryPanelTwoPlayer from './ScoreSummaryPanelTwoPlayer.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
 	import SetupPanel from './SetupPanel.svelte';
-	import UnitCard from './UnitCard.svelte';
-	import UnitVitalityDialog from './UnitVitalityDialog.svelte';
-	import { PLAYER_SEATS, seatAccent } from './playerAccent';
 
-	type GameView = 'scoring' | 'army-p1' | 'army-p2' | 'mission';
+	type GameView = 'scoring' | 'army' | 'mission';
 
 	const VIEWS: Array<{ id: GameView; label: string }> = [
 		{ id: 'scoring', label: 'Scoring' },
-		{ id: 'army-p1', label: 'P1 Army' },
-		{ id: 'army-p2', label: 'P2 Army' },
+		{ id: 'army', label: 'Army' },
 		{ id: 'mission', label: 'Mission' }
 	];
 
@@ -72,7 +66,6 @@
 		onDeleteScheme: (player: PlayerKey) => void;
 		onRevealScheme: (player: PlayerKey) => void;
 		onSetRound: (round: number) => void;
-		onSetVitality: (player: PlayerKey, entryId: string, vitality: UnitVitality) => void;
 		onSwap: () => void;
 	};
 
@@ -100,30 +93,22 @@
 		onDeleteScheme,
 		onRevealScheme,
 		onSetRound,
-		onSetVitality,
 		onSwap
 	}: Props = $props();
 
-	/** A started game always opens on the score sheet; the other three views are reference. */
+	/** A started game always opens on the score sheet; the other two views are reference. */
 	let view = $state<GameView>('scoring');
 	let confirmAbandon = $state(false);
 	let isSwapping = $state(false);
 
-	// The popups live at the screen root: the sliding strip carries a transform, which would
-	// become the containing block for their fixed overlays and trap them inside a pane.
-	let cardTarget = $state<{ view: ArmyView; row: ArmyRosterRow } | null>(null);
-	let upgradeTarget = $state<{ view: ArmyView; upgrade: ArmyUpgradeSpec } | null>(null);
-	let vitalityTarget = $state<{ player: PlayerKey; view: ArmyView; row: ArmyRosterRow } | null>(
-		null
-	);
+	// The rule popups live at the screen root: the sliding strip carries a transform, which
+	// would become the containing block for their fixed overlays and trap them inside a pane.
 	let openRule = $state<RuleCallout | null>(null);
+	// The focused flower, and the slot its overlay glides from and back to.
+	let focus = $state<{ flower: BattleFlowerSpec; rect: FlowerRect } | null>(null);
 
-	/** Which of the four view buttons the spotlight sits under. */
+	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
-
-	function armyViewFor(player: PlayerKey): ArmyView | null {
-		return player === 'player1' ? armyViewP1 : armyViewP2;
-	}
 
 	// Swipe detection, same contract as the solo tracker and the army builder: a mostly-horizontal
 	// pointer gesture steps between the views. Touch and pen only — a mouse drag is a text
@@ -162,32 +147,7 @@
 	}
 </script>
 
-{#snippet armyPane(player: PlayerKey)}
-	{@const army = armyViewFor(player)}
-	{@const seat = PLAYER_SEATS[player]}
-	{@const frozen = activePlayer !== player}
-	{#if army}
-		<ArmyReadonlyPanel
-			view={army}
-			title={seat.label + ' Army'}
-			hue={seat.hue}
-			readOnly={frozen}
-			hint={frozen ? seat.label + ' is not the active player — shown for reference.' : undefined}
-			onShowUnit={(row) => (cardTarget = { view: army, row })}
-			onShowUpgrade={(upgrade) => (upgradeTarget = { view: army, upgrade })}
-			onOpenVitality={(row) => (vitalityTarget = { player, view: army, row })}
-		/>
-	{:else}
-		<Panel title={seat.label + ' Army'} titleClass={seatAccent(seat.hue).text}>
-			<p class="text-sm text-slate-200">
-				{seat.label} has no army attached to this run. One can be picked from the mission briefing before
-				starting the game.
-			</p>
-		</Panel>
-	{/if}
-{/snippet}
-
-<!-- The swipe is a redundant shortcut for the four labelled view buttons in the header; the
+<!-- The swipe is a redundant shortcut for the three labelled view buttons in the header; the
      surface itself is not a widget, so it deliberately carries no ARIA role. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
@@ -199,13 +159,13 @@
 	<ScreenHeader onBack={() => (confirmAbandon = true)}>
 		{#snippet actions()}
 			<div
-				class="relative grid grid-cols-4 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5"
+				class="relative grid grid-cols-3 rounded-xl border border-slate-600/60 bg-slate-900/60 p-0.5"
 				aria-label="Game views"
 			>
 				<!-- The spotlight: one cell wide, slides to whichever view is active. -->
 				<div
 					aria-hidden="true"
-					class="pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc((100%-0.25rem)/4)] rounded-lg bg-sky-500/25 shadow-[0_0_18px_rgba(56,189,248,0.45)] ring-1 ring-sky-300/70 transition-transform duration-300 ease-out motion-reduce:transition-none"
+					class="pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc((100%-0.25rem)/3)] rounded-lg bg-sky-500/25 shadow-[0_0_18px_rgba(56,189,248,0.45)] ring-1 ring-sky-300/70 transition-transform duration-300 ease-out motion-reduce:transition-none"
 					style="transform: translateX({activeIndex * 100}%)"
 				></div>
 				{#each VIEWS as item (item.id)}
@@ -225,15 +185,15 @@
 		{/snippet}
 	</ScreenHeader>
 
-	<!-- One strip, four panes side by side: switching views slides the whole surface, so the
+	<!-- One strip, three panes side by side: switching views slides the whole surface, so the
 	     outgoing view leaves the way the gesture came from. Each pane scrolls itself, otherwise
 	     the document scroll would strand the player below a short pane after reading a long one. -->
 	<div class="relative min-h-0 flex-1 overflow-hidden">
 		<div
-			class="flex h-full w-[400%] transition-transform duration-300 ease-out motion-reduce:transition-none"
-			style="transform: translateX(-{(activeIndex * 100) / 4}%)"
+			class="flex h-full w-[300%] transition-transform duration-300 ease-out motion-reduce:transition-none"
+			style="transform: translateX(-{(activeIndex * 100) / 3}%)"
 		>
-			<div class="min-h-0 w-1/4 touch-pan-y overflow-y-auto overscroll-contain pb-6">
+			<div class="min-h-0 w-1/3 touch-pan-y overflow-y-auto overscroll-contain pb-6">
 				<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
 					<ActivePlayerPanel
 						{activePlayer}
@@ -278,17 +238,17 @@
 					/>
 				</div>
 			</div>
-			<div class="min-h-0 w-1/4 touch-pan-y overflow-y-auto overscroll-contain pb-6">
+			<div class="min-h-0 w-1/3 touch-pan-y overflow-y-auto overscroll-contain pb-6">
 				<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
-					{@render armyPane('player1')}
+					<BattleFlowersPanel
+						p1={armyViewP1}
+						p2={armyViewP2}
+						dimmed={focus !== null}
+						onSelect={(flower, rect) => (focus = { flower, rect })}
+					/>
 				</div>
 			</div>
-			<div class="min-h-0 w-1/4 touch-pan-y overflow-y-auto overscroll-contain pb-6">
-				<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
-					{@render armyPane('player2')}
-				</div>
-			</div>
-			<div class="min-h-0 w-1/4 touch-pan-y overflow-y-auto overscroll-contain pb-6">
+			<div class="min-h-0 w-1/3 touch-pan-y overflow-y-auto overscroll-contain pb-6">
 				<div class="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-4">
 					<DescriptionPanel
 						name={mission.name}
@@ -320,50 +280,10 @@
 	/>
 {/if}
 
-{#if cardTarget}
-	{@const army = cardTarget.view}
-	{@const row = cardTarget.row}
-	<UnitCard
-		unit={row.upgradedUnit}
-		faction={army.faction}
-		classIndex={army.classIndex}
-		skillIndex={army.skillIndex}
-		traitIndex={army.traitIndex}
-		combatArtIndex={army.combatArtIndex}
-		spellcraftIndex={army.spellcraftIndex}
-		spells={army.spells}
-		stratagemIndex={army.stratagemIndex}
-		itemIndex={{ ...army.itemIndex, ...row.itemOverrides }}
-		stats={row.effectiveStats}
-		size={row.effectiveSize}
-		mounted={row.mounted}
-		mountName={row.mount?.name}
-		onClose={() => (cardTarget = null)}
-	/>
-{/if}
-
-{#if upgradeTarget}
-	<ArmyUpgradeDetail
-		upgrade={upgradeTarget.upgrade}
-		cost={upgradeTarget.upgrade.cost}
-		factionColor={upgradeTarget.view.faction.color}
-		onClose={() => (upgradeTarget = null)}
-	/>
-{/if}
-
-{#if vitalityTarget}
-	{@const target = vitalityTarget}
-	{@const row = target.row}
-	{@const full = { hp: row.effectiveStats.HP ?? 0, sta: row.effectiveStats.STA ?? 0 }}
-	<UnitVitalityDialog
-		{row}
-		vitality={target.view.vitality[row.entryId] ?? full}
-		onAccept={(vitality) => {
-			onSetVitality(target.player, row.entryId, vitality);
-			vitalityTarget = null;
-		}}
-		onCancel={() => (vitalityTarget = null)}
-	/>
-{/if}
-
 <RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />
+
+<!-- At the screen root, like the rule dialog: the strip's transform would trap a fixed overlay
+     rendered inside the pane, and the focused flower has to paint above the blur. -->
+{#if focus}
+	<BattleFlowerFocus flower={focus.flower} from={focus.rect} onClosed={() => (focus = null)} />
+{/if}

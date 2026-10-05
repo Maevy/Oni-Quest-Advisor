@@ -20,6 +20,8 @@ export type SeatAccent = {
 	strong: string;
 	/** Panel and cell borders. */
 	border: string;
+	/** A translucent seat-tinted surface behind a whole half of a split panel. */
+	wash: string;
 	/** The outlined header-button recipe (Pick P1 Army / Pick P2 Army). */
 	pickButton: string;
 	/** An interactive army row at rest and under the pointer. */
@@ -32,6 +34,7 @@ export const SEAT_ACCENTS: Record<SeatHue, SeatAccent> = {
 		label: 'text-sky-400',
 		strong: 'text-sky-100',
 		border: 'border-sky-500/40',
+		wash: 'bg-sky-500/10',
 		pickButton:
 			'border-2 border-sky-500/50 bg-slate-900/60 text-sky-100 enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20',
 		rowHover: 'hover:border-sky-400/60 hover:shadow-[0_0_12px_rgba(56,189,248,0.35)]'
@@ -41,6 +44,7 @@ export const SEAT_ACCENTS: Record<SeatHue, SeatAccent> = {
 		label: 'text-orange-400',
 		strong: 'text-orange-100',
 		border: 'border-orange-500/40',
+		wash: 'bg-orange-500/10',
 		pickButton:
 			'border-2 border-orange-500/50 bg-slate-900/60 text-orange-100 enabled:hover:bg-orange-500/10 enabled:active:bg-orange-500/20',
 		rowHover: 'hover:border-orange-400/60 hover:shadow-[0_0_12px_rgba(251,146,60,0.35)]'

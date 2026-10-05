@@ -57,8 +57,10 @@
 	import TournamentLobby from '$lib/components/TournamentLobby.svelte';
 	import TournamentJoin from '$lib/components/TournamentJoin.svelte';
 	import TournamentRoundPrep from '$lib/components/TournamentRoundPrep.svelte';
+	import TournamentResults from '$lib/components/TournamentResults.svelte';
 	import TournamentUnavailable from '$lib/components/TournamentUnavailable.svelte';
 	import type { BriefingArmy } from '$lib/components/briefingArmy';
+	import type { MegaphoneInbox } from '$lib/components/toMegaphone';
 
 	contentStore.load();
 
@@ -73,9 +75,14 @@
 	// Resume an online seat from a previous visit if any, then a tournament seat, and only
 	// then offer the open local game.
 	onMount(() => {
-		void onlineGameStore.resumeSession().then((resumed) => {
+		void onlineGameStore.resumeSession().then(async (resumed) => {
 			if (resumed) {
 				navigationStore.enterOnlineGame();
+				// A table's match is a detour from an event this device still holds a seat in.
+				// Resuming that too — silently, with no prompt, because the player is already
+				// where they belong — is what keeps the organizer's megaphone reaching them and
+				// gives the match's exits a tournament to go back to.
+				if (onlineGameStore.view?.tournament) await tournamentEventStore.resumeSession();
 				return;
 			}
 			void tournamentEventStore.resumeSession().then((resumedTournament) => {
@@ -90,11 +97,21 @@
 		});
 	});
 
-	/** The two screens a live tournament shows, which its status switches between. */
+	/** The screens a live tournament shows, which its status switches between. */
 	function onTournamentScreen(): boolean {
 		return (
-			navigationStore.screen === 'tournament-lobby' || navigationStore.screen === 'tournament-round'
+			navigationStore.screen === 'tournament-lobby' ||
+			navigationStore.screen === 'tournament-round' ||
+			navigationStore.screen === 'tournament-results'
 		);
+	}
+
+	/** Where an event's status puts a device that is following it — never a click. */
+	function followTournamentStatus(): void {
+		const status = tournamentEventStore.view?.status;
+		if (status === 'active') navigationStore.enterTournamentRound();
+		else if (status === 'concluded') navigationStore.enterTournamentResults();
+		else navigationStore.enterTournamentLobby();
 	}
 
 	/** A cancelled tournament has no screen left — go home and let the menu say what happened. */
@@ -107,29 +124,32 @@
 	});
 
 	/**
-	 * The event's status decides which screen a device shows, not a click: the organizer pressing
-	 * Start Tournament moves every participant to the round over the change notification. Only
-	 * followed while a tournament screen is up, so a device that walked away to the menu is never
-	 * yanked back into the event.
+	 * The event's status decides which screen a device shows: the organizer starting it moves
+	 * every participant to the round, and concluding it moves them to the final standing, over the
+	 * change notification. Only followed while a tournament screen is up, so a device that walked
+	 * away to the menu — or into its match — is never yanked back.
 	 */
 	$effect(() => {
 		const status = tournamentEventStore.view?.status;
 		if (!status || !onTournamentScreen()) return;
-		if (status === 'active') {
-			if (navigationStore.screen !== 'tournament-round') navigationStore.enterTournamentRound();
-		} else if (navigationStore.screen !== 'tournament-lobby') {
-			navigationStore.enterTournamentLobby();
-		}
+		followTournamentStatus();
 	});
 
 	let showTournamentAbandon = $derived(resumableTournament || abandoningFromLobby);
+	let tournamentConcluded = $derived(tournamentEventStore.view?.status === 'concluded');
 	let tournamentAbandonText = $derived.by(() => {
 		const name = tournamentEventStore.tournamentName;
 		const what = name ? `"${name}"` : 'this tournament';
+		// Nothing is given up any more: the event is over, and its results stay on the server for
+		// the report window whether this device keeps its seat or not.
+		if (tournamentConcluded) {
+			return `${what} has concluded. Leaving clears it from this device.`;
+		}
 		return tournamentEventStore.isOrganizer
 			? `You are the organizer of ${what}. Abandoning it cancels the tournament and deletes it for everyone.`
 			: `You are participating in ${what}. Abandoning it gives up your seat.`;
 	});
+	let tournamentAbandonLabel = $derived(tournamentConcluded ? 'Leave' : 'Abandon');
 
 	/** The prompt's safe branch — back onto the screen the event is on, which resynchronizes. */
 	function returnToTournament(): void {
@@ -137,8 +157,7 @@
 		abandoningFromLobby = false;
 		// Without a view (the resume fetch failed) the lobby's retry panel is the honest landing
 		// spot; the status effect above moves on from there once a view arrives.
-		if (tournamentEventStore.view?.status === 'active') navigationStore.enterTournamentRound();
-		else navigationStore.enterTournamentLobby();
+		followTournamentStatus();
 	}
 
 	/**
@@ -159,6 +178,53 @@
 	function resumeOpenGame(): void {
 		if (resumableGame) navigationStore.resumeOpenGame(resumableGame.game, resumableGame.mission);
 		resumableGame = null;
+	}
+
+	/**
+	 * The organizer's megaphone, as the header widget takes it: this seat's inbox and the count
+	 * that makes it glow. Null for the organizer, who sends rather than reads, and null for a
+	 * device with no seat — which is what keeps it off every screen that is not part of an event.
+	 */
+	let megaphone = $derived.by((): MegaphoneInbox | null => {
+		const view = tournamentEventStore.view;
+		if (!view || view.role === 'organizer') return null;
+		return {
+			messages: view.messages,
+			unread: view.unreadMessages,
+			onRead: () => void tournamentEventStore.readMessages()
+		};
+	});
+
+	/**
+	 * The same inbox, but only while this device sits in a match a tournament owns. A free online
+	 * game has no organizer shouting at it, and showing an event's messages inside an unrelated
+	 * match would be the app talking to the wrong room.
+	 */
+	let tableMegaphone = $derived(onlineGameStore.view?.tournament ? megaphone : null);
+
+	/**
+	 * A player sits down at their table's match. The server hands back an ordinary online seat —
+	 * the first of the two to press creates the game, the second joins the same one — so from here
+	 * the match is an ordinary online game and this device follows the ordinary online flow.
+	 */
+	async function enterTableGame(tableIndex: number): Promise<void> {
+		const gameId = tournamentEventStore.view?.round?.tables[tableIndex]?.match.gameId ?? null;
+		// A match this device is already in is a navigation, not a new seat: entering again would
+		// only mint a second token for the same chair and drop the one it is holding.
+		if (gameId !== null && onlineGameStore.view?.id === gameId) {
+			navigationStore.enterOnlineGame();
+			return;
+		}
+		const session = await tournamentEventStore.enterTableGame(tableIndex);
+		if (!session) return;
+		await onlineGameStore.adoptSession(session);
+		navigationStore.enterOnlineGame();
+	}
+
+	/** Walks out of a concluded event: no seat to free, so nothing to tell the server. */
+	function leaveConcludedTournament(): void {
+		tournamentEventStore.leaveConcluded();
+		navigationStore.leaveTournamentLobby();
 	}
 
 	/** The startup prompt's destructive branch — discards the run and stays on the main menu. */
@@ -321,8 +387,15 @@
 
 	/** Leaves the online game on this device only; the stored seat session resumes it later. */
 	function leaveOnlineGame(): void {
+		// A tournament table's match ends at its table: the event is still running and this device
+		// still holds a seat in it, so the main menu would leave both of them behind. The game view
+		// says so while it is loaded; a reconnect that never got that far falls back on the event
+		// this device is still sitting in, which only a table's match can explain.
+		const toTournament =
+			onlineGameStore.view?.tournament != null || tournamentEventStore.view != null;
 		onlineGameStore.leave();
-		navigationStore.leaveOnline();
+		if (toTournament) navigationStore.leaveOnlineToTournament();
+		else navigationStore.leaveOnline();
 	}
 
 	/**
@@ -331,7 +404,8 @@
 	 * lives on but the token that authenticates this device is gone.
 	 */
 	function stepAwayFromOnlineGame(): void {
-		navigationStore.leaveOnline();
+		if (onlineGameStore.view?.tournament) navigationStore.leaveOnlineToTournament();
+		else navigationStore.leaveOnline();
 	}
 
 	/** Hands the finished cut to the match. The code is read before leaving wipes the builder. */
@@ -797,6 +871,7 @@
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
 			onReturn={stepAwayFromOnlineGame}
+			megaphone={tableMegaphone}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'prep'}
 		<OnlineArmyPrep
@@ -812,6 +887,7 @@
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
 			onReturn={stepAwayFromOnlineGame}
+			megaphone={tableMegaphone}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineGameStore.view.phase === 'setup'}
 		<OnlineSchemeSelect
@@ -829,6 +905,7 @@
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onCloseGame={() => onlineGameStore.closeGame()}
 			onReturn={stepAwayFromOnlineGame}
+			megaphone={tableMegaphone}
 		/>
 	{:else if onlineGameStore.view.status === 'active' && onlineMission}
 		<OnlineTracker
@@ -848,6 +925,7 @@
 			onRevealScheme={() => onlineGameStore.revealScheme()}
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onReturn={stepAwayFromOnlineGame}
+			megaphone={tableMegaphone}
 		/>
 	{:else if onlineGameStore.view.status === 'finished'}
 		<OnlineStats
@@ -855,6 +933,7 @@
 			factions={contentStore.factions}
 			schemes={contentStore.schemes}
 			onReturnToMenu={leaveOnlineGame}
+			megaphone={tableMegaphone}
 		/>
 	{:else}
 		<OnlineLobby
@@ -872,6 +951,7 @@
 			onReturn={stepAwayFromOnlineGame}
 			onToggleReady={() => onlineGameStore.toggleReady()}
 			onStartGame={() => onlineGameStore.startGame()}
+			megaphone={tableMegaphone}
 		/>
 	{/if}
 {:else if navigationStore.screen === 'online-game'}
@@ -885,7 +965,7 @@
 				class="rounded-xl bg-sky-300 px-6 py-2 font-semibold text-slate-950 transition hover:bg-sky-200 active:bg-sky-200"
 				onclick={leaveOnlineGame}
 			>
-				Return to Main Menu
+				{tournamentEventStore.view ? 'Return to Tournament' : 'Return to Main Menu'}
 			</button>
 		{/if}
 	</div>
@@ -946,9 +1026,29 @@
 			missions={contentStore.missions}
 			factions={contentStore.armyFactions}
 			error={tournamentEventStore.error}
+			activeGameId={onlineGameStore.view?.id ?? null}
+			{megaphone}
 			onAssign={(occupant, tableIndex) => void tournamentEventStore.assign(occupant, tableIndex)}
 			onStartRound={() => void tournamentEventStore.startRound()}
+			onNextRound={() => void tournamentEventStore.nextRound()}
+			onConclude={() => void tournamentEventStore.conclude()}
+			onShout={(tableIndex, text) => tournamentEventStore.sendMessage(tableIndex, text)}
+			onEnterGame={(tableIndex) => void enterTableGame(tableIndex)}
 			onLeave={() => (abandoningFromLobby = true)}
+		/>
+	{:else}
+		<TournamentUnavailable
+			error={tournamentEventStore.error}
+			onRetry={() => void tournamentEventStore.retry()}
+			onAbandon={() => (abandoningFromLobby = true)}
+		/>
+	{/if}
+{:else if navigationStore.screen === 'tournament-results'}
+	{#if tournamentEventStore.view}
+		<TournamentResults
+			view={tournamentEventStore.view}
+			error={tournamentEventStore.error}
+			onLeave={leaveConcludedTournament}
 		/>
 	{:else}
 		<TournamentUnavailable
@@ -1030,8 +1130,6 @@
 		onDeleteScheme={(player) => twoPlayerProgressStore.deleteScheme(player)}
 		onRevealScheme={(player) => twoPlayerProgressStore.revealScheme(player)}
 		onSetRound={(round) => twoPlayerProgressStore.setRound(round)}
-		onSetVitality={(player, entryId, vitality) =>
-			twoPlayerProgressStore.setUnitVitality(player, entryId, vitality)}
 		onSwap={() => twoPlayerProgressStore.swapPlayer()}
 	/>
 {:else if selectedMission && missionProgressStore.progress}
@@ -1083,7 +1181,7 @@
 {#if showTournamentAbandon}
 	<ConfirmDialog
 		text={tournamentAbandonText}
-		confirmLabel="Abandon"
+		confirmLabel={tournamentAbandonLabel}
 		cancelLabel="Return"
 		confirming={abandoningTournament}
 		errorText={tournamentEventStore.error}

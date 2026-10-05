@@ -54,6 +54,7 @@ import {
 	upgradesForFaction,
 	unitsForFaction,
 	unitStatuses,
+	vitalityRingStates,
 	type ArmyEntry,
 	type ArmyItemSpec,
 	type ArmyRulesIndexes,
@@ -2768,5 +2769,27 @@ describe('applyZeroHpStates', () => {
 		expect(applyZeroHpStates({ hp: 1, sta: 0, statuses: ['bleeding'] }).statuses).toEqual([
 			'bleeding'
 		]);
+	});
+});
+
+describe('vitalityRingStates', () => {
+	it('draws one box per point of the base stat, all full while untouched', () => {
+		expect(vitalityRingStates(2, 2)).toEqual(['full', 'full']);
+		expect(vitalityRingStates(0, 0)).toEqual([]);
+	});
+
+	it('empties lost points out from the bottom end of the ring', () => {
+		expect(vitalityRingStates(1, 2)).toEqual(['full', 'empty']);
+		expect(vitalityRingStates(0, 3)).toEqual(['empty', 'empty', 'empty']);
+		expect(vitalityRingStates(2, 5)).toEqual(['full', 'full', 'empty', 'empty', 'empty']);
+	});
+
+	it('repaints an overhealed Life blue over the red boxes instead of growing the ring', () => {
+		expect(vitalityRingStates(3, 2)).toEqual(['over', 'full']);
+		expect(vitalityRingStates(4, 2)).toEqual(['over', 'over']);
+	});
+
+	it('never draws more boxes than the base stat, however far past it the Life is', () => {
+		expect(vitalityRingStates(9, 2)).toEqual(['over', 'over']);
 	});
 });

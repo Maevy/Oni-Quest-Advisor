@@ -1,4 +1,5 @@
 import type { ArmyFactionId, ArmyFormat } from './army';
+import { vitalityRingStates } from './army';
 import type {
 	ArmyFactionConfig,
 	ArmyItemSpec,
@@ -8,7 +9,8 @@ import type {
 	ArmySpellSpec,
 	ArmyStratagemSpec,
 	ArmyUpgradeSpec,
-	UnitVitality
+	UnitVitality,
+	VitalityRingState
 } from './army';
 
 /**
@@ -89,6 +91,47 @@ export type ArmyView = {
 	/** Live Life/stamina per copy (entry id); absent entries are untouched, i.e. full. */
 	vitality: Record<string, UnitVitality>;
 };
+
+/** One half of a Battle Flower's ring: the stat it tracks and the state of each box. */
+export type BattleRingSpec = {
+	current: number;
+	max: number;
+	states: VitalityRingState[];
+};
+
+/**
+ * One army copy as a Battle Flower: the orb's identity plus its two ring halves - stamina on
+ * the left, Life on the right. A half is null when the model carries no value for that stat.
+ */
+export type BattleFlowerSpec = {
+	entryId: string;
+	name: string;
+	icon?: string;
+	/** The mount's name while this copy rides one; null otherwise. */
+	mountedOn: string | null;
+	stamina: BattleRingSpec | null;
+	life: BattleRingSpec | null;
+};
+
+function battleRing(max: number | null, current: number | null): BattleRingSpec | null {
+	if (max === null || current === null) return null;
+	return { current, max, states: vitalityRingStates(current, max) };
+}
+
+/** Projects an army view into the flowers its panel draws: one per copy, in list order. */
+export function battleFlowersFor(view: ArmyView): BattleFlowerSpec[] {
+	return view.rows.map((row) => {
+		const vitality = view.vitality[row.entryId];
+		return {
+			entryId: row.entryId,
+			name: row.name,
+			icon: row.icon,
+			mountedOn: row.mounted ? (row.mount?.name ?? null) : null,
+			stamina: battleRing(row.effectiveStats.STA, vitality?.sta ?? row.effectiveStats.STA),
+			life: battleRing(row.effectiveStats.HP, vitality?.hp ?? row.effectiveStats.HP)
+		};
+	});
+}
 
 /** Groups saved armies by faction (in `factionOrder`), newest first within each group. */
 export function groupSavedArmies(

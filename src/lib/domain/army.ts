@@ -102,6 +102,24 @@ export function unitStatuses(vitality: UnitVitality | null | undefined): UnitSta
 	return vitality?.statuses ?? [];
 }
 
+/** One box of a Battle Flower's ring. */
+export type VitalityRingState = 'full' | 'empty' | 'over';
+
+/**
+ * The states of one half of a Battle Flower's ring, in draw order from the top of the orb
+ * downwards. The ring always carries `max` boxes - the model's base stat - so its shape never
+ * changes mid-game: lost points empty out from the bottom end, and an overhealed Life repaints
+ * its extra points blue over the red boxes from the top end instead of growing the ring (two
+ * base HP healed to three read one blue and one red; at four, both are blue).
+ */
+export function vitalityRingStates(current: number, max: number): VitalityRingState[] {
+	const over = Math.min(Math.max(current - max, 0), max);
+	const full = Math.min(current, max) - over;
+	return Array.from({ length: max }, (_, index) =>
+		index < over ? 'over' : index < over + full ? 'full' : 'empty'
+	);
+}
+
 /**
  * Flips one State on or off, keeping the catalog order. The two Poison strengths
  * describe the same condition, so picking one drops the other.
