@@ -2268,7 +2268,25 @@
 		},
 		"effect": [
 			{
-				"text": "Sweep I, Cleave. If the user has neither a Shield nor another Weapon equipped, it may reroll one Melee Attack Roll."
+				"text": "Sweep I",
+				"link": {
+					"type": "trait",
+					"id": "sweep",
+					"level": 1
+				}
+			},
+			{
+				"text": ", "
+			},
+			{
+				"text": "Cleave",
+				"link": {
+					"type": "trait",
+					"id": "cleave"
+				}
+			},
+			{
+				"text": ". If the user has neither a Shield nor another Weapon equipped, it may reroll one Melee Attack Roll."
 			}
 		],
 		"weight": 3

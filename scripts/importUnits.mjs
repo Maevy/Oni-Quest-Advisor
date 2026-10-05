@@ -305,10 +305,16 @@ function normalize(text) {
 		.trim();
 }
 
-/** Broken rich-link markup in the producer dump, repaired before parsing. */
+/** Broken or missing rich-link markup in the producer dump, repaired before parsing. */
 const SOURCE_LINK_FIXES = [
 	['(Armor-Piercing([trait.ARMOR_PIERCING]', '(Armor-Piercing)[trait.ARMOR_PIERCING]'],
-	['[trait.POSION.', '[trait.POISON.']
+	['[trait.POSION.', '[trait.POISON.'],
+	// Slayer's Blade is the one effect in the dump written as plain text, so its granted traits
+	// were the only weapon traits in the catalog that rendered without a popup.
+	[
+		'Sweep I, Cleave. If the user has neither a Shield',
+		'(Sweep I)[trait.SWEEP.1], (Cleave)[trait.CLEAVE]. If the user has neither a Shield'
+	]
 ];
 
 const ROMAN_DIGITS = { I: 1, V: 5, X: 10 };
