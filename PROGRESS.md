@@ -9,12 +9,15 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 - Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.8.0** (tagged on `main`,
   2026-09-26), the hot-seat parity release. Day-to-day work happens on **`develop`**, pushed
   to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` is 26 commits ahead of v0.8.0** (2026-09-27 … 2026-09-30) with **two unreleased
-  features**, in this order:
-  1. **Tournament** (`9367fc1`…`19d7fea`) — the configuration wizard, server-side creation,
-     the shared lobby, joining by link or QR, resume/abandon, and the match-preparation screen
-     with its roadmap and table assignment. It stops at the round's `setup` phase; the `game`
-     and `scoring` phases are agreed but not built.
+- **`develop` is ahead of v0.8.0** (2026-09-27 … today) with **two unreleased features**, in this
+  order:
+  1. **Tournament** (`9367fc1`…, extended 2026-10-02) — the configuration wizard, server-side
+     creation, the shared lobby, joining by link or QR, resume/abandon, the match-preparation
+     screen with its roadmap and table assignment, **and now the round's `game` and `scoring`
+     phases**: a table's match is an ordinary online game the tournament creates and overwatches
+     (Enter Game, the megaphone, results reporting themselves into a cumulative standing, replays
+     of dead tables, the next round and the conclusion screen with its medal standings). What is
+     left of the feature is the **tournament report** — the button exists and is inert.
   2. **The online-mode redesign** (`da407c1`…`4ddd789`) — a game is born set up, both seats
      bring an army, Start Game is gated on per-seat **Ready**, and a match opens with Army
      Reveal → Army Preparation (a Roster is cut to ≤85 in a _borrowed_ army builder) → Scheme
@@ -49,12 +52,26 @@ Nothing has been run against Fly yet, and two decisions are outstanding:
 
 ## What's next
 
-The agreed next step is the **tournament round's `game` and `scoring` phases**: what the
-tables actually play, how a result is reported, how the standing is fed and how the next round
-opens. A tournament round is expected to become N online games under tournament overwatch —
-which is why the online redesign came first. Two things a tournament needs that online does not
-have yet: an army registered per **round** rather than per game, and a scoring path back into
-the tournament's VP standing.
+The **tournament report** is deferred by agreement (2026-10-05): `completedRounds` already holds
+everything it needs (each round's pairing, its results and the cumulative totals), concluded
+events are kept 48 hours for it, and the **Prepare Tournament Report** button is on the
+conclusion screen waiting. What a report contains, in what shape, and whether it is generated on
+the device or on the server is the open half.
+
+The current feature is the **Battle Flowers** — the army panel's redesign: every copy drawn as
+its icon in a circular orb ringed by Stamina boxes (yellow, left half) and Life boxes (red,
+right half). **Phase 1 sits in the working tree, uncommitted**: the hot-seat tracker's two army
+panes became a single Army view holding one panel split into a sky and an orange half, one
+flower per row, and clicking a flower focuses it — backdrop blur, a 1.3× clone gliding to the
+viewport centre, the rest faded; once landed, a ring of eight petal buttons blooms outside the
+ring (damage / heal / status × self / enemy / ally) and retracts before the flower glides home
+on click-outside or Escape. What the interaction phase still owes: the petals' functions, box
+taps, the unit card on the orb, and status assignment — until then hot-seat cannot change Life,
+stamina or States at all. Behaviour spec:
+`docs/functional-spec/06-two-player-hot-seat.md`. The flowers replace the other modes' army
+panels afterwards. **Next session (2026-10-05): prepare the petal icons, then wire the petals'
+functions** — damage/heal on self first, then the enemy/friendly targeting modes, then status
+assignment.
 
 Smaller open threads:
 
@@ -92,10 +109,11 @@ copy-pasted class strings, which is why disabled styling has drifted between scr
 
 ## Verification on this machine
 
-`npm run check`, `npm run lint`, `npm run test` after every change (605 tests as of the online
-redesign). Beyond that, the habit here has been **throwaway browser and API passes** — a real
-two-context Playwright run asserting the journey, deleted afterwards; the unreleased work was
-verified by ten of them, from 8 to 60 assertions. Four traps cost a run each and recur:
+`npm run check`, `npm run lint`, `npm run test` after every change (636 tests as of the tournament
+round's game/scoring phases). Beyond that, the habit here has been **throwaway browser and API
+passes** — a real multi-context Playwright run asserting the journey, deleted afterwards; the
+unreleased work was verified by a dozen of them, from 8 to 65 assertions. Five traps cost a run
+each and recur:
 
 - **`npm install` is blocked**, so no new dependencies. This is why the QR encoder is in-app
   (`domain/qr.ts`) rather than a package.
@@ -107,6 +125,13 @@ verified by ten of them, from 8 to 60 assertions. Four traps cost a run each and
 - **A fresh browser context shows the privacy banner**, which intercepts clicks until
   dismissed. Also: the first unit in the Helian catalog is `upgradesLocked`, so it renders no
   upgrade slot at all.
+- **Keep throwaway scripts outside the project root.** Vite's dev server watches the whole tree,
+  and any write under it — including editing a `.mjs` harness in `.qwen/tmp/` while a pass is in
+  flight — logs `[vite] (ssr) page reload` and **full-page-reloads every connected browser**,
+  which drops mid-journey devices back onto the startup prompt and reads as a flaky app. The
+  harnesses live in `~/.qwen/tmp/oni-verify/` now (importing Playwright by absolute path into this
+  project's `node_modules`), and "press outside the popup" must click something inert — the
+  header's title — or it lands on a table panel's Enter Game and walks the device into its match.
 
 ## Deployment & ops
 

@@ -86,12 +86,51 @@ BYE{/if}` rendered as "playerand the BYE". Recorded in `src/lib/components/CLAUD
   host) where Node throws, so link validation that only parses is engine-dependent. The
   domain rejects whitespace before parsing and a unit test pins it for both engines.
 
-**Next, agreed but not built:** the round's `game` and `scoring` phases — what the tables
-actually play, how a result is reported, how the standing is fed and how the next round opens.
-A tournament round is expected to become N online games running under tournament overwatch,
-which is why the online redesign below came first. It will need two things online does not
-have: an army registered per **round** rather than per game, and a scoring path back into the
-tournament's VP standing.
+### The round plays: `game`, `scoring` and the conclusion (2026-10-02)
+
+The round's `game` and `scoring` phases got their content: a table's match became an ordinary
+online game the tournament owns, the organizer got a megaphone, and the event learned to end.
+
+- **Enter Game** — a table's match is created by the first of its two players to press it, with
+  **both seats filled** from the registrations (`createTournamentGame`), the round's mission and
+  its season; the second press takes the other seat. No join code, no approval, no mission to
+  pick: the pairing was already decided. From there the pair walks the ordinary online flow, and
+  the match's exits come back to the board (`Return to Tournament` on the score screen, the
+  header's Return, and a silent tournament resume when a device reloads into its match).
+- **The game id is derived** — `CODE-R{round}T{table}A{attempt}` — which is what makes Enter Game
+  idempotent and race-free: two devices pressing at once aim at one row, and the second insert
+  meets a primary-key conflict instead of opening a rival table. `/enter-game` also **re-mints the
+  caller's seat token**, the recovery path for a device that lost its session (the old token dies,
+  which is the same one-token-one-seat rule a join lives by).
+- **Results report themselves.** A finished game folds its VP into the round
+  (`recordTableResult`, idempotent — a retention auto-finish and a leader's last click can both
+  arrive), the standing is **cumulative across rounds**, and the round moves to `scoring` by
+  itself when its last table reports. The organizer's **Next Round** archives the round into
+  `completedRounds` (the report's raw material) and opens the next mission; **Conclude
+  Tournament** ends the event onto the final standing — gold, silver, bronze and grey, ties
+  sharing the higher place.
+- **A dead table replays** (a closed game bumps the table's `attempt`, giving the replay a fresh
+  id); there is deliberately **no organizer score override**. A BYE table is settled at round
+  start with **5 VP**, so it never holds a round open.
+- **The megaphone** — per-table composers on the board plus a broadcast in the organizer's
+  header; a player's inbox lives in the header of the board _and_ of all six online screens,
+  glowing yellow with a count while unread, grey once read, closing on a press outside. Messages
+  belong to the round they were sent in and carry per-seat read state.
+- **A concluded event frees no seat**: its exits are local, because a freed seat would drop that
+  player out of the archived standing the 48-hour report window exists to keep.
+
+Traps this pass added to the collection:
+
+- **Vite full-page-reloads every connected browser on any write under the project root** —
+  including a throwaway `.mjs` harness in `.qwen/tmp/`, which made mid-journey devices drop back
+  onto the startup prompt and read as a flaky app. Harnesses live outside the tree now.
+- **"Press outside the popup" must click something inert.** The first attempt clicked mid-page
+  and landed on a table panel's Enter Game, walking the test device into its match.
+- **A re-minted token retires the old one**, so a harness that keeps the first Enter Game's
+  session and presses again gets a 401 on the old token — correct behaviour, surprising test.
+
+**Next, agreed but not built:** the tournament report — `completedRounds` holds everything it
+needs and the **Prepare Tournament Report** button is on the conclusion screen, inert.
 
 ### The online redesign (`da407c1`…`4ddd789`, 17 commits)
 
@@ -208,6 +247,29 @@ exposure it exists for (the Leader's M and INT) is already in place. Still defer
 leader's accept popup cannot show the joiner's army, `pendingJoinNickname` is only hidden
 client-side, and online's resume/leave flow is not aligned with the tournament's
 prompt-and-abandon pattern.
+
+### 2026-10-05 — two fixes and the Battle Flowers
+
+- **Slayer's Blade's granted traits had no popups.** The producer wrote that one item effect as
+  plain text — a scan of every rich-text segment in the generated content found it to be the
+  only unlinked grant list in the catalog — so a third `SOURCE_LINK_FIXES` entry repairs the
+  markup before parsing; the regenerated `items.json` gains exactly one changed effect.
+- **The army builder's header floated centred over its full-bleed body**, the one screen whose
+  panels are not `max-w-xl`. `ScreenHeader` gained a `wide` prop that drops the centred column
+  so Return lines up with the panel edge; every other screen keeps the column.
+- **Battle Flowers**: hot-seat's two army panes became a single **Army** view (the switcher is
+  now Scoring / Army / Mission) holding one panel split into a sky and an orange half. Every
+  copy is a flower — the icon in a circular orb with one thin ring flush against it: Stamina
+  boxes yellow on the left half, Life red on the right, a lost point an empty box with its
+  coloured rim from the bottom end, an overhealed Life repainting blue from the top end instead
+  of growing the ring (`vitalityRingStates`). Clicking a flower **focuses** it: the screen
+  blurs, a 1.3× clone glides from the slot to the viewport centre and the other flowers fade;
+  once landed, a ring of eight **petal buttons** (damage / heal / status × self / enemy / ally,
+  tinted red / emerald / violet) blooms out from behind the flower, and dismissing retracts the
+  petals before the flower glides home. The clone lives at the screen root because the sliding
+  strip's transform would trap a `fixed` overlay inside the pane. Petal icons and functions are
+  the next session's work; until then hot-seat cannot edit Life, stamina or States at all — the
+  vitality menu went with the army panes it lived in.
 
 ---
 

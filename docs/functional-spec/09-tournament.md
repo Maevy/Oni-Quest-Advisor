@@ -283,7 +283,10 @@ Decisions taken here:
 
 ## The match-preparation screen
 
-`tournament-round`, one screen for both roles, in four parts:
+`tournament-round`, one screen for both roles and for all three of the round's phases, in four
+parts. Parts 3 and 4 are the ones the phase changes: the assignment board and its Start Round
+button belong to `setup`, and from `game` on the same cards lock and talk about matches instead
+(see _Playing the round_).
 
 1. **Progress** — the event's **roadmap**: a line of dots, one per step, that glows green from grey
    as the tournament advances. The steps are the three phases of every round — _Round 1 Setup_,
@@ -305,10 +308,13 @@ Decisions taken here:
    assignment gate below is met, and pressing it moves the round from **setup** to **game**
    (`POST /api/tournaments/<code>/start-round`): the roadmap advances one step on every device at
    once and the tables lock.
-4. **Table Assignment** — the **pool** of everybody without a table (the registered players in seat
-   order, then the BYE when the field is odd) and one card per configured table showing its name,
-   its occupant count out of two, and its occupants as chips in their army's faction colour (the
-   BYE in amber).
+4. **Tables** — in `setup`, the assignment board: the **pool** of everybody without a table (the
+   registered players in seat order, then the BYE when the field is odd) and one card per
+   configured table showing its name, its occupant count out of two, and its occupants as chips in
+   their army's faction colour (the BYE in amber). From `game` on, the pool is gone and each card
+   shows its match instead: **Enter Game** for the two players it holds, _Playing_ while their game
+   lives, and once it is over a greyed card with _Game finished_ (or _Bye_) and each player's
+   victory points — the organizer's per-table megaphone sits in the card's corner either way.
 
 Only the organizer assigns; a player sees the identical board read-only — plain text chips, no
 placement controls — and the line _"The organizer assigns the tables."_ Every move is a server
@@ -342,24 +348,129 @@ comes back as an error line at the top of the screen; the board simply stays as 
 A round walks through **setup → game → scoring**, and the phase is server state, so every device
 shows the same step of the roadmap and the same screen affordances:
 
-| Phase     | The board                                                                       | Start Round                                        |
-| --------- | ------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `setup`   | the organizer may assign, players watch                                         | shown to the organizer, gated on the pairing       |
-| `game`    | **locked** for everybody — _"The tables are locked — this round is under way."_ | gone; the screen says _"Round n is being played."_ |
-| `scoring` | locked                                                                          | gone; _"Round n is being scored."_                 |
+| Phase     | The board                                                                       | The primary button                                                        |
+| --------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `setup`   | the organizer may assign, players watch                                         | **Start Round**, to the organizer, gated on the pairing                   |
+| `game`    | **locked** for everybody — _"The tables are locked — this round is under way."_ | **Enter Game**, to each table's own players; _"Round n is being played."_ |
+| `scoring` | locked, every panel greyed with its result                                      | **Next Round** / **Conclude Tournament**, to the organizer                |
 
 Locking at the start of the game phase is deliberate: a pairing must not change underneath a match
 that is already being played. A mistake means cancelling the event — undoing a started round is not
 offered. Rows written before the phase model existed hydrate to `setup`, which was all a round
 could be then.
 
-## Next — playing and scoring the round
+`scoring` is nobody's click: the round lands there by itself the moment its last table reports a
+result, which is what makes the organizer's button appear on every device at once. Until then the
+round stays in `game` however many tables have finished.
 
-The round reaches `game` and stops there. The next step gives the phase content: the tables' matches
-begin (presumably each table is a normal match on the players' own devices, with the tournament
-server overwatching), the results are reported, `scoring` turns them into victory points in the
-standing, and the round after it opens on the next mission — which is what moves the roadmap from
-_Round 1 Scoring_ to _Round 2 Setup_.
+## Playing the round
+
+A table's match **is** an ordinary online 2-player game — the same screens, the same phases, the
+same tracker — with three differences: the tournament paired it, the tournament seeded it, and the
+tournament is where it goes back to when it ends.
+
+**Enter Game** appears in the middle of a table's panel, and only for the two players seated at it
+(a player at another table sees that table as _"This table is playing its match."_, and the
+organizer sees it with no button at all). The first of the two to press it creates the match: the
+server builds an online game with **both seats already filled** from the tournament registrations,
+the round's mission, and the season that mission belongs to — so there is no join code to share, no
+request to approve, and no mission to pick. The second press finds that game and takes the other
+seat. Each player lands in the game's lobby as its own seat, and the pair follows the ordinary
+online flow from there: both Ready, Start Game, Army Reveal, Army Preparation (a registered Roster
+is cut down to the match list — **per round**, since every round is a fresh game), Scheme
+Selection, then the tracker. The lobby names itself _"Table Match Lobby"_ with the event code, round
+and table under it, and shows no invite panel: a paired table invites nobody, and a shared link
+would only let a stranger in.
+
+The match's identity travels with it as `{ code, round, tableIndex }` on the game document, which is
+what routes its exits: the score screen's button reads **Return to Tournament** instead of _End
+game_, the header's Return goes back to the round board instead of the main menu, and a device that
+reloads into the match also resumes its tournament seat silently, so the megaphone still reaches it
+and its exits still have somewhere to go.
+
+**A table's game id is derived, never allocated** — `CODE-R{round}T{table}A{attempt}` — so two
+devices pressing Enter Game at the same instant aim at the same row: one creates it, the other
+meets a primary-key conflict and joins it. Pressing Enter Game again is a navigation, not a second
+seat: the page recognises a match this device is already in and simply goes back to it, and the
+server (asked anyway, by a device that lost its session) hands back a **freshly minted seat token**
+for the caller's own seat, which retires the old one. That is the recovery path for a cleared
+browser: the tournament token proves who is asking, so a player can always get back into their
+chair.
+
+**A finished table greys out.** Its panel shows _Game finished_ with both players' victory points,
+the winner's name in green, and no button; the round's standing has already taken the score. A
+table the BYE sits at is settled the moment the round starts — it plays no game, its player sits the
+round out and takes the BYE's points, and its panel is greyed like any other finished one, so it
+never holds a round open.
+
+**A dead table replays.** A match its leader closed instead of finishing (the header's Close Game,
+or a game abandoned at round 5 and finished by retention) reads as _Abandoned_ and tells its players
+to enter again; the next Enter Game bumps the table's `attempt`, which gives the replay a game of
+its own rather than resurrecting the closed one. There is **no organizer score override** — a result
+nobody played would be a result nobody can trust — so a table whose players are simply gone holds
+the round until the organizer cancels the event.
+
+**Scoring.** A game reports itself into the round when it concludes: the two players' final VP land
+on their seats (the table's occupant order _is_ the game's player1/player2 order), added to the
+cumulative standing. Reports are idempotent, because a stale game auto-finished by retention and a
+leader's last click can both arrive. Victory points therefore **accumulate across rounds** — a round
+starts on the total the previous one ended with — and the Round Control panel says so.
+
+**Moving on.** Once every table has reported the round is in `scoring`, and the organizer's button
+appears: **Next Round** archives the round (its pairing, its results and its totals, which is the
+raw material the report window exists for) and opens the next mission with empty tables to pair
+again; **Conclude Tournament** — offered only after the last mission — ends the event. Every device
+follows, over the change notification, without a reload.
+
+## The organizer's megaphone
+
+While a round runs the organizer can shout at the tables, and a shout reaches a player **inside the
+match it interrupts** — which is the point, since _"time is up, last activations"_ is exactly the
+message a player must see without leaving the game they are scoring.
+
+- **Per table:** a small megaphone in the top-right corner of each table panel, which opens a
+  composer addressed to that table.
+- **To everybody:** a megaphone in the organizer's own top bar, addressed to every table at once.
+  Both are the same widget and the same call; `tableIndex: null` is the broadcast.
+- **A player's inbox** is a megaphone in their top bar too — on the round board and on every one of
+  the six online screens of their match. While anything is unread it is **bright yellow and glows**
+  (pulsing unless the device asks for reduced motion), with a red count badge above 1; opening it
+  lists the messages newest first with their round and time, marks them read, and the button goes
+  **grey**. Pressing outside (or Escape) closes it.
+- A shout belongs to **the round it was sent in**, so a new round starts with a quiet megaphone
+  rather than inheriting the last one's leftovers, and a message for another table is never shown.
+  Read state is per seat — one token holds one seat, so a seat and a device are the same thing —
+  and the list is capped, oldest first out.
+- The organizer has no inbox: they are the one shouting. A playing organizer sends like any other
+  organizer and receives nothing.
+
+## The conclusion screen
+
+Concluding the event moves every device still in it to the final standing — a screen of its own,
+not a phase of the round board. It is headed **Tournament Concluded** with _"After n rounds of
+{event}"_ and the organizer's external link.
+
+The standing lists **every registered player** — the BYE is not a player and an empty seat never
+registered, so neither appears — ranked by cumulative victory points, each row a panel ringed in its
+medal: **gold** for 1st, **silver** for 2nd, **bronze** for 3rd and a plain dark grey border for the
+rest, so a winner reads at a glance across a table of names. Rows show the place as an ordinal, the
+name (with _(you)_ and _organizer_ where they apply) and the points. Equal totals **share the higher
+place** and the next rank skips the tie (two 1st, then 3rd), with seat order breaking the display
+order of a tie.
+
+Exits are the last asymmetry between the roles: a **player** gets _Leave Tournament_, the
+**organizer** gets _End Tournament_ (both simply return to the main menu) plus _Prepare Tournament
+Report_, which is inert until the report exists. All three are **local** — no server call. A
+concluded event has no seat to free, and freeing one would drop that player out of the standing the
+48-hour report window exists to keep, which is also why `/leave` still refuses after the conclusion.
+The rows stay on the server for the report; only this device's session goes.
+
+## Next — the tournament report
+
+The event concludes and its rounds are archived (`completedRounds`, oldest first: pairing, results
+and the cumulative totals as of each round's end). **Prepare Tournament Report** is the button that
+will use them, and the reason concluded events are kept for 48 hours. What a report contains, in
+what shape, and whether it is generated on the device or on the server, is the next iteration.
 
 ## Open questions
 
@@ -370,24 +481,18 @@ _Round 1 Scoring_ to _Round 2 Setup_.
 - **Mixing mission kinds needs a scoring story.** Ceasefire missions carry the automatic −4 VP
   penalty and forbid round-1 scoring, and Broken Morale changes how a game ends; a tournament
   that mixes them into one points table has to say how.
-- **What does a table hold?** For the round being prepared: up to two occupants, either two players
-  or one player and the BYE, and nothing else — no mission of its own (it plays the round's) and no
-  score of its own yet. Whether a table carries its own round counter once matches run, or the
-  tournament runs all tables in lockstep, is undecided.
-- **Swiss details.** Pairing rules (score groups, first-player balance, rematch avoidance), how a
-  table's result is reported (by the players' own devices, or entered by the TO), and what a
-  win/draw/loss is worth in tournament points.
+- **Swiss details.** Pairing rules (score groups, first-player balance, rematch avoidance) and
+  whether manual mode should score Swiss-style. What is decided: a table's result is reported by
+  the game itself (never typed in by the TO), and the standing counts cumulative victory points —
+  not match wins — so a BYE's fixed award is what stands in for a win.
 - **Manual pairing beyond the first round.** The assignment board exists (drag, or tap to place),
-  and it is what the manual tick always meant for round 1. Open: whether the TO re-assigns by hand
-  every round on the same board, whether manual mode still scores Swiss-style, and whether an
-  automatic pairing should ever be offered as a suggestion the TO can adjust.
+  and every round is paired on it again today. Whether an automatic pairing should ever be offered
+  as a suggestion the TO can adjust is open.
 - **Registered armies are snapshots, not validated lists.** The TO's and every joiner's Roster list
   arrives as a `{ name, factionId, code }` snapshot and is shown by name and faction; the server
   never decodes the code, so nothing enforces the 125-point cap yet. Whether creation and join
-  should verify it (the code is self-describing) is open.
-- **What a BYE win is worth.** Who takes it is decided — the organizer assigns it like any other
-  occupant — but not what the sit-out scores: the same tournament points as a played win, fewer, or
-  a separate marker that tie-breaks treat differently.
+  should verify it (the code is self-describing) is open. Note that the cap is enforced where it
+  matters: each round's match cuts the roster down through the army builder's own guards.
 - **A field that cannot fill cannot shrink.** With at most one empty seat allowed, two no-shows
   make the event unstartable and the only way out is cancelling it and recreating a smaller one.
   Whether the organizer may shrink the field of a lobby that has not started — and whether the
@@ -399,15 +504,22 @@ _Round 1 Scoring_ to _Round 2 Setup_.
   releasing a seat mid-pairing needs a forfeit rule first (what the opponent at that table scores,
   whether the table is dissolved, whether the field goes odd and a BYE appears). The organizer can
   cancel a running event, so a broken one is killable today.
-- **Where do the tables' games actually run?** Presumably each table is a normal match on the
-  players' own devices through the online machinery, with the tournament server overwatching;
-  whether a table may instead be hot-seat on one device is open.
-- **Concluding.** What decides the victor — tournament points, match wins, tie-breaks — and what
-  the final screen shows.
+- **A table whose players are gone.** A closed match replays, but a replay needs both players to
+  come back; a table with a no-show holds its round in `game` forever, and the only way out is
+  cancelling the event. Whether the organizer should get a forfeit rule (a result for a match that
+  was never played) is the open half of the replay decision.
+- **The BYE's award is a constant.** Five victory points, whatever the field, the mission or the
+  round. Whether it should track something (the field's average, the round's average score) is
+  open; the constant is what keeps the sit-out neutral without pretending a win was played.
 - **Identity beyond the seat token.** A device holds exactly one tournament seat session; whether a
   name can be reused across tournaments, whether a TO can hand their seat over, or whether players
   ever get an account, is open.
+- **The report.** `completedRounds` holds everything a report needs, and concluded events are kept
+  48 hours for it; what the report contains and where it is generated is the next iteration.
 
-Resolved since the last revision: the army builder's Roster format is no longer internally named
-`'tournament'` — it is `'roster'`, with a decode migration for existing codes and saves (see
-`08-army-builder.md` §Formats).
+Resolved since the last revision: the round's `game` and `scoring` phases are built — a table's
+match is an ordinary online game the tournament creates and overwatches (see _Playing the round_),
+results report themselves into a cumulative standing, and the event concludes onto a final screen;
+the BYE is worth 5 VP; a dead table replays rather than being scored by hand; and the army
+builder's Roster format is no longer internally named `'tournament'` — it is `'roster'`, with a
+decode migration for existing codes and saves (see `08-army-builder.md` §Formats).

@@ -52,10 +52,10 @@ lives in one place (`components/playerAccent.ts`), so a seat reads the same ever
 the briefing's pick buttons and army panel headings, the Active Player line, the two VP blocks,
 the army pane titles and the interactive row's hover glow.
 
-## The four-view tracker
+## The three-view tracker
 
-The tracker is the same sliding-strip screen as solo's, with four views behind the header's
-spotlight switcher: **Scoring / P1 Army / P2 Army / Mission**. A horizontal swipe steps between
+The tracker is the same sliding-strip screen as solo's, with three views behind the header's
+spotlight switcher: **Scoring / Army / Mission**. A horizontal swipe steps between
 them like everywhere else, and each pane scrolls itself.
 
 ### Scoring
@@ -83,18 +83,50 @@ carries the app's neon beam in violet (`neon-border neon-violet`) — violet bei
 mechanic's hue, belonging to neither seat. A fresh play is reached the way every other run ends:
 Return → Abandon → pick the mission again.
 
-### P1 Army / P2 Army
+### Army — the Battle Flowers
 
-Each seat's attached army in the same panel the solo tracker uses, with a seat title and colour.
-The pane belonging to the **active** seat is live: rows open the vitality menu (damage, heal with
-overheal to double, stamina, fifteen States) exactly as in solo, and the accepted values persist
-under that seat's `vitality` map. The other pane is **frozen**: portraits and upgrade pills still
-open their inspection popups and the Life/stamina tracks and State glyphs still render, but the
-rows carry no click target, and one line under the heading says the seat is not the active player
-and the pane is shown for reference. Swapping is what hands a pane over.
+One panel split vertically in half: a translucent **sky** half for Player 1 and a translucent
+**orange** half for Player 2, each headed by its seat's name and the army it fields (or _No army
+attached_). Every copy in a seat's list is drawn as a **Battle Flower**: the unit's icon in a
+circular orb, ringed by a circular bar in two halves.
 
-Because decoded entry ids are position-based, both seats can hold an `imported-0`; the two
-`vitality` maps keep them apart.
+- The **left half** is the copy's Stamina: one equal box per point of its effective STA, filled
+  yellow.
+- The **right half** is its Life: one box per point of its effective HP, filled red.
+- A lost point **empties its box from the bottom end** of the half (a dark box keeping its
+  coloured rim), so the ring's shape never changes mid-game.
+- The ring is thin and sits flush on the orb, and the two halves meet at 12 and 6 o'clock, so the
+  whole flower reads as **one circle** rather than an orb inside a disconnected band. Every
+  filled box carries a dark border so the count reads at a glance; a lost box's coloured rim is
+  what marks its slot.
+- An overhealed Life **repaints its extra points blue over the red boxes from the top end**
+  instead of growing the ring: two base HP healed to three read one blue and one red box, at
+  four both are blue.
+- A half a model has no value for (a null STA or HP) draws no boxes at all.
+- A mounted copy is one flower: the rider's icon, the mount's stats on the ring, and the mount's
+  name under the unit's.
+
+Both seats share the one view, so the old active/frozen distinction no longer applies to armies —
+a flower is reference for whoever holds the phone.
+
+**Focusing a flower.** Clicking a flower lifts it out of the panel: the screen behind blurs and
+dims, the flower glides to the viewport centre at 1.3× its size, and every other flower fades to
+a quarter of its opacity so the focused one holds the eye. A click anywhere outside the flowers —
+or Escape — glides it back into its slot and restores the panel. The enlarged flower is a
+measured clone rendered at the screen root (`BattleFlowerFocus`), because the sliding strip's
+transform would trap a `fixed` overlay inside the pane; it grows a third, deliberately not to
+full screen. Once the flower has landed, a ring of eight **petals** blooms outside its ring —
+thicker arc buttons, one per action the flower will offer: damage to this model, to an enemy or
+to a friendly; heal this model or a friendly; assign a status to this model, an enemy or a
+friendly — tinted red, emerald and violet by kind. Dismissing retracts the petals first and only
+then glides the flower home. The petals' behaviour is the next iteration; today they hold their
+place and keep the focus open. Focusing is the flower's only other interaction: beyond it the
+flowers edit nothing. The vitality menu, the unit card and status assignment return in the
+interaction phase, rebuilt on the flower itself; until then those features are simply absent
+from the army view.
+
+Because decoded entry ids are position-based (`imported-1` for a list's first copy), both seats
+can hold the same id; the two `vitality` maps keep them apart.
 
 ### Mission
 
@@ -108,8 +140,8 @@ countdown** (`CountdownOverlay`, `z-50`): _"Player swapping in"_ above a giant n
 **Skip** button. Finishing the countdown and pressing Skip both perform the swap.
 
 That delay is the whole privacy mechanism: the outgoing player looks away, the incoming player
-takes the phone. `activePlayer` then flips, the Scoring sheet rebinds to the new seat's
-objectives, and the army panes trade editable for frozen.
+takes the phone. `activePlayer` then flips and the Scoring sheet rebinds to the new seat's
+objectives; the Army view is shared reference and does not change hands.
 
 The swap does **not** touch progress — objectives, schemes, vitality and the round all survive it.
 
@@ -125,18 +157,18 @@ mid-run offers the resume prompt, and the record's `mode` sends it into this tra
 
 Same game, different trust model:
 
-|                         | Hot-seat                   | Online                                                                 |
-| ----------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| Device                  | one, shared                | one per player                                                         |
-| Source of truth         | `localStorage`             | the server                                                             |
-| Scheme secrecy          | convention + a countdown   | server-enforced visibility filter                                      |
-| Reveal                  | permanent, one press       | a **toggleable intent**, committed when the leader advances to Scoring |
-| Revealed scheme's boxes | editable by either player  | **owner only**                                                         |
-| Hidden scheme scoring   | allowed (boxes are there)  | **impossible** — boxes stay locked until revealed                      |
-| Round advancement       | manual, Player 1 only      | server phase engine, leader-driven                                     |
-| Objectives              | active seat's own sheet    | own column, only during the Scoring phase                              |
-| Armies                  | one per seat, tracked live | none                                                                   |
-| Swap mechanic           | yes                        | none needed                                                            |
+|                         | Hot-seat                        | Online                                                                 |
+| ----------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| Device                  | one, shared                     | one per player                                                         |
+| Source of truth         | `localStorage`                  | the server                                                             |
+| Scheme secrecy          | convention + a countdown        | server-enforced visibility filter                                      |
+| Reveal                  | permanent, one press            | a **toggleable intent**, committed when the leader advances to Scoring |
+| Revealed scheme's boxes | editable by either player       | **owner only**                                                         |
+| Hidden scheme scoring   | allowed (boxes are there)       | **impossible** — boxes stay locked until revealed                      |
+| Round advancement       | manual, Player 1 only           | server phase engine, leader-driven                                     |
+| Objectives              | active seat's own sheet         | own column, only during the Scoring phase                              |
+| Armies                  | one per seat, as Battle Flowers | none                                                                   |
+| Swap mechanic           | yes                             | none needed                                                            |
 
 The online rules that have no hot-seat equivalent (reveal-as-intent, revealed-only scoring,
 phase freezing) exist because a server can enforce them; hot-seat cannot, so it does not pretend
@@ -151,9 +183,10 @@ to.
 - **The swap countdown is skippable**, which means the privacy guarantee is opt-in at the exact
   moment it matters. Is Skip worth keeping (it is genuinely useful when the same person is
   playing both seats for a test), or should it go?
-- **The frozen army pane is a convention, not a lock.** Nothing stops the incoming player from
-  swapping back and editing the other seat's Life. Hot-seat's trust model has always been "one
-  phone, two people sitting together"; the pane only makes the honest path obvious.
+- **The flowers focus but do not edit.** Life, stamina and States cannot be changed in hot-seat
+  at all right now: the vitality menu went with the army panes it lived in, and the flower's own
+  interaction — box taps, the unit card on the orb, status assignment on the flower — is the next
+  iteration. Until then a run fields whatever Life it started with.
 - Hot-seat has **no notion of a finished game** — no statistics, no winner, no round snapshots.
   Online computes all three. Would a post-round-5 summary be useful here, or are the two VP
   blocks enough?

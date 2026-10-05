@@ -101,6 +101,23 @@ Note that a seat's `progress` is the **same `SeatProgress` type hot-seat uses**,
 hot-seat keeps its `pickedArmy` and live `vitality` on `PlayerProgress`, locally, while an online
 seat keeps both of its in server state.
 
+`tournament` is the table this game belongs to — `{ code, round, tableIndex }` — and `null` for a
+free game. Only `createTournamentGame` sets it: a tournament's match is born with **both seats
+filled** from the event's registrations (no pending join, no invite code, no mission to pick — the
+round's mission and its season are the setup), because the pairing was already decided by whoever
+runs the event. The reference is what lets a finished game report its score back into the round
+(`lib/server/tournamentGames.ts`, called from `advance-phase` and from retention's auto-finish),
+and what tells the client that its exits belong to a table rather than to the main menu. Rows
+written before the field existed simply have none — which is also the truth about every free game
+— so it is read through `onlineGameTournament()`; the filtered view carries it as-is, since it
+names no army and no token. A table's game id is **derived**, not allocated
+(`CODE-R{round}T{table}A{attempt}`), so two devices entering at the same instant aim at the same
+row and the second's insert meets a primary-key conflict instead of opening a rival table; the
+`attempt` is what gives a replay of a closed match a game of its own. Because the tournament
+already proves who is asking, `enter-game` may re-mint a seat's token — the recovery path for a
+device that lost its session — retiring the old one, which is the same "one token holds one seat"
+rule a join lives by.
+
 ### Transitions
 
 Every transition is a pure function with a `can*` guard. Guards return booleans; the transition

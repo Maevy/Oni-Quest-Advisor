@@ -49,16 +49,26 @@ each `src/lib/` folder.
 - **Active player** (hot-seat only) — whose sheet, schemes and army are currently editable. In
   memory only; switched by the Swap Player countdown.
 - **Reveal** — making a hidden Scheme visible. Permanent and one-press in hot-seat; online it is
-  a **toggleable intent** during the Reveal phase, committed when the leader advances to Scoring,
-  and a hidden scheme **cannot be scored at all**.
+  the seat's own **one-way act at any moment of a running round**, behind a confirmation, and a
+  hidden scheme **cannot be scored at all**.
 - **Total VP** — Results VP + Scheme VP, capped at 10, not floored at 0 (ceasefire penalties can
   push a party negative).
 - **Open game** — a local run started from the briefing and not yet abandoned, recorded under
   `oni-quest-advisor:open-game` with its mode. Its existence is what makes the app offer to resume
   on the next launch; abandoning deletes it together with that mission's progress.
 - **Game view** — one of the tabs a tracker splits into: solo has **Scoring** (the default, holding
-  the score panel, Results and Schemes), **Army** and **Mission**; hot-seat adds a second army tab
-  for the other seat (**Scoring / P1 Army / P2 Army / Mission**).
+  the score panel, Results and Schemes), **Army** and **Mission**; hot-seat has the same three,
+  its Army view holding both seats at once. Online splits by seat instead of
+  by army (**P1 Scoring / P2 Scoring / Army / Mission**), each scoring pane carrying that seat's
+  identity, scheme and Results, and its Army view is still a placeholder.
+- **Battle Flower** — one army copy drawn as its icon in a circular orb ringed by two half-rings
+  of boxes: Stamina (yellow) on the left, Life (red) on the right. Lost points empty from the
+  bottom end of a half; an overhealed Life repaints blue from the top end instead of growing the
+  ring. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
+  row. Clicking a flower focuses it — blur, a 1.3× clone at the viewport centre — and a ring of
+  eight petal buttons (damage / heal / status × self / enemy / ally) blooms outside the ring;
+  their icons and functions are the next iteration. See
+  [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 
 ### Online
 
@@ -119,21 +129,22 @@ each `src/lib/` folder.
 ### Tournament
 
 - **Tournament** — an event run by a Tournament Organizer: a named field of players paired round
-  by round at tables, concluding with a victor. Under construction; the configuration wizard, the
-  lobby and joining exist, pairing onward does not. See
+  by round at tables, concluding with a victor. Under construction; everything through the
+  conclusion screen exists — the configuration wizard, the lobby and joining, table assignment,
+  the round's matches, scoring and the final standing — and only the report does not. See
   [09-tournament.md](./09-tournament.md).
 - **Tournament Organizer (TO)** — creates, configures, pairs and concludes a tournament and
   overwatches its tables. May also take one of the seats.
 - **Field** — the tournament's participant count: an even number from 4 to 32, one seat per
   pairing slot. A playing TO holds one of those seats rather than adding to them.
-- **Pairing mode** — automatic (a Swiss system pairs each round) or manual (the TO assigns each
-  round's tables by hand).
+- **Pairing mode** — automatic (a Swiss system pairs each round; **not built yet**) or manual (the
+  TO assigns each round's tables by hand, which is what exists today).
 - **Round** — one pass through the field: its number, the mission it plays (mission _n_ of the
-  configured list), the table assignments and the victory-point standing. Round 1 opens when the
-  TO starts the event.
+  configured list), the table assignments and the victory-point standing, which is **cumulative
+  across rounds**. Round 1 opens when the TO starts the event.
 - **BYE** — the imaginary player an odd registered field adds so that every table can still be
   paired. It is an occupant the TO assigns like any player, and whoever it lands with sits that
-  round out and takes it as a win.
+  round out and takes it as a win worth a fixed **5 VP**.
 - **Occupant** — what a table holds in the round being prepared: a registered player's seat, or
   the BYE. At most two per table, and no table may hold one alone.
 - **Round phase** — `setup` (tables are being assigned), `game` (the matches are played, tables
@@ -151,7 +162,8 @@ each `src/lib/` folder.
 game-mode ──┬── Solo ────────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── 2 Player ────────────▶ season-select ▶ mission-select ▶ mission-briefing ▶ mission-detail
             ├── Online 2 Player ─────▶ [intro notice] ▶ online-create ▶ online-join ▶ online-game
-            ├── Organize Tournament ─▶ tournament-setup (wizard) ▶ tournament-lobby ▶ tournament-round (starting the round onward under construction)
+            ├── Organize Tournament ─▶ tournament-setup (wizard) ▶ tournament-lobby ▶ tournament-round ▶ tournament-results
+            │                          (a round's tables open their matches in online-game; the report is the next iteration)
             └── Army Builder ────────▶ army-faction-select ▶ army-builder
 ```
 
@@ -179,26 +191,22 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
    round stepper and reset live: an inline panel at the top of each local tracker's Scoring view
    (hot-seat's adds the Active Player line and the swap), and nothing at all in online.
 6. [06-two-player-hot-seat.md](./06-two-player-hot-seat.md) — one device, two secrets: state
-   model, seat colours, the four-view tracker, the swap countdown, and how it differs from online.
+   model, seat colours, the Battle Flowers army view, the swap countdown, and how it differs from
+   online.
 7. [07-online-two-player.md](./07-online-two-player.md) — the online player journey: create,
    invite, join, setup, rounds and phases, finish and statistics, reconnection, closing.
 8. [08-army-builder.md](./08-army-builder.md) — faction select, the builder, unit cards, mounts,
    upgrades, the Roster equipment pool, army codes and saved armies.
 9. [09-tournament.md](./09-tournament.md) — the Tournament Organizer's event: configuration
-   wizard, creation, the lobby and joining (built), then pairings, overwatch and the conclusion.
-   Under construction; grows step by step.
+   wizard, creation, the lobby and joining, table assignment, the round's matches, scoring, the
+   megaphone and the conclusion (all built); the report is what is left. Under construction; grows
+   step by step.
 
 ## Open questions
 
 Each document ends with its own **Open questions** section — keep them updated as decisions get
 made, and treat them as the backlog of behavioural gaps. The cross-cutting ones:
 
-- **The shared header component is half done.** `ScreenHeader` now renders the season and mission
-  selects, the briefing (both modes) and both local trackers; the mode select, online screens and
-  army builder still invent their own constellations. Tracked in
-  [../technical-spec/01-visual-theme.md](../technical-spec/01-visual-theme.md).
 - **The picked army is display-only.** The Army views are reference sheets; nothing validates a
   list against the mission (points, faction, required units). Whether it ever should is an open
   question in [01-navigation-flow.md](./01-navigation-flow.md).
-- **Grouped Results in online.** Both local modes render per-round cards in the briefing and the
-  tracker; online still shows one card per round-entry (Awaiting Reinforcements: 12 cards).

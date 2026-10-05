@@ -178,27 +178,40 @@ button, whose violet is the swap mechanic's hue and belongs to neither seat.
 
 ## The top bar
 
-`ScreenHeader.svelte` is the one bar six screens share — season select, mission select, the
-mission briefing in both local modes, and both local trackers. Chrome: `sticky top-0 z-30` over a
+`ScreenHeader.svelte` is the one bar **every screen with somewhere to go back to** shares: the
+season and mission selects, the mission briefing in both local modes, both local trackers, the
+army builder's two screens, all eight online screens and all five tournament ones. Only the mode
+select has no bar — it is the root, so it passes no `onBack` and there is nothing to return from.
+Chrome: `sticky top-0 z-30` over a
 `border-b border-slate-700/40 bg-slate-950/80 backdrop-blur` strip, its row centred in the same
-`max-w-xl px-4` column as the page body. Left: the red inverted **← Return** — the one filled
-navigation button, the treatment the briefing established. Middle: an optional `title`, rendered
+`max-w-xl px-4` column as the page body — unless the screen passes `wide`, which only the army
+builder does: its panels are the one full-bleed body in the app, so there the row spans the same
+width as the body and Return lines up with the panel edge instead of floating in the middle of
+the screen. Left: the red inverted **← Return** — the one filled
+navigation button, the treatment the briefing established, and `shrink-0 whitespace-nowrap`
+because a wide right side used to squeeze it until "← Return" wrapped onto two lines and silently
+grew every header by 13 px. Middle: an optional `title`, rendered
 as the page's `h1` (the mission select's season name; screens that title themselves below, like
 the season select's hero block, pass none). Right: an `actions` snippet — plain outlined buttons
-on the selects and briefing, the tracker's spotlight view switcher on the tracker.
+on the selects and briefing, a tracker's spotlight view switcher, the builder's Standard/Roster
+tabs, Close Game on a live online screen — then a `trailing` slot kept apart from `actions`
+because whatever sits there must never be squeezed or wrapped, and the tournament megaphone at
+the very end of the bar.
 
-Sticky is a harmless no-op on the three full-height screens, whose layout pins the bar already,
+Sticky is a harmless no-op on the four full-height screens (`ArmyBuilderView`, `MissionDetail`,
+`MissionDetailTwoPlayer`, `OnlineTracker`), whose layout pins the bar already,
 and is what keeps Return in reach while a long mission list scrolls. The row carries `min-h-16` so
 the bar is the same height on every screen: without it the height follows the tallest control, and
 a lone border-less Return sits 6 px lower than the tracker's bordered switcher. The min-height has
 to clear that control _plus_ the row's `py-2.5`, because `border-box` measures it on the padded
 box — an earlier `min-h-11` silently did nothing for exactly that reason. It is a **minimum**, and
-the actions container wraps (`flex-wrap justify-end`) for the two screens whose right side does
-not fit one row on a phone: the hot-seat briefing (Return + two army picks + Start Game) and the
-hot-seat tracker (Return + a four-up switcher). A wrapped bar simply grows taller.
+the actions container wraps (`flex-wrap justify-end`) for the screens whose right side does
+not fit one row on a phone: the hot-seat briefing (Return + two army picks + Start Game) and any
+tracker (Return + a view switcher, plus the megaphone online). A wrapped bar simply grows taller.
 
-The mode select, the online screens and the army builder still carry their own constellations;
-see Open questions.
+Nothing hand-rolls a back button any more. The online screens' and the army builder's ad-hoc bars
+moved onto this one, each keeping its screen-specific control in `actions`, so a screen's identity
+now lives in a banner or a panel title below the bar rather than in a second chrome of its own.
 
 ## Overlays, stacking and the backdrop-filter trap
 
@@ -301,9 +314,6 @@ honour `prefers-reduced-motion`, and mark decorative glyphs `aria-hidden`.
 
 ## Open questions
 
-- **The shared top bar covers six screens.** `ScreenHeader` now renders the season and mission
-  selects, the briefing in both local modes and both local trackers. The mode select, the online
-  screens and the army builder still invent their own constellations and should move onto it.
 - Should the button recipes above become real shared components/classes? They are currently
   copy-pasted Tailwind strings, which is why the disabled treatment drifted between screens.
 - The palette has no semantic names (`--color-danger` etc.), so "red means destructive" is

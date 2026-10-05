@@ -40,7 +40,7 @@ online-create | online-join | online-game
                     │ "Start Game" — records the open game
                     ▼
              mission-detail  ══▶  solo:   [ Scoring | Army | Mission ]
-                                  hot-seat: [ Scoring | P1 Army | P2 Army | Mission ]
+                                  hot-seat: [ Scoring | Army | Mission ]
                     │
                     │ "← Return" → confirm "Abandon this game?"
                     ├── Keep playing ─▶ stays put
@@ -52,9 +52,12 @@ online-create | online-join | online-game
 
   app start ──tournament session found──▶ "You are participating in {name}"
                                           (organizer: "You are the organizer of {name}")
-                                   ├── Return ──▶ tournament-lobby (refetched, then live over SSE)
+                                   ├── Return ──▶ the screen the event status says
+                                   │            (lobby / round / results; refetched, live over SSE)
                                    └── Abandon ─▶ stays on game-mode — participant: seat freed
                                                                    organizer: event cancelled
+                                   (a concluded event: Abandon reads "Leave" and is local —
+                                    there is no seat left to free)
 
 
   game-mode ──"Army Builder"──▶ army-faction-select ──pick faction──▶ army-builder
@@ -80,6 +83,14 @@ online-create | online-join | online-game
   tournament-lobby ──"← Return"──▶ the same "You are participating in {name}" prompt
   tournament-round                 ├── Return ──▶ back onto the screen the status says
                                    └── Abandon ─▶ game-mode (seat freed / event cancelled)
+
+  tournament-round ──"Enter Game" (the two players a table holds)──▶ online-game
+                     (the match is an ordinary online game the tournament created; its exits —
+                      Return, the score screen's Return to Tournament — come back here)
+  tournament-round ──"Next Round" / "Conclude Tournament" (organizer, round scored)──▶
+                     tournament-round (the next mission) / tournament-results (every device)
+  tournament-results ──"Leave Tournament" (player) / "End Tournament" (organizer)──▶ game-mode
+                     (both local: a concluded event has no seat left to free)
 ```
 
 ## Screen 1 — Game Mode (`game-mode`)
@@ -243,19 +254,16 @@ view keeps its own scroll position. A mostly-vertical drag scrolls instead and c
 The three buttons remain the accessible path; the swipe is a shortcut, never the only way.
 
 In **hot-seat** the same screen id renders `MissionDetailTwoPlayer` — the same sliding-strip
-tracker with **four** views, because each seat fields its own army:
+tracker with **three** views; its Army view holds both seats at once:
 
 | View        | Contents                                                                                                                       |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | **Scoring** | Active Player panel → score panel (both seats' VP, round, Swap Player) → Results (**active seat only**) → Schemes (both seats) |
-| **P1 Army** | Player 1's army — editable while Player 1 is the active player, frozen for reference otherwise                                 |
-| **P2 Army** | Player 2's army — editable while Player 2 is the active player, frozen for reference otherwise                                 |
+| **Army**    | the **Battle Flowers**: one panel split into a sky and an orange half, each seat's copies as orb-and-ring flowers              |
 | **Mission** | the static panels only: Description (with its rule-label popups) → Setup → Deployment Map → Quest Rules                        |
 
-The two army panes are the same component as solo's Army view, with a seat title and colour and a
-frozen mode: the inactive seat's rows keep their portraits, upgrade pills, Life/stamina tracks and
-State glyphs, but carry no click target and say in one line why they are read-only. Swapping
-players is what hands an army pane over — the panes themselves never change owner. See
+The flowers render each seat's `vitality` map and are display-only in their first phase — no
+click target on them yet, for either seat. See
 [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 
 ### Return means abandon
@@ -366,15 +374,22 @@ lobby instead of taking a second seat.
 persistence and no open-game record. **Return** in the lobby is a different matter: it asks first,
 and abandoning tells the server (a participant frees their seat, the organizer cancels the event).
 
-`tournament-round` is the match-preparation screen a started event lives on: the progress roadmap,
-the round and its mission, the victory-point standing, the **Start Round** button (the organizer's
-alone, gated on a complete pairing) and the table assignment board, which locks once the round
-moves from `setup` to `game`. **Which of the two screens a device shows is driven by the event's
-status, not by a click** — the organizer's **Start Tournament** moves every participant from the
-lobby to the round over the change notification, and the page only follows that status while a
-tournament screen is already up, so a device that walked away to the menu is never pulled back into
-the event. The startup prompt's **Return** lands on whichever of the two the fetched status names.
-Full detail in [09-tournament.md](./09-tournament.md).
+`tournament-round` is the one screen a started event lives on through all three of its round's
+phases: the progress roadmap, the round and its mission, the victory-point standing, and a table
+panel whose contents follow the phase — the assignment board and **Start Round** (the organizer's
+alone, gated on a complete pairing) in `setup`; locked tables with an **Enter Game** button for the
+two players each table holds in `game`; greyed, scored tables with **Next Round** / **Conclude
+Tournament** for the organizer in `scoring`. **Enter Game** hands the device an ordinary online
+seat — the match the tournament created for that table — and moves it to `online-game`, whose
+exits (the header's Return, the score screen's **Return to Tournament**) come back here. **Which
+screen a device shows is driven by the event's status, not by a click** — the organizer's **Start
+Tournament**, **Next Round** and **Conclude Tournament** move every participant over the change
+notification, and the page only follows that status while a tournament screen is already up, so a
+device that walked away to the menu — or into its match — is never pulled back into the event. The
+startup prompt's **Return** lands on whichever screen the fetched status names.
+`tournament-results` is where a concluded event puts every device still in it: the final standing
+in medal colours, and the exits (all local). Full detail in
+[09-tournament.md](./09-tournament.md).
 
 ## Online flow
 

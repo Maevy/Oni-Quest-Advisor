@@ -107,6 +107,18 @@ section.
   tournament registrations; read the format through `pickedArmyFormat()`) and `vitality`
   (entry id → `{ hp, sta }`, **absent = full**). Life overheals to double its base, the extra
   hearts blue. Total VP is capped at `MAX_TOTAL_VP` = 10.
+- **Battle Flower** → one army copy drawn as its icon in a circular orb ringed by two half-rings
+  of boxes: STA (yellow) on the left, HP (red) on the right. The ring always carries the
+  **base** stat's boxes — a lost point empties its box from the bottom end and an overhealed
+  Life **repaints** its extra points blue from the top end (`vitalityRingStates`), so the ring
+  never grows. One flower per copy; a mounted copy is one flower on the mount's stats. Hot-seat's
+  Army view is one panel split into a sky and an orange half, one flower per row; clicking a
+  flower **focuses** it (backdrop blur, a 1.3× clone gliding from its slot to the viewport centre,
+  the rest faded; click outside or Escape returns it — the clone lives at the screen root because
+  the strip's transform traps `fixed` overlays), and once landed a ring of eight **petal buttons**
+  blooms outside the ring (damage / heal / status × self / enemy / ally); their functions are the
+  next iteration. Editing still lives nowhere: the vitality menu went with the army panes it
+  lived in and returns on the flower later.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the
@@ -196,6 +208,28 @@ section.
   - **A round walks `setup` → `game` → `scoring`** (`TOURNAMENT_ROUND_PHASES`) and the phase
     is server state. `/start-round` moves it to `game`, which **locks the tables** for
     everybody — a pairing cannot change under a match being played, and there is no way back.
+    `scoring` is **nobody's click**: the round lands there when its last table reports, and from
+    there the organizer's `/next-round` (or `/conclude` after the last mission) is the only way on.
+  - **A table's match is an ordinary online game the tournament owns.** `round.tables` and
+    `round.matches` are parallel arrays created together; the game id is **derived**
+    (`tournamentGameId` = `CODE-R{round}T{table}A{attempt}`), never allocated, so two devices
+    pressing Enter Game at once aim at one row — the second insert meets a primary-key conflict
+    and joins the first game. `createTournamentGame` fills **both seats** from the registrations
+    (no join, no invite code, mission from the round), and `/enter-game` re-mints the caller's
+    seat token, which is the recovery path for a device that lost its session. A finished game
+    reports its VP into the **cumulative** standing (`recordTableResult`, idempotent — a stale
+    game auto-finished by retention and a leader's last click can both arrive); the table's
+    occupant order _is_ the game's player1/player2 order. A closed game **replays** (the attempt
+    bumps, giving the replay a fresh id) — there is no organizer score override. A BYE table is
+    settled at round start with `BYE_VICTORY_POINTS` = 5, so it never holds a round open.
+  - **The megaphone** (`state.messages`, newest first, capped, each with `readBy`) reaches a
+    player inside the match it interrupts: per-table composers on the round board plus a
+    broadcast in the organizer's header, and an inbox in a player's header on the board and on
+    all six online screens. Messages belong to the round they were sent in; reading is per seat.
+  - **A concluded event frees no seat.** Its exits (Leave / End Tournament) are local-only,
+    because a freed seat would drop that player out of the archived standing the 48-hour report
+    window exists to keep — which is also why `/leave` still refuses after the conclusion.
+    `completedRounds` (pairing, results, cumulative totals) is the report's raw material.
   - The roadmap (`tournamentRoadmap`) is **derived, not stored**: three steps per configured
     mission plus a final conclusion.
   - **The QR symbol is encoded in-app** (`domain/qr.ts`: byte mode, EC level M, versions 1–6,
