@@ -115,10 +115,22 @@ section.
   Army view is one panel split into a sky and an orange half, one flower per row; clicking a
   flower **focuses** it (backdrop blur, a 1.3× clone gliding from its slot to the viewport centre,
   the rest faded; click outside or Escape returns it — the clone lives at the screen root because
-  the strip's transform traps `fixed` overlays), and once landed a ring of eight **petal buttons**
-  blooms outside the ring (damage / heal / status × self / enemy / ally); their functions are the
-  next iteration. Editing still lives nowhere: the vitality menu went with the army panes it
-  lived in and returns on the flower later.
+  the strip's transform traps `fixed` overlays), and once landed a ring of six **petal buttons**
+  blooms outside the ring — the model's card, deal damage, heal, assign a status, remove a status
+  and manage Stamina — as one dark-blue glass whose pressed petal lights a yellow rim (one at a
+  time; the light is the selection a later sub-ring will bloom from, except the card petal, whose
+  light is the open `UnitCard`'s and drops when it closes). The glyph says the kind and the
+  colour the intent: a grey bang in a grey ring for the card, a red sword, a green medic's cross,
+  an orange star to assign and a light-blue one to remove a status, a yellow disc for Stamina.
+  The card petal opens the copy's `UnitCard` above the flower, and dismissing the card leaves the
+  flower centred until the next click outside. The sword and the cross are wired: pressing one
+  blooms a third ring of amounts (1…6 and X, painted behind the action ring), an amount brings
+  the field forward as a target row — the **living** copies for damage, every copy below its
+  **overheal cap** (double base, blue boxes) for heal, seat rims and copy badges on the icons —
+  one tap selects under a turning crosshair, the second confirms, the glyph flies to the target
+  and its Life boxes walk one by one before the overlay closes with the change committed to that
+  seat's vitality map. The status and Stamina petals still hold their place; editing lives
+  nowhere else — the vitality menu went with the army panes it lived in.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the

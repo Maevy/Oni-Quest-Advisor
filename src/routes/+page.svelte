@@ -13,6 +13,8 @@
 		pickedArmyFormat,
 		resolveArmyEntries,
 		savedArmyFormat,
+		vitalityAfterDamage,
+		vitalityAfterHeal,
 		type ArmyFormat,
 		type ArmyRosterRow,
 		type ArmyView,
@@ -1131,6 +1133,36 @@
 		onRevealScheme={(player) => twoPlayerProgressStore.revealScheme(player)}
 		onSetRound={(round) => twoPlayerProgressStore.setRound(round)}
 		onSwap={() => twoPlayerProgressStore.swapPlayer()}
+		onDamage={(target, amount) => {
+			const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
+			const row = view?.rows.find((candidate) => candidate.entryId === target.entryId);
+			if (!view || !row) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterDamage(
+					view.vitality[target.entryId],
+					row.effectiveStats.HP ?? 0,
+					row.effectiveStats.STA,
+					amount
+				)
+			);
+		}}
+		onHeal={(target, amount) => {
+			const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
+			const row = view?.rows.find((candidate) => candidate.entryId === target.entryId);
+			if (!view || !row) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterHeal(
+					view.vitality[target.entryId],
+					row.effectiveStats.HP ?? 0,
+					row.effectiveStats.STA,
+					amount
+				)
+			);
+		}}
 	/>
 {:else if selectedMission && missionProgressStore.progress}
 	<MissionDetail

@@ -60,21 +60,38 @@ the device or on the server is the open half.
 
 The current feature is the **Battle Flowers** — the army panel's redesign: every copy drawn as
 its icon in a circular orb ringed by Stamina boxes (yellow, left half) and Life boxes (red,
-right half). **Phase 1 sits in the working tree, uncommitted**: the hot-seat tracker's two army
-panes became a single Army view holding one panel split into a sky and an orange half, one
-flower per row, and clicking a flower focuses it — backdrop blur, a 1.3× clone gliding to the
-viewport centre, the rest faded; once landed, a ring of eight petal buttons blooms outside the
-ring (damage / heal / status × self / enemy / ally) and retracts before the flower glides home
-on click-outside or Escape. What the interaction phase still owes: the petals' functions, box
-taps, the unit card on the orb, and status assignment — until then hot-seat cannot change Life,
-stamina or States at all. Behaviour spec:
+right half). Phase 1 shipped in `e895afe`: the hot-seat tracker's two army panes became a single
+Army view holding one panel split into a sky and an orange half, one flower per row, and
+clicking a flower focuses it — backdrop blur, a 1.3× clone gliding to the viewport centre, the
+rest faded; once landed, a ring of petals blooms outside the ring and retracts before the flower
+glides home on click-outside or Escape. The ring is now **six petals** (2026-10-05): the model's
+card, deal damage, heal, assign a status, remove a status and manage Stamina — one dark-blue
+glass, a pressed petal lighting a yellow rim (one at a time; the light is the selection a later
+sub-ring will bloom from — except the info petal, whose light is the open card's and drops when
+the card closes), and the card petal opening the copy's unit card above the flower, which a
+click outside dismisses while the flower stays centred until the next one. The glyphs landed the
+same day: a grey bang in a ring for the card, a red sword, a green medic's cross, an orange star
+for assigning and a light-blue one for removing a status, and a yellow disc for Stamina. The
+damage flow landed the same day as the first petal function: pressing the sword blooms a third
+ring (1…6 and X, blooming from behind the action ring, with X's own amount entry), an amount
+brings the living field forward as a
+target row (seat rims, copy badges, the focused copy's twin among them), one tap selects under a
+turning crosshair, the second confirms, the sword flies, the Life boxes darken one by one and
+the overlay closes with the hit committed to the seat's vitality map. The heal flow followed the
+same day, the shape turned around: the row offers every copy below its overheal cap (the fallen
+and the whole alike), the green cross flies, and the boxes refill one by one, past full into the
+blue overheal up to double the base. What the interaction phase
+still owes: the status / Stamina petals' functions, box taps, and status assignment — until then
+hot-seat can wound, kill and heal but not assign States or spend Stamina. Behaviour spec:
 `docs/functional-spec/06-two-player-hot-seat.md`. The flowers replace the other modes' army
-panels afterwards. **Next session (2026-10-05): prepare the petal icons, then wire the petals'
-functions** — damage/heal on self first, then the enemy/friendly targeting modes, then status
-assignment.
+panels afterwards. **Next: the status petals' flows** — assign and remove — then Stamina
+management.
 
 Smaller open threads:
 
+- **Healing can raise the fallen** — the heal row includes copies at 0 Life, so a heal revives
+  them and the zero-Life States lift again with the hp change. Whether that is legal is an open
+  ruling (2026-10-06), to be revisited; if not, `healableTargetsFor` gains a `current > 0` guard.
 - **The online tracker's Army view is an empty list on purpose** — a placeholder for per-copy
   tracking, which is where the vitality work from v0.7.0 would land.
 - **The initiative roll** (rulebook step 8) is unmodelled; its formula and prize are rulebook

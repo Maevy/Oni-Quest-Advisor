@@ -68,6 +68,13 @@
 	}
 }
 
+/* The petal ring's lit rim. A CSS drop-shadow() on an SVG path is clipped to the path's default
+   filter region (its bounding box plus 10%), which cuts the glow into a rectangle; this points
+   at the ring's own <filter>, whose region spans the whole petal space, so the glow stays round. */
+@utility petal-glow {
+	filter: url(#petal-glow);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.neon-border::after {
 		animation: none;

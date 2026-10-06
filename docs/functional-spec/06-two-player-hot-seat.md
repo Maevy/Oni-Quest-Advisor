@@ -115,15 +115,44 @@ a quarter of its opacity so the focused one holds the eye. A click anywhere outs
 or Escape — glides it back into its slot and restores the panel. The enlarged flower is a
 measured clone rendered at the screen root (`BattleFlowerFocus`), because the sliding strip's
 transform would trap a `fixed` overlay inside the pane; it grows a third, deliberately not to
-full screen. Once the flower has landed, a ring of eight **petals** blooms outside its ring —
-thicker arc buttons, one per action the flower will offer: damage to this model, to an enemy or
-to a friendly; heal this model or a friendly; assign a status to this model, an enemy or a
-friendly — tinted red, emerald and violet by kind. Dismissing retracts the petals first and only
-then glides the flower home. The petals' behaviour is the next iteration; today they hold their
-place and keep the focus open. Focusing is the flower's only other interaction: beyond it the
-flowers edit nothing. The vitality menu, the unit card and status assignment return in the
-interaction phase, rebuilt on the flower itself; until then those features are simply absent
-from the army view.
+full screen. Once the flower has landed, a ring of six **petals** blooms outside its ring —
+thicker arc buttons, clockwise from 12 o'clock: the model's card, **deal damage**, **heal**,
+**assign a status**, **remove a status**, **manage Stamina**. Damage and heal no longer declare a
+target — choosing the model is the action's own step — so one sword and one cross cover both
+cases, while status splits into assign and remove. The petals are one dark-blue glass — a very
+dark fill, a brighter blue outline — because the glyph carries the meaning, not a tint: a red
+**sword**, a green **medic's cross**, an orange **star** for assigning and a light blue one for
+removing a status, a yellow **disc** for Stamina, and a grey exclamation mark in a grey ring for
+the card. Pressing a petal lights its rim bright yellow with a glow, and only one petal glows at
+a time: pressing another moves the light, hovering shows it transiently, and a dismissal drops
+it as the petals retract. The pressed petal is the selection a later ring of sub-petals will
+bloom from; until then the other three action petals hold their place and keep the focus open. The info
+petal's light is the open card's rather than a standing selection: closing the card returns it
+to the ring's default grey, and keyboard focus wears its own sky rim, so yellow always means
+hover or pressed. The info petal opens the copy's **unit card** above the flower: dismissing the
+card — click outside or Escape — closes one layer and leaves the flower centred, and only the
+next click outside glides it home.
+
+**The damage flow** — the first petal function (2026-10-05). Pressing the sword blooms a third
+ring of seven petals, **1 … 6 and X** — painted beneath the action ring, so it emerges from
+behind it — the last opening a small amount entry; pressing an
+amount brings the whole living field forward: every alive copy of both armies, the focused
+copy's twin among them so a model can hit itself, each drawn as its flower with both rings, in
+a wrapped grid below the flower under the line "Tap on selected model and then confirm it
+again". Seat-coloured rims say whose model it is and a badge numbers duplicate copies. One tap
+selects — a slowly turning green crosshair — and a second tap on the same icon confirms: the red
+sword flies from the focused flower to the target, and on arrival the hit is committed to that
+seat's vitality map, clamped to the Life left, while the target's Life boxes darken one by one;
+when the last one has faded the overlay dismisses itself and the army view returns to normal.
+Dead copies leave the row. Escape and click-outside peel the flow back one layer at a time — the
+amount entry, then the sub-ring and row, then the overlay — and a strike in flight ignores them
+both. The status and Stamina petals still hold their place.
+
+The **heal flow** is the same shape turned around: the cross blooms the same amount ring (its X
+entry labelled "Healing"), the row offers every copy below its **overheal cap** — the fallen and
+the whole alike, because Life overheals to double its base — the green cross flies instead of the
+sword, and the boxes refill one by one, past full into the blue overheal and no further than
+double the base. Whether a heal may raise a fallen copy is still an open ruling.
 
 Because decoded entry ids are position-based (`imported-1` for a list's first copy), both seats
 can hold the same id; the two `vitality` maps keep them apart.
@@ -183,10 +212,10 @@ to.
 - **The swap countdown is skippable**, which means the privacy guarantee is opt-in at the exact
   moment it matters. Is Skip worth keeping (it is genuinely useful when the same person is
   playing both seats for a test), or should it go?
-- **The flowers focus but do not edit.** Life, stamina and States cannot be changed in hot-seat
-  at all right now: the vitality menu went with the army panes it lived in, and the flower's own
-  interaction — box taps, the unit card on the orb, status assignment on the flower — is the next
-  iteration. Until then a run fields whatever Life it started with.
+- **The flowers focus and read, but do not edit.** The info petal's unit card is the flower's one
+  open door; Life, stamina and States still cannot be changed in hot-seat at all — box taps,
+  damage, heal and status assignment are the interaction phase's work, and the six action petals
+  are lit placeholders until it lands. Until then a run fields whatever Life it started with.
 - Hot-seat has **no notion of a finished game** — no statistics, no winner, no round snapshots.
   Online computes all three. Would a post-round-5 summary be useful here, or are the two VP
   blocks enough?

@@ -1,0 +1,145 @@
+import { describe, expect, it } from 'vitest';
+import {
+	aliveTargetsFor,
+	damageApplied,
+	healApplied,
+	healableTargetsFor,
+	vitalityAfterDamage,
+	vitalityAfterHeal,
+	type VitalityTarget
+} from './vitalityFlow';
+import type { BattleFlowerSpec } from './savedArmy';
+
+function flower(entryId: string, name: string, hp: number | null, max = 3): BattleFlowerSpec {
+	return {
+		entryId,
+		name,
+		mountedOn: null,
+		stamina: null,
+		life: hp === null ? null : { current: hp, max, states: [] }
+	};
+}
+
+const ids = (targets: VitalityTarget[]): string[] => targets.map((target) => target.entryId);
+
+const SEATS = [
+	{
+		player: 'player1' as const,
+		flowers: [flower('p1-a', 'Shieldbearer', 3), flower('p1-b', 'Shieldbearer', 1)]
+	},
+	{ player: 'player2' as const, flowers: [flower('p2-a', 'Oni Raider', 2)] }
+];
+
+describe('aliveTargetsFor', () => {
+	it('lists every living copy of both seats, in seat order', () => {
+		expect(ids(aliveTargetsFor(SEATS))).toEqual(['p1-a', 'p1-b', 'p2-a']);
+	});
+
+	it('skips dead copies and copies without Life', () => {
+		const targets = aliveTargetsFor([
+			{
+				player: 'player1',
+				flowers: [
+					flower('dead', 'Shieldbearer', 0),
+					flower('nohp', 'Summon', null),
+					flower('ok', 'Shieldbearer', 2)
+				]
+			}
+		]);
+		expect(ids(targets)).toEqual(['ok']);
+	});
+
+	it('numbers duplicate copies per seat, leaving unique names unnumbered', () => {
+		const targets = aliveTargetsFor([
+			{
+				player: 'player1',
+				flowers: [
+					flower('a', 'Shieldbearer', 3),
+					flower('b', 'Shieldbearer', 3),
+					flower('c', 'Shieldbearer', 0),
+					flower('d', 'Captain', 3)
+				]
+			},
+			{ player: 'player2', flowers: [flower('e', 'Shieldbearer', 3)] }
+		]);
+		expect(targets.map((target) => target.copy)).toEqual([1, 2, null, null]);
+	});
+});
+
+describe('healableTargetsFor', () => {
+	it('lists every copy below its overheal cap, from the fallen to the whole', () => {
+		const targets = healableTargetsFor([
+			{
+				player: 'player1',
+				flowers: [
+					flower('full', 'Shieldbearer', 3),
+					flower('hurt', 'Shieldbearer', 1),
+					flower('dead', 'Captain', 0),
+					flower('capped', 'Captain', 4, 2)
+				]
+			},
+			{ player: 'player2', flowers: [flower('p2', 'Oni Raider', 2, 2)] }
+		]);
+		expect(ids(targets)).toEqual(['full', 'hurt', 'dead', 'p2']);
+	});
+
+	it('skips copies without Life', () => {
+		const targets = healableTargetsFor([
+			{ player: 'player1', flowers: [flower('nohp', 'Summon', null)] }
+		]);
+		expect(ids(targets)).toEqual([]);
+	});
+});
+
+describe('damageApplied', () => {
+	it('takes the whole amount while Life lasts', () => {
+		expect(damageApplied(2, 5)).toBe(2);
+	});
+
+	it('clamps to what is left, and to zero', () => {
+		expect(damageApplied(6, 2)).toBe(2);
+		expect(damageApplied(3, 0)).toBe(0);
+	});
+});
+
+describe('healApplied', () => {
+	it('restores the whole amount while boxes are dark', () => {
+		expect(healApplied(2, 1, 3)).toBe(2);
+	});
+
+	it('heals a whole model into its overheal', () => {
+		expect(healApplied(2, 3, 3)).toBe(2);
+	});
+
+	it('clamps at the overheal cap, and a capped model not at all', () => {
+		expect(healApplied(6, 2, 3)).toBe(4);
+		expect(healApplied(3, 6, 3)).toBe(0);
+	});
+});
+
+describe('vitalityAfterDamage', () => {
+	it('reads an untouched copy as full', () => {
+		expect(vitalityAfterDamage(undefined, 4, 2, 3)).toEqual({ hp: 1, sta: 2 });
+	});
+
+	it('keeps stamina and States, and never drops below zero', () => {
+		const after = vitalityAfterDamage({ hp: 2, sta: 1, statuses: ['bleeding'] }, 4, 2, 6);
+		expect(after).toEqual({ hp: 0, sta: 1, statuses: ['bleeding'] });
+	});
+});
+
+describe('vitalityAfterHeal', () => {
+	it('fills the dark boxes and keeps stamina and States', () => {
+		const after = vitalityAfterHeal({ hp: 1, sta: 1, statuses: ['bleeding'] }, 4, 2, 2);
+		expect(after).toEqual({ hp: 3, sta: 1, statuses: ['bleeding'] });
+	});
+
+	it('reads an untouched copy as full', () => {
+		expect(vitalityAfterHeal(undefined, 4, 2, 3)).toEqual({ hp: 7, sta: 2 });
+	});
+
+	it('heals into the overheal and stops at double the base', () => {
+		expect(vitalityAfterHeal({ hp: 2, sta: 2 }, 2, 2, 3)).toEqual({ hp: 4, sta: 2 });
+		expect(vitalityAfterHeal({ hp: 3, sta: 2 }, 4, 2, 6)).toEqual({ hp: 8, sta: 2 });
+	});
+});

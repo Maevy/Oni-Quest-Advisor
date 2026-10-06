@@ -124,7 +124,13 @@
 			aria-hidden="true"
 		>
 			{#each boxes as box (box.d)}
-				<path d={box.d} class={box.classes} stroke-width="2" />
+				<!-- The fill/stroke transition is what lets a strike darken its boxes one by one. -->
+				<path
+					d={box.d}
+					class="{box.classes} transition-[fill,stroke] duration-300
+						motion-reduce:transition-none"
+					stroke-width="2"
+				/>
 			{/each}
 		</svg>
 		<!-- The orb's box is exactly the ring's inner circle (2 * INNER of the 120 viewBox), so its

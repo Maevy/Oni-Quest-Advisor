@@ -11,7 +11,8 @@
 		p2: ArmyView | null;
 		/** Every flower fades while one of them is focused in the overlay. */
 		dimmed?: boolean;
-		onSelect?: (flower: BattleFlowerSpec, rect: FlowerRect) => void;
+		/** Carries the seat's view along, so the screen can resolve the flower's unit card. */
+		onSelect?: (flower: BattleFlowerSpec, rect: FlowerRect, army: ArmyView) => void;
 	};
 
 	let { p1, p2, dimmed = false, onSelect }: Props = $props();
@@ -40,7 +41,7 @@
 					<BattleFlower
 						{flower}
 						{dimmed}
-						onSelect={onSelect ? (rect) => onSelect(flower, rect) : undefined}
+						onSelect={onSelect ? (rect) => onSelect(flower, rect, army) : undefined}
 					/>
 				{/each}
 			</div>

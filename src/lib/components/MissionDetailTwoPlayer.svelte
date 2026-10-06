@@ -10,6 +10,12 @@
 		SchemeCard,
 		TwoPlayerMissionProgress
 	} from '$lib/domain';
+	import {
+		aliveTargetsFor,
+		battleFlowersFor,
+		healableTargetsFor,
+		type VitalityTarget
+	} from '$lib/domain';
 	import ActivePlayerPanel from './ActivePlayerPanel.svelte';
 	import BattleFlowerFocus from './BattleFlowerFocus.svelte';
 	import type { FlowerRect } from './BattleFlower.svelte';
@@ -25,6 +31,7 @@
 	import ScoreSummaryPanelTwoPlayer from './ScoreSummaryPanelTwoPlayer.svelte';
 	import ScreenHeader from './ScreenHeader.svelte';
 	import SetupPanel from './SetupPanel.svelte';
+	import UnitCard from './UnitCard.svelte';
 
 	type GameView = 'scoring' | 'army' | 'mission';
 
@@ -67,6 +74,10 @@
 		onRevealScheme: (player: PlayerKey) => void;
 		onSetRound: (round: number) => void;
 		onSwap: () => void;
+		/** A strike landed in the damage flow: commit it to the target seat's vitality map. */
+		onDamage: (target: VitalityTarget, amount: number) => void;
+		/** A heal landed in the heal flow: commit it to the target seat's vitality map. */
+		onHeal: (target: VitalityTarget, amount: number) => void;
 	};
 
 	let {
@@ -93,7 +104,9 @@
 		onDeleteScheme,
 		onRevealScheme,
 		onSetRound,
-		onSwap
+		onSwap,
+		onDamage,
+		onHeal
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -104,11 +117,46 @@
 	// The rule popups live at the screen root: the sliding strip carries a transform, which
 	// would become the containing block for their fixed overlays and trap them inside a pane.
 	let openRule = $state<RuleCallout | null>(null);
-	// The focused flower, and the slot its overlay glides from and back to.
-	let focus = $state<{ flower: BattleFlowerSpec; rect: FlowerRect } | null>(null);
+	// The focused flower, the slot its overlay glides from and back to, and the seat's army it
+	// belongs to - the card the info petal opens resolves against that army's row and catalogs.
+	let focus = $state<{ flower: BattleFlowerSpec; rect: FlowerRect; army: ArmyView } | null>(null);
+	// The info petal's card, kept separate from the focus so that closing it leaves the flower
+	// centred: one click outside dismisses the card, the next one sends the flower home.
+	let focusInfo = $state(false);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
+
+	/** The focused copy's roster row, while its card is open; null the rest of the time. */
+	let focusRow = $derived.by(() => {
+		const current = focus;
+		if (!current || !focusInfo) return null;
+		return (
+			current.army.rows.find((candidate) => candidate.entryId === current.flower.entryId) ?? null
+		);
+	});
+
+	function openFocus(flower: BattleFlowerSpec, rect: FlowerRect, army: ArmyView): void {
+		focus = { flower, rect, army };
+		focusInfo = false;
+	}
+
+	function closeFocus(): void {
+		focus = null;
+		focusInfo = false;
+	}
+
+	/** Both seats' flowers in seat order: what the vitality flows project their rows from. */
+	let seatFlowers = $derived.by(() => {
+		const seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }> = [];
+		if (armyViewP1) seats.push({ player: 'player1', flowers: battleFlowersFor(armyViewP1) });
+		if (armyViewP2) seats.push({ player: 'player2', flowers: battleFlowersFor(armyViewP2) });
+		return seats;
+	});
+	/** The living field: the damage flow's target row. */
+	let damageTargets = $derived(aliveTargetsFor(seatFlowers));
+	/** The healable field: every copy below its overheal cap, the heal flow's target row. */
+	let healTargets = $derived(healableTargetsFor(seatFlowers));
 
 	// Swipe detection, same contract as the solo tracker and the army builder: a mostly-horizontal
 	// pointer gesture steps between the views. Touch and pen only — a mouse drag is a text
@@ -244,7 +292,7 @@
 						p1={armyViewP1}
 						p2={armyViewP2}
 						dimmed={focus !== null}
-						onSelect={(flower, rect) => (focus = { flower, rect })}
+						onSelect={openFocus}
 					/>
 				</div>
 			</div>
@@ -285,5 +333,39 @@
 <!-- At the screen root, like the rule dialog: the strip's transform would trap a fixed overlay
      rendered inside the pane, and the focused flower has to paint above the blur. -->
 {#if focus}
-	<BattleFlowerFocus flower={focus.flower} from={focus.rect} onClosed={() => (focus = null)} />
+	<BattleFlowerFocus
+		flower={focus.flower}
+		from={focus.rect}
+		infoOpen={focusInfo}
+		onInfo={() => (focusInfo = true)}
+		{damageTargets}
+		{healTargets}
+		{onDamage}
+		{onHeal}
+		onClosed={closeFocus}
+	/>
+{/if}
+
+<!-- After the flower in the document and on the same layer, so its own backdrop is what catches
+     an outside click: dismissing the card leaves the flower centred, and only the next click
+     outside reaches the flower's backdrop and glides it home. Escape closes one layer at a time
+     for the same reason - the card registers later, so it is the one that answers. -->
+{#if focus && focusRow}
+	<UnitCard
+		unit={focusRow.upgradedUnit}
+		faction={focus.army.faction}
+		classIndex={focus.army.classIndex}
+		skillIndex={focus.army.skillIndex}
+		traitIndex={focus.army.traitIndex}
+		combatArtIndex={focus.army.combatArtIndex}
+		spellcraftIndex={focus.army.spellcraftIndex}
+		spells={focus.army.spells}
+		stratagemIndex={focus.army.stratagemIndex}
+		itemIndex={{ ...focus.army.itemIndex, ...focusRow.itemOverrides }}
+		stats={focusRow.effectiveStats}
+		size={focusRow.effectiveSize}
+		mounted={focusRow.mounted}
+		mountName={focusRow.mount?.name}
+		onClose={() => (focusInfo = false)}
+	/>
 {/if}

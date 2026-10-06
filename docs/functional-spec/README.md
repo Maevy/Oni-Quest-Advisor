@@ -66,9 +66,13 @@ each `src/lib/` folder.
   bottom end of a half; an overhealed Life repaints blue from the top end instead of growing the
   ring. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
   row. Clicking a flower focuses it — blur, a 1.3× clone at the viewport centre — and a ring of
-  eight petal buttons (damage / heal / status × self / enemy / ally) blooms outside the ring;
-  their icons and functions are the next iteration. See
-  [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
+  six petal buttons blooms outside the ring: the model's card, deal damage, heal, assign a
+  status, remove a status and manage Stamina, glyphed as a grey bang in a ring, a red sword, a
+  green cross, an orange star, a light-blue star and a yellow disc. A pressed petal glows yellow
+  and the card petal opens the unit card. The damage and heal petals' flows are in — a sub-ring
+  of amounts, the field as a target row (living copies for damage, every copy below its overheal
+  cap for heal), a crosshair confirm, the flying glyph and the sequential Life walk; status and
+  Stamina functions are the next iteration. See [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 
 ### Online
 
