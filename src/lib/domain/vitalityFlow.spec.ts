@@ -1,22 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import {
+	allTargetsFor,
 	aliveTargetsFor,
 	damageApplied,
 	healApplied,
 	healableTargetsFor,
 	vitalityAfterDamage,
 	vitalityAfterHeal,
+	vitalityAfterStatuses,
 	type VitalityTarget
 } from './vitalityFlow';
 import type { BattleFlowerSpec } from './savedArmy';
+import type { UnitStatus } from './army';
 
-function flower(entryId: string, name: string, hp: number | null, max = 3): BattleFlowerSpec {
+function flower(
+	entryId: string,
+	name: string,
+	hp: number | null,
+	max = 3,
+	statuses: UnitStatus[] = []
+): BattleFlowerSpec {
 	return {
 		entryId,
 		name,
 		mountedOn: null,
 		stamina: null,
-		life: hp === null ? null : { current: hp, max, states: [] }
+		life: hp === null ? null : { current: hp, max, states: [] },
+		statuses
 	};
 }
 
@@ -91,6 +101,34 @@ describe('healableTargetsFor', () => {
 	});
 });
 
+describe('allTargetsFor', () => {
+	it('lists every copy of both seats, fallen and untracked alike', () => {
+		const targets = allTargetsFor([
+			{
+				player: 'player1',
+				flowers: [
+					flower('dead', 'Shieldbearer', 0),
+					flower('nohp', 'Summon', null),
+					flower('hurt', 'Captain', 1, 3, ['bleeding'])
+				]
+			},
+			{ player: 'player2', flowers: [flower('p2', 'Oni Raider', 2)] }
+		]);
+		expect(ids(targets)).toEqual(['dead', 'nohp', 'hurt', 'p2']);
+	});
+
+	it('numbers duplicate copies per seat exactly as the other rows do', () => {
+		const targets = allTargetsFor([
+			{
+				player: 'player1',
+				flowers: [flower('a', 'Shieldbearer', 0), flower('b', 'Shieldbearer', 3)]
+			},
+			{ player: 'player2', flowers: [flower('c', 'Shieldbearer', 3)] }
+		]);
+		expect(targets.map((target) => target.copy)).toEqual([1, 2, null]);
+	});
+});
+
 describe('damageApplied', () => {
 	it('takes the whole amount while Life lasts', () => {
 		expect(damageApplied(2, 5)).toBe(2);
@@ -141,5 +179,29 @@ describe('vitalityAfterHeal', () => {
 	it('heals into the overheal and stops at double the base', () => {
 		expect(vitalityAfterHeal({ hp: 2, sta: 2 }, 2, 2, 3)).toEqual({ hp: 4, sta: 2 });
 		expect(vitalityAfterHeal({ hp: 3, sta: 2 }, 4, 2, 6)).toEqual({ hp: 8, sta: 2 });
+	});
+});
+
+describe('vitalityAfterStatuses', () => {
+	it('replaces the States wholesale and keeps Life and stamina', () => {
+		const after = vitalityAfterStatuses({ hp: 1, sta: 2, statuses: ['bleeding'] }, 4, 2, [
+			'slowed'
+		]);
+		expect(after).toEqual({ hp: 1, sta: 2, statuses: ['slowed'] });
+	});
+
+	it('reads an untouched copy as full', () => {
+		expect(vitalityAfterStatuses(undefined, 4, 2, ['panicked'])).toEqual({
+			hp: 4,
+			sta: 2,
+			statuses: ['panicked']
+		});
+	});
+
+	it('drops the key again once the draft clears every State', () => {
+		expect(vitalityAfterStatuses({ hp: 2, sta: 1, statuses: ['bleeding'] }, 4, 2, [])).toEqual({
+			hp: 2,
+			sta: 1
+		});
 	});
 });

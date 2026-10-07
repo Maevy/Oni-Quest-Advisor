@@ -8,9 +8,11 @@
 		ResultsEntry,
 		RuleCallout,
 		SchemeCard,
-		TwoPlayerMissionProgress
+		TwoPlayerMissionProgress,
+		UnitStatus
 	} from '$lib/domain';
 	import {
+		allTargetsFor,
 		aliveTargetsFor,
 		battleFlowersFor,
 		healableTargetsFor,
@@ -78,6 +80,8 @@
 		onDamage: (target: VitalityTarget, amount: number) => void;
 		/** A heal landed in the heal flow: commit it to the target seat's vitality map. */
 		onHeal: (target: VitalityTarget, amount: number) => void;
+		/** A status ring was confirmed: commit the draft to the target seat's vitality map. */
+		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
 	};
 
 	let {
@@ -106,7 +110,8 @@
 		onSetRound,
 		onSwap,
 		onDamage,
-		onHeal
+		onHeal,
+		onStatuses
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -119,10 +124,20 @@
 	let openRule = $state<RuleCallout | null>(null);
 	// The focused flower, the slot its overlay glides from and back to, and the seat's army it
 	// belongs to - the card the info petal opens resolves against that army's row and catalogs.
-	let focus = $state<{ flower: BattleFlowerSpec; rect: FlowerRect; army: ArmyView } | null>(null);
+	// The seat comes along because an entry id is only unique inside one army, and two seats may
+	// field the same save.
+	let focus = $state<{
+		flower: BattleFlowerSpec;
+		rect: FlowerRect;
+		army: ArmyView;
+		player: PlayerKey;
+	} | null>(null);
 	// The info petal's card, kept separate from the focus so that closing it leaves the flower
 	// centred: one click outside dismisses the card, the next one sends the flower home.
 	let focusInfo = $state(false);
+	// Set once a status flow moves the focus onto another copy: the flower the overlay opened
+	// from has gone home, so its slot stays lit in the strip instead of fading with the rest.
+	let focusMovedHome = $state(false);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
@@ -136,15 +151,27 @@
 		);
 	});
 
-	function openFocus(flower: BattleFlowerSpec, rect: FlowerRect, army: ArmyView): void {
-		focus = { flower, rect, army };
+	function openFocus(
+		flower: BattleFlowerSpec,
+		rect: FlowerRect,
+		army: ArmyView,
+		player: PlayerKey
+	): void {
+		focus = { flower, rect, army, player };
 		focusInfo = false;
+		focusMovedHome = false;
 	}
 
 	function closeFocus(): void {
 		focus = null;
 		focusInfo = false;
+		focusMovedHome = false;
 	}
+
+	/** The slot a status flow left behind, lit while every other flower stays faded. */
+	let undimmed = $derived(
+		focus && focusMovedHome ? { player: focus.player, entryId: focus.flower.entryId } : null
+	);
 
 	/** Both seats' flowers in seat order: what the vitality flows project their rows from. */
 	let seatFlowers = $derived.by(() => {
@@ -157,6 +184,8 @@
 	let damageTargets = $derived(aliveTargetsFor(seatFlowers));
 	/** The healable field: every copy below its overheal cap, the heal flow's target row. */
 	let healTargets = $derived(healableTargetsFor(seatFlowers));
+	/** The whole field: the status flow's target row, fallen copies included. */
+	let statusTargets = $derived(allTargetsFor(seatFlowers));
 
 	// Swipe detection, same contract as the solo tracker and the army builder: a mostly-horizontal
 	// pointer gesture steps between the views. Touch and pen only — a mouse drag is a text
@@ -292,6 +321,7 @@
 						p1={armyViewP1}
 						p2={armyViewP2}
 						dimmed={focus !== null}
+						{undimmed}
 						onSelect={openFocus}
 					/>
 				</div>
@@ -340,8 +370,11 @@
 		onInfo={() => (focusInfo = true)}
 		{damageTargets}
 		{healTargets}
+		{statusTargets}
 		{onDamage}
 		{onHeal}
+		{onStatuses}
+		onFocusMoved={() => (focusMovedHome = true)}
 		onClosed={closeFocus}
 	/>
 {/if}

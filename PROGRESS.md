@@ -64,28 +64,39 @@ right half). Phase 1 shipped in `e895afe`: the hot-seat tracker's two army panes
 Army view holding one panel split into a sky and an orange half, one flower per row, and
 clicking a flower focuses it — backdrop blur, a 1.3× clone gliding to the viewport centre, the
 rest faded; once landed, a ring of petals blooms outside the ring and retracts before the flower
-glides home on click-outside or Escape. The ring is now **six petals** (2026-10-05): the model's
-card, deal damage, heal, assign a status, remove a status and manage Stamina — one dark-blue
-glass, a pressed petal lighting a yellow rim (one at a time; the light is the selection a later
-sub-ring will bloom from — except the info petal, whose light is the open card's and drops when
-the card closes), and the card petal opening the copy's unit card above the flower, which a
-click outside dismisses while the flower stays centred until the next one. The glyphs landed the
-same day: a grey bang in a ring for the card, a red sword, a green medic's cross, an orange star
-for assigning and a light-blue one for removing a status, and a yellow disc for Stamina. The
-damage flow landed the same day as the first petal function: pressing the sword blooms a third
-ring (1…6 and X, blooming from behind the action ring, with X's own amount entry), an amount
-brings the living field forward as a
-target row (seat rims, copy badges, the focused copy's twin among them), one tap selects under a
-turning crosshair, the second confirms, the sword flies, the Life boxes darken one by one and
-the overlay closes with the hit committed to the seat's vitality map. The heal flow followed the
-same day, the shape turned around: the row offers every copy below its overheal cap (the fallen
-and the whole alike), the green cross flies, and the boxes refill one by one, past full into the
-blue overheal up to double the base. What the interaction phase
-still owes: the status / Stamina petals' functions, box taps, and status assignment — until then
-hot-seat can wound, kill and heal but not assign States or spend Stamina. Behaviour spec:
+glides home on click-outside or Escape. The ring is now **five petals** (2026-10-07): the model's
+card, deal damage, heal, edit statuses and manage Stamina — one dark-blue glass, a pressed petal
+lighting a yellow rim (one at a time; the light is the selection a later sub-ring will bloom from
+— except the info petal, whose light is the open card's and drops when the card closes), and the
+card petal opening the copy's unit card above the flower, which a click outside dismisses while
+the flower stays centred until the next one. The glyphs: a grey bang in a ring for the card, a red
+sword, a green medic's cross, an orange star for the States and a yellow disc for Stamina; the
+assign/remove pair collapsed into the one star when the status flow made both directions one
+ring. The damage flow landed 2026-10-05 as the first petal function: pressing the sword blooms a
+third ring (1…6 and X, blooming from behind the action ring, with X's own amount entry), an
+amount brings the living field forward as a target row (seat rims, copy badges, the focused
+copy's twin among them), one tap selects under a turning crosshair, the second confirms, the
+sword flies, the Life boxes darken one by one and the overlay closes with the hit committed to
+the seat's vitality map. The heal flow followed the same day, the shape turned around: the row
+offers every copy below its overheal cap (the fallen and the whole alike), the green cross flies,
+and the boxes refill one by one, past full into the blue overheal up to double the base. The
+**status flow** (2026-10-07) is the third petal function and the first that moves the focus: the
+star's row holds every copy of both seats, one tap moves the focus onto the target — its flower
+takes the centre while the flower it left glides home and stays **lit** in its slot — and a beat
+later all fifteen States bloom around it as tappable orbs on a ring of their own (44 px each,
+radius fitted to the smaller screen dimension; the petals went home with the flower they belonged
+to and this flow has no amount ring, so nothing competes for the space). A carried State lights
+the yellow rim and wears its own colour, the rest are the petals' glass with a grey glyph, and
+Incapacitated and Crouched are locked orbs while Life is 0, because the store re-applies them to
+every commit. Taps edit a **draft**; the model icon commits it — the first tap arms the crosshair,
+the second writes the whole draft in one go and sends the flower home into **the target's** slot —
+and toggling an orb disarms a pending commit. The States a copy carries also hang off its strip
+flower as a **band of orbs on the upper arc** (own glyph, own colour, a `+n` chip past four,
+absent on a clean copy), which is the default state's read of them. What the interaction phase
+still owes: the Stamina petal's function and box taps — until then hot-seat can wound, kill, heal
+and assign States but not spend Stamina. Behaviour spec:
 `docs/functional-spec/06-two-player-hot-seat.md`. The flowers replace the other modes' army
-panels afterwards. **Next: the status petals' flows** — assign and remove — then Stamina
-management.
+panels afterwards. **Next: Stamina management**, then box taps.
 
 Smaller open threads:
 

@@ -138,15 +138,32 @@ export function toggleUnitStatus(statuses: UnitStatus[], status: UnitStatus): Un
 }
 
 /**
+ * The States a model at zero Life always carries: it becomes Incapacitated and immediately
+ * enters the Crouched State. Every commit re-applies them, so a status editor that offered
+ * to clear one would show the tap silently undone - which is why the very same list is what
+ * locks those orbs. Healing back up does not cancel them; that stays a manual toggle.
+ */
+export const ZERO_HP_STATUSES: readonly UnitStatus[] = ['incapacitated', 'crouched'];
+
+/**
+ * Whether a State is forced on a copy at this Life total and so cannot be toggled off it.
+ * A copy that never tracked Life (`hp` null at the call site) reads as whole, not as fallen.
+ */
+export function statusLockedAtZeroHp(status: UnitStatus, hp: number): boolean {
+	return hp <= 0 && ZERO_HP_STATUSES.includes(status);
+}
+
+/**
  * A model whose Life reaches 0 becomes Incapacitated and immediately enters the Crouched
  * State, so a committed zero-Life vitality carries both whether or not the player lit them
- * in the menu. Healing back up does not cancel them - that stays a manual toggle.
+ * in the menu.
  */
 export function applyZeroHpStates(vitality: UnitVitality): UnitVitality {
 	if (vitality.hp > 0) return vitality;
 	let statuses = vitality.statuses ?? [];
-	if (!statuses.includes('incapacitated')) statuses = toggleUnitStatus(statuses, 'incapacitated');
-	if (!statuses.includes('crouched')) statuses = toggleUnitStatus(statuses, 'crouched');
+	for (const status of ZERO_HP_STATUSES) {
+		if (!statuses.includes(status)) statuses = toggleUnitStatus(statuses, status);
+	}
 	return { ...vitality, statuses };
 }
 

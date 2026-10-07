@@ -4,7 +4,14 @@
 </script>
 
 <script lang="ts">
-	import type { BattleFlowerSpec, BattleRingSpec, VitalityRingState } from '$lib/domain';
+	import type {
+		BattleFlowerSpec,
+		BattleRingSpec,
+		UnitStatus,
+		VitalityRingState
+	} from '$lib/domain';
+	import { UNIT_STATUS_LABELS } from '$lib/domain';
+	import StatusGlyph from './StatusGlyph.svelte';
 
 	type Props = {
 		flower: BattleFlowerSpec;
@@ -20,9 +27,28 @@
 		 * receives its clicks while the petals visually emerge from behind the flower.
 		 */
 		inert?: boolean;
+		/**
+		 * The States band. Suppressed wherever a ring of its own surrounds the flower - the
+		 * focus overlay's petals and the target row's cells both sit at the band's radius.
+		 */
+		showStatuses?: boolean;
+		/**
+		 * The copy's seat-and-entry key, mirrored onto the root as `data-flower-key` so a flow
+		 * can measure this flower's slot in the strip - the slot a focus that moved onto the
+		 * copy has to glide home into, which the target row's own cells are not.
+		 */
+		flowerKey?: string | null;
 	};
 
-	let { flower, dimmed = false, onSelect, showLabel = true, inert = false }: Props = $props();
+	let {
+		flower,
+		dimmed = false,
+		onSelect,
+		showLabel = true,
+		inert = false,
+		showStatuses = true,
+		flowerKey = null
+	}: Props = $props();
 
 	function handleClick(event: MouseEvent): void {
 		if (!onSelect) return;
@@ -103,7 +129,55 @@
 		}
 		if (flower.life) halves.push(`Life ${flower.life.current} of ${flower.life.max}`);
 		const mounted = flower.mountedOn ? ` on ${flower.mountedOn}` : '';
-		return `${flower.name}${mounted}: ${halves.join(', ') || 'no tracked stats'}`;
+		const states =
+			flower.statuses.length > 0
+				? `, States: ${flower.statuses.map((status) => UNIT_STATUS_LABELS[status]).join(', ')}`
+				: '';
+		return `${flower.name}${mounted}: ${halves.join(', ') || 'no tracked stats'}${states}`;
+	});
+
+	/**
+	 * The States band, in the flower's own 120-unit box: a radius that clears the vitality
+	 * ring's outer edge (55) by the orb's own half-width, spread over an upper arc narrow
+	 * enough that every orb stays inside the box horizontally. Only the topmost orbs reach
+	 * past the box vertically, into the gap the panel leaves between flowers - which is why
+	 * the band is capped and the panel's gap is what it is.
+	 */
+	const STATUS_BAND = { radius: 66, spread: 50, orb: 24, shown: 4 };
+	/** The orb's box as a percentage of the flower's, so it scales with the slot. */
+	const ORB_PCT = (STATUS_BAND.orb / 120) * 100;
+
+	type StatusChip = {
+		status: UnitStatus | null;
+		label: string;
+		extra: number;
+		left: number;
+		top: number;
+	};
+
+	let statusChips = $derived.by(() => {
+		if (!showStatuses || flower.statuses.length === 0) return [];
+		const shown = flower.statuses.slice(0, STATUS_BAND.shown);
+		const extra = flower.statuses.length - shown.length;
+		const chips: StatusChip[] = shown.map((status) => ({
+			status,
+			label: UNIT_STATUS_LABELS[status],
+			extra: 0,
+			left: 50,
+			top: 50
+		}));
+		if (extra > 0)
+			chips.push({ status: null, label: `${extra} more States`, extra, left: 50, top: 50 });
+		// Evenly spread across the arc and centred on 12 o'clock, so one orb always sits on top.
+		const step = chips.length === 1 ? 0 : (2 * STATUS_BAND.spread) / (chips.length - 1);
+		return chips.map((chip, index) => {
+			const angle = ((index * step - STATUS_BAND.spread) * Math.PI) / 180;
+			return {
+				...chip,
+				left: 50 + ((STATUS_BAND.radius * Math.sin(angle)) / 120) * 100,
+				top: 50 - ((STATUS_BAND.radius * Math.cos(angle)) / 120) * 100
+			};
+		});
 	});
 </script>
 
@@ -114,6 +188,7 @@
 	class="flex w-full max-w-[104px] flex-col items-center gap-1 transition-opacity duration-300
 		{dimmed ? 'opacity-25' : 'opacity-100'} {inert ? 'pointer-events-none' : ''}"
 	aria-label={summary}
+	data-flower-key={flowerKey ?? undefined}
 	onclick={handleClick}
 >
 	<div class="relative aspect-square w-full">
@@ -149,6 +224,29 @@
 				</div>
 			{/if}
 		</div>
+		<!-- The States band: the carried States as orbs on the upper arc, each in its own colour.
+		     Display-only - the flower's own click still focuses it - and a chip counts whatever
+		     did not fit. The button's aria-label names them, so the band is hidden from AT. -->
+		{#if statusChips.length > 0}
+			<div class="pointer-events-none absolute inset-0" aria-hidden="true">
+				{#each statusChips as chip (chip.label)}
+					<span
+						class="absolute flex items-center justify-center rounded-full border
+							border-slate-500/80 bg-slate-950/90"
+						style="left: {chip.left}%; top: {chip.top}%; width: {ORB_PCT}%;
+							height: {ORB_PCT}%; transform: translate(-50%, -50%)"
+					>
+						{#if chip.status}
+							<StatusGlyph status={chip.status} active size="h-[72%] w-[72%]" />
+						{:else}
+							<span class="text-[9px] leading-none font-bold text-slate-200">
+								+{chip.extra}
+							</span>
+						{/if}
+					</span>
+				{/each}
+			</div>
+		{/if}
 	</div>
 	{#if showLabel}
 		<p class="w-full truncate text-center text-[10px] font-semibold text-slate-100">

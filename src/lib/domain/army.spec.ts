@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	ARMY_UNIT_SIZES,
 	UNIT_STATUSES,
+	ZERO_HP_STATUSES,
 	addArmyUnit,
 	addRosterPick,
 	affinityElements,
@@ -41,6 +42,7 @@ import {
 	spellCostDisplay,
 	spellcraftLevelCap,
 	spellcraftPopupFor,
+	statusLockedAtZeroHp,
 	stratagemsFor,
 	substituteArmyTemplate,
 	toggleArmyMount,
@@ -2769,6 +2771,30 @@ describe('applyZeroHpStates', () => {
 		expect(applyZeroHpStates({ hp: 1, sta: 0, statuses: ['bleeding'] }).statuses).toEqual([
 			'bleeding'
 		]);
+	});
+});
+
+describe('statusLockedAtZeroHp', () => {
+	it('locks exactly the States a fallen copy is forced into', () => {
+		expect(statusLockedAtZeroHp('incapacitated', 0)).toBe(true);
+		expect(statusLockedAtZeroHp('crouched', 0)).toBe(true);
+		expect(statusLockedAtZeroHp('bleeding', 0)).toBe(false);
+	});
+
+	it('unlocks them again as soon as the copy has Life', () => {
+		expect(statusLockedAtZeroHp('incapacitated', 1)).toBe(false);
+		expect(statusLockedAtZeroHp('crouched', 4)).toBe(false);
+	});
+
+	// The lock exists because the store re-applies these States on every commit: a UI that
+	// offered to clear one the store puts straight back would show the tap silently undone.
+	// The two lists must therefore be the same list, in both directions.
+	it('locks whatever applyZeroHpStates forces on, and nothing it leaves alone', () => {
+		for (const status of UNIT_STATUSES) {
+			const forced = applyZeroHpStates({ hp: 0, sta: 0 }).statuses?.includes(status) ?? false;
+			expect(statusLockedAtZeroHp(status, 0)).toBe(forced);
+		}
+		expect(ZERO_HP_STATUSES).toEqual(['incapacitated', 'crouched']);
 	});
 });
 

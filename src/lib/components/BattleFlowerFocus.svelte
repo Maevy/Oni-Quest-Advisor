@@ -1,14 +1,20 @@
 <script lang="ts">
-	import type { BattleFlowerSpec, VitalityTarget } from '$lib/domain';
+	import type { BattleFlowerSpec, UnitStatus, VitalityTarget } from '$lib/domain';
 	import {
 		AMOUNT_STEPS,
 		damageApplied,
 		healApplied,
 		lifeCap,
+		statusLockedAtZeroHp,
+		toggleUnitStatus,
+		UNIT_STATUSES,
+		UNIT_STATUS_LABELS,
 		vitalityRingStates
 	} from '$lib/domain';
 	import { playerAccent } from './playerAccent';
 	import BattleFlower from './BattleFlower.svelte';
+	import type { FlowerRect } from './BattleFlower.svelte';
+	import StatusGlyph from './StatusGlyph.svelte';
 	import { onEscapeKey } from './escapeKey';
 
 	type Props = {
@@ -23,10 +29,19 @@
 		damageTargets: VitalityTarget[];
 		/** Every wounded copy of both armies, in seat order: the heal flow's target row. */
 		healTargets: VitalityTarget[];
+		/** Every copy of both armies, in seat order: the status flow's target row. */
+		statusTargets: VitalityTarget[];
 		/** The strike landed: the screen commits the damage to the target seat's vitality map. */
 		onDamage: (target: VitalityTarget, amount: number) => void;
 		/** The heal landed: the screen commits it to the target seat's vitality map. */
 		onHeal: (target: VitalityTarget, amount: number) => void;
+		/** The ring was confirmed: the screen commits the draft to the target seat's map. */
+		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
+		/**
+		 * A status flow moved the focus onto another copy, so the flower this overlay opened
+		 * from has gone home: the screen lights that slot again in the strip.
+		 */
+		onFocusMoved?: () => void;
 		/** Called once the petals have retracted and the flower has glided back into its slot. */
 		onClosed: () => void;
 	};
@@ -38,8 +53,11 @@
 		onInfo,
 		damageTargets,
 		healTargets,
+		statusTargets,
 		onDamage,
 		onHeal,
+		onStatuses,
+		onFocusMoved,
 		onClosed
 	}: Props = $props();
 
@@ -49,6 +67,8 @@
 	const STRIKE_MS = 500;
 	const FADE_MS = 260;
 	const FADE_SETTLE_MS = 450;
+	/** How long the flower dips to its slot size while a status flow swaps it for the target. */
+	const SWAP_MS = 170;
 
 	let placed = $state(false);
 	let petalsOut = $state(false);
@@ -62,8 +82,9 @@
 
 	// The vitality flows - damage and heal share one shape: ring 3 carries the amount, then the
 	// field steps in front as the target row, one tap selects and the second confirms, and the
-	// strike plays out on its own.
-	type Flow = 'damage' | 'heal';
+	// strike plays out on its own. The status flow has no amount: its row leads straight into
+	// the ring of States around the copy the focus moved onto.
+	type Flow = 'damage' | 'heal' | 'status';
 	let flow = $state<Flow | null>(null);
 	let subRingOut = $state(false);
 	let amount = $state<number | null>(null);
@@ -88,23 +109,42 @@
 		flying: boolean;
 	}>(null);
 
+	// The status flow's own state: the copy the focus moved onto, the draft its ring edits, and
+	// the slot the overlay will glide home into once that draft is confirmed or discarded.
+	let statusTarget = $state<VitalityTarget | null>(null);
+	let statusDraft = $state<UnitStatus[]>([]);
+	let statusArmed = $state(false);
+	let statusRingOut = $state(false);
+	let homeRect = $state<FlowerRect | null>(null);
+	let swapDip = $state(false);
+
 	const keyOf = (target: VitalityTarget): string => `${target.player}:${target.entryId}`;
 
-	// Translation from the clicked slot to the viewport centre. translate() runs before scale()
+	/** The flower on show: the one the overlay opened from, or a status flow's target. */
+	let shownFlower = $derived(statusTarget ? statusTarget.flower : flower);
+
+	/** The slot the overlay is anchored to, and glides home to: the target's once focus moved. */
+	let anchor = $derived(homeRect ?? from);
+
+	// Translation from the anchor slot to the viewport centre. translate() runs before scale()
 	// in the transform list, so this centres the UNSCALED box; the scale then grows it about its
 	// own centre and the centre stays put. Centring in the grown frame instead lands the flower
-	// half a growth-step off centre.
+	// half a growth-step off centre. Both left and the translation transition together, so a
+	// mid-flight change of anchor moves neither: the two changes cancel at every step.
 	let shift = $derived.by(() => ({
-		dx: (window.innerWidth - from.width) / 2 - from.x,
-		dy: (window.innerHeight - from.width) / 2 - from.y
+		dx: (window.innerWidth - anchor.width) / 2 - anchor.x,
+		dy: (window.innerHeight - anchor.width) / 2 - anchor.y
 	}));
 
 	let transform = $derived(
 		closing === 'flower' || !placed
 			? 'none'
-			: `translate(${shift.dx}px, ${shift.dy}px) scale(${GROWTH})`
+			: `translate(${shift.dx}px, ${shift.dy}px) scale(${swapDip ? 1 : GROWTH})`
 	);
 	let petalsOpen = $derived(petalsOut && closing === null);
+	let statusRingOpen = $derived(statusRingOut && closing === null);
+	/** The model icon's commit target: the orb inside the flower, 75% of its grown box. */
+	let iconSize = $derived(Math.round(anchor.width * GROWTH * 0.75));
 
 	const timers: ReturnType<typeof setTimeout>[] = [];
 	function later(ms: number, fn: () => void): void {
@@ -152,16 +192,27 @@
 		picked = null;
 		struck = null;
 		faded = 0;
+		statusRingOut = false;
+		statusArmed = false;
 	}
 
-	/** Layered dismissal: the X entry, then the flow, then the whole overlay. */
+	/**
+	 * Layered dismissal: the X entry, then the flow, then the whole overlay. An open status ring
+	 * skips the middle step - there is no flow left to fold back into, because the flower the
+	 * ring belongs to is not the one the petals opened from. Its draft goes with it: nothing was
+	 * committed, so leaving writes nothing.
+	 */
 	function close(): void {
 		if (closing || strike) return;
 		if (amountEntry) {
 			amountEntry = false;
 			return;
 		}
-		if (subRingOut) {
+		if (statusRingOut) {
+			dismiss();
+			return;
+		}
+		if (subRingOut || targetsOut) {
 			cancelFlow();
 			return;
 		}
@@ -232,54 +283,89 @@
 
 	type Glyph = 'info' | 'sword' | 'cross' | 'star' | 'circle';
 
-	type Petal = { id: string; label: string; glyph: Glyph; glyphClasses: string };
+	type Petal = {
+		id: string;
+		label: string;
+		glyph: Glyph;
+		glyphClasses: string;
+		/** The flow this petal opens; null for the two that are not flows. */
+		flow: Flow | null;
+	};
 
 	/**
-	 * The six petals, clockwise from 12 o'clock: the model's card, then what a run does to
-	 * Life and States, then Stamina. Damage and heal no longer declare a target - choosing the
-	 * model is the action's own step - so one sword and one cross cover both cases; status
-	 * splits the other way, into **assign** (orange) and **remove** (light blue); and the yellow
-	 * circle is Stamina, the activations a model spends.
+	 * The five petals, clockwise from 12 o'clock: the model's card, then what a run does to
+	 * Life, States and Stamina. Damage and heal do not declare a target - choosing the model is
+	 * the action's own step - and neither do the States: one orange star opens the row, and the
+	 * ring it leads to both assigns and removes, so a second "remove" petal would only be a
+	 * second door into the same room.
 	 */
 	const PETALS: Petal[] = [
 		{
 			id: 'info',
 			label: "Show this model's card",
 			glyph: 'info',
-			glyphClasses: 'fill-slate-400 stroke-slate-400'
+			glyphClasses: 'fill-slate-400 stroke-slate-400',
+			flow: null
 		},
-		{ id: 'damage', label: 'Deal damage', glyph: 'sword', glyphClasses: 'fill-red-400' },
-		{ id: 'heal', label: 'Heal', glyph: 'cross', glyphClasses: 'fill-emerald-400' },
 		{
-			id: 'status-apply',
-			label: 'Assign a status',
-			glyph: 'star',
-			glyphClasses: 'fill-orange-400'
+			id: 'damage',
+			label: 'Deal damage',
+			glyph: 'sword',
+			glyphClasses: 'fill-red-400',
+			flow: 'damage'
 		},
-		{ id: 'status-clear', label: 'Remove a status', glyph: 'star', glyphClasses: 'fill-sky-300' },
-		{ id: 'stamina', label: 'Manage Stamina', glyph: 'circle', glyphClasses: 'fill-yellow-400' }
+		{ id: 'heal', label: 'Heal', glyph: 'cross', glyphClasses: 'fill-emerald-400', flow: 'heal' },
+		{
+			id: 'status',
+			label: 'Edit statuses',
+			glyph: 'star',
+			glyphClasses: 'fill-orange-400',
+			flow: 'status'
+		},
+		{
+			id: 'stamina',
+			label: 'Manage Stamina',
+			glyph: 'circle',
+			glyphClasses: 'fill-yellow-400',
+			flow: null
+		}
 	];
 
-	// Pressing a petal lights it - the selection a later ring of sub-petals will bloom from.
-	// The sword and the cross are the petals whose sub-ring exists today; pressing one again
-	// folds its flow away, pressing the other switches the flow, and pressing any other petal
-	// folds whatever is open away first.
+	// Pressing a petal lights it - the selection its ring blooms from. Pressing the same petal
+	// again folds its flow away, pressing another switches the flow, and pressing one of the two
+	// that are not flows folds whatever is open away first.
 	function select(petal: Petal): void {
 		if (strike) return;
-		if (petal.glyph === 'sword' || petal.glyph === 'cross') {
-			const next: Flow = petal.glyph === 'sword' ? 'damage' : 'heal';
+		if (petal.flow) {
+			const next = petal.flow;
 			activePetal = petal.id;
-			if (subRingOut && flow === next) cancelFlow();
+			if (flow === next && (subRingOut || targetsOut)) cancelFlow();
 			else {
 				cancelFlow();
-				flow = next;
-				subRingOut = true;
+				openFlow(next);
 			}
 			return;
 		}
 		cancelFlow();
 		activePetal = petal.id;
 		if (petal.glyph === 'info') onInfo();
+	}
+
+	/**
+	 * Damage and heal open on their amount ring, the row following once an amount is chosen;
+	 * the status flow has no amount to choose, so it opens straight onto the row.
+	 */
+	function openFlow(next: Flow): void {
+		flow = next;
+		picked = null;
+		struck = null;
+		faded = 0;
+		if (next === 'status') {
+			rowTargets = [...statusTargets];
+			targetsOut = true;
+			return;
+		}
+		subRingOut = true;
 	}
 
 	function pickAmount(value: number): void {
@@ -297,17 +383,42 @@
 		pickAmount(Math.floor(amountDraft));
 	}
 
-	function targetCentre(key: string): { x: number; y: number } {
+	/** A row cell's slot, read while the row is still on screen - it is what carries it. */
+	function slotOf(key: string): FlowerRect | null {
 		const el = document.querySelector(`[data-target-key="${key}"]`);
-		if (!el) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+		if (!el) return null;
 		const rect = el.getBoundingClientRect();
-		return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+		return { x: rect.x, y: rect.y, width: rect.width };
 	}
 
-	// One tap selects a model, the second confirms: the flow's glyph leaves the focused flower,
-	// and once it lands the change is committed and the target's Life walks box by box.
+	/**
+	 * A copy's slot in the strip. The row's cells are not this: they sit mid-screen in an overlay
+	 * that is gone by the time the flower glides home, so a focus that moved onto a copy takes
+	 * its home from the strip flower itself.
+	 */
+	function stripSlotOf(key: string): FlowerRect | null {
+		const el = document.querySelector(`[data-flower-key="${key}"]`);
+		if (!el) return null;
+		const rect = el.getBoundingClientRect();
+		return { x: rect.x, y: rect.y, width: rect.width };
+	}
+
+	function targetCentre(key: string): { x: number; y: number } {
+		const slot = slotOf(key);
+		if (!slot) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+		return { x: slot.x + slot.width / 2, y: slot.y + slot.width / 2 };
+	}
+
+	// Damage and heal: one tap selects a model, the second confirms - the flow's glyph leaves
+	// the focused flower, and once it lands the change is committed and the target's Life walks
+	// box by box. The status flow's single tap moves the focus instead; its commit is the ring's.
 	function tapTarget(target: VitalityTarget): void {
-		if (strike || amount === null || flow === null) return;
+		if (strike || flow === null) return;
+		if (flow === 'status') {
+			retarget(target);
+			return;
+		}
+		if (amount === null) return;
 		const key = keyOf(target);
 		if (picked !== key) {
 			picked = key;
@@ -332,6 +443,88 @@
 		);
 		later(STRIKE_MS, () => landStrike(target));
 	}
+
+	/**
+	 * The status flow moves the focus onto the chosen copy: its flower takes the centre, the
+	 * overlay will glide home into ITS slot, and the flower the overlay opened from goes back to
+	 * the strip - lit, because that is where it now lives. The petals fold with it, since they
+	 * belong to the flower that left. One dip to the slot size on the way reads as the swap:
+	 * the outgoing model shrinks home while the incoming one grows into the centre.
+	 */
+	function retarget(target: VitalityTarget): void {
+		const slot = stripSlotOf(keyOf(target));
+		if (slot) homeRect = slot;
+		statusTarget = target;
+		statusDraft = [...target.flower.statuses];
+		statusArmed = false;
+		targetsOut = false;
+		petalsOut = false;
+		swapDip = true;
+		onFocusMoved?.();
+		later(SWAP_MS, () => (swapDip = false));
+		later(GLIDE_MS, () => {
+			if (statusTarget) statusRingOut = true;
+		});
+	}
+
+	/**
+	 * Toggles one State in the draft. The States the rules force on a fallen copy are not
+	 * offered: the store re-applies them to every commit, so clearing one would only show the
+	 * tap undone. Editing disarms the pending commit, so a tap after a toggle never writes.
+	 */
+	function toggleDraft(status: UnitStatus): void {
+		const target = statusTarget;
+		if (!target || closing) return;
+		if (statusLockedAtZeroHp(status, target.flower.life?.current ?? 1)) return;
+		statusDraft = toggleUnitStatus(statusDraft, status);
+		statusArmed = false;
+	}
+
+	/** The model icon is the commit: the first tap arms the crosshair, the second writes. */
+	function tapIcon(): void {
+		if (!statusRingOpen || !statusTarget) return;
+		if (!statusArmed) {
+			statusArmed = true;
+			return;
+		}
+		onStatuses(statusTarget, statusDraft);
+		dismiss();
+	}
+
+	/**
+	 * The status ring's geometry, in px about the viewport centre: every State at once, on a
+	 * radius that keeps a 44px orb - a real touch target - inside the smaller screen dimension.
+	 * Nothing competes for this radius: the petals went home and this flow has no amount ring.
+	 */
+	const STATUS_ORB = 44;
+	let statusRadius = $derived.by(() => {
+		const room = Math.min(window.innerWidth, window.innerHeight) / 2;
+		return Math.max(84, Math.min(room - STATUS_ORB / 2 - 10, 150));
+	});
+
+	type StatusOrb = {
+		status: UnitStatus;
+		label: string;
+		x: number;
+		y: number;
+		on: boolean;
+		locked: boolean;
+	};
+
+	let statusRing = $derived.by((): StatusOrb[] => {
+		const target = statusTarget;
+		if (!target) return [];
+		const hp = target.flower.life?.current ?? 1;
+		const step = (360 / UNIT_STATUSES.length) * (Math.PI / 180);
+		return UNIT_STATUSES.map((status, index) => ({
+			status,
+			label: UNIT_STATUS_LABELS[status],
+			x: statusRadius * Math.sin(index * step),
+			y: -statusRadius * Math.cos(index * step),
+			on: statusDraft.includes(status),
+			locked: statusLockedAtZeroHp(status, hp)
+		}));
+	});
 
 	function landStrike(target: VitalityTarget): void {
 		const life = target.flower.life;
@@ -408,9 +601,24 @@
 	</g>
 {/snippet}
 
+<!-- The selection mark: a slowly turning crosshair, still under reduced motion, where it simply
+     holds. `box` places it - over a row cell it fills the cell, over the model icon it rings it. -->
+{#snippet crosshair(box: string)}
+	<svg
+		viewBox="0 0 40 40"
+		fill="none"
+		class="pointer-events-none absolute {box} animate-[spin_5s_linear_infinite]
+			stroke-emerald-400 motion-reduce:animate-none"
+	>
+		<circle cx="20" cy="20" r="16.5" stroke-width="1.6" stroke-dasharray="6 5" />
+		<path d="M 20 0 V 7 M 20 33 V 40 M 0 20 H 7 M 33 20 H 40" stroke-width="2" />
+	</svg>
+{/snippet}
+
 <div
-	class="fixed z-50 transition-transform duration-300 ease-out motion-reduce:transition-none"
-	style="left: {from.x}px; top: {from.y}px; width: {from.width}px; transform: {transform}"
+	class="fixed z-50 transition-[transform,left,top,width] duration-300 ease-out
+		motion-reduce:transition-none"
+	style="left: {anchor.x}px; top: {anchor.y}px; width: {anchor.width}px; transform: {transform}"
 >
 	<!-- Before the flower in paint order, so the ring blooms out from behind it and retracts
 	     behind it. The flower copy is pointer-inert, which is what still lets the petals -
@@ -420,7 +628,9 @@
 		viewBox="0 0 125 125"
 		class="pointer-events-none absolute left-1/2 aspect-square w-[125%] overflow-visible
 			transition-all duration-300 ease-out motion-reduce:transition-none"
-		style="top: {from.width / 2}px; transform: translate(-50%, -50%) scale({petalsOpen ? 1 : 0.55});
+		style="top: {anchor.width / 2}px; transform: translate(-50%, -50%) scale({petalsOpen
+			? 1
+			: 0.55});
 			opacity: {petalsOpen ? 1 : 0}"
 		aria-hidden={!petalsOpen}
 	>
@@ -513,22 +723,27 @@
 			{@render petalGlyph(petal, cx, cy)}
 		{/each}
 	</svg>
-	<BattleFlower {flower} showLabel={false} inert />
+	<!-- The flower on show, and no States band of its own: the petals sit at the band's radius. -->
+	<BattleFlower flower={shownFlower} showLabel={false} showStatuses={false} inert />
 </div>
 
 <!-- The vitality flow's target row: the field steps out of the blurred panel and up in front,
      below the flower, the focused copy's twin among them so a model can act on itself. Which
-     copies appear is the flow's business - the living field for damage, the wounded for heal.
-     Seat-coloured rims say whose model it is; a badge numbers duplicate copies. -->
+     copies appear is the flow's business - the living field for damage, the wounded for heal,
+     every copy for the States. Seat-coloured rims say whose model it is; a badge numbers
+     duplicate copies. No States band here: the cells are round and tight, and the band would
+     paint over the neighbouring cell. -->
 {#if targetsOut}
 	<div
 		class="fixed right-0 left-0 z-50 mx-auto w-[min(92vw,26rem)] transition-all duration-300
 			ease-out motion-reduce:transition-none"
-		style="top: calc(50% + {Math.round(from.width * 1.05)}px);
+		style="top: calc(50% + {Math.round(anchor.width * 1.05)}px);
 			opacity: {targetsIn ? 1 : 0}; transform: translateY({targetsIn ? '0' : '18px'})"
 	>
 		<p class="mb-2 text-center text-xs tracking-wide text-slate-300">
-			Tap on selected model and then confirm it again
+			{flow === 'status'
+				? 'Tap target to select statuses'
+				: 'Tap on selected model and then confirm it again'}
 		</p>
 		<div
 			class="max-h-[34dvh] overflow-y-auto overscroll-contain rounded-2xl
@@ -555,7 +770,7 @@
 							}
 						}}
 					>
-						<BattleFlower flower={rowFlower(target)} showLabel={false} />
+						<BattleFlower flower={rowFlower(target)} showLabel={false} showStatuses={false} />
 						{#if target.copy !== null}
 							<span
 								class="absolute -top-1 -right-1 rounded-full border
@@ -566,23 +781,72 @@
 							</span>
 						{/if}
 						{#if picked === keyOf(target)}
-							<!-- The selection: a slowly turning crosshair, still under reduced
-							     motion, where it simply holds. -->
-							<svg
-								viewBox="0 0 40 40"
-								fill="none"
-								class="pointer-events-none absolute inset-0 h-full w-full
-									animate-[spin_5s_linear_infinite] stroke-emerald-400
-									motion-reduce:animate-none"
-							>
-								<circle cx="20" cy="20" r="16.5" stroke-width="1.6" stroke-dasharray="6 5" />
-								<path d="M 20 0 V 7 M 20 33 V 40 M 0 20 H 7 M 33 20 H 40" stroke-width="2" />
-							</svg>
+							{@render crosshair('inset-0 h-full w-full')}
 						{/if}
 					</div>
 				{/each}
 			</div>
 		</div>
+	</div>
+{/if}
+
+<!-- The status flow's ring: every State the game has, all at once, around the copy the focus
+     moved onto. A carried State lights the same yellow rim the pressed petal does and wears its
+     own colour; the rest are the dark glass the petals are, with a grey glyph. The two States
+     the rules force on a fallen copy are locked rather than offered, because the store puts
+     them back on every commit - a tap that silently undoes itself teaches nothing. -->
+{#if statusTarget}
+	<div
+		class="pointer-events-none fixed inset-0 z-50 transition-opacity duration-300
+			motion-reduce:transition-none"
+		style="opacity: {statusRingOpen ? 1 : 0}"
+		aria-hidden={!statusRingOpen}
+	>
+		{#each statusRing as orb (orb.status)}
+			<button
+				type="button"
+				disabled={orb.locked}
+				class="absolute flex items-center justify-center rounded-full border-2 bg-slate-900
+					transition-all duration-200 ease-out outline-none
+					motion-reduce:transition-none {statusRingOpen ? 'pointer-events-auto' : 'pointer-events-none'}
+					{orb.on ? 'border-yellow-300 shadow-[0_0_12px_2px_rgba(253,224,71,0.5)]' : 'border-slate-500'}
+					{orb.locked ? 'cursor-not-allowed opacity-50' : 'hover:border-yellow-300'}
+					focus-visible:border-sky-200"
+				style="left: calc(50% + {Math.round(orb.x)}px); top: calc(50% + {Math.round(orb.y)}px);
+					width: {STATUS_ORB}px; height: {STATUS_ORB}px;
+					transform: translate(-50%, -50%) scale({statusRingOpen ? 1 : 0.55})"
+				aria-pressed={orb.on}
+				aria-label={orb.locked
+					? `${orb.label} - forced while Life is 0`
+					: `${orb.on ? 'Remove' : 'Assign'} ${orb.label}`}
+				onclick={() => toggleDraft(orb.status)}
+			>
+				<StatusGlyph status={orb.status} active={orb.on} size="h-7 w-7" />
+			</button>
+		{/each}
+		<!-- The model icon is the commit: the first tap arms the crosshair, the second writes the
+		     draft. It sits above the flower, which is inert, so the ring owns the whole gesture. -->
+		<button
+			type="button"
+			class="absolute rounded-full outline-none focus-visible:ring-2 focus-visible:ring-sky-200
+				{statusRingOpen ? 'pointer-events-auto' : 'pointer-events-none'}"
+			style="left: 50%; top: 50%; width: {iconSize}px; height: {iconSize}px;
+				transform: translate(-50%, -50%)"
+			aria-label={statusArmed
+				? `Confirm the States on ${statusTarget.flower.name}`
+				: `Arm the commit for ${statusTarget.flower.name}`}
+			onclick={tapIcon}
+		>
+			{#if statusArmed}
+				{@render crosshair('-inset-3')}
+			{/if}
+		</button>
+		<p
+			class="absolute right-0 bottom-6 left-0 px-6 text-center text-xs tracking-wide
+				text-slate-300"
+		>
+			Tap status effects to add or remove them. Tap model icon twice to confirm
+		</p>
 	</div>
 {/if}
 

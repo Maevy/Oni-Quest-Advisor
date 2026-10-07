@@ -15,6 +15,7 @@
 		savedArmyFormat,
 		vitalityAfterDamage,
 		vitalityAfterHeal,
+		vitalityAfterStatuses,
 		type ArmyFormat,
 		type ArmyRosterRow,
 		type ArmyView,
@@ -22,7 +23,8 @@
 		type OpenGame,
 		type PickedArmy,
 		type PlayerKey,
-		type SavedArmy
+		type SavedArmy,
+		type VitalityTarget
 	} from '$lib/domain';
 	import {
 		armyBuilderStore,
@@ -489,6 +491,17 @@
 	let armyView = $derived(missionProgressStore.armyView());
 	let armyViewP1 = $derived(twoPlayerProgressStore.armyView('player1'));
 	let armyViewP2 = $derived(twoPlayerProgressStore.armyView('player2'));
+
+	/**
+	 * A vitality flow's target resolved against the seat that owns it: the base stats a commit
+	 * needs live on the roster row, and the copy's committed record lives in the seat's own
+	 * vitality map. Null when that seat fields nothing or its snapshot no longer decodes.
+	 */
+	function seatRowOf(target: VitalityTarget): { view: ArmyView; row: ArmyRosterRow } | null {
+		const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
+		const row = view?.rows.find((candidate) => candidate.entryId === target.entryId);
+		return view && row ? { view, row } : null;
+	}
 
 	function factionOf(army: PickedArmy | null) {
 		return army
@@ -1134,32 +1147,44 @@
 		onSetRound={(round) => twoPlayerProgressStore.setRound(round)}
 		onSwap={() => twoPlayerProgressStore.swapPlayer()}
 		onDamage={(target, amount) => {
-			const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
-			const row = view?.rows.find((candidate) => candidate.entryId === target.entryId);
-			if (!view || !row) return;
+			const seat = seatRowOf(target);
+			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
 				vitalityAfterDamage(
-					view.vitality[target.entryId],
-					row.effectiveStats.HP ?? 0,
-					row.effectiveStats.STA,
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
 					amount
 				)
 			);
 		}}
 		onHeal={(target, amount) => {
-			const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
-			const row = view?.rows.find((candidate) => candidate.entryId === target.entryId);
-			if (!view || !row) return;
+			const seat = seatRowOf(target);
+			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
 				vitalityAfterHeal(
-					view.vitality[target.entryId],
-					row.effectiveStats.HP ?? 0,
-					row.effectiveStats.STA,
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
 					amount
+				)
+			);
+		}}
+		onStatuses={(target, statuses) => {
+			const seat = seatRowOf(target);
+			if (!seat) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterStatuses(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					statuses
 				)
 			);
 		}}

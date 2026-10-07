@@ -111,26 +111,33 @@ section.
   of boxes: STA (yellow) on the left, HP (red) on the right. The ring always carries the
   **base** stat's boxes — a lost point empties its box from the bottom end and an overhealed
   Life **repaints** its extra points blue from the top end (`vitalityRingStates`), so the ring
-  never grows. One flower per copy; a mounted copy is one flower on the mount's stats. Hot-seat's
-  Army view is one panel split into a sky and an orange half, one flower per row; clicking a
-  flower **focuses** it (backdrop blur, a 1.3× clone gliding from its slot to the viewport centre,
-  the rest faded; click outside or Escape returns it — the clone lives at the screen root because
-  the strip's transform traps `fixed` overlays), and once landed a ring of six **petal buttons**
-  blooms outside the ring — the model's card, deal damage, heal, assign a status, remove a status
-  and manage Stamina — as one dark-blue glass whose pressed petal lights a yellow rim (one at a
-  time; the light is the selection a later sub-ring will bloom from, except the card petal, whose
-  light is the open `UnitCard`'s and drops when it closes). The glyph says the kind and the
-  colour the intent: a grey bang in a grey ring for the card, a red sword, a green medic's cross,
-  an orange star to assign and a light-blue one to remove a status, a yellow disc for Stamina.
-  The card petal opens the copy's `UnitCard` above the flower, and dismissing the card leaves the
-  flower centred until the next click outside. The sword and the cross are wired: pressing one
-  blooms a third ring of amounts (1…6 and X, painted behind the action ring), an amount brings
-  the field forward as a target row — the **living** copies for damage, every copy below its
-  **overheal cap** (double base, blue boxes) for heal, seat rims and copy badges on the icons —
-  one tap selects under a turning crosshair, the second confirms, the glyph flies to the target
-  and its Life boxes walk one by one before the overlay closes with the change committed to that
-  seat's vitality map. The status and Stamina petals still hold their place; editing lives
-  nowhere else — the vitality menu went with the army panes it lived in.
+  never grows. The States a copy carries hang off the flower as a **band of orbs on its upper
+  arc**, just outside the ring — own glyph in its own colour, a `+n` chip past four, absent on a
+  clean copy, display-only. One flower per copy; a mounted copy is one flower on the mount's
+  stats. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
+  row; clicking a flower **focuses** it (backdrop blur, a 1.3× clone gliding from its slot to the
+  viewport centre, the rest faded; click outside or Escape returns it — the clone lives at the
+  screen root because the strip's transform traps `fixed` overlays), and once landed a ring of
+  five **petal buttons** blooms outside the ring — the model's card, deal damage, heal, edit
+  statuses and manage Stamina — as one dark-blue glass whose pressed petal lights a yellow rim
+  (one at a time; the light is the selection a later sub-ring will bloom from, except the card
+  petal, whose light is the open `UnitCard`'s and drops when it closes). The glyph says the kind
+  and the colour the intent: a grey bang in a grey ring for the card, a red sword, a green
+  medic's cross, an orange star for the States, a yellow disc for Stamina. The card petal opens
+  the copy's `UnitCard` above the flower, and dismissing the card leaves the flower centred until
+  the next click outside. The sword and the cross are wired: pressing one blooms a third ring of
+  amounts (1…6 and X, painted behind the action ring), an amount brings the field forward as a
+  target row — the **living** copies for damage, every copy below its **overheal cap** (double
+  base, blue boxes) for heal, seat rims and copy badges on the icons — one tap selects under a
+  turning crosshair, the second confirms, the glyph flies to the target and its Life boxes walk
+  one by one before the overlay closes with the change committed to that seat's vitality map. The
+  star is wired the third way: its row holds **every** copy, one tap moves the focus onto the
+  target (the flower it left stays lit in its slot), all fifteen States bloom around it as
+  tappable orbs — lit yellow in their own colour when carried, the petals' glass when not,
+  Incapacitated and Crouched **locked** while Life is 0 because the store re-applies them — and
+  the model icon commits the draft, its first tap arming the crosshair. The Stamina petal still
+  holds its place; editing lives nowhere else — the vitality menu went with the army panes it
+  lived in.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the

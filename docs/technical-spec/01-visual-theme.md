@@ -101,10 +101,11 @@ free ~75 px of row width for the unit name on phones; that is the floor, not a t
 
 ### Status glyphs
 
-`StatusGlyph.svelte` owns the fifteen State markers of the vitality menu and the Army rows —
-hand-drawn 24×24 SVG, like every other glyph in the app. Off, all of them read `slate-500`; on,
-each State owns a colour. Inner cut-outs (skull eyes, poison numbers, the snail's spiral) are
-`slate-900`, so they read on any fill, grey included.
+`StatusGlyph.svelte` owns the fifteen State markers of the vitality menu, the Army rows, the
+Battle Flower's States band and the status flow's ring of orbs — hand-drawn 24×24 SVG, like every
+other glyph in the app. Off, all of them read `slate-500`; on, each State owns a colour. Inner
+cut-outs (skull eyes, poison numbers, the snail's spiral) are `slate-900`, so they read on any
+fill, grey included.
 
 | Status                      | Glyph                   | Colour when on |
 | --------------------------- | ----------------------- | -------------- |

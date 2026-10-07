@@ -1,5 +1,5 @@
 import type { ArmyFactionId, ArmyFormat } from './army';
-import { vitalityRingStates } from './army';
+import { unitStatuses, vitalityRingStates } from './army';
 import type {
 	ArmyFactionConfig,
 	ArmyItemSpec,
@@ -9,6 +9,7 @@ import type {
 	ArmySpellSpec,
 	ArmyStratagemSpec,
 	ArmyUpgradeSpec,
+	UnitStatus,
 	UnitVitality,
 	VitalityRingState
 } from './army';
@@ -100,8 +101,9 @@ export type BattleRingSpec = {
 };
 
 /**
- * One army copy as a Battle Flower: the orb's identity plus its two ring halves - stamina on
- * the left, Life on the right. A half is null when the model carries no value for that stat.
+ * One army copy as a Battle Flower: the orb's identity, its two ring halves - stamina on
+ * the left, Life on the right - and the States it carries. A half is null when the model
+ * carries no value for that stat.
  */
 export type BattleFlowerSpec = {
 	entryId: string;
@@ -111,6 +113,8 @@ export type BattleFlowerSpec = {
 	mountedOn: string | null;
 	stamina: BattleRingSpec | null;
 	life: BattleRingSpec | null;
+	/** The States the copy carries, in catalog order; empty for a copy carrying none. */
+	statuses: UnitStatus[];
 };
 
 function battleRing(max: number | null, current: number | null): BattleRingSpec | null {
@@ -128,7 +132,8 @@ export function battleFlowersFor(view: ArmyView): BattleFlowerSpec[] {
 			icon: row.icon,
 			mountedOn: row.mounted ? (row.mount?.name ?? null) : null,
 			stamina: battleRing(row.effectiveStats.STA, vitality?.sta ?? row.effectiveStats.STA),
-			life: battleRing(row.effectiveStats.HP, vitality?.hp ?? row.effectiveStats.HP)
+			life: battleRing(row.effectiveStats.HP, vitality?.hp ?? row.effectiveStats.HP),
+			statuses: unitStatuses(vitality)
 		};
 	});
 }

@@ -1,6 +1,6 @@
 import type { BattleFlowerSpec } from './savedArmy';
 import type { PlayerKey } from './twoPlayer';
-import type { UnitVitality } from './army';
+import type { UnitStatus, UnitVitality } from './army';
 
 /** The amount ring's fixed steps; the ring closes with X, which asks for a number. */
 export const AMOUNT_STEPS = [1, 2, 3, 4, 5, 6] as const;
@@ -67,6 +67,17 @@ export function healableTargetsFor(
 	);
 }
 
+/**
+ * The status flow's row: every copy of both armies. States are not a function of Life, so
+ * nothing is filtered out - a fallen copy is exactly the one whose Incapacitated orb a player
+ * goes looking for.
+ */
+export function allTargetsFor(
+	seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }>
+): VitalityTarget[] {
+	return targetsWhere(seats, () => true);
+}
+
 /** What a hit of `amount` actually takes off a model with `currentHp` Life left: never more. */
 export function damageApplied(amount: number, currentHp: number): number {
 	return Math.max(0, Math.min(amount, currentHp));
@@ -108,5 +119,26 @@ export function vitalityAfterHeal(
 		sta: current?.sta ?? baseSta ?? 0
 	};
 	if (current?.statuses) vitality.statuses = current.statuses;
+	return vitality;
+}
+
+/**
+ * The vitality record after a status edit: Life and stamina untouched, the States replaced
+ * wholesale by the ring's confirmed draft. An empty draft drops the key again, so a copy
+ * cleared of every State costs nothing in the run's map. The zero-Life States are not
+ * re-applied here - the store's `setUnitVitality` runs every commit through
+ * `applyZeroHpStates`, which is the one place that rule lives.
+ */
+export function vitalityAfterStatuses(
+	current: UnitVitality | undefined,
+	baseHp: number,
+	baseSta: number | null,
+	statuses: UnitStatus[]
+): UnitVitality {
+	const vitality: UnitVitality = {
+		hp: current?.hp ?? baseHp,
+		sta: current?.sta ?? baseSta ?? 0
+	};
+	if (statuses.length > 0) vitality.statuses = statuses;
 	return vitality;
 }

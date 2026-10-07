@@ -105,6 +105,12 @@ circular orb, ringed by a circular bar in two halves.
 - A half a model has no value for (a null STA or HP) draws no boxes at all.
 - A mounted copy is one flower: the rider's icon, the mount's stats on the ring, and the mount's
   name under the unit's.
+- The States a copy carries hang off the flower as a **band of orbs on its upper arc**, just
+  outside the vitality ring: one small orb per State, each wearing the State's own glyph in its
+  own colour, and a `+n` chip once more than four would not fit the arc. A copy carrying no
+  States shows no band, so a clean army reads exactly as it always did. The band is display-only
+  — the flower's own click still focuses it — and the flower's aria-label names the States for a
+  screen reader.
 
 Both seats share the one view, so the old active/frozen distinction no longer applies to armies —
 a flower is reference for whoever holds the phone.
@@ -115,15 +121,14 @@ a quarter of its opacity so the focused one holds the eye. A click anywhere outs
 or Escape — glides it back into its slot and restores the panel. The enlarged flower is a
 measured clone rendered at the screen root (`BattleFlowerFocus`), because the sliding strip's
 transform would trap a `fixed` overlay inside the pane; it grows a third, deliberately not to
-full screen. Once the flower has landed, a ring of six **petals** blooms outside its ring —
+full screen. Once the flower has landed, a ring of five **petals** blooms outside its ring —
 thicker arc buttons, clockwise from 12 o'clock: the model's card, **deal damage**, **heal**,
-**assign a status**, **remove a status**, **manage Stamina**. Damage and heal no longer declare a
-target — choosing the model is the action's own step — so one sword and one cross cover both
-cases, while status splits into assign and remove. The petals are one dark-blue glass — a very
-dark fill, a brighter blue outline — because the glyph carries the meaning, not a tint: a red
-**sword**, a green **medic's cross**, an orange **star** for assigning and a light blue one for
-removing a status, a yellow **disc** for Stamina, and a grey exclamation mark in a grey ring for
-the card. Pressing a petal lights its rim bright yellow with a glow, and only one petal glows at
+**edit statuses**, **manage Stamina**. Damage and heal no longer declare a target — choosing the
+model is the action's own step — and neither do the States, so one orange **star** covers
+assigning and removing alike; a second "remove" petal would only be a second door into the same
+ring. The petals are one dark-blue glass — a very dark fill, a brighter blue outline — because
+the glyph carries the meaning, not a tint: a red **sword**, a green **medic's cross**, an orange
+**star**, a yellow **disc** for Stamina, and a grey exclamation mark in a grey ring for the card. Pressing a petal lights its rim bright yellow with a glow, and only one petal glows at
 a time: pressing another moves the light, hovering shows it transiently, and a dismissal drops
 it as the petals retract. The pressed petal is the selection a later ring of sub-petals will
 bloom from; until then the other three action petals hold their place and keep the focus open. The info
@@ -153,6 +158,27 @@ entry labelled "Healing"), the row offers every copy below its **overheal cap** 
 the whole alike, because Life overheals to double its base — the green cross flies instead of the
 sword, and the boxes refill one by one, past full into the blue overheal and no further than
 double the base. Whether a heal may raise a fallen copy is still an open ruling.
+
+**The status flow** (2026-10-06) is the third petal function, and the first that moves the focus.
+The star opens the same target row — but with **every** copy of both armies in it, fallen and
+untouched alike, because States are not a function of Life — under the line "Tap target to
+select statuses". One tap, not two: the ring the tap leads to is reversible and has its own
+commit, so a mis-tap costs nothing. That tap moves the focus onto the chosen copy — its flower
+takes the centre while the flower the overlay opened from glides back to its slot and stays
+**lit** there, the one bright flower in a dimmed strip, because that is where it now lives — and
+a beat later all fifteen States bloom around the target as orbs on a ring of their own: a real
+44 px touch target each, on a radius that fits the smaller screen dimension, with nothing
+competing for the space (the petals went home with the flower they belonged to, and this flow has
+no amount ring). A carried State lights the same yellow rim the pressed petal does and wears its
+own colour; the rest are the petals' dark glass with a grey glyph. Tapping an orb toggles it in a
+**draft** — nothing is written yet — under the line "Tap status effects to add or remove them.
+Tap model icon twice to confirm". The model icon is the commit: the first tap arms the green
+crosshair around it, the second writes the whole draft to that seat's vitality map in one go and
+sends the flower home into **the target's** slot. Toggling an orb disarms a pending commit, so a
+tap after an edit never writes by accident. Escape and click-outside discard the draft and close.
+The two States a model at zero Life is forced into — Incapacitated and Crouched — are **locked
+orbs**, dimmed and labelled "forced while Life is 0": the store re-applies them to every commit,
+so offering to clear them would only show the tap undone.
 
 Because decoded entry ids are position-based (`imported-1` for a list's first copy), both seats
 can hold the same id; the two `vitality` maps keep them apart.
@@ -212,10 +238,9 @@ to.
 - **The swap countdown is skippable**, which means the privacy guarantee is opt-in at the exact
   moment it matters. Is Skip worth keeping (it is genuinely useful when the same person is
   playing both seats for a test), or should it go?
-- **The flowers focus and read, but do not edit.** The info petal's unit card is the flower's one
-  open door; Life, stamina and States still cannot be changed in hot-seat at all — box taps,
-  damage, heal and status assignment are the interaction phase's work, and the six action petals
-  are lit placeholders until it lands. Until then a run fields whatever Life it started with.
+- **The flowers edit Life and States, but not Stamina.** Damage, heal and the status ring are
+  wired (2026-10-06); the yellow Stamina petal still holds its place, as do box taps. Until
+  Stamina lands, a run spends whatever Stamina it started with.
 - Hot-seat has **no notion of a finished game** — no statistics, no winner, no round snapshots.
   Online computes all three. Would a post-round-5 summary be useful here, or are the two VP
   blocks enough?

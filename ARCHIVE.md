@@ -271,6 +271,53 @@ prompt-and-abandon pattern.
   the next session's work; until then hot-seat cannot edit Life, stamina or States at all — the
   vitality menu went with the army panes it lived in.
 
+### 2026-10-06 — the petals grow hands (98e4c26)
+
+- The six petals got their **glyphs** (grey bang in a ring for the card, red sword, green medic's
+  cross, orange star to assign and light-blue one to remove a status, yellow disc for Stamina)
+  and the first two functions. Damage and heal share one shape: pressing the petal blooms a
+  **third ring** of amounts (1…6 and X, painted behind the action ring so it emerges from behind
+  it; X opens a small amount entry), an amount brings the field forward as a target row under the
+  flower — the living copies for damage, every copy below its overheal cap for heal, seat rims
+  and copy badges, the focused copy's twin among them so a model can act on itself — one tap
+  selects under a turning green crosshair, the second confirms, the flow's glyph flies to the
+  target and its Life boxes walk one by one before the overlay closes with the change committed.
+- **Worth remembering:** the amount ring _is_ the third ring (petals 47–61, amounts 64–76 in the
+  overlay's 125-unit box), so anything new that wants a radius has to take it from somewhere. The
+  row hangs at `top: calc(50% + width × 1.05)` with `max-h-[34dvh]` — on a 640 px-tall phone it
+  already ends past the bottom edge, which is why pushing the rings outward is not free. The hit
+  commits the moment the glyph lands, so the row renders from a **snapshot** taken when the amount
+  was chosen; rendering it from the live views would change every affected box at once mid-fade.
+
+### 2026-10-07 — the status flow: a band on the strip, a ring of States at the centre
+
+- The States a copy carries now hang off its strip flower as a **band of orbs on the upper arc**,
+  just outside the vitality ring — own glyph in its own colour (`StatusGlyph`), a `+n` chip once
+  more than four would not fit the arc, absent on a clean copy, display-only. The band is capped
+  and the panel's flower gap is `gap-5` because the topmost orb reaches ~16 px past the flower's
+  box, into the gap.
+- The assign/remove petal pair **collapsed into one orange star**: the ring it opens both assigns
+  and removes, so a second petal would only be a second door into the same room. Five petals now.
+- The status flow is the first that **moves the focus**: the star's row holds every copy of both
+  seats (States are not a function of Life), one tap — not two, because the ring is reversible and
+  has its own commit — moves the focus onto that copy. The overlay keeps one instance and _swaps
+  its displayed flower_: the wrapper's `left/top/width` and its centring translate transition
+  together, so changing the anchor mid-flight moves nothing, and on close the flower glides home
+  into the **target's** slot. The flower the overlay opened from stays **lit** in its slot (a new
+  `undimmed` on the panel, keyed by seat _and_ entry because two seats may field the same save).
+- All fifteen States bloom around the target as tappable 44 px orbs on a radius fitted to the
+  smaller screen dimension. Nothing competes for that radius: the petals went home with the flower
+  they belonged to, and this flow has no amount ring. Taps edit a **draft**; the model icon
+  commits it — first tap arms the crosshair, second writes the whole draft in one go — and
+  toggling an orb disarms a pending commit. Escape and click-outside discard.
+- **Worth remembering:** `setUnitVitality` runs every commit through `applyZeroHpStates`, so a
+  status editor that offered to clear Incapacitated or Crouched on a 0-Life copy would show the
+  tap silently undone. The ring therefore **locks** those two orbs while Life is 0, and
+  `ZERO_HP_STATUSES` / `statusLockedAtZeroHp` share one list with `applyZeroHpStates` so the lock
+  and the rule cannot drift (a spec asserts both directions). Verified end to end in a real
+  browser (45 assertions: the flow, the draft discard, the lock, the `+n` chip, and the
+  damage/heal regression after the petal count changed).
+
 ---
 
 ## v0.8.0 — the hot-seat parity release (2026-09-26, 3 commits)

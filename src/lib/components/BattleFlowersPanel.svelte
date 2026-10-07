@@ -11,16 +11,32 @@
 		p2: ArmyView | null;
 		/** Every flower fades while one of them is focused in the overlay. */
 		dimmed?: boolean;
+		/**
+		 * The copy the focus moved off, once a status flow has retargeted: it stays lit in the
+		 * strip, because that is where it went home to. Keyed by seat as well as entry - two
+		 * seats may field the same save, so an entry id alone is not a copy.
+		 */
+		undimmed?: { player: PlayerKey; entryId: string } | null;
 		/** Carries the seat's view along, so the screen can resolve the flower's unit card. */
-		onSelect?: (flower: BattleFlowerSpec, rect: FlowerRect, army: ArmyView) => void;
+		onSelect?: (
+			flower: BattleFlowerSpec,
+			rect: FlowerRect,
+			army: ArmyView,
+			player: PlayerKey
+		) => void;
 	};
 
-	let { p1, p2, dimmed = false, onSelect }: Props = $props();
+	let { p1, p2, dimmed = false, undimmed = null, onSelect }: Props = $props();
 
 	const SEAT_ORDER: PlayerKey[] = ['player1', 'player2'];
 
 	function viewFor(player: PlayerKey): ArmyView | null {
 		return player === 'player1' ? p1 : p2;
+	}
+
+	function isDimmed(player: PlayerKey, entryId: string): boolean {
+		if (!dimmed) return false;
+		return !(undimmed?.player === player && undimmed.entryId === entryId);
 	}
 </script>
 
@@ -35,13 +51,17 @@
 		</div>
 		{#if army}
 			<!-- One flower per row: a two-column grid squeezed each flower below its design size
-			     on a phone, and the ring's box count is the thing that must stay legible. -->
-			<div class="flex flex-col items-center gap-3">
+			     on a phone, and the ring's box count is the thing that must stay legible.
+			     gap-5 and the top pad are the States band's headroom: its topmost orb reaches
+			     ~16px past the flower's box, into the gap - and for the first flower, past the
+			     header, which the outer gap-3 alone would not cover. -->
+			<div class="flex flex-col items-center gap-5 pt-1">
 				{#each battleFlowersFor(army) as flower (flower.entryId)}
 					<BattleFlower
 						{flower}
-						{dimmed}
-						onSelect={onSelect ? (rect) => onSelect(flower, rect, army) : undefined}
+						flowerKey={`${player}:${flower.entryId}`}
+						dimmed={isDimmed(player, flower.entryId)}
+						onSelect={onSelect ? (rect) => onSelect(flower, rect, army, player) : undefined}
 					/>
 				{/each}
 			</div>
