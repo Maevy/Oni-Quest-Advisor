@@ -538,10 +538,12 @@
 		strike = null;
 		picked = null;
 		// The amount ring folds as the glyph lands, so the dismissal that follows the fade
-		// closes the overlay instead of folding a flow that is already over.
+		// closes the overlay instead of folding a flow that is already over. It has to be
+		// dismiss() rather than close(): the row is still out while its boxes walk the fade,
+		// and close() would read that as a layer to fold and leave the overlay open.
 		subRingOut = false;
 		for (let box = 1; box <= applied; box++) later(FADE_MS * box, () => (faded = box));
-		later(FADE_MS * applied + FADE_SETTLE_MS, close);
+		later(FADE_MS * applied + FADE_SETTLE_MS, dismiss);
 	}
 
 	/** The struck copy's flower while its Life walks: boxes darken or refill from the bottom,
