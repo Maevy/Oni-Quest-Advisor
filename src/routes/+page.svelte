@@ -13,6 +13,7 @@
 		pickedArmyFormat,
 		resolveArmyEntries,
 		savedArmyFormat,
+		vitalityAfterBoxTap,
 		vitalityAfterDamage,
 		vitalityAfterHeal,
 		vitalityAfterStamina,
@@ -1200,6 +1201,21 @@
 					seat.row.effectiveStats.HP ?? 0,
 					seat.row.effectiveStats.STA,
 					delta
+				)
+			);
+		}}
+		onSetStat={(target, half, value) => {
+			const seat = seatRowOf(target);
+			if (!seat) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterBoxTap(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					half,
+					value
 				)
 			);
 		}}

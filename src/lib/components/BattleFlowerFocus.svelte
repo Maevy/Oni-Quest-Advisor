@@ -40,6 +40,8 @@
 		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
 		/** A Stamina step was tapped: the screen commits it to the focused copy's seat. */
 		onStamina: (delta: number) => void;
+		/** A ring box was tapped: the screen sets that half of the focused copy straight to it. */
+		onSetStat: (half: 'life' | 'stamina', value: number) => void;
 		/**
 		 * A status flow moved the focus onto another copy, so the flower this overlay opened
 		 * from has gone home: the screen lights that slot again in the strip.
@@ -61,6 +63,7 @@
 		onHeal,
 		onStatuses,
 		onStamina,
+		onSetStat,
 		onFocusMoved,
 		onClosed
 	}: Props = $props();
@@ -391,26 +394,50 @@
 		pickAmount(Math.floor(amountDraft));
 	}
 
-	// The walk the centred flower's Stamina boxes make after a step, and the value they now
-	// show. The flower prop is the snapshot taken when the overlay opened, so the flow keeps
-	// its own running value: the commit lands in the store at once, the ring catches up box by
-	// box - the row's flower does the same during a strike - and once it has, this value is
-	// what the next step starts from. A tap mid-walk restarts from what the player now sees,
-	// and the token drops the old walk's timers instead of letting two walks fight over the
-	// ring. Keyed by entry, because a status flow can swap the flower on show mid-session.
-	let staShown = $state<{ entryId: string; token: number; shown: number } | null>(null);
-	let staWalkToken = 0;
+	// The values the centred flower's rings now show, and the walk they are mid-way through.
+	// The flower prop is the snapshot taken when the overlay opened, so the flows keep their
+	// own running record: a commit lands in the store at once and the ring catches up box by
+	// box - the row's flower does the same during a strike. A tap mid-walk restarts from what
+	// the player now sees, and the token drops the old walk's timers instead of letting two
+	// walks fight over the ring. Keyed by entry, because a status flow can swap the flower on
+	// show mid-session.
+	let shownVitality = $state<{ entryId: string; token: number; hp: number; sta: number } | null>(
+		null
+	);
+	let walkToken = 0;
 
-	/** The focused copy's Stamina as the player now sees it, snapshot and walk included. */
-	let staminaCurrent = $derived.by(() => {
-		const sta = flower.stamina;
-		if (!sta) return null;
-		return staShown?.entryId === flower.entryId ? staShown.shown : sta.current;
-	});
+	/** One half of the focused copy as the player now sees it, snapshot and walk included. */
+	function displayed(half: 'life' | 'stamina'): number | null {
+		const ring = half === 'life' ? flower.life : flower.stamina;
+		if (!ring) return null;
+		if (shownVitality?.entryId === flower.entryId)
+			return half === 'life' ? shownVitality.hp : shownVitality.sta;
+		return ring.current;
+	}
+
+	/** Walks one half from where it is on screen to where the commit put it, one box a step. */
+	function walk(half: 'life' | 'stamina', from: number, goal: number): void {
+		const steps = goal - from;
+		const count = Math.abs(steps);
+		const token = ++walkToken;
+		shownVitality = {
+			entryId: flower.entryId,
+			token,
+			hp: half === 'life' ? from : (displayed('life') ?? 0),
+			sta: half === 'stamina' ? from : (displayed('stamina') ?? 0)
+		};
+		for (let box = 1; box <= count; box++)
+			later(FADE_MS * box, () => {
+				if (!shownVitality || shownVitality.token !== token) return;
+				const value = from + Math.sign(steps) * box;
+				if (half === 'life') shownVitality.hp = value;
+				else shownVitality.sta = value;
+			});
+	}
 
 	/** The Stamina ring's two steps, dead at the floor and at the over-Stamina cap. */
 	let staminaSteps = $derived.by(() => {
-		const current = staminaCurrent ?? 0;
+		const current = displayed('stamina') ?? 0;
 		return [
 			{ delta: -1, label: 'Spend 1 Stamina', enabled: current > 0 },
 			{
@@ -423,34 +450,53 @@
 
 	function applyStaminaStep(delta: number): void {
 		const sta = flower.stamina;
-		const from = staminaCurrent;
+		const from = displayed('stamina');
 		if (!sta || from === null || strike || closing) return;
 		const goal = Math.min(staminaCap(sta.max), Math.max(0, from + delta));
 		if (goal === from) return;
 		onStamina(delta);
-		const steps = goal - from;
-		const count = Math.abs(steps);
-		const token = ++staWalkToken;
-		staShown = { entryId: flower.entryId, token, shown: from };
-		for (let box = 1; box <= count; box++)
-			later(FADE_MS * box, () => {
-				if (!staShown || staShown.token !== token) return;
-				staShown.shown = from + Math.sign(steps) * box;
-			});
+		walk('stamina', from, goal);
 	}
 
-	/** The flower on show, its Stamina ring at the value the steps have walked it to. */
+	// Box taps: the ring's boxes are themselves the control on the focused flower, while the
+	// petals hold their place just outside the ring - so the boxes steal no petal click. Only
+	// while the ring is idle: mid-flow the player's hand is somewhere else, and once a status
+	// flow has moved the focus the flower on show is not the one this overlay commits for.
+	let boxesLive = $derived(petalsOpen && flow === null && !statusTarget && !strike && !infoOpen);
+
+	function applyBoxTap(half: 'stamina' | 'life', index: number): void {
+		const from = displayed(half);
+		const max = half === 'life' ? flower.life?.max : flower.stamina?.max;
+		if (!boxesLive || from === null || max === undefined) return;
+		const goal = Math.min(max, Math.max(0, index + 1));
+		if (goal === from) return;
+		onSetStat(half, goal);
+		walk(half, from, goal);
+	}
+
+	/** The flower on show, its rings at the values the steps and taps have walked them to. */
 	let walkedFlower = $derived.by(() => {
-		const sta = shownFlower.stamina;
-		if (!staShown || staShown.entryId !== shownFlower.entryId || !sta) return shownFlower;
-		return {
-			...shownFlower,
-			stamina: {
-				...sta,
-				current: staShown.shown,
-				states: vitalityRingStates(staShown.shown, sta.max)
-			}
-		};
+		if (!shownVitality || shownVitality.entryId !== shownFlower.entryId) return shownFlower;
+		let spec = shownFlower;
+		if (spec.stamina)
+			spec = {
+				...spec,
+				stamina: {
+					...spec.stamina,
+					current: shownVitality.sta,
+					states: vitalityRingStates(shownVitality.sta, spec.stamina.max)
+				}
+			};
+		if (spec.life)
+			spec = {
+				...spec,
+				life: {
+					...spec.life,
+					current: shownVitality.hp,
+					states: vitalityRingStates(shownVitality.hp, spec.life.max)
+				}
+			};
+		return spec;
 	});
 
 	/** A row cell's slot, read while the row is still on screen - it is what carries it. */
@@ -837,8 +883,15 @@
 		{/each}
 	</svg>
 	<!-- The flower on show, and no States band of its own: the petals sit at the band's radius.
-	     Its Stamina ring is the walked snapshot while a step's boxes are still moving. -->
-	<BattleFlower flower={walkedFlower} showLabel={false} showStatuses={false} inert />
+	     Its rings are the walked snapshot while a step's or a tap's boxes are still moving, and
+	     while the petals hold their place its boxes are themselves tappable. -->
+	<BattleFlower
+		flower={walkedFlower}
+		showLabel={false}
+		showStatuses={false}
+		inert
+		onBoxTap={boxesLive ? applyBoxTap : undefined}
+	/>
 </div>
 
 <!-- The vitality flow's target row: the field steps out of the blurred panel and up in front,

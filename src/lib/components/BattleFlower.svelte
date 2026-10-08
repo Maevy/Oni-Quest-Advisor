@@ -38,6 +38,12 @@
 		 * copy has to glide home into, which the target row's own cells are not.
 		 */
 		flowerKey?: string | null;
+		/**
+		 * Makes the ring's boxes tappable: the n-th box of a half sets that stat straight to n.
+		 * Only the focus overlay passes it - the strip's flowers stay display-only, and there
+		 * the petals sit just outside the ring, so the boxes steal nothing.
+		 */
+		onBoxTap?: (half: 'stamina' | 'life', index: number) => void;
 	};
 
 	let {
@@ -47,7 +53,8 @@
 		showLabel = true,
 		inert = false,
 		showStatuses = true,
-		flowerKey = null
+		flowerKey = null,
+		onBoxTap
 	}: Props = $props();
 
 	function handleClick(event: MouseEvent): void {
@@ -84,7 +91,13 @@
 		);
 	}
 
-	type RingBox = { d: string; classes: string };
+	type RingBox = {
+		d: string;
+		classes: string;
+		half: 'stamina' | 'life';
+		index: number;
+		label: string;
+	};
 
 	/** The vitality markers' recipes, bordered: a filled box carries a dark border so the count
 	 * reads at a glance against its neighbours; a lost box keeps its coloured rim, which is what
@@ -113,7 +126,13 @@
 			const start = side === 'right' ? index * span : 360 - (index + 1) * span;
 			// Contiguous boxes spanning the full half: their borders divide them, and the two
 			// halves meeting at 12 and 6 o'clock close the outline into one circle.
-			return { d: sectorPath(start, start + span), classes: boxClasses(kind, state) };
+			return {
+				d: sectorPath(start, start + span),
+				classes: boxClasses(kind, state),
+				half: kind,
+				index,
+				label: `Set ${kind === 'life' ? 'Life' : 'Stamina'} to ${index + 1} of ${ring.max}`
+			};
 		});
 	}
 
@@ -196,12 +215,16 @@
 </script>
 
 <!-- w-full max-w-[104px] on the root, not the orb: inside a flex column the root would otherwise
-     shrink-wrap to its label and the percentage-wide orb would collapse with it. -->
+     shrink-wrap to its label and the percentage-wide orb would collapse with it. The inert copy
+     is hidden from AT: it is a duplicate of the strip flower that stays in the tree, and its
+     tappable boxes are a pointer shortcut - everything they set is also reachable by petals. -->
 <button
 	type="button"
 	class="flex w-full max-w-[104px] flex-col items-center gap-1 transition-opacity duration-300
 		{dimmed ? 'opacity-25' : 'opacity-100'} {inert ? 'pointer-events-none' : ''}"
 	aria-label={summary}
+	aria-hidden={inert ? true : undefined}
+	tabindex={inert ? -1 : undefined}
 	data-flower-key={flowerKey ?? undefined}
 	onclick={handleClick}
 >
@@ -213,13 +236,24 @@
 			aria-hidden="true"
 		>
 			{#each boxes as box (box.d)}
-				<!-- The fill/stroke transition is what lets a strike darken its boxes one by one. -->
+				<!-- The fill/stroke transition is what lets a strike darken its boxes one by one.
+				     With onBoxTap the box is itself the control: the n-th box of a half sets that
+				     stat straight to n, on the focused flower and nowhere else. It is a pointer
+				     shortcut inside an aria-hidden copy - every value it sets is also reachable
+				     by keyboard through the petals - so it carries no role and no key handler. -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<path
 					d={box.d}
 					class="{box.classes} transition-[fill,stroke] duration-300
-						motion-reduce:transition-none"
+						motion-reduce:transition-none {onBoxTap ? 'cursor-pointer hover:opacity-70' : ''}"
 					stroke-width="2"
-				/>
+					onclick={onBoxTap ? () => onBoxTap(box.half, box.index) : undefined}
+				>
+					{#if onBoxTap}
+						<title>{box.label}</title>
+					{/if}
+				</path>
 			{/each}
 		</svg>
 		<!-- The orb's box is exactly the ring's inner circle (2 * INNER of the 120 viewBox), so its

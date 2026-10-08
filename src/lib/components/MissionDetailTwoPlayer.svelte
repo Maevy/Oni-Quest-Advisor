@@ -84,6 +84,8 @@
 		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
 		/** A Stamina step was tapped on the focused flower: commit it to that seat's map. */
 		onStamina: (target: VitalityTarget, delta: number) => void;
+		/** A ring box was tapped on the focused flower: set that half straight to the box. */
+		onSetStat: (target: VitalityTarget, half: 'life' | 'stamina', value: number) => void;
 	};
 
 	let {
@@ -114,7 +116,8 @@
 		onDamage,
 		onHeal,
 		onStatuses,
-		onStamina
+		onStamina,
+		onSetStat
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -387,6 +390,17 @@
 					copy: null
 				},
 				delta
+			)}
+		onSetStat={(half, value) =>
+			onSetStat(
+				{
+					player: focused.player,
+					entryId: focused.flower.entryId,
+					flower: focused.flower,
+					copy: null
+				},
+				half,
+				value
 			)}
 		onFocusMoved={() => (focusMovedHome = true)}
 		onClosed={closeFocus}

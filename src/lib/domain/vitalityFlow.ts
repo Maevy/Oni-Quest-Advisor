@@ -149,6 +149,30 @@ export function vitalityAfterStamina(
 }
 
 /**
+ * The vitality record after a box tap: one half jumps straight to the tapped box, the other
+ * half and the States kept. The ring only carries base boxes, so a tap can never ask for more
+ * than the base - over-Stamina stays the disc's +1 alone - and Life clamps to the overheal cap
+ * for the same reason a stray value can never land here.
+ */
+export function vitalityAfterBoxTap(
+	current: UnitVitality | undefined,
+	baseHp: number,
+	baseSta: number | null,
+	half: 'life' | 'stamina',
+	value: number
+): UnitVitality {
+	const vitality: UnitVitality = {
+		hp: half === 'life' ? Math.min(lifeCap(baseHp), Math.max(0, value)) : (current?.hp ?? baseHp),
+		sta:
+			half === 'stamina'
+				? Math.min(baseSta ?? 0, Math.max(0, value))
+				: (current?.sta ?? baseSta ?? 0)
+	};
+	if (current?.statuses) vitality.statuses = current.statuses;
+	return vitality;
+}
+
+/**
  * The vitality record after a status edit: Life and stamina untouched, the States replaced
  * wholesale by the ring's confirmed draft. An empty draft drops the key again, so a copy
  * cleared of every State costs nothing in the run's map. The zero-Life States are not

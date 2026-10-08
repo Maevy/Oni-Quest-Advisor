@@ -100,10 +100,14 @@ centred flower and walks its Stamina boxes one step — a spend emptying from th
 Life, a gain refilling the same way, and past the base the extra point repainting its box
 **violet** from the top end, over-Stamina running to double the base like Life's blue. The step
 ring stays out between taps, so several points cost several taps; a model with no Stamina gets a
-dead disc instead of two disabled steps. What the interaction phase
-still owes: box taps. Behaviour spec:
-`docs/functional-spec/06-two-player-hot-seat.md`. The flowers replace the other modes' army
-panels afterwards. **Next: box taps.**
+dead disc instead of two disabled steps. **Box taps** (2026-10-08) closed the flower
+interaction: on the focused flower the ring's boxes are themselves tappable while the petals
+hold their place — the n-th box of a half sets that stat straight to n, walking and committing
+at once — live only while the ring is idle; the strip flowers stay display-only and
+over-Stamina stays the disc's +1. What remains of the flowers is carrying them to the other
+modes' army panels. Behaviour spec:
+`docs/functional-spec/06-two-player-hot-seat.md`. **Next: the flowers carry to the solo and
+online army panels.**
 
 Smaller open threads:
 

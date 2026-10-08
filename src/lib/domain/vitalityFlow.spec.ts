@@ -6,6 +6,7 @@ import {
 	healApplied,
 	healableTargetsFor,
 	staminaCap,
+	vitalityAfterBoxTap,
 	vitalityAfterDamage,
 	vitalityAfterHeal,
 	vitalityAfterStamina,
@@ -233,5 +234,32 @@ describe('vitalityAfterStamina', () => {
 		expect(vitalityAfterStamina(undefined, 4, 3, -1)).toEqual({ hp: 4, sta: 2 });
 		expect(vitalityAfterStamina(undefined, 4, 3, 1)).toEqual({ hp: 4, sta: 4 });
 		expect(vitalityAfterStamina({ hp: 2, sta: 0 }, 2, null, 1)).toEqual({ hp: 2, sta: 0 });
+	});
+});
+
+describe('vitalityAfterBoxTap', () => {
+	it('sets the tapped half straight to the box and keeps the other', () => {
+		expect(vitalityAfterBoxTap({ hp: 4, sta: 2 }, 4, 3, 'life', 1)).toEqual({ hp: 1, sta: 2 });
+		expect(vitalityAfterBoxTap({ hp: 4, sta: 2 }, 4, 3, 'stamina', 1)).toEqual({ hp: 4, sta: 1 });
+	});
+
+	it('clamps at zero and at the caps, and keeps States', () => {
+		expect(
+			vitalityAfterBoxTap({ hp: 1, sta: 1, statuses: ['bleeding'] }, 4, 3, 'life', 99)
+		).toEqual({
+			hp: 8,
+			sta: 1,
+			statuses: ['bleeding']
+		});
+		expect(vitalityAfterBoxTap({ hp: 1, sta: 1 }, 4, 3, 'stamina', 99)).toEqual({ hp: 1, sta: 3 });
+		expect(vitalityAfterBoxTap({ hp: 2, sta: 2 }, 2, 2, 'life', 0)).toEqual({ hp: 0, sta: 2 });
+	});
+
+	it('reads an untouched copy as full, and a null base as nothing to set', () => {
+		expect(vitalityAfterBoxTap(undefined, 4, 3, 'stamina', 2)).toEqual({ hp: 4, sta: 2 });
+		expect(vitalityAfterBoxTap({ hp: 2, sta: 0 }, 2, null, 'stamina', 3)).toEqual({
+			hp: 2,
+			sta: 0
+		});
 	});
 });

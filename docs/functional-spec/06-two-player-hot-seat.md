@@ -194,6 +194,18 @@ between taps, so several points cost several taps; Escape or click-outside folds
 next Escape glides the flower home. A model with no Stamina value gets a dead disc — dimmed and
 labelled — instead of a ring of two disabled steps.
 
+**Box taps** (2026-10-08) are the shortcut over all of it, and the last piece of the flower
+interaction. On the focused flower — and only there, the strip's flowers stay display-only — the
+ring's boxes are themselves tappable while the petals hold their place just outside the ring:
+tapping the n-th box of a half sets that stat straight to n, Life or Stamina alike, the boxes
+walking to the new value and the commit landing at once like a Stamina step. Taps are live only
+while the ring is idle — no flow open, no strike in flight, no card above — because mid-flow the
+player's hand is somewhere else. Over-Stamina has no box of its own (the ring never grows), so
+it stays the disc's +1; and the boxes are a pointer shortcut rather than a path of their own —
+every value they set is also reachable through the petals — so they carry no keyboard role and
+sit inside the overlay's flower copy, which is hidden from assistive tech as a duplicate of the
+strip flower behind it.
+
 Because decoded entry ids are position-based (`imported-1` for a list's first copy), both seats
 can hold the same id; the two `vitality` maps keep them apart.
 
@@ -252,9 +264,6 @@ to.
 - **The swap countdown is skippable**, which means the privacy guarantee is opt-in at the exact
   moment it matters. Is Skip worth keeping (it is genuinely useful when the same person is
   playing both seats for a test), or should it go?
-- **The flowers edit Life and States, but not Stamina.** Damage, heal and the status ring are
-  wired (2026-10-06); the yellow Stamina petal still holds its place, as do box taps. Until
-  Stamina lands, a run spends whatever Stamina it started with.
 - Hot-seat has **no notion of a finished game** — no statistics, no winner, no round snapshots.
   Online computes all three. Would a post-round-5 summary be useful here, or are the two VP
   blocks enough?

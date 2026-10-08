@@ -140,7 +140,10 @@ section.
   fourth way and is the only flow with no row: it blooms a third ring of two steps, **−1 and
   +1**, dead at the floor and at the over-Stamina cap, each tap committing at once onto the
   centred flower and walking its Stamina boxes one step — over-Stamina repainting **violet**
-  from the top end to double the base, like Life's blue.
+  from the top end to double the base, like Life's blue. The ring's boxes are tappable on the
+  focused flower as a pointer shortcut — the n-th box of a half sets that stat straight to n,
+  walking and committing at once, live only while the ring is idle — while the strip flowers
+  stay display-only and over-Stamina stays the disc's.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the
