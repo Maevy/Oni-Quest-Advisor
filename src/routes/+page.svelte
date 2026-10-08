@@ -15,6 +15,7 @@
 		savedArmyFormat,
 		vitalityAfterDamage,
 		vitalityAfterHeal,
+		vitalityAfterStamina,
 		vitalityAfterStatuses,
 		type ArmyFormat,
 		type ArmyRosterRow,
@@ -1185,6 +1186,20 @@
 					seat.row.effectiveStats.HP ?? 0,
 					seat.row.effectiveStats.STA,
 					statuses
+				)
+			);
+		}}
+		onStamina={(target, delta) => {
+			const seat = seatRowOf(target);
+			if (!seat) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterStamina(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					delta
 				)
 			);
 		}}

@@ -110,8 +110,8 @@ section.
 - **Battle Flower** → one army copy drawn as its icon in a circular orb ringed by two half-rings
   of boxes: STA (yellow) on the left, HP (red) on the right. The ring always carries the
   **base** stat's boxes — a lost point empties its box from the bottom end and an overhealed
-  Life **repaints** its extra points blue from the top end (`vitalityRingStates`), so the ring
-  never grows. The States a copy carries hang off the flower as a **band of orbs over its
+  Life **repaints** its extra points blue from the top end (an over-Stamina violet), so the ring
+  never grows (`vitalityRingStates`). The States a copy carries hang off the flower as a **band of orbs over its
   shoulders**, just outside the ring — four slots down the left, four down the right, own glyph
   in its own colour, a `+n` chip in the last right slot past eight, absent on a clean copy,
   display-only. One flower per copy; a mounted copy is one flower on the mount's
@@ -136,9 +136,11 @@ section.
   target (the flower it left stays lit in its slot), all fifteen States bloom around it as
   tappable orbs — lit yellow in their own colour when carried, the petals' glass when not,
   Incapacitated and Crouched **locked** while Life is 0 because the store re-applies them — and
-  the model icon commits the draft, its first tap arming the crosshair. The Stamina petal still
-  holds its place; editing lives nowhere else — the vitality menu went with the army panes it
-  lived in.
+  the model icon commits the draft, its first tap arming the crosshair. The disc is wired the
+  fourth way and is the only flow with no row: it blooms a third ring of two steps, **−1 and
+  +1**, dead at the floor and at the over-Stamina cap, each tap committing at once onto the
+  centred flower and walking its Stamina boxes one step — over-Stamina repainting **violet**
+  from the top end to double the base, like Life's blue.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the

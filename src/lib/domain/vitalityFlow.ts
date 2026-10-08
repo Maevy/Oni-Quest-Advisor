@@ -5,11 +5,17 @@ import type { UnitStatus, UnitVitality } from './army';
 /** The amount ring's fixed steps; the ring closes with X, which asks for a number. */
 export const AMOUNT_STEPS = [1, 2, 3, 4, 5, 6] as const;
 
-/** Life overheals to double its base; the extra points paint blue instead of growing the ring. */
+/** A tracked half overheals to double its base: Life paints the extra points blue, Stamina
+ * violet - neither grows the ring. */
 export const OVERHEAL_FACTOR = 2;
 
 /** The most Life a copy of `max` base can hold, overheal included. */
 export function lifeCap(max: number): number {
+	return OVERHEAL_FACTOR * max;
+}
+
+/** The most Stamina a copy of `max` base can hold, over-Stamina included. */
+export function staminaCap(max: number): number {
 	return OVERHEAL_FACTOR * max;
 }
 
@@ -117,6 +123,26 @@ export function vitalityAfterHeal(
 	const vitality: UnitVitality = {
 		hp: Math.min(lifeCap(baseHp), (current?.hp ?? baseHp) + amount),
 		sta: current?.sta ?? baseSta ?? 0
+	};
+	if (current?.statuses) vitality.statuses = current.statuses;
+	return vitality;
+}
+
+/**
+ * The vitality record after a Stamina step: Stamina moves one point and never below zero or
+ * above the over-Stamina cap, Life and States kept. A model with no Stamina (a null base) has
+ * nothing to move, so the petal that leads here is not offered on it.
+ */
+export function vitalityAfterStamina(
+	current: UnitVitality | undefined,
+	baseHp: number,
+	baseSta: number | null,
+	delta: number
+): UnitVitality {
+	const base = baseSta ?? 0;
+	const vitality: UnitVitality = {
+		hp: current?.hp ?? baseHp,
+		sta: Math.min(staminaCap(base), Math.max(0, (current?.sta ?? base) + delta))
 	};
 	if (current?.statuses) vitality.statuses = current.statuses;
 	return vitality;

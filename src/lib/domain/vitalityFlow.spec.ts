@@ -5,8 +5,10 @@ import {
 	damageApplied,
 	healApplied,
 	healableTargetsFor,
+	staminaCap,
 	vitalityAfterDamage,
 	vitalityAfterHeal,
+	vitalityAfterStamina,
 	vitalityAfterStatuses,
 	type VitalityTarget
 } from './vitalityFlow';
@@ -203,5 +205,33 @@ describe('vitalityAfterStatuses', () => {
 			hp: 2,
 			sta: 1
 		});
+	});
+});
+
+describe('vitalityAfterStamina', () => {
+	it('caps over-Stamina at double the base, like Life', () => {
+		expect(staminaCap(3)).toBe(6);
+		expect(vitalityAfterStamina({ hp: 4, sta: 6 }, 4, 3, 1)).toEqual({ hp: 4, sta: 6 });
+		expect(vitalityAfterStamina({ hp: 4, sta: 5 }, 4, 3, 4)).toEqual({ hp: 4, sta: 6 });
+	});
+
+	it('never spends below zero', () => {
+		expect(vitalityAfterStamina({ hp: 4, sta: 0 }, 4, 3, -1)).toEqual({ hp: 4, sta: 0 });
+		expect(vitalityAfterStamina({ hp: 4, sta: 1 }, 4, 3, -5)).toEqual({ hp: 4, sta: 0 });
+	});
+
+	it('moves one point and keeps Life and States', () => {
+		expect(vitalityAfterStamina({ hp: 1, sta: 2, statuses: ['bleeding'] }, 4, 3, -1)).toEqual({
+			hp: 1,
+			sta: 1,
+			statuses: ['bleeding']
+		});
+		expect(vitalityAfterStamina({ hp: 1, sta: 2 }, 4, 3, 1)).toEqual({ hp: 1, sta: 3 });
+	});
+
+	it('reads an untouched copy as full, and a null base as nothing to move', () => {
+		expect(vitalityAfterStamina(undefined, 4, 3, -1)).toEqual({ hp: 4, sta: 2 });
+		expect(vitalityAfterStamina(undefined, 4, 3, 1)).toEqual({ hp: 4, sta: 4 });
+		expect(vitalityAfterStamina({ hp: 2, sta: 0 }, 2, null, 1)).toEqual({ hp: 2, sta: 0 });
 	});
 });

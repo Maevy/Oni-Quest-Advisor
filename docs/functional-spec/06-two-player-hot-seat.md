@@ -101,7 +101,8 @@ circular orb, ringed by a circular bar in two halves.
   what marks its slot.
 - An overhealed Life **repaints its extra points blue over the red boxes from the top end**
   instead of growing the ring: two base HP healed to three read one blue and one red box, at
-  four both are blue.
+  four both are blue. Over-Stamina repaints the yellow boxes violet the same way, to double the
+  base.
 - A half a model has no value for (a null STA or HP) draws no boxes at all.
 - A mounted copy is one flower: the rider's icon, the mount's stats on the ring, and the mount's
   name under the unit's.
@@ -153,7 +154,7 @@ seat's vitality map, clamped to the Life left, while the target's Life boxes dar
 when the last one has faded the overlay dismisses itself and the army view returns to normal.
 Dead copies leave the row. Escape and click-outside peel the flow back one layer at a time — the
 amount entry, then the sub-ring and row, then the overlay — and a strike in flight ignores them
-both. The status and Stamina petals still hold their place.
+both.
 
 The **heal flow** is the same shape turned around: the cross blooms the same amount ring (its X
 entry labelled "Healing"), the row offers every copy below its **overheal cap** — the fallen and
@@ -181,6 +182,17 @@ tap after an edit never writes by accident. Escape and click-outside discard the
 The two States a model at zero Life is forced into — Incapacitated and Crouched — are **locked
 orbs**, dimmed and labelled "forced while Life is 0": the store re-applies them to every commit,
 so offering to clear them would only show the tap undone.
+
+**The Stamina flow** (2026-10-08) is the fourth petal function, and the only one with no row:
+the yellow disc blooms a third ring of just the two steps Stamina has — **−1 and +1** — dead at
+the floor and at the over-Stamina cap, and each tap acts on the flower already centred, the one
+the petals belong to. The commit lands at once and the centred flower's Stamina boxes walk the
+single step: a spend empties its box from the bottom end exactly like Life, a gain refills it
+the same way, and past the base the extra point repaints its box **violet** from the top end —
+over-Stamina overheals to double the base the way Life's blue does. The step ring stays out
+between taps, so several points cost several taps; Escape or click-outside folds it, and the
+next Escape glides the flower home. A model with no Stamina value gets a dead disc — dimmed and
+labelled — instead of a ring of two disabled steps.
 
 Because decoded entry ids are position-based (`imported-1` for a list's first copy), both seats
 can hold the same id; the two `vitality` maps keep them apart.

@@ -82,6 +82,8 @@
 		onHeal: (target: VitalityTarget, amount: number) => void;
 		/** A status ring was confirmed: commit the draft to the target seat's vitality map. */
 		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
+		/** A Stamina step was tapped on the focused flower: commit it to that seat's map. */
+		onStamina: (target: VitalityTarget, delta: number) => void;
 	};
 
 	let {
@@ -111,7 +113,8 @@
 		onSwap,
 		onDamage,
 		onHeal,
-		onStatuses
+		onStatuses,
+		onStamina
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -363,9 +366,10 @@
 <!-- At the screen root, like the rule dialog: the strip's transform would trap a fixed overlay
      rendered inside the pane, and the focused flower has to paint above the blur. -->
 {#if focus}
+	{@const focused = focus}
 	<BattleFlowerFocus
-		flower={focus.flower}
-		from={focus.rect}
+		flower={focused.flower}
+		from={focused.rect}
 		infoOpen={focusInfo}
 		onInfo={() => (focusInfo = true)}
 		{damageTargets}
@@ -374,6 +378,16 @@
 		{onDamage}
 		{onHeal}
 		{onStatuses}
+		onStamina={(delta) =>
+			onStamina(
+				{
+					player: focused.player,
+					entryId: focused.flower.entryId,
+					flower: focused.flower,
+					copy: null
+				},
+				delta
+			)}
 		onFocusMoved={() => (focusMovedHome = true)}
 		onClosed={closeFocus}
 	/>

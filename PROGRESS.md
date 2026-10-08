@@ -93,11 +93,17 @@ the second writes the whole draft in one go and sends the flower home into **the
 and toggling an orb disarms a pending commit. The States a copy carries also hang off its strip
 flower as a **band of orbs over its shoulders** — four slots down the left, four down the right,
 the `+n` chip taking the last right slot past eight (own glyph, own colour, absent on a clean
-copy) — which is the default state's read of them. What the interaction phase
-still owes: the Stamina petal's function and box taps — until then hot-seat can wound, kill, heal
-and assign States but not spend Stamina. Behaviour spec:
+copy) — which is the default state's read of them. The **Stamina flow** (2026-10-08) is the
+fourth petal function and the only one with no row: the disc blooms a third ring of two steps,
+−1 and +1, dead at the floor and at the over-Stamina cap; each tap commits at once onto the
+centred flower and walks its Stamina boxes one step — a spend emptying from the bottom end like
+Life, a gain refilling the same way, and past the base the extra point repainting its box
+**violet** from the top end, over-Stamina running to double the base like Life's blue. The step
+ring stays out between taps, so several points cost several taps; a model with no Stamina gets a
+dead disc instead of two disabled steps. What the interaction phase
+still owes: box taps. Behaviour spec:
 `docs/functional-spec/06-two-player-hot-seat.md`. The flowers replace the other modes' army
-panels afterwards. **Next: Stamina management**, then box taps.
+panels afterwards. **Next: box taps.**
 
 Smaller open threads:
 

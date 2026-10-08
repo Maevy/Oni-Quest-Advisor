@@ -5,6 +5,7 @@
 		damageApplied,
 		healApplied,
 		lifeCap,
+		staminaCap,
 		statusLockedAtZeroHp,
 		toggleUnitStatus,
 		UNIT_STATUSES,
@@ -37,6 +38,8 @@
 		onHeal: (target: VitalityTarget, amount: number) => void;
 		/** The ring was confirmed: the screen commits the draft to the target seat's map. */
 		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
+		/** A Stamina step was tapped: the screen commits it to the focused copy's seat. */
+		onStamina: (delta: number) => void;
 		/**
 		 * A status flow moved the focus onto another copy, so the flower this overlay opened
 		 * from has gone home: the screen lights that slot again in the strip.
@@ -57,6 +60,7 @@
 		onDamage,
 		onHeal,
 		onStatuses,
+		onStamina,
 		onFocusMoved,
 		onClosed
 	}: Props = $props();
@@ -83,8 +87,9 @@
 	// The vitality flows - damage and heal share one shape: ring 3 carries the amount, then the
 	// field steps in front as the target row, one tap selects and the second confirms, and the
 	// strike plays out on its own. The status flow has no amount: its row leads straight into
-	// the ring of States around the copy the focus moved onto.
-	type Flow = 'damage' | 'heal' | 'status';
+	// the ring of States around the copy the focus moved onto. Stamina has no row at all: its
+	// two steps act on the flower already centred here, so the model needs no choosing.
+	type Flow = 'damage' | 'heal' | 'status' | 'stamina';
 	let flow = $state<Flow | null>(null);
 	let subRingOut = $state(false);
 	let amount = $state<number | null>(null);
@@ -297,7 +302,8 @@
 	 * Life, States and Stamina. Damage and heal do not declare a target - choosing the model is
 	 * the action's own step - and neither do the States: one orange star opens the row, and the
 	 * ring it leads to both assigns and removes, so a second "remove" petal would only be a
-	 * second door into the same room.
+	 * second door into the same room. Stamina needs no row at all: its two steps act on the
+	 * flower the petals already belong to.
 	 */
 	const PETALS: Petal[] = [
 		{
@@ -327,15 +333,17 @@
 			label: 'Manage Stamina',
 			glyph: 'circle',
 			glyphClasses: 'fill-yellow-400',
-			flow: null
+			flow: 'stamina'
 		}
 	];
 
 	// Pressing a petal lights it - the selection its ring blooms from. Pressing the same petal
-	// again folds its flow away, pressing another switches the flow, and pressing one of the two
-	// that are not flows folds whatever is open away first.
+	// again folds its flow away, pressing another switches the flow, and pressing the one that
+	// is not a flow folds whatever is open away first. A model with no Stamina has nothing for
+	// its petal to move, so the petal is dead rather than a ring of two disabled steps.
 	function select(petal: Petal): void {
 		if (strike) return;
+		if (petal.flow === 'stamina' && !flower.stamina) return;
 		if (petal.flow) {
 			const next = petal.flow;
 			activePetal = petal.id;
@@ -382,6 +390,68 @@
 		if (amountDraft === null || !Number.isFinite(amountDraft) || amountDraft < 1) return;
 		pickAmount(Math.floor(amountDraft));
 	}
+
+	// The walk the centred flower's Stamina boxes make after a step, and the value they now
+	// show. The flower prop is the snapshot taken when the overlay opened, so the flow keeps
+	// its own running value: the commit lands in the store at once, the ring catches up box by
+	// box - the row's flower does the same during a strike - and once it has, this value is
+	// what the next step starts from. A tap mid-walk restarts from what the player now sees,
+	// and the token drops the old walk's timers instead of letting two walks fight over the
+	// ring. Keyed by entry, because a status flow can swap the flower on show mid-session.
+	let staShown = $state<{ entryId: string; token: number; shown: number } | null>(null);
+	let staWalkToken = 0;
+
+	/** The focused copy's Stamina as the player now sees it, snapshot and walk included. */
+	let staminaCurrent = $derived.by(() => {
+		const sta = flower.stamina;
+		if (!sta) return null;
+		return staShown?.entryId === flower.entryId ? staShown.shown : sta.current;
+	});
+
+	/** The Stamina ring's two steps, dead at the floor and at the over-Stamina cap. */
+	let staminaSteps = $derived.by(() => {
+		const current = staminaCurrent ?? 0;
+		return [
+			{ delta: -1, label: 'Spend 1 Stamina', enabled: current > 0 },
+			{
+				delta: 1,
+				label: 'Gain 1 Stamina',
+				enabled: current < staminaCap(flower.stamina?.max ?? 0)
+			}
+		];
+	});
+
+	function applyStaminaStep(delta: number): void {
+		const sta = flower.stamina;
+		const from = staminaCurrent;
+		if (!sta || from === null || strike || closing) return;
+		const goal = Math.min(staminaCap(sta.max), Math.max(0, from + delta));
+		if (goal === from) return;
+		onStamina(delta);
+		const steps = goal - from;
+		const count = Math.abs(steps);
+		const token = ++staWalkToken;
+		staShown = { entryId: flower.entryId, token, shown: from };
+		for (let box = 1; box <= count; box++)
+			later(FADE_MS * box, () => {
+				if (!staShown || staShown.token !== token) return;
+				staShown.shown = from + Math.sign(steps) * box;
+			});
+	}
+
+	/** The flower on show, its Stamina ring at the value the steps have walked it to. */
+	let walkedFlower = $derived.by(() => {
+		const sta = shownFlower.stamina;
+		if (!staShown || staShown.entryId !== shownFlower.entryId || !sta) return shownFlower;
+		return {
+			...shownFlower,
+			stamina: {
+				...sta,
+				current: staShown.shown,
+				states: vitalityRingStates(staShown.shown, sta.max)
+			}
+		};
+	});
 
 	/** A row cell's slot, read while the row is still on screen - it is what carries it. */
 	function slotOf(key: string): FlowerRect | null {
@@ -644,7 +714,9 @@
 				<feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#fde047" flood-opacity="0.9" />
 			</filter>
 		</defs>
-		<!-- The third ring: how much damage. Painted first, so it blooms out from behind the
+		<!-- The third ring: how much. Damage and heal count in steps and close with an X that
+		     asks for a number; Stamina offers just the two steps it has, -1 and +1, dead at the
+		     floor and at the over-Stamina cap. Painted first, so it blooms out from behind the
 		     action ring and folds back behind it on the way out - the action ring and its
 		     glyphs stay on top, which is what makes the bloom read as emerging. -->
 		<g
@@ -653,65 +725,104 @@
 				opacity: {subRingOut ? 1 : 0}"
 			aria-hidden={!subRingOut}
 		>
-			{#each [...AMOUNT_STEPS, null] as value, index (value === null ? 'x' : `${value}`)}
-				<path
-					d={ringPath(index, 7, AMOUNT_RING)}
-					class="{subRingOut ? 'pointer-events-auto' : 'pointer-events-none'}
+			{#if flow === 'stamina'}
+				{#each staminaSteps as step, index (step.delta)}
+					<path
+						d={ringPath(index, 2, AMOUNT_RING)}
+						class="{subRingOut && step.enabled
+							? 'pointer-events-auto cursor-pointer'
+							: 'pointer-events-none'} transition-all duration-200 outline-none {PETAL}
+							{subRingOut && step.enabled ? PETAL_HOVER : ''} {PETAL_FOCUS}"
+						role="button"
+						tabindex={subRingOut && step.enabled ? 0 : -1}
+						aria-label={step.label}
+						aria-disabled={step.enabled ? undefined : 'true'}
+						stroke-width="2"
+						onclick={() => applyStaminaStep(step.delta)}
+						onkeydown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								applyStaminaStep(step.delta);
+							}
+						}}
+					/>
+					{@const [ax, ay] = ringCentre(index, 2, AMOUNT_RING)}
+					<text
+						x={round(ax)}
+						y={round(ay)}
+						text-anchor="middle"
+						dominant-baseline="central"
+						font-size="11"
+						class="pointer-events-none {step.enabled ? 'fill-slate-200' : 'fill-slate-500'}"
+					>
+						{step.delta < 0 ? '−1' : '+1'}
+					</text>
+				{/each}
+			{:else}
+				{#each [...AMOUNT_STEPS, null] as value, index (value === null ? 'x' : `${value}`)}
+					<path
+						d={ringPath(index, 7, AMOUNT_RING)}
+						class="{subRingOut ? 'pointer-events-auto' : 'pointer-events-none'}
 						cursor-pointer transition-all duration-200 outline-none {PETAL}
 						{PETAL_HOVER} {PETAL_FOCUS}
 						{subRingOut && (value === null ? amountEntry : amount === value) ? PETAL_LIT : ''}"
-					role="button"
-					tabindex={subRingOut ? 0 : -1}
-					aria-label={value === null
-						? flow === 'heal'
-							? 'Choose the healing'
-							: 'Choose the damage'
-						: flow === 'heal'
-							? `Heal ${value}`
-							: `Deal ${value} damage`}
-					stroke-width="2"
-					onclick={() => {
-						if (value === null) {
-							amountDraft = null;
-							amountEntry = true;
-						} else {
-							pickAmount(value);
-						}
-					}}
-					onkeydown={(event) => {
-						if (event.key === 'Enter' || event.key === ' ') {
-							event.preventDefault();
+						role="button"
+						tabindex={subRingOut ? 0 : -1}
+						aria-label={value === null
+							? flow === 'heal'
+								? 'Choose the healing'
+								: 'Choose the damage'
+							: flow === 'heal'
+								? `Heal ${value}`
+								: `Deal ${value} damage`}
+						stroke-width="2"
+						onclick={() => {
 							if (value === null) {
 								amountDraft = null;
 								amountEntry = true;
 							} else {
 								pickAmount(value);
 							}
-						}
-					}}
-				/>
-				{@const [ax, ay] = ringCentre(index, 7, AMOUNT_RING)}
-				<text
-					x={round(ax)}
-					y={round(ay)}
-					text-anchor="middle"
-					dominant-baseline="central"
-					font-size="11"
-					class="pointer-events-none fill-slate-200"
-				>
-					{value === null ? 'X' : value}
-				</text>
-			{/each}
+						}}
+						onkeydown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								if (value === null) {
+									amountDraft = null;
+									amountEntry = true;
+								} else {
+									pickAmount(value);
+								}
+							}
+						}}
+					/>
+					{@const [ax, ay] = ringCentre(index, 7, AMOUNT_RING)}
+					<text
+						x={round(ax)}
+						y={round(ay)}
+						text-anchor="middle"
+						dominant-baseline="central"
+						font-size="11"
+						class="pointer-events-none fill-slate-200"
+					>
+						{value === null ? 'X' : value}
+					</text>
+				{/each}
+			{/if}
 		</g>
 		{#each PETALS as petal, index (petal.id)}
+			{@const dead = petal.id === 'stamina' && !flower.stamina}
 			<path
 				d={ringPath(index, PETALS.length, ACTION_RING)}
-				class="{petalsOpen ? 'pointer-events-auto' : 'pointer-events-none'} cursor-pointer
-					transition-all duration-200 outline-none {PETAL} {PETAL_HOVER} {PETAL_FOCUS}
-					{litPetal === petal.id ? PETAL_LIT : ''}"
+				class="{petalsOpen && !dead
+					? 'pointer-events-auto cursor-pointer'
+					: 'pointer-events-none'} transition-all duration-200 outline-none {PETAL}
+					{dead ? '' : PETAL_HOVER} {PETAL_FOCUS} {litPetal === petal.id ? PETAL_LIT : ''}
+					{dead ? 'opacity-40' : ''}"
 				role="button"
-				tabindex={petalsOpen ? 0 : -1}
-				aria-label={petal.label}
+				tabindex={petalsOpen && !dead ? 0 : -1}
+				aria-label={dead ? 'Manage Stamina - this model tracks no Stamina' : petal.label}
+				aria-disabled={dead ? 'true' : undefined}
 				stroke-width="2"
 				onclick={() => select(petal)}
 				onkeydown={(event) => {
@@ -725,8 +836,9 @@
 			{@render petalGlyph(petal, cx, cy)}
 		{/each}
 	</svg>
-	<!-- The flower on show, and no States band of its own: the petals sit at the band's radius. -->
-	<BattleFlower flower={shownFlower} showLabel={false} showStatuses={false} inert />
+	<!-- The flower on show, and no States band of its own: the petals sit at the band's radius.
+	     Its Stamina ring is the walked snapshot while a step's boxes are still moving. -->
+	<BattleFlower flower={walkedFlower} showLabel={false} showStatuses={false} inert />
 </div>
 
 <!-- The vitality flow's target row: the field steps out of the blurred panel and up in front,

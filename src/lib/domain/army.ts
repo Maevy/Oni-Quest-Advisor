@@ -92,7 +92,8 @@ export const UNIT_STATUS_LABELS: Record<UnitStatus, string> = {
 /**
  * A copy's live Life and stamina during a run. Absent from the run's vitality map means
  * untouched, i.e. full. `hp` may exceed the model's base HP (overheal, up to double the
- * base); `sta` never exceeds its base. `statuses` lists the States the copy carries;
+ * base, painted blue); `sta` may likewise exceed its base up to double (over-Stamina,
+ * painted violet). `statuses` lists the States the copy carries;
  * absent means none, so an untouched copy costs nothing in the run's map.
  */
 export type UnitVitality = { hp: number; sta: number; statuses?: UnitStatus[] };
@@ -108,9 +109,10 @@ export type VitalityRingState = 'full' | 'empty' | 'over';
 /**
  * The states of one half of a Battle Flower's ring, in draw order from the top of the orb
  * downwards. The ring always carries `max` boxes - the model's base stat - so its shape never
- * changes mid-game: lost points empty out from the bottom end, and an overhealed Life repaints
- * its extra points blue over the red boxes from the top end instead of growing the ring (two
- * base HP healed to three read one blue and one red; at four, both are blue).
+ * changes mid-game: lost points empty out from the bottom end, and an overhealed half repaints
+ * its extra points from the top end instead of growing the ring - Life blue over the red
+ * boxes, Stamina violet over the yellow (two base HP healed to three read one blue and one
+ * red; at four, both are blue).
  */
 export function vitalityRingStates(current: number, max: number): VitalityRingState[] {
 	const over = Math.min(Math.max(current - max, 0), max);

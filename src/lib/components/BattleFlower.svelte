@@ -94,7 +94,10 @@
 		if (state === 'empty') {
 			return kind === 'life' ? 'fill-black/70 stroke-red-500' : 'fill-black/70 stroke-yellow-400';
 		}
-		if (kind === 'stamina') return 'fill-yellow-400/75 stroke-slate-950';
+		if (kind === 'stamina')
+			return state === 'over'
+				? 'fill-violet-400/75 stroke-slate-950'
+				: 'fill-yellow-400/75 stroke-slate-950';
 		return state === 'over'
 			? 'fill-sky-400/75 stroke-slate-950'
 			: 'fill-red-500/75 stroke-slate-950';
