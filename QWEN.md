@@ -139,9 +139,10 @@ section.
   commits the draft, its first tap arming the crosshair. Incapacitated is **not a pick**: zero
   Life forces it (with Crouched) onto a living model and straight **Dead** onto an Undead one,
   a heal of at least 1 drops it again, and a second hit on a fallen model kills it; Dead — a
-  pick of its own, never sharing a copy with Incapacitated — leaves the heal row while the
-  fallen stay in the damage row. Neither rides the band: the fallen wear a **yellow wash with
-  the Incapacitated glyph** on their icon, the Dead a **red wash with the skull**. The disc is
+  pick of its own, never sharing a copy with Incapacitated — stays in the heal row, since a
+  heal of at least 1 is what takes it off, while the fallen stay in the damage row. Neither
+  rides the band: the fallen wear a **yellow wash with the Incapacitated glyph** on their icon,
+  the Dead a **red wash with the skull**. The disc is
   wired the fourth way and is the only flow with no row: it blooms a third ring of two steps,
   **−1 and +1**, dead at the floor and at the over-Stamina cap, each tap committing at once onto
   the centred flower and walking its Stamina boxes one step — over-Stamina repainting **violet**

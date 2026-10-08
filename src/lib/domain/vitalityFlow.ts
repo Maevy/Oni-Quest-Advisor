@@ -65,26 +65,22 @@ export function aliveTargetsFor(
 	return targetsWhere(seats, (flower) => flower.life !== null && !flower.statuses.includes('dead'));
 }
 
-/** The heal flow's row: every copy below its overheal cap, from the fallen to the whole -
- * except the Dead, who are past healing. An Undead copy on the floor is the one exception:
- * its Dead is the fall's consequence, the living model's Incapacitated, so a heal stands it
- * back up. */
+/** The heal flow's row: every copy below its overheal cap, from the fallen and the Dead to
+ * the whole - a heal of at least one point is exactly what stands a fallen model up and what
+ * takes the Dead State off a corpse, so nobody who can be lifted is left out of the row. */
 export function healableTargetsFor(
 	seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }>
 ): VitalityTarget[] {
 	return targetsWhere(
 		seats,
-		(flower) =>
-			flower.life !== null &&
-			flower.life.current < lifeCap(flower.life.max) &&
-			!(flower.statuses.includes('dead') && !(flower.undead && flower.life.current <= 0))
+		(flower) => flower.life !== null && flower.life.current < lifeCap(flower.life.max)
 	);
 }
 
 /**
  * The status flow's row: every copy of both armies. States are not a function of Life, so
- * nothing is filtered out - a fallen copy is exactly the one whose Incapacitated orb a player
- * goes looking for.
+ * nothing is filtered out - a fallen or Dead copy is exactly the one a player goes looking
+ * for, to assign or clear what it carries.
  */
 export function allTargetsFor(
 	seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }>

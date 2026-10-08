@@ -2773,19 +2773,20 @@ describe('settleVitalityStates', () => {
 		).toEqual(['bleeding', 'crouched']);
 	});
 
-	it("drops Dead when a heal stands an Undead copy up, but never a living copy's", () => {
+	it('drops Dead and Incapacitated when a heal lifts the copy, Undead or living', () => {
 		expect(
 			settleVitalityStates({ hp: 1, sta: 1, statuses: ['dead'] }, 0, true).statuses
 		).toBeUndefined();
 		expect(
 			settleVitalityStates({ hp: 1, sta: 1, statuses: ['dead', 'bleeding'] }, 0, false).statuses
-		).toEqual(['dead', 'bleeding']);
+		).toEqual(['bleeding']);
 	});
 
-	it("keeps a Dead copy's Dead through a heal that starts above zero", () => {
-		expect(settleVitalityStates({ hp: 3, sta: 2, statuses: ['dead'] }, 2, false).statuses).toEqual([
-			'dead'
-		]);
+	it('takes Dead off whichever copy a heal lifts, not only off the fallen', () => {
+		expect(settleVitalityStates({ hp: 3, sta: 2, statuses: ['dead'] }, 2, false)).toEqual({
+			hp: 3,
+			sta: 2
+		});
 	});
 
 	it('leaves a copy whose Life did not move untouched', () => {

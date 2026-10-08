@@ -185,12 +185,13 @@ export function statusLockedAtZeroHp(
 
 /**
  * The one place the zero-Life rules live: every committed vitality passes through here. A
- * copy whose Life rose - a heal of at least one point, however it was applied - loses
- * Incapacitated, the fall's consequence ending as the model stands back up; an Undead copy
- * rising from zero loses Dead, which is its fall's consequence. Dead and Incapacitated never
- * share a copy, so turning Dead drops Incapacitated wherever it sits. At zero Life the copy
- * then carries its forced States whether or not the player lit them, and a copy left carrying
- * nothing drops the key again so it costs nothing in the run's map.
+ * copy whose Life rose - a heal of at least one point, however it was applied - loses both
+ * States of the fall: Incapacitated, as the model stands back up, and Dead, because the heal
+ * is exactly what brings a corpse back to play. Dead and Incapacitated never share a copy, so
+ * turning Dead drops Incapacitated wherever it sits. At zero Life the copy then carries its
+ * forced States whether or not the player lit them - Incapacitated and Crouched, or Dead alone
+ * for the Undead and for anyone already Dead - and a copy left carrying nothing drops the key
+ * again so it costs nothing in the run's map.
  */
 export function settleVitalityStates(
 	vitality: UnitVitality,
@@ -199,12 +200,8 @@ export function settleVitalityStates(
 ): UnitVitality {
 	let statuses = vitality.statuses ?? [];
 	const rose = previousHp !== undefined && vitality.hp > previousHp;
-	const dropped: UnitStatus[] = [];
-	if (rose) {
-		dropped.push('incapacitated');
-		if (undead && previousHp <= 0) dropped.push('dead');
-	}
-	if (statuses.includes('dead')) dropped.push('incapacitated');
+	const dropped: UnitStatus[] = rose ? ['incapacitated', 'dead'] : [];
+	if (statuses.includes('dead') && !rose) dropped.push('incapacitated');
 	if (dropped.length > 0) statuses = statuses.filter((status) => !dropped.includes(status));
 	if (vitality.hp <= 0) {
 		for (const status of zeroHpStates(undead, statuses)) {

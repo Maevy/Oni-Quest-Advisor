@@ -191,13 +191,13 @@ Dead itself is a pick like any other — killing is a decision — and can also 
 to a standing model; where Dead sits, Incapacitated never sits with it, so turning Dead drops
 it, and taking Dead off a corpse at zero Life lands the copy back on the floor, forced States
 and all. An **Undead** model has no Incapacitated: zero Life puts it straight into Dead, and a
-heal up from zero takes that Dead back off. The Dead are past healing — the heal row leaves them
-lying — with the one exception of an Undead copy on the floor, whose Dead is exactly the fall a
-heal reverses; the damage row, in turn, still lists the fallen, because the second fall is how
-Dead arrives. Neither State rides the band: a fallen model wears a translucent **yellow wash
-with the Incapacitated glyph** over its icon and a Dead one a slighter **red wash with the
-skull**, on every flower — strip, centred copy and target row alike — so what happened to a
-model reads across the table without ever looking at the orbs.
+heal up from zero takes that Dead back off. The heal row lists the Dead like anyone else,
+because a heal of at least one point is exactly what brings a corpse back to play — the rise
+takes the Dead State off whichever copy it lifts; the damage row, in turn, still lists the
+fallen, because the second fall is how Dead arrives. Neither State rides the band: a fallen
+model wears a translucent **yellow wash with the Incapacitated glyph** over its icon and a Dead
+one a slighter **red wash with the skull**, on every flower — strip, centred copy and target row
+alike — so what happened to a model reads across the table without ever looking at the orbs.
 
 **The Stamina flow** (2026-10-08) is the fourth petal function, and the only one with no row:
 the yellow disc blooms a third ring of just the two steps Stamina has — **−1 and +1** — dead at

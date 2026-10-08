@@ -108,7 +108,8 @@ over-Stamina stays the disc's +1. The same day reworked what zero Life means: In
 the ring for good — a living model that falls is forced into it with Crouched, and any heal of
 at least one point drops it again as the model stands up; a second hit on a fallen model kills
 it, an Undead model goes straight to Dead at zero Life, and Dead (still a pick of its own, never
-sharing a copy with Incapacitated) leaves the heal row while the fallen stay in the damage row.
+sharing a copy with Incapacitated) stays in the heal row, since a heal of at least one point is
+what takes it off — while the fallen stay in the damage row, where the second fall kills.
 Neither State rides the band any more: the fallen wear a yellow wash with the Incapacitated
 glyph over their icon, the Dead a red wash with the skull, on every flower. What remains of the
 flowers is carrying them to the other modes' army panels. Behaviour spec:

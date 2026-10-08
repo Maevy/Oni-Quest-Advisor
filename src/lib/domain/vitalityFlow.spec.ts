@@ -99,7 +99,7 @@ describe('healableTargetsFor', () => {
 		expect(ids(targets)).toEqual(['full', 'hurt', 'fallen', 'p2']);
 	});
 
-	it('skips the Dead, except an Undead copy on the floor - Dead is its fall', () => {
+	it('lists the Dead like anyone else - a heal is what brings them back', () => {
 		const targets = healableTargetsFor([
 			{
 				player: 'player1',
@@ -110,7 +110,7 @@ describe('healableTargetsFor', () => {
 				]
 			}
 		]);
-		expect(ids(targets)).toEqual(['undead-down']);
+		expect(ids(targets)).toEqual(['corpse', 'undead-down', 'undead-killed']);
 	});
 
 	it('skips copies without Life', () => {
