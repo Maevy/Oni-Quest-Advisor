@@ -8,7 +8,7 @@
 		staminaCap,
 		statusLockedAtZeroHp,
 		toggleUnitStatus,
-		UNIT_STATUSES,
+		RING_STATUSES,
 		UNIT_STATUS_LABELS,
 		vitalityRingStates
 	} from '$lib/domain';
@@ -591,7 +591,15 @@
 	function toggleDraft(status: UnitStatus): void {
 		const target = statusTarget;
 		if (!target || closing) return;
-		if (statusLockedAtZeroHp(status, target.flower.life?.current ?? 1)) return;
+		if (
+			statusLockedAtZeroHp(
+				status,
+				target.flower.life?.current ?? 1,
+				target.flower.undead,
+				target.flower.statuses
+			)
+		)
+			return;
 		statusDraft = toggleUnitStatus(statusDraft, status);
 		statusArmed = false;
 	}
@@ -631,14 +639,14 @@
 		const target = statusTarget;
 		if (!target) return [];
 		const hp = target.flower.life?.current ?? 1;
-		const step = (360 / UNIT_STATUSES.length) * (Math.PI / 180);
-		return UNIT_STATUSES.map((status, index) => ({
+		const step = (360 / RING_STATUSES.length) * (Math.PI / 180);
+		return RING_STATUSES.map((status, index) => ({
 			status,
 			label: UNIT_STATUS_LABELS[status],
 			x: statusRadius * Math.sin(index * step),
 			y: -statusRadius * Math.cos(index * step),
 			on: statusDraft.includes(status),
-			locked: statusLockedAtZeroHp(status, hp)
+			locked: statusLockedAtZeroHp(status, hp, target.flower.undead, target.flower.statuses)
 		}));
 	});
 

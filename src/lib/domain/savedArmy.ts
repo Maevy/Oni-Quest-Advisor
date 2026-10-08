@@ -115,6 +115,9 @@ export type BattleFlowerSpec = {
 	life: BattleRingSpec | null;
 	/** The States the copy carries, in catalog order; empty for a copy carrying none. */
 	statuses: UnitStatus[];
+	/** Whether the model carries the Undead trait: it has no Incapacitated, and zero Life
+	 * puts it straight into Dead. */
+	undead: boolean;
 };
 
 function battleRing(max: number | null, current: number | null): BattleRingSpec | null {
@@ -133,7 +136,10 @@ export function battleFlowersFor(view: ArmyView): BattleFlowerSpec[] {
 			mountedOn: row.mounted ? (row.mount?.name ?? null) : null,
 			stamina: battleRing(row.effectiveStats.STA, vitality?.sta ?? row.effectiveStats.STA),
 			life: battleRing(row.effectiveStats.HP, vitality?.hp ?? row.effectiveStats.HP),
-			statuses: unitStatuses(vitality)
+			statuses: unitStatuses(vitality),
+			undead: [row.upgradedUnit, row.mount].some((unit) =>
+				(unit?.traits ?? []).some((trait) => trait.id === 'undead')
+			)
 		};
 	});
 }

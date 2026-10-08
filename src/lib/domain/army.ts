@@ -71,6 +71,23 @@ export const UNIT_STATUSES = [
 
 export type UnitStatus = (typeof UNIT_STATUSES)[number];
 
+/**
+ * The States the status ring offers. Incapacitated is not a pick: a model earns it only by
+ * falling to zero Life and loses it only by rising again, so an orb that offered to toggle it
+ * would only ever show the tap undone. Dead stays a pick - killing a model is a decision, and
+ * taking Dead off it is how a corpse returns to play.
+ */
+export const RING_STATUSES = UNIT_STATUSES.filter(
+	(status) => status !== 'incapacitated'
+) as readonly UnitStatus[];
+
+/**
+ * The States the flower says with a tinted orb and a glyph over the model's icon instead of
+ * with orbs on the band: Incapacitated and Dead are what *happened to* the model rather than
+ * conditions it carries, so they read at a glance and never crowd the shoulders.
+ */
+export const OVERLAY_STATUSES: readonly UnitStatus[] = ['incapacitated', 'dead'];
+
 export const UNIT_STATUS_LABELS: Record<UnitStatus, string> = {
 	bleeding: 'Bleeding',
 	blinded: 'Blinded',
@@ -140,32 +157,61 @@ export function toggleUnitStatus(statuses: UnitStatus[], status: UnitStatus): Un
 }
 
 /**
- * The States a model at zero Life always carries: it becomes Incapacitated and immediately
- * enters the Crouched State. Every commit re-applies them, so a status editor that offered
- * to clear one would show the tap silently undone - which is why the very same list is what
- * locks those orbs. Healing back up does not cancel them; that stays a manual toggle.
+ * The States a model at zero Life always carries. A living model becomes Incapacitated and
+ * immediately enters the Crouched State; an Undead model has no Incapacitated and goes
+ * straight to Dead; and a model that is already Dead - killed outright, or struck again on
+ * the floor - carries Dead alone, never Incapacitated or Crouched on top of it.
  */
-export const ZERO_HP_STATUSES: readonly UnitStatus[] = ['incapacitated', 'crouched'];
+export function zeroHpStates(
+	undead: boolean,
+	statuses: readonly UnitStatus[]
+): readonly UnitStatus[] {
+	if (undead) return ['dead'];
+	return statuses.includes('dead') ? [] : ['incapacitated', 'crouched'];
+}
 
 /**
  * Whether a State is forced on a copy at this Life total and so cannot be toggled off it.
  * A copy that never tracked Life (`hp` null at the call site) reads as whole, not as fallen.
  */
-export function statusLockedAtZeroHp(status: UnitStatus, hp: number): boolean {
-	return hp <= 0 && ZERO_HP_STATUSES.includes(status);
+export function statusLockedAtZeroHp(
+	status: UnitStatus,
+	hp: number,
+	undead = false,
+	statuses: readonly UnitStatus[] = []
+): boolean {
+	return hp <= 0 && zeroHpStates(undead, statuses).includes(status);
 }
 
 /**
- * A model whose Life reaches 0 becomes Incapacitated and immediately enters the Crouched
- * State, so a committed zero-Life vitality carries both whether or not the player lit them
- * in the menu.
+ * The one place the zero-Life rules live: every committed vitality passes through here. A
+ * copy whose Life rose - a heal of at least one point, however it was applied - loses
+ * Incapacitated, the fall's consequence ending as the model stands back up; an Undead copy
+ * rising from zero loses Dead, which is its fall's consequence. Dead and Incapacitated never
+ * share a copy, so turning Dead drops Incapacitated wherever it sits. At zero Life the copy
+ * then carries its forced States whether or not the player lit them, and a copy left carrying
+ * nothing drops the key again so it costs nothing in the run's map.
  */
-export function applyZeroHpStates(vitality: UnitVitality): UnitVitality {
-	if (vitality.hp > 0) return vitality;
+export function settleVitalityStates(
+	vitality: UnitVitality,
+	previousHp: number | undefined,
+	undead: boolean
+): UnitVitality {
 	let statuses = vitality.statuses ?? [];
-	for (const status of ZERO_HP_STATUSES) {
-		if (!statuses.includes(status)) statuses = toggleUnitStatus(statuses, status);
+	const rose = previousHp !== undefined && vitality.hp > previousHp;
+	const dropped: UnitStatus[] = [];
+	if (rose) {
+		dropped.push('incapacitated');
+		if (undead && previousHp <= 0) dropped.push('dead');
 	}
+	if (statuses.includes('dead')) dropped.push('incapacitated');
+	if (dropped.length > 0) statuses = statuses.filter((status) => !dropped.includes(status));
+	if (vitality.hp <= 0) {
+		for (const status of zeroHpStates(undead, statuses)) {
+			if (!statuses.includes(status)) statuses = toggleUnitStatus(statuses, status);
+		}
+	}
+	if (statuses.length === 0) return { hp: vitality.hp, sta: vitality.sta };
 	return { ...vitality, statuses };
 }
 

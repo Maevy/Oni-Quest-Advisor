@@ -1159,7 +1159,8 @@
 					seat.row.effectiveStats.HP ?? 0,
 					seat.row.effectiveStats.STA,
 					amount
-				)
+				),
+				target.flower.undead
 			);
 		}}
 		onHeal={(target, amount) => {
@@ -1173,7 +1174,8 @@
 					seat.row.effectiveStats.HP ?? 0,
 					seat.row.effectiveStats.STA,
 					amount
-				)
+				),
+				target.flower.undead
 			);
 		}}
 		onStatuses={(target, statuses) => {
@@ -1187,7 +1189,8 @@
 					seat.row.effectiveStats.HP ?? 0,
 					seat.row.effectiveStats.STA,
 					statuses
-				)
+				),
+				target.flower.undead
 			);
 		}}
 		onStamina={(target, delta) => {
@@ -1201,7 +1204,8 @@
 					seat.row.effectiveStats.HP ?? 0,
 					seat.row.effectiveStats.STA,
 					delta
-				)
+				),
+				target.flower.undead
 			);
 		}}
 		onSetStat={(target, half, value) => {
@@ -1216,7 +1220,8 @@
 					seat.row.effectiveStats.STA,
 					half,
 					value
-				)
+				),
+				target.flower.undead
 			);
 		}}
 	/>

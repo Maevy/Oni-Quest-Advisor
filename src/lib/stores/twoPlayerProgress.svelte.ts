@@ -101,13 +101,19 @@ class TwoPlayerProgressStore {
 	}
 
 	/** Commits a copy's Life/stamina/States once that seat's vitality menu is accepted. */
-	setUnitVitality(player: PlayerKey, entryId: string, vitality: UnitVitality): void {
+	setUnitVitality(
+		player: PlayerKey,
+		entryId: string,
+		vitality: UnitVitality,
+		undead = false
+	): void {
 		if (!this.progress) return;
+		const previousHp = this.progress[player].vitality?.[entryId]?.hp;
 		this.progress = domain.setTwoPlayerVitality(
 			this.progress,
 			player,
 			entryId,
-			domain.applyZeroHpStates(vitality)
+			domain.settleVitalityStates(vitality, previousHp, undead)
 		);
 		this.persist();
 	}

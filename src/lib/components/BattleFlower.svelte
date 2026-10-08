@@ -10,7 +10,7 @@
 		UnitStatus,
 		VitalityRingState
 	} from '$lib/domain';
-	import { UNIT_STATUS_LABELS } from '$lib/domain';
+	import { OVERLAY_STATUSES, UNIT_STATUS_LABELS } from '$lib/domain';
 	import StatusGlyph from './StatusGlyph.svelte';
 
 	type Props = {
@@ -186,14 +186,15 @@
 
 	let statusChips = $derived.by(() => {
 		if (!showStatuses || flower.statuses.length === 0) return [];
+		// Incapacitated and Dead are not band orbs: the orb's tint and glyph say them, at a
+		// glance and without crowding the shoulders the carried conditions hang off.
+		const carried = flower.statuses.filter((status) => !OVERLAY_STATUSES.includes(status));
+		if (carried.length === 0) return [];
 		// The States fill the left slots from the top down and then the right; past eight the
 		// last right slot counts the rest instead of a ninth orb overlapping its neighbour.
-		const overflow = flower.statuses.length > STATUS_SLOTS.length;
-		const shown = flower.statuses.slice(
-			0,
-			overflow ? STATUS_SLOTS.length - 1 : STATUS_SLOTS.length
-		);
-		const extra = flower.statuses.length - shown.length;
+		const overflow = carried.length > STATUS_SLOTS.length;
+		const shown = carried.slice(0, overflow ? STATUS_SLOTS.length - 1 : STATUS_SLOTS.length);
+		const extra = carried.length - shown.length;
 		const chips: StatusChip[] = shown.map((status) => ({
 			status,
 			label: UNIT_STATUS_LABELS[status],
@@ -269,6 +270,24 @@
 					class="flex h-full w-full items-center justify-center text-lg font-bold text-slate-300"
 				>
 					{flower.name.charAt(0)}
+				</div>
+			{/if}
+			<!-- What happened to the model, said on the icon itself: a fallen model wears a
+			     translucent yellow wash with the Incapacitated glyph over it, a Dead one a
+			     slighter red wash with the skull - readable across the table without ever
+			     looking at the band. Dead wins where both would read, which the rules never
+			     let happen. -->
+			{#if flower.statuses.includes('dead') || flower.statuses.includes('incapacitated')}
+				{@const fallen = flower.statuses.includes('dead') ? 'dead' : 'incapacitated'}
+				<div
+					class="absolute inset-0 {fallen === 'dead' ? 'bg-red-600/30' : 'bg-yellow-400/40'}"
+					aria-hidden="true"
+				></div>
+				<div
+					class="absolute inset-0 flex items-center justify-center opacity-90"
+					aria-hidden="true"
+				>
+					<StatusGlyph status={fallen} active size="h-3/5 w-3/5" />
 				</div>
 			{/if}
 		</div>

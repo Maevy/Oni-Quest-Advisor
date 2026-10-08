@@ -104,8 +104,14 @@ dead disc instead of two disabled steps. **Box taps** (2026-10-08) closed the fl
 interaction: on the focused flower the ring's boxes are themselves tappable while the petals
 hold their place — the n-th box of a half sets that stat straight to n, walking and committing
 at once — live only while the ring is idle; the strip flowers stay display-only and
-over-Stamina stays the disc's +1. What remains of the flowers is carrying them to the other
-modes' army panels. Behaviour spec:
+over-Stamina stays the disc's +1. The same day reworked what zero Life means: Incapacitated left
+the ring for good — a living model that falls is forced into it with Crouched, and any heal of
+at least one point drops it again as the model stands up; a second hit on a fallen model kills
+it, an Undead model goes straight to Dead at zero Life, and Dead (still a pick of its own, never
+sharing a copy with Incapacitated) leaves the heal row while the fallen stay in the damage row.
+Neither State rides the band any more: the fallen wear a yellow wash with the Incapacitated
+glyph over their icon, the Dead a red wash with the skull, on every flower. What remains of the
+flowers is carrying them to the other modes' army panels. Behaviour spec:
 `docs/functional-spec/06-two-player-hot-seat.md`. **Next: the flowers carry to the solo and
 online army panels.**
 

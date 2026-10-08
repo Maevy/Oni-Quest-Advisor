@@ -1,6 +1,6 @@
 import type { BattleFlowerSpec } from './savedArmy';
 import type { PlayerKey } from './twoPlayer';
-import type { UnitStatus, UnitVitality } from './army';
+import { toggleUnitStatus, type UnitStatus, type UnitVitality } from './army';
 
 /** The amount ring's fixed steps; the ring closes with X, which asks for a number. */
 export const AMOUNT_STEPS = [1, 2, 3, 4, 5, 6] as const;
@@ -56,20 +56,28 @@ function targetsWhere(
 	return targets;
 }
 
-/** The damage flow's row: every copy that still has Life to lose. */
+/** The damage flow's row: every copy that tracks Life and is not Dead, the fallen included -
+ * a model on the floor still has a fate to meet, and striking it again is exactly how Dead
+ * arrives. A copy without Life has nothing a hit could take, and nothing Dead could follow. */
 export function aliveTargetsFor(
 	seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }>
 ): VitalityTarget[] {
-	return targetsWhere(seats, (flower) => flower.life !== null && flower.life.current > 0);
+	return targetsWhere(seats, (flower) => flower.life !== null && !flower.statuses.includes('dead'));
 }
 
-/** The heal flow's row: every copy below its overheal cap, from the fallen to the whole. */
+/** The heal flow's row: every copy below its overheal cap, from the fallen to the whole -
+ * except the Dead, who are past healing. An Undead copy on the floor is the one exception:
+ * its Dead is the fall's consequence, the living model's Incapacitated, so a heal stands it
+ * back up. */
 export function healableTargetsFor(
 	seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }>
 ): VitalityTarget[] {
 	return targetsWhere(
 		seats,
-		(flower) => flower.life !== null && flower.life.current < lifeCap(flower.life.max)
+		(flower) =>
+			flower.life !== null &&
+			flower.life.current < lifeCap(flower.life.max) &&
+			!(flower.statuses.includes('dead') && !(flower.undead && flower.life.current <= 0))
 	);
 }
 
@@ -97,7 +105,9 @@ export function healApplied(amount: number, currentHp: number, maxHp: number): n
 
 /**
  * The vitality record after a hit: Life drops and never below zero, stamina and States are
- * kept. `current` is absent for a copy nothing has touched yet, which reads as full.
+ * kept. `current` is absent for a copy nothing has touched yet, which reads as full. A copy
+ * already on the floor that takes another hit dies instead: with no Life left to take, the
+ * hit's whole effect is the Dead State.
  */
 export function vitalityAfterDamage(
 	current: UnitVitality | undefined,
@@ -105,11 +115,15 @@ export function vitalityAfterDamage(
 	baseSta: number | null,
 	amount: number
 ): UnitVitality {
+	const before = current?.hp ?? baseHp;
+	let statuses = current?.statuses ?? [];
+	if (amount > 0 && before <= 0 && !statuses.includes('dead'))
+		statuses = toggleUnitStatus(statuses, 'dead');
 	const vitality: UnitVitality = {
-		hp: Math.max(0, (current?.hp ?? baseHp) - amount),
+		hp: Math.max(0, before - amount),
 		sta: current?.sta ?? baseSta ?? 0
 	};
-	if (current?.statuses) vitality.statuses = current.statuses;
+	if (statuses.length > 0) vitality.statuses = statuses;
 	return vitality;
 }
 
@@ -177,7 +191,7 @@ export function vitalityAfterBoxTap(
  * wholesale by the ring's confirmed draft. An empty draft drops the key again, so a copy
  * cleared of every State costs nothing in the run's map. The zero-Life States are not
  * re-applied here - the store's `setUnitVitality` runs every commit through
- * `applyZeroHpStates`, which is the one place that rule lives.
+ * `settleVitalityStates`, which is the one place that rule lives.
  */
 export function vitalityAfterStatuses(
 	current: UnitVitality | undefined,

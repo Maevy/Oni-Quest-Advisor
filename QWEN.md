@@ -133,13 +133,18 @@ section.
   turning crosshair, the second confirms, the glyph flies to the target and its Life boxes walk
   one by one before the overlay closes with the change committed to that seat's vitality map. The
   star is wired the third way: its row holds **every** copy, one tap moves the focus onto the
-  target (the flower it left stays lit in its slot), all fifteen States bloom around it as
-  tappable orbs — lit yellow in their own colour when carried, the petals' glass when not,
-  Incapacitated and Crouched **locked** while Life is 0 because the store re-applies them — and
-  the model icon commits the draft, its first tap arming the crosshair. The disc is wired the
-  fourth way and is the only flow with no row: it blooms a third ring of two steps, **−1 and
-  +1**, dead at the floor and at the over-Stamina cap, each tap committing at once onto the
-  centred flower and walking its Stamina boxes one step — over-Stamina repainting **violet**
+  target (the flower it left stays lit in its slot), the fourteen pickable States bloom around
+  it as tappable orbs — lit yellow in their own colour when carried, the petals' glass when
+  not, Crouched **locked** while Life is 0 because the store re-applies it — and the model icon
+  commits the draft, its first tap arming the crosshair. Incapacitated is **not a pick**: zero
+  Life forces it (with Crouched) onto a living model and straight **Dead** onto an Undead one,
+  a heal of at least 1 drops it again, and a second hit on a fallen model kills it; Dead — a
+  pick of its own, never sharing a copy with Incapacitated — leaves the heal row while the
+  fallen stay in the damage row. Neither rides the band: the fallen wear a **yellow wash with
+  the Incapacitated glyph** on their icon, the Dead a **red wash with the skull**. The disc is
+  wired the fourth way and is the only flow with no row: it blooms a third ring of two steps,
+  **−1 and +1**, dead at the floor and at the over-Stamina cap, each tap committing at once onto
+  the centred flower and walking its Stamina boxes one step — over-Stamina repainting **violet**
   from the top end to double the base, like Life's blue. The ring's boxes are tappable on the
   focused flower as a pointer shortcut — the n-th box of a half sets that stat straight to n,
   walking and committing at once, live only while the ring is idle — while the strip flowers

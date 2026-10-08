@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	ARMY_UNIT_SIZES,
 	UNIT_STATUSES,
-	ZERO_HP_STATUSES,
 	addArmyUnit,
 	addRosterPick,
 	affinityElements,
-	applyZeroHpStates,
 	armyCopyCounts,
 	armyPoints,
 	armyRulesTitle,
@@ -43,6 +41,8 @@ import {
 	spellcraftLevelCap,
 	spellcraftPopupFor,
 	statusLockedAtZeroHp,
+	settleVitalityStates,
+	zeroHpStates,
 	stratagemsFor,
 	substituteArmyTemplate,
 	toggleArmyMount,
@@ -2744,57 +2744,88 @@ describe('toggleUnitStatus', () => {
 	});
 });
 
-describe('applyZeroHpStates', () => {
-	it('adds Incapacitated and Crouched when Life reaches 0', () => {
-		expect(applyZeroHpStates({ hp: 0, sta: 2 }).statuses).toEqual(['crouched', 'incapacitated']);
-	});
-
-	it('keeps the States the copy already carried', () => {
-		expect(applyZeroHpStates({ hp: 0, sta: 0, statuses: ['bleeding'] }).statuses).toEqual([
-			'bleeding',
+describe('settleVitalityStates', () => {
+	it('forces Incapacitated and Crouched on a living copy whose Life reaches 0', () => {
+		expect(settleVitalityStates({ hp: 0, sta: 2 }, 2, false).statuses).toEqual([
 			'crouched',
 			'incapacitated'
 		]);
 	});
 
-	it('does not duplicate States the player already lit', () => {
-		const fallen = applyZeroHpStates({
-			hp: 0,
-			sta: 0,
-			statuses: ['crouched', 'incapacitated']
-		});
-		expect(fallen.statuses).toEqual(['crouched', 'incapacitated']);
+	it('puts an Undead copy straight into Dead at zero Life', () => {
+		expect(settleVitalityStates({ hp: 0, sta: 2 }, 2, true).statuses).toEqual(['dead']);
 	});
 
-	it('leaves a living copy untouched', () => {
-		expect(applyZeroHpStates({ hp: 3, sta: 2 })).toEqual({ hp: 3, sta: 2 });
-		expect(applyZeroHpStates({ hp: 1, sta: 0, statuses: ['bleeding'] }).statuses).toEqual([
-			'bleeding'
+	it('keeps a Dead copy at zero Life Dead alone - no Incapacitated, no Crouched', () => {
+		expect(
+			settleVitalityStates({ hp: 0, sta: 0, statuses: ['dead', 'incapacitated'] }, 0, false)
+				.statuses
+		).toEqual(['dead']);
+	});
+
+	it('drops Incapacitated when a heal stands the copy back up', () => {
+		expect(
+			settleVitalityStates(
+				{ hp: 2, sta: 2, statuses: ['bleeding', 'crouched', 'incapacitated'] },
+				0,
+				false
+			).statuses
+		).toEqual(['bleeding', 'crouched']);
+	});
+
+	it("drops Dead when a heal stands an Undead copy up, but never a living copy's", () => {
+		expect(
+			settleVitalityStates({ hp: 1, sta: 1, statuses: ['dead'] }, 0, true).statuses
+		).toBeUndefined();
+		expect(
+			settleVitalityStates({ hp: 1, sta: 1, statuses: ['dead', 'bleeding'] }, 0, false).statuses
+		).toEqual(['dead', 'bleeding']);
+	});
+
+	it("keeps a Dead copy's Dead through a heal that starts above zero", () => {
+		expect(settleVitalityStates({ hp: 3, sta: 2, statuses: ['dead'] }, 2, false).statuses).toEqual([
+			'dead'
 		]);
+	});
+
+	it('leaves a copy whose Life did not move untouched', () => {
+		expect(settleVitalityStates({ hp: 3, sta: 2 }, 3, false)).toEqual({ hp: 3, sta: 2 });
+		expect(
+			settleVitalityStates({ hp: 0, sta: 2, statuses: ['crouched', 'incapacitated'] }, 0, false)
+				.statuses
+		).toEqual(['crouched', 'incapacitated']);
+	});
+
+	it('drops the key again once nothing is carried', () => {
+		expect(settleVitalityStates({ hp: 2, sta: 2, statuses: ['incapacitated'] }, 0, false)).toEqual({
+			hp: 2,
+			sta: 2
+		});
 	});
 });
 
 describe('statusLockedAtZeroHp', () => {
 	it('locks exactly the States a fallen copy is forced into', () => {
-		expect(statusLockedAtZeroHp('incapacitated', 0)).toBe(true);
 		expect(statusLockedAtZeroHp('crouched', 0)).toBe(true);
 		expect(statusLockedAtZeroHp('bleeding', 0)).toBe(false);
+		expect(statusLockedAtZeroHp('dead', 0, true)).toBe(true);
+		expect(statusLockedAtZeroHp('crouched', 0, false, ['dead'])).toBe(false);
 	});
 
 	it('unlocks them again as soon as the copy has Life', () => {
-		expect(statusLockedAtZeroHp('incapacitated', 1)).toBe(false);
-		expect(statusLockedAtZeroHp('crouched', 4)).toBe(false);
+		expect(statusLockedAtZeroHp('crouched', 1)).toBe(false);
+		expect(statusLockedAtZeroHp('dead', 4, true)).toBe(false);
 	});
 
 	// The lock exists because the store re-applies these States on every commit: a UI that
 	// offered to clear one the store puts straight back would show the tap silently undone.
 	// The two lists must therefore be the same list, in both directions.
-	it('locks whatever applyZeroHpStates forces on, and nothing it leaves alone', () => {
+	it('locks whatever zeroHpStates forces on, and nothing it leaves alone', () => {
 		for (const status of UNIT_STATUSES) {
-			const forced = applyZeroHpStates({ hp: 0, sta: 0 }).statuses?.includes(status) ?? false;
+			const forced = zeroHpStates(false, []).includes(status);
 			expect(statusLockedAtZeroHp(status, 0)).toBe(forced);
 		}
-		expect(ZERO_HP_STATUSES).toEqual(['incapacitated', 'crouched']);
+		expect(zeroHpStates(true, [])).toEqual(['dead']);
 	});
 });
 

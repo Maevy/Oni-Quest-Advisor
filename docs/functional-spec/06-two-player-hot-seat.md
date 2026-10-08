@@ -169,7 +169,8 @@ select statuses". One tap, not two: the ring the tap leads to is reversible and 
 commit, so a mis-tap costs nothing. That tap moves the focus onto the chosen copy — its flower
 takes the centre while the flower the overlay opened from glides back to its slot and stays
 **lit** there, the one bright flower in a dimmed strip, because that is where it now lives — and
-a beat later all fifteen States bloom around the target as orbs on a ring of their own: a real
+a beat later the fourteen pickable States bloom around the target as orbs on a ring of their own:
+a real
 44 px touch target each, on a radius that fits the smaller screen dimension, with nothing
 competing for the space (the petals went home with the flower they belonged to, and this flow has
 no amount ring). A carried State lights the same yellow rim the pressed petal does and wears its
@@ -179,9 +180,24 @@ Tap model icon twice to confirm". The model icon is the commit: the first tap ar
 crosshair around it, the second writes the whole draft to that seat's vitality map in one go and
 sends the flower home into **the target's** slot. Toggling an orb disarms a pending commit, so a
 tap after an edit never writes by accident. Escape and click-outside discard the draft and close.
-The two States a model at zero Life is forced into — Incapacitated and Crouched — are **locked
-orbs**, dimmed and labelled "forced while Life is 0": the store re-applies them to every commit,
-so offering to clear them would only show the tap undone.
+
+**Zero Life is a contract, not a pick** (reworked 2026-10-08). Incapacitated left the ring
+entirely: a living model whose Life reaches 0 is forced into Incapacitated and Crouched —
+Crouched stays a locked orb, dimmed and labelled "forced while Life is 0", while Incapacitated
+cannot be offered at all — and any heal of at least one point drops the Incapacitated again as
+the model stands back up, keeping whatever else it carried. A model already on the floor that
+takes another hit dies: with no Life left to take, the hit's whole effect is the Dead State.
+Dead itself is a pick like any other — killing is a decision — and can also be assigned straight
+to a standing model; where Dead sits, Incapacitated never sits with it, so turning Dead drops
+it, and taking Dead off a corpse at zero Life lands the copy back on the floor, forced States
+and all. An **Undead** model has no Incapacitated: zero Life puts it straight into Dead, and a
+heal up from zero takes that Dead back off. The Dead are past healing — the heal row leaves them
+lying — with the one exception of an Undead copy on the floor, whose Dead is exactly the fall a
+heal reverses; the damage row, in turn, still lists the fallen, because the second fall is how
+Dead arrives. Neither State rides the band: a fallen model wears a translucent **yellow wash
+with the Incapacitated glyph** over its icon and a Dead one a slighter **red wash with the
+skull**, on every flower — strip, centred copy and target row alike — so what happened to a
+model reads across the table without ever looking at the orbs.
 
 **The Stamina flow** (2026-10-08) is the fourth petal function, and the only one with no row:
 the yellow disc blooms a third ring of just the two steps Stamina has — **−1 and +1** — dead at

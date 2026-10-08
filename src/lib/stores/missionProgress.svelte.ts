@@ -82,11 +82,15 @@ class MissionProgressStore {
 	}
 
 	/** Commits a copy's Life/stamina once the vitality menu is accepted. */
-	setUnitVitality(entryId: string, vitality: UnitVitality): void {
+	setUnitVitality(entryId: string, vitality: UnitVitality, undead = false): void {
 		if (!this.progress) return;
+		const previousHp = this.progress.vitality[entryId]?.hp;
 		this.progress = {
 			...this.progress,
-			vitality: { ...this.progress.vitality, [entryId]: domain.applyZeroHpStates(vitality) }
+			vitality: {
+				...this.progress.vitality,
+				[entryId]: domain.settleVitalityStates(vitality, previousHp, undead)
+			}
 		};
 		this.persist();
 	}

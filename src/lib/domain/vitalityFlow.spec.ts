@@ -21,7 +21,8 @@ function flower(
 	name: string,
 	hp: number | null,
 	max = 3,
-	statuses: UnitStatus[] = []
+	statuses: UnitStatus[] = [],
+	undead = false
 ): BattleFlowerSpec {
 	return {
 		entryId,
@@ -29,7 +30,8 @@ function flower(
 		mountedOn: null,
 		stamina: null,
 		life: hp === null ? null : { current: hp, max, states: [] },
-		statuses
+		statuses,
+		undead
 	};
 }
 
@@ -48,18 +50,19 @@ describe('aliveTargetsFor', () => {
 		expect(ids(aliveTargetsFor(SEATS))).toEqual(['p1-a', 'p1-b', 'p2-a']);
 	});
 
-	it('skips dead copies and copies without Life', () => {
+	it('keeps the fallen - another hit on them is how Dead arrives - and skips the Dead', () => {
 		const targets = aliveTargetsFor([
 			{
 				player: 'player1',
 				flowers: [
-					flower('dead', 'Shieldbearer', 0),
+					flower('fallen', 'Shieldbearer', 0),
+					flower('dead', 'Shieldbearer', 0, 3, ['dead']),
 					flower('nohp', 'Summon', null),
 					flower('ok', 'Shieldbearer', 2)
 				]
 			}
 		]);
-		expect(ids(targets)).toEqual(['ok']);
+		expect(ids(targets)).toEqual(['fallen', 'ok']);
 	});
 
 	it('numbers duplicate copies per seat, leaving unique names unnumbered', () => {
@@ -75,7 +78,7 @@ describe('aliveTargetsFor', () => {
 			},
 			{ player: 'player2', flowers: [flower('e', 'Shieldbearer', 3)] }
 		]);
-		expect(targets.map((target) => target.copy)).toEqual([1, 2, null, null]);
+		expect(targets.map((target) => target.copy)).toEqual([1, 2, 3, null, null]);
 	});
 });
 
@@ -87,13 +90,27 @@ describe('healableTargetsFor', () => {
 				flowers: [
 					flower('full', 'Shieldbearer', 3),
 					flower('hurt', 'Shieldbearer', 1),
-					flower('dead', 'Captain', 0),
+					flower('fallen', 'Captain', 0),
 					flower('capped', 'Captain', 4, 2)
 				]
 			},
 			{ player: 'player2', flowers: [flower('p2', 'Oni Raider', 2, 2)] }
 		]);
-		expect(ids(targets)).toEqual(['full', 'hurt', 'dead', 'p2']);
+		expect(ids(targets)).toEqual(['full', 'hurt', 'fallen', 'p2']);
+	});
+
+	it('skips the Dead, except an Undead copy on the floor - Dead is its fall', () => {
+		const targets = healableTargetsFor([
+			{
+				player: 'player1',
+				flowers: [
+					flower('corpse', 'Shieldbearer', 0, 3, ['dead']),
+					flower('undead-down', 'Ghoul', 0, 3, ['dead'], true),
+					flower('undead-killed', 'Ghoul', 2, 3, ['dead'], true)
+				]
+			}
+		]);
+		expect(ids(targets)).toEqual(['undead-down']);
 	});
 
 	it('skips copies without Life', () => {
@@ -166,6 +183,21 @@ describe('vitalityAfterDamage', () => {
 	it('keeps stamina and States, and never drops below zero', () => {
 		const after = vitalityAfterDamage({ hp: 2, sta: 1, statuses: ['bleeding'] }, 4, 2, 6);
 		expect(after).toEqual({ hp: 0, sta: 1, statuses: ['bleeding'] });
+	});
+
+	it('kills a copy already on the floor instead of taking Life it has not got', () => {
+		expect(
+			vitalityAfterDamage({ hp: 0, sta: 1, statuses: ['crouched', 'incapacitated'] }, 2, 2, 3)
+		).toEqual({ hp: 0, sta: 1, statuses: ['crouched', 'dead', 'incapacitated'] });
+	});
+
+	it('does not kill on a hit that merely floors the copy, nor on a hit of nothing', () => {
+		expect(vitalityAfterDamage({ hp: 1, sta: 1 }, 2, 2, 5)).toEqual({ hp: 0, sta: 1 });
+		expect(vitalityAfterDamage({ hp: 0, sta: 1, statuses: ['incapacitated'] }, 2, 2, 0)).toEqual({
+			hp: 0,
+			sta: 1,
+			statuses: ['incapacitated']
+		});
 	});
 });
 
