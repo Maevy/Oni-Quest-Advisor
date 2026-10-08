@@ -91,8 +91,9 @@ Incapacitated and Crouched are locked orbs while Life is 0, because the store re
 every commit. Taps edit a **draft**; the model icon commits it — the first tap arms the crosshair,
 the second writes the whole draft in one go and sends the flower home into **the target's** slot —
 and toggling an orb disarms a pending commit. The States a copy carries also hang off its strip
-flower as a **band of orbs on the upper arc** (own glyph, own colour, a `+n` chip past four,
-absent on a clean copy), which is the default state's read of them. What the interaction phase
+flower as a **band of orbs over its shoulders** — four slots down the left, four down the right,
+the `+n` chip taking the last right slot past eight (own glyph, own colour, absent on a clean
+copy) — which is the default state's read of them. What the interaction phase
 still owes: the Stamina petal's function and box taps — until then hot-seat can wound, kill, heal
 and assign States but not spend Stamina. Behaviour spec:
 `docs/functional-spec/06-two-player-hot-seat.md`. The flowers replace the other modes' army

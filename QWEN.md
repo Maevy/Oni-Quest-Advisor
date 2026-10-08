@@ -111,9 +111,10 @@ section.
   of boxes: STA (yellow) on the left, HP (red) on the right. The ring always carries the
   **base** stat's boxes — a lost point empties its box from the bottom end and an overhealed
   Life **repaints** its extra points blue from the top end (`vitalityRingStates`), so the ring
-  never grows. The States a copy carries hang off the flower as a **band of orbs on its upper
-  arc**, just outside the ring — own glyph in its own colour, a `+n` chip past four, absent on a
-  clean copy, display-only. One flower per copy; a mounted copy is one flower on the mount's
+  never grows. The States a copy carries hang off the flower as a **band of orbs over its
+  shoulders**, just outside the ring — four slots down the left, four down the right, own glyph
+  in its own colour, a `+n` chip in the last right slot past eight, absent on a clean copy,
+  display-only. One flower per copy; a mounted copy is one flower on the mount's
   stats. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
   row; clicking a flower **focuses** it (backdrop blur, a 1.3× clone gliding from its slot to the
   viewport centre, the rest faded; click outside or Escape returns it — the clone lives at the

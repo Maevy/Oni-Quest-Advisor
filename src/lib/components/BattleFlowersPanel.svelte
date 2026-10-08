@@ -52,10 +52,10 @@
 		{#if army}
 			<!-- One flower per row: a two-column grid squeezed each flower below its design size
 			     on a phone, and the ring's box count is the thing that must stay legible.
-			     gap-5 and the top pad are the States band's headroom: its topmost orb reaches
-			     ~16px past the flower's box, into the gap - and for the first flower, past the
+			     gap-6 and the top pad are the States band's headroom: its topmost orbs reach
+			     ~19px past the flower's box, into the gap - and for the first flower, past the
 			     header, which the outer gap-3 alone would not cover. -->
-			<div class="flex flex-col items-center gap-5 pt-1">
+			<div class="flex flex-col items-center gap-6 pt-1">
 				{#each battleFlowersFor(army) as flower (flower.entryId)}
 					<BattleFlower
 						{flower}

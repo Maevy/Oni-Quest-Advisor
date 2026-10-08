@@ -137,15 +137,22 @@
 	});
 
 	/**
-	 * The States band, in the flower's own 120-unit box: a radius that clears the vitality
-	 * ring's outer edge (55) by the orb's own half-width, spread over an upper arc narrow
-	 * enough that every orb stays inside the box horizontally. Only the topmost orbs reach
-	 * past the box vertically, into the gap the panel leaves between flowers - which is why
-	 * the band is capped and the panel's gap is what it is.
+	 * The States band, in the flower's own 120-unit box: eight slots arcing over the shoulders -
+	 * four down the left, four down the right, 12 o'clock left clear where the two ring halves
+	 * meet. The radius clears the vitality ring's outer edge (55) by the orb's own half-width;
+	 * the outermost slots stop above 3 and 9 o'clock's underside so no orb reaches the unit's
+	 * name, and their outer edge lands a few px into the padding the half leaves beside the
+	 * flower - the band's only horizontal slack. The topmost pair reaches ~19px past the box,
+	 * into the gap the panel leaves between flowers.
 	 */
-	const STATUS_BAND = { radius: 66, spread: 50, orb: 24, shown: 4 };
+	const STATUS_BAND = { radius: 70, orb: 30, first: 18, step: 27, perSide: 4 };
 	/** The orb's box as a percentage of the flower's, so it scales with the slot. */
 	const ORB_PCT = (STATUS_BAND.orb / 120) * 100;
+	/** The slot angles clockwise from 12 o'clock: the left four top-down, then the right four. */
+	const STATUS_SLOTS = Array.from({ length: 2 * STATUS_BAND.perSide }, (_, index) => {
+		const side = index < STATUS_BAND.perSide ? -1 : 1;
+		return side * (STATUS_BAND.first + STATUS_BAND.step * (index % STATUS_BAND.perSide));
+	});
 
 	type StatusChip = {
 		status: UnitStatus | null;
@@ -157,7 +164,13 @@
 
 	let statusChips = $derived.by(() => {
 		if (!showStatuses || flower.statuses.length === 0) return [];
-		const shown = flower.statuses.slice(0, STATUS_BAND.shown);
+		// The States fill the left slots from the top down and then the right; past eight the
+		// last right slot counts the rest instead of a ninth orb overlapping its neighbour.
+		const overflow = flower.statuses.length > STATUS_SLOTS.length;
+		const shown = flower.statuses.slice(
+			0,
+			overflow ? STATUS_SLOTS.length - 1 : STATUS_SLOTS.length
+		);
 		const extra = flower.statuses.length - shown.length;
 		const chips: StatusChip[] = shown.map((status) => ({
 			status,
@@ -168,10 +181,8 @@
 		}));
 		if (extra > 0)
 			chips.push({ status: null, label: `${extra} more States`, extra, left: 50, top: 50 });
-		// Evenly spread across the arc and centred on 12 o'clock, so one orb always sits on top.
-		const step = chips.length === 1 ? 0 : (2 * STATUS_BAND.spread) / (chips.length - 1);
 		return chips.map((chip, index) => {
-			const angle = ((index * step - STATUS_BAND.spread) * Math.PI) / 180;
+			const angle = (STATUS_SLOTS[index] * Math.PI) / 180;
 			return {
 				...chip,
 				left: 50 + ((STATUS_BAND.radius * Math.sin(angle)) / 120) * 100,
@@ -224,9 +235,10 @@
 				</div>
 			{/if}
 		</div>
-		<!-- The States band: the carried States as orbs on the upper arc, each in its own colour.
-		     Display-only - the flower's own click still focuses it - and a chip counts whatever
-		     did not fit. The button's aria-label names them, so the band is hidden from AT. -->
+		<!-- The States band: the carried States as orbs arcing over the flower's shoulders, each
+		     in its own colour - the left four slots first, then the right four. Display-only -
+		     the flower's own click still focuses it - and past eight States the last right slot
+		     counts the rest. The button's aria-label names them, so the band is hidden from AT. -->
 		{#if statusChips.length > 0}
 			<div class="pointer-events-none absolute inset-0" aria-hidden="true">
 				{#each statusChips as chip (chip.label)}
@@ -239,7 +251,7 @@
 						{#if chip.status}
 							<StatusGlyph status={chip.status} active size="h-[72%] w-[72%]" />
 						{:else}
-							<span class="text-[9px] leading-none font-bold text-slate-200">
+							<span class="text-[10px] leading-none font-bold text-slate-200">
 								+{chip.extra}
 							</span>
 						{/if}

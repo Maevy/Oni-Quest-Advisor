@@ -105,12 +105,14 @@ circular orb, ringed by a circular bar in two halves.
 - A half a model has no value for (a null STA or HP) draws no boxes at all.
 - A mounted copy is one flower: the rider's icon, the mount's stats on the ring, and the mount's
   name under the unit's.
-- The States a copy carries hang off the flower as a **band of orbs on its upper arc**, just
-  outside the vitality ring: one small orb per State, each wearing the State's own glyph in its
-  own colour, and a `+n` chip once more than four would not fit the arc. A copy carrying no
-  States shows no band, so a clean army reads exactly as it always did. The band is display-only
-  — the flower's own click still focuses it — and the flower's aria-label names the States for a
-  screen reader.
+- The States a copy carries hang off the flower as a **band of orbs over its shoulders**, just
+  outside the vitality ring: eight slots — four arcing down the left, four down the right, 12
+  o'clock left clear where the two ring halves meet — and the carried States fill them in order,
+  the left four from the top down and then the right. Each orb wears the State's own glyph in its
+  own colour; past eight, the last right slot becomes a `+n` chip counting the rest. A copy
+  carrying no States shows no band, so a clean army reads exactly as it always did. The band is
+  display-only — the flower's own click still focuses it — and the flower's aria-label names the
+  States for a screen reader.
 
 Both seats share the one view, so the old active/frozen distinction no longer applies to armies —
 a flower is reference for whoever holds the phone.
