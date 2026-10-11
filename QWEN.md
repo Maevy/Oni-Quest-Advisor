@@ -116,40 +116,35 @@ section.
   in its own colour, a `+n` chip in the last right slot past eight, absent on a clean copy,
   display-only. One flower per copy; a mounted copy is one flower on the mount's
   stats. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
-  row, and **two gestures with two jobs** (reworked 2026-10-11). A **tap focuses** the flower
-  (backdrop blur, a 1.3× clone gliding from its slot to the viewport centre, the rest faded;
-  click outside or Escape returns it — the clone lives at the screen root because the strip's
-  transform traps `fixed` overlays), and once landed a ring of five **petal buttons** blooms
-  outside the ring — the model's card, deal damage, heal, edit statuses and manage Stamina — as
-  one dark-blue glass whose pressed petal lights a yellow rim (one at a time; the light is the
-  selection its sub-flow opens from, except the card petal, whose light is the open `UnitCard`'s
-  and drops when it closes). **Every petal acts on the centred model and on nothing else**: the
-  sword and the cross open the shared **amount pad** (a calculator grid 1…9 + OK, tinted
-  red/green) below the flower and land on it, its Life boxes walking while the pad folds back to
-  the petals; the star blooms the fourteen pickable States as tappable orbs around it — lit
-  yellow in their own colour when carried, the petals' glass when not, Crouched **locked** while
-  Life is 0 because the store re-applies it — and the model icon commits the draft, its first
-  tap arming the crosshair; the disc blooms a third ring of two steps, **−1 and +1**, dead at the
-  floor and at the over-Stamina cap. The ring's boxes are tappable on the focused flower as a
-  pointer shortcut — the n-th box of a half sets that stat straight to n, walking and committing
-  at once, live only while the ring is idle. **A drag acts on another model**: lifting a strip
-  flower past an 8px threshold fades the States bands, follows the finger with a measured clone
-  at the screen root and rings the hovered flower with a crosshair; dropping on one opens the
-  **Interaction panel** (origin left, target right, an _Interaction_ arrow between), dropping on
-  nothing returns the clone and fades the bands back. The panel offers seven actions regardless
-  of friend or foe — Assign Damage, Assign Healing, Assign/Remove Status, Assign/Remove Buff
-  (_inert_), Deal Stagger, Deal Stun, Trade Item (_inert_) — the first three reusing the pad and
-  a boxed State picker, Stagger and Stun a confirmation; on confirm the glyph flies origin→target,
-  the commit lands in the target seat's vitality map and its boxes walk before the panel folds.
-  **Stagger spends one activation, Stun every one** (`vitalityAfterStagger`/`vitalityAfterStun`) —
-  Stamina only, no State of their own. A drag is never the strip's view-swipe and never a focus
-  (the click it leaves is swallowed). Incapacitated is **not a pick**: zero Life forces it (with
-  Crouched) onto a living model and straight **Dead** onto an Undead one, a heal of at least 1
-  drops it again, and a second hit on a fallen model kills it; Dead — a pick of its own, never
-  sharing a copy with Incapacitated — stays reachable because any flower is a valid drop target
-  and the self petals act on whatever is centred. Neither rides the band: the fallen wear a
-  **yellow wash with the Incapacitated glyph** on their icon, the Dead a **red wash with the
-  skull**.
+  row, and **two gestures with two jobs** (reworked 2026-10-11). A **tap opens the Self
+  Interaction dialog** — the same shell as the cross-model panel but with **one model, inert, at
+  the top** between two _Self Interaction_ labels, and six buttons below: Assign Damage, Assign
+  Healing, Assign/Remove Status, Assign/Remove Buff (_inert_), Model Info and Activation
+  Management. The model at the top is a picture, not a control — no box taps, no tap-for-card — so
+  every self action is a button: Damage/Healing open the shared **amount pad** (a calculator grid
+  1…9 + OK, tinted red/green) and land on the dialog's own model; Status opens the shared **boxed
+  State picker** (fourteen orbs, tooltip, Accept) whose Accept writes the draft to that model;
+  Model Info opens the `UnitCard` above the dialog; Activation Management opens a **−1 / +1 /
+  Accept** box that commits the net Stamina change (`onStamina`, over-Stamina to double the base)
+  and walks the bars. **A drag acts on another model**: lifting a strip flower past an 8px
+  threshold fades the States bands, follows the finger with a measured clone at the screen root
+  and rings the hovered flower with a crosshair; dropping on one opens the **Interaction panel**
+  (origin left, target right, an _Interaction_ arrow between), dropping on nothing returns the
+  clone and fades the bands back. The panel offers seven actions regardless of friend or foe —
+  Assign Damage, Assign Healing, Assign/Remove Status, Assign/Remove Buff (_inert_), Deal Stagger,
+  Deal Stun, Trade Item (_inert_) — the first three reusing the pad and the boxed State picker,
+  Stagger and Stun a confirmation; on confirm the glyph flies origin→target, the commit lands in
+  the target seat's vitality map and its boxes walk before the panel folds. **Stagger spends one
+  activation, Stun every one** (`vitalityAfterStagger`/`vitalityAfterStun`) — Stamina only, no
+  State of their own; the self dialog swaps those three for Model Info and Activation Management.
+  Both dialogs render at the screen root because the strip's transform traps `fixed` overlays. A
+  drag is never the strip's view-swipe and never a self dialog (the click it leaves is swallowed).
+  Incapacitated is **not a pick**: zero Life forces it (with Crouched) onto a living model and
+  straight **Dead** onto an Undead one, a heal of at least 1 drops it again, and a second hit on a
+  fallen model kills it; Dead — a pick of its own, never sharing a copy with Incapacitated — stays
+  reachable because any flower is a valid drop target and the self dialog acts on its own model.
+  Neither rides the band: the fallen wear a **yellow wash with the Incapacitated glyph** on their
+  icon, the Dead a **red wash with the skull**.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the
