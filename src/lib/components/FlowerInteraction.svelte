@@ -461,7 +461,10 @@
 			<span class="w-16 text-center text-[10px] tracking-wide text-slate-400 uppercase">
 				Self Interaction
 			</span>
-			<div class="w-32 rounded-full border-2 bg-slate-900/60 p-0.5 {targetAccent.border}">
+			<!-- The rim must stay a circle: BattleFlower caps at 104px, so a wider box stops being
+			     square once the flower no longer fills it, and rounded-full on a wide box draws an
+			     egg. 108 = the 104px flower plus the p-0.5 rim padding on both sides. -->
+			<div class="w-[108px] rounded-full border-2 bg-slate-900/60 p-0.5 {targetAccent.border}">
 				<BattleFlower flower={shownTarget} showLabel={false} showStatuses inert />
 			</div>
 			<span class="w-16 text-center text-[10px] tracking-wide text-slate-400 uppercase">
