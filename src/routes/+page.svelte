@@ -506,6 +506,15 @@
 		return view && row ? { view, row } : null;
 	}
 
+	/**
+	 * The solo run's roster row a vitality target names. Solo fields one army, so unlike
+	 * seatRowOf there is no seat to look up - the target's entry id is the whole key.
+	 */
+	function soloRowOf(target: VitalityTarget): { view: ArmyView; row: ArmyRosterRow } | null {
+		const row = armyView?.rows.find((candidate) => candidate.entryId === target.entryId);
+		return armyView && row ? { view: armyView, row } : null;
+	}
+
 	function factionOf(army: PickedArmy | null) {
 		return army
 			? contentStore.armyFactions.find((faction) => faction.id === army.factionId)
@@ -1262,7 +1271,88 @@
 			missionProgressStore.setSchemeChecked(checkedIncrements, chosenSchemeCard.maxIncrements)}
 		onDeleteScheme={() => missionProgressStore.deleteScheme()}
 		onSetRound={(round) => missionProgressStore.setRound(round)}
-		onSetVitality={(entryId, vitality) => missionProgressStore.setUnitVitality(entryId, vitality)}
+		onDamage={(target, amount) => {
+			const seat = soloRowOf(target);
+			if (!seat) return;
+			missionProgressStore.setUnitVitality(
+				target.entryId,
+				vitalityAfterDamage(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					amount
+				),
+				target.flower.undead
+			);
+		}}
+		onHeal={(target, amount) => {
+			const seat = soloRowOf(target);
+			if (!seat) return;
+			missionProgressStore.setUnitVitality(
+				target.entryId,
+				vitalityAfterHeal(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					amount
+				),
+				target.flower.undead
+			);
+		}}
+		onStatuses={(target, statuses) => {
+			const seat = soloRowOf(target);
+			if (!seat) return;
+			missionProgressStore.setUnitVitality(
+				target.entryId,
+				vitalityAfterStatuses(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					statuses
+				),
+				target.flower.undead
+			);
+		}}
+		onStagger={(target) => {
+			const seat = soloRowOf(target);
+			if (!seat) return;
+			missionProgressStore.setUnitVitality(
+				target.entryId,
+				vitalityAfterStagger(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA
+				),
+				target.flower.undead
+			);
+		}}
+		onStun={(target) => {
+			const seat = soloRowOf(target);
+			if (!seat) return;
+			missionProgressStore.setUnitVitality(
+				target.entryId,
+				vitalityAfterStun(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA
+				),
+				target.flower.undead
+			);
+		}}
+		onStamina={(target, delta) => {
+			const seat = soloRowOf(target);
+			if (!seat) return;
+			missionProgressStore.setUnitVitality(
+				target.entryId,
+				vitalityAfterStamina(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA,
+					delta
+				),
+				target.flower.undead
+			);
+		}}
 	/>
 {/if}
 

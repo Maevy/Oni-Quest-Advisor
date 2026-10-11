@@ -66,9 +66,14 @@
 	</div>
 {/snippet}
 
-<Panel title="Armies">
-	<div class="grid grid-cols-2 gap-2">
-		{#each SEAT_ORDER as player (player)}
+<Panel
+	title={SEAT_ORDER.filter((player) => viewFor(player) !== null).length === 1 ? 'Army' : 'Armies'}
+>
+	<!-- Only seats that actually field an army get a half, so a solo run shows one centred column
+	     rather than a column beside an empty "fields nothing" one. -->
+	{@const present = SEAT_ORDER.filter((player) => viewFor(player) !== null)}
+	<div class="grid gap-2 {present.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}">
+		{#each present as player (player)}
 			{@render half(player)}
 		{/each}
 	</div>
