@@ -67,6 +67,13 @@
 		onSelect({ x: rect.x, y: rect.y, width: rect.width });
 	}
 
+	// A mouse press-and-move on the icon would otherwise start the browser's native image drag -
+	// the ghost a desktop shows - which steals the gesture from the flower drag and drops the
+	// pointer stream. Touch never starts one, which is why phones were unaffected.
+	function blockNativeDrag(event: DragEvent): void {
+		event.preventDefault();
+	}
+
 	// Ring geometry in a 120x120 viewBox, angles clockwise from 12 o'clock. The Life half runs
 	// top-to-bottom down the right side and the stamina half mirrors it down the left, so both
 	// halves fill from the top and empty towards 6 o'clock - a wounded model loses boxes at the
@@ -225,12 +232,14 @@
 <button
 	type="button"
 	class="flex w-full max-w-[104px] touch-none flex-col items-center gap-1 transition-opacity
-		duration-300 {dimmed ? 'opacity-25' : 'opacity-100'} {inert ? 'pointer-events-none' : ''}"
+		duration-300 select-none {dimmed ? 'opacity-25' : 'opacity-100'}
+		{inert ? 'pointer-events-none' : ''}"
 	aria-label={summary}
 	aria-hidden={inert ? true : undefined}
 	tabindex={inert ? -1 : undefined}
 	data-flower-key={flowerKey ?? undefined}
 	onclick={handleClick}
+	ondragstart={blockNativeDrag}
 >
 	<div class="relative aspect-square w-full">
 		<svg
@@ -267,7 +276,7 @@
 			class="absolute inset-[12.5%] overflow-hidden rounded-full border-2 border-slate-600/60 bg-slate-900/70"
 		>
 			{#if flower.icon}
-				<img src={flower.icon} alt="" class="h-full w-full object-contain" />
+				<img src={flower.icon} alt="" draggable="false" class="h-full w-full object-contain" />
 			{:else}
 				<div
 					class="flex h-full w-full items-center justify-center text-lg font-bold text-slate-300"
