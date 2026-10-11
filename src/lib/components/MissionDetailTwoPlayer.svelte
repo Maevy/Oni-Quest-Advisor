@@ -11,13 +11,7 @@
 		TwoPlayerMissionProgress,
 		UnitStatus
 	} from '$lib/domain';
-	import {
-		allTargetsFor,
-		aliveTargetsFor,
-		battleFlowersFor,
-		healableTargetsFor,
-		type VitalityTarget
-	} from '$lib/domain';
+	import { battleFlowersFor, type VitalityTarget } from '$lib/domain';
 	import ActivePlayerPanel from './ActivePlayerPanel.svelte';
 	import BattleFlowerFocus from './BattleFlowerFocus.svelte';
 	import type { FlowerRect } from './BattleFlower.svelte';
@@ -149,9 +143,6 @@
 	// The info petal's card, kept separate from the focus so that closing it leaves the flower
 	// centred: one click outside dismisses the card, the next one sends the flower home.
 	let focusInfo = $state(false);
-	// Set once a status flow moves the focus onto another copy: the flower the overlay opened
-	// from has gone home, so its slot stays lit in the strip instead of fading with the rest.
-	let focusMovedHome = $state(false);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
@@ -179,33 +170,32 @@
 		}
 		focus = { flower, rect, army, player };
 		focusInfo = false;
-		focusMovedHome = false;
 	}
 
 	function closeFocus(): void {
 		focus = null;
 		focusInfo = false;
-		focusMovedHome = false;
 	}
 
-	/** The slot a status flow left behind, lit while every other flower stays faded. */
-	let undimmed = $derived(
-		focus && focusMovedHome ? { player: focus.player, entryId: focus.flower.entryId } : null
+	/** The focused copy as a vitality-flow target: every petal now acts on it and only it. */
+	let selfTarget = $derived.by((): VitalityTarget | null =>
+		focus
+			? {
+					player: focus.player,
+					entryId: focus.flower.entryId,
+					flower: focus.flower,
+					copy: null
+				}
+			: null
 	);
 
-	/** Both seats' flowers in seat order: what the vitality flows project their rows from. */
+	/** Both seats' flowers in seat order: what a drag's data-flower-key resolves against. */
 	let seatFlowers = $derived.by(() => {
 		const seats: Array<{ player: PlayerKey; flowers: BattleFlowerSpec[] }> = [];
 		if (armyViewP1) seats.push({ player: 'player1', flowers: battleFlowersFor(armyViewP1) });
 		if (armyViewP2) seats.push({ player: 'player2', flowers: battleFlowersFor(armyViewP2) });
 		return seats;
 	});
-	/** The living field: the damage flow's target row. */
-	let damageTargets = $derived(aliveTargetsFor(seatFlowers));
-	/** The healable field: every copy below its overheal cap, the heal flow's target row. */
-	let healTargets = $derived(healableTargetsFor(seatFlowers));
-	/** The whole field: the status flow's target row, fallen copies included. */
-	let statusTargets = $derived(allTargetsFor(seatFlowers));
 
 	// Swipe detection, same contract as the solo tracker and the army builder: a mostly-horizontal
 	// pointer gesture steps between the views. Touch and pen only — a mouse drag is a text
@@ -472,7 +462,6 @@
 						p2={armyViewP2}
 						dimmed={focus !== null}
 						dragging={drag !== null}
-						{undimmed}
 						onSelect={openFocus}
 					/>
 				</div>
@@ -513,41 +502,18 @@
 
 <!-- At the screen root, like the rule dialog: the strip's transform would trap a fixed overlay
      rendered inside the pane, and the focused flower has to paint above the blur. -->
-{#if focus}
+{#if focus && selfTarget}
 	{@const focused = focus}
 	<BattleFlowerFocus
 		flower={focused.flower}
 		from={focused.rect}
 		infoOpen={focusInfo}
 		onInfo={() => (focusInfo = true)}
-		{damageTargets}
-		{healTargets}
-		{statusTargets}
-		{onDamage}
-		{onHeal}
-		{onStatuses}
-		onStamina={(delta) =>
-			onStamina(
-				{
-					player: focused.player,
-					entryId: focused.flower.entryId,
-					flower: focused.flower,
-					copy: null
-				},
-				delta
-			)}
-		onSetStat={(half, value) =>
-			onSetStat(
-				{
-					player: focused.player,
-					entryId: focused.flower.entryId,
-					flower: focused.flower,
-					copy: null
-				},
-				half,
-				value
-			)}
-		onFocusMoved={() => (focusMovedHome = true)}
+		onDamage={(amount) => onDamage(selfTarget, amount)}
+		onHeal={(amount) => onHeal(selfTarget, amount)}
+		onStatuses={(statuses) => onStatuses(selfTarget, statuses)}
+		onStamina={(delta) => onStamina(selfTarget, delta)}
+		onSetStat={(half, value) => onSetStat(selfTarget, half, value)}
 		onClosed={closeFocus}
 	/>
 {/if}

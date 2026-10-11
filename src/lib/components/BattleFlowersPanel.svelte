@@ -13,12 +13,6 @@
 		dimmed?: boolean;
 		/** A flower is being dragged: the States bands fade out to clear the field. */
 		dragging?: boolean;
-		/**
-		 * The copy the focus moved off, once a status flow has retargeted: it stays lit in the
-		 * strip, because that is where it went home to. Keyed by seat as well as entry - two
-		 * seats may field the same save, so an entry id alone is not a copy.
-		 */
-		undimmed?: { player: PlayerKey; entryId: string } | null;
 		/** Carries the seat's view along, so the screen can resolve the flower's unit card. */
 		onSelect?: (
 			flower: BattleFlowerSpec,
@@ -28,17 +22,12 @@
 		) => void;
 	};
 
-	let { p1, p2, dimmed = false, dragging = false, undimmed = null, onSelect }: Props = $props();
+	let { p1, p2, dimmed = false, dragging = false, onSelect }: Props = $props();
 
 	const SEAT_ORDER: PlayerKey[] = ['player1', 'player2'];
 
 	function viewFor(player: PlayerKey): ArmyView | null {
 		return player === 'player1' ? p1 : p2;
-	}
-
-	function isDimmed(player: PlayerKey, entryId: string): boolean {
-		if (!dimmed) return false;
-		return !(undimmed?.player === player && undimmed.entryId === entryId);
 	}
 </script>
 
@@ -62,7 +51,7 @@
 					<BattleFlower
 						{flower}
 						flowerKey={`${player}:${flower.entryId}`}
-						dimmed={isDimmed(player, flower.entryId)}
+						{dimmed}
 						statusesFaded={dragging}
 						onSelect={onSelect ? (rect) => onSelect(flower, rect, army, player) : undefined}
 					/>
