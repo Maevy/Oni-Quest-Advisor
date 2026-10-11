@@ -13,7 +13,6 @@
 	} from '$lib/domain';
 	import { battleFlowersFor, type VitalityTarget } from '$lib/domain';
 	import ActivePlayerPanel from './ActivePlayerPanel.svelte';
-	import BattleFlowerFocus from './BattleFlowerFocus.svelte';
 	import type { FlowerRect } from './BattleFlower.svelte';
 	import BattleFlowersPanel from './BattleFlowersPanel.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
@@ -78,10 +77,8 @@
 		onHeal: (target: VitalityTarget, amount: number) => void;
 		/** A status ring was confirmed: commit the draft to the target seat's vitality map. */
 		onStatuses: (target: VitalityTarget, statuses: UnitStatus[]) => void;
-		/** A Stamina step was tapped on the focused flower: commit it to that seat's map. */
+		/** Activation Management committed a net Stamina change: apply it to that seat's map. */
 		onStamina: (target: VitalityTarget, delta: number) => void;
-		/** A ring box was tapped on the focused flower: set that half straight to the box. */
-		onSetStat: (target: VitalityTarget, half: 'life' | 'stamina', value: number) => void;
 		/** The Interaction panel dealt a Stagger: spend one of the target's activations. */
 		onStagger: (target: VitalityTarget) => void;
 		/** The Interaction panel dealt a Stun: spend every one of the target's activations. */
@@ -117,7 +114,6 @@
 		onHeal,
 		onStatuses,
 		onStamina,
-		onSetStat,
 		onStagger,
 		onStun
 	}: Props = $props();
@@ -130,64 +126,46 @@
 	// The rule popups live at the screen root: the sliding strip carries a transform, which
 	// would become the containing block for their fixed overlays and trap them inside a pane.
 	let openRule = $state<RuleCallout | null>(null);
-	// The focused flower, the slot its overlay glides from and back to, and the seat's army it
-	// belongs to - the card the info petal opens resolves against that army's row and catalogs.
-	// The seat comes along because an entry id is only unique inside one army, and two seats may
-	// field the same save.
-	let focus = $state<{
-		flower: BattleFlowerSpec;
-		rect: FlowerRect;
-		army: ArmyView;
-		player: PlayerKey;
-	} | null>(null);
-	// The info petal's card, kept separate from the focus so that closing it leaves the flower
-	// centred: one click outside dismisses the card, the next one sends the flower home.
-	let focusInfo = $state(false);
+	// The Self Interaction dialog: the tapped copy as a vitality target, plus the seat's army its
+	// card resolves against. A tap opens this; a drag opens the cross-model Interaction panel
+	// instead. The seat comes along because an entry id is only unique inside one army, and two
+	// seats may field the same save.
+	let selfDialog = $state<{ target: VitalityTarget; army: ArmyView } | null>(null);
+	// The card the tapped model's icon opens, kept separate so closing it leaves the dialog up.
+	let selfInfo = $state(false);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
 
-	/** The focused copy's roster row, while its card is open; null the rest of the time. */
-	let focusRow = $derived.by(() => {
-		const current = focus;
-		if (!current || !focusInfo) return null;
+	/** The tapped copy's roster row, while its card is open; null the rest of the time. */
+	let selfRow = $derived.by(() => {
+		const current = selfDialog;
+		if (!current || !selfInfo) return null;
 		return (
-			current.army.rows.find((candidate) => candidate.entryId === current.flower.entryId) ?? null
+			current.army.rows.find((candidate) => candidate.entryId === current.target.entryId) ?? null
 		);
 	});
 
-	function openFocus(
+	function openSelf(
 		flower: BattleFlowerSpec,
-		rect: FlowerRect,
+		_rect: FlowerRect,
 		army: ArmyView,
 		player: PlayerKey
 	): void {
 		// A drag ends with the browser firing a click on the flower it left; that click must not
-		// also focus. The gesture that dragged set the flag, and this consumes it.
+		// also open the dialog. The gesture that dragged set the flag, and this consumes it.
 		if (suppressFocus) {
 			suppressFocus = false;
 			return;
 		}
-		focus = { flower, rect, army, player };
-		focusInfo = false;
+		selfDialog = { target: { player, entryId: flower.entryId, flower, copy: null }, army };
+		selfInfo = false;
 	}
 
-	function closeFocus(): void {
-		focus = null;
-		focusInfo = false;
+	function closeSelf(): void {
+		selfDialog = null;
+		selfInfo = false;
 	}
-
-	/** The focused copy as a vitality-flow target: every petal now acts on it and only it. */
-	let selfTarget = $derived.by((): VitalityTarget | null =>
-		focus
-			? {
-					player: focus.player,
-					entryId: focus.flower.entryId,
-					flower: focus.flower,
-					copy: null
-				}
-			: null
-	);
 
 	/** Both seats' flowers in seat order: what a drag's data-flower-key resolves against. */
 	let seatFlowers = $derived.by(() => {
@@ -460,9 +438,8 @@
 					<BattleFlowersPanel
 						p1={armyViewP1}
 						p2={armyViewP2}
-						dimmed={focus !== null}
 						dragging={drag !== null}
-						onSelect={openFocus}
+						onSelect={openSelf}
 					/>
 				</div>
 			</div>
@@ -501,44 +478,46 @@
 <RuleCalloutDialog rule={openRule} onClose={() => (openRule = null)} />
 
 <!-- At the screen root, like the rule dialog: the strip's transform would trap a fixed overlay
-     rendered inside the pane, and the focused flower has to paint above the blur. -->
-{#if focus && selfTarget}
-	{@const focused = focus}
-	<BattleFlowerFocus
-		flower={focused.flower}
-		from={focused.rect}
-		infoOpen={focusInfo}
-		onInfo={() => (focusInfo = true)}
-		onDamage={(amount) => onDamage(selfTarget, amount)}
-		onHeal={(amount) => onHeal(selfTarget, amount)}
-		onStatuses={(statuses) => onStatuses(selfTarget, statuses)}
-		onStamina={(delta) => onStamina(selfTarget, delta)}
-		onSetStat={(half, value) => onSetStat(selfTarget, half, value)}
-		onClosed={closeFocus}
+     rendered inside the pane. A tap opens the Self Interaction dialog - the same shell as the
+     cross-model panel, but one model acting on itself, with box taps on its ring and its card
+     a tap on the icon away. -->
+{#if selfDialog}
+	<FlowerInteraction
+		self
+		origin={selfDialog.target}
+		target={selfDialog.target}
+		{onDamage}
+		{onHeal}
+		{onStatuses}
+		{onStagger}
+		{onStun}
+		{onStamina}
+		onInfo={() => (selfInfo = true)}
+		onClose={closeSelf}
 	/>
 {/if}
 
-<!-- After the flower in the document and on the same layer, so its own backdrop is what catches
-     an outside click: dismissing the card leaves the flower centred, and only the next click
-     outside reaches the flower's backdrop and glides it home. Escape closes one layer at a time
-     for the same reason - the card registers later, so it is the one that answers. -->
-{#if focus && focusRow}
+<!-- After the dialog in the document and on the same layer, so its own backdrop is what catches
+     an outside click: dismissing the card leaves the dialog up, and only the next click outside
+     reaches the dialog's backdrop and closes it. Escape closes one layer at a time for the same
+     reason - the card registers later, so it is the one that answers. -->
+{#if selfDialog && selfRow}
 	<UnitCard
-		unit={focusRow.upgradedUnit}
-		faction={focus.army.faction}
-		classIndex={focus.army.classIndex}
-		skillIndex={focus.army.skillIndex}
-		traitIndex={focus.army.traitIndex}
-		combatArtIndex={focus.army.combatArtIndex}
-		spellcraftIndex={focus.army.spellcraftIndex}
-		spells={focus.army.spells}
-		stratagemIndex={focus.army.stratagemIndex}
-		itemIndex={{ ...focus.army.itemIndex, ...focusRow.itemOverrides }}
-		stats={focusRow.effectiveStats}
-		size={focusRow.effectiveSize}
-		mounted={focusRow.mounted}
-		mountName={focusRow.mount?.name}
-		onClose={() => (focusInfo = false)}
+		unit={selfRow.upgradedUnit}
+		faction={selfDialog.army.faction}
+		classIndex={selfDialog.army.classIndex}
+		skillIndex={selfDialog.army.skillIndex}
+		traitIndex={selfDialog.army.traitIndex}
+		combatArtIndex={selfDialog.army.combatArtIndex}
+		spellcraftIndex={selfDialog.army.spellcraftIndex}
+		spells={selfDialog.army.spells}
+		stratagemIndex={selfDialog.army.stratagemIndex}
+		itemIndex={{ ...selfDialog.army.itemIndex, ...selfRow.itemOverrides }}
+		stats={selfRow.effectiveStats}
+		size={selfRow.effectiveSize}
+		mounted={selfRow.mounted}
+		mountName={selfRow.mount?.name}
+		onClose={() => (selfInfo = false)}
 	/>
 {/if}
 
