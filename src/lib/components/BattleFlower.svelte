@@ -44,6 +44,8 @@
 		 * the petals sit just outside the ring, so the boxes steal nothing.
 		 */
 		onBoxTap?: (half: 'stamina' | 'life', index: number) => void;
+		/** Fades the States band out while a drag lifts the flower; the slots hold their place. */
+		statusesFaded?: boolean;
 	};
 
 	let {
@@ -54,7 +56,8 @@
 		inert = false,
 		showStatuses = true,
 		flowerKey = null,
-		onBoxTap
+		onBoxTap,
+		statusesFaded = false
 	}: Props = $props();
 
 	function handleClick(event: MouseEvent): void {
@@ -221,8 +224,8 @@
      tappable boxes are a pointer shortcut - everything they set is also reachable by petals. -->
 <button
 	type="button"
-	class="flex w-full max-w-[104px] flex-col items-center gap-1 transition-opacity duration-300
-		{dimmed ? 'opacity-25' : 'opacity-100'} {inert ? 'pointer-events-none' : ''}"
+	class="flex w-full max-w-[104px] touch-none flex-col items-center gap-1 transition-opacity
+		duration-300 {dimmed ? 'opacity-25' : 'opacity-100'} {inert ? 'pointer-events-none' : ''}"
 	aria-label={summary}
 	aria-hidden={inert ? true : undefined}
 	tabindex={inert ? -1 : undefined}
@@ -296,7 +299,11 @@
 		     the flower's own click still focuses it - and past eight States the last right slot
 		     counts the rest. The button's aria-label names them, so the band is hidden from AT. -->
 		{#if statusChips.length > 0}
-			<div class="pointer-events-none absolute inset-0" aria-hidden="true">
+			<div
+				class="pointer-events-none absolute inset-0 transition-opacity duration-200
+					motion-reduce:transition-none {statusesFaded ? 'opacity-0' : 'opacity-100'}"
+				aria-hidden="true"
+			>
 				{#each statusChips as chip (chip.label)}
 					<span
 						class="absolute flex items-center justify-center rounded-full border

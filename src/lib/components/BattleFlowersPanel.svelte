@@ -11,6 +11,8 @@
 		p2: ArmyView | null;
 		/** Every flower fades while one of them is focused in the overlay. */
 		dimmed?: boolean;
+		/** A flower is being dragged: the States bands fade out to clear the field. */
+		dragging?: boolean;
 		/**
 		 * The copy the focus moved off, once a status flow has retargeted: it stays lit in the
 		 * strip, because that is where it went home to. Keyed by seat as well as entry - two
@@ -26,7 +28,7 @@
 		) => void;
 	};
 
-	let { p1, p2, dimmed = false, undimmed = null, onSelect }: Props = $props();
+	let { p1, p2, dimmed = false, dragging = false, undimmed = null, onSelect }: Props = $props();
 
 	const SEAT_ORDER: PlayerKey[] = ['player1', 'player2'];
 
@@ -61,6 +63,7 @@
 						{flower}
 						flowerKey={`${player}:${flower.entryId}`}
 						dimmed={isDimmed(player, flower.entryId)}
+						statusesFaded={dragging}
 						onSelect={onSelect ? (rect) => onSelect(flower, rect, army, player) : undefined}
 					/>
 				{/each}

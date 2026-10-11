@@ -25,6 +25,8 @@
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import CountdownOverlay from './CountdownOverlay.svelte';
 	import DescriptionPanel from './DescriptionPanel.svelte';
+	import FlowerDragLayer from './FlowerDragLayer.svelte';
+	import FlowerInteraction from './FlowerInteraction.svelte';
 	import MissionMap from './MissionMap.svelte';
 	import QuestRulesPanel from './QuestRulesPanel.svelte';
 	import ResultsPanel from './ResultsPanel.svelte';
@@ -86,6 +88,10 @@
 		onStamina: (target: VitalityTarget, delta: number) => void;
 		/** A ring box was tapped on the focused flower: set that half straight to the box. */
 		onSetStat: (target: VitalityTarget, half: 'life' | 'stamina', value: number) => void;
+		/** The Interaction panel dealt a Stagger: spend one of the target's activations. */
+		onStagger: (target: VitalityTarget) => void;
+		/** The Interaction panel dealt a Stun: spend every one of the target's activations. */
+		onStun: (target: VitalityTarget) => void;
 	};
 
 	let {
@@ -117,7 +123,9 @@
 		onHeal,
 		onStatuses,
 		onStamina,
-		onSetStat
+		onSetStat,
+		onStagger,
+		onStun
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -163,6 +171,12 @@
 		army: ArmyView,
 		player: PlayerKey
 	): void {
+		// A drag ends with the browser firing a click on the flower it left; that click must not
+		// also focus. The gesture that dragged set the flag, and this consumes it.
+		if (suppressFocus) {
+			suppressFocus = false;
+			return;
+		}
 		focus = { flower, rect, army, player };
 		focusInfo = false;
 		focusMovedHome = false;
@@ -206,10 +220,36 @@
 	}
 
 	function onPointerDown(event: PointerEvent): void {
+		suppressFocus = false;
 		swipeStart = event.pointerType === 'mouse' ? null : { x: event.clientX, y: event.clientY };
+		// A flower under the finger is a possible drag, but it is still a tap until it moves past
+		// the threshold - so the click that focuses is left alone until then. The gesture is
+		// tracked on window, because the lifted clone is a fixed overlay the pane would clip.
+		const el = (event.target as HTMLElement | null)?.closest?.('[data-flower-key]');
+		const key = el instanceof HTMLElement ? el.dataset.flowerKey : undefined;
+		if (!(el instanceof HTMLElement) || !key) return;
+		const target = targetForKey(key);
+		if (!target) return;
+		const r = el.getBoundingClientRect();
+		grab = {
+			key,
+			flower: target.flower,
+			player: target.player,
+			rect: { x: r.x, y: r.y, width: r.width },
+			startX: event.clientX,
+			startY: event.clientY
+		};
+		window.addEventListener('pointermove', onGrabMove);
+		window.addEventListener('pointerup', onGrabUp);
+		window.addEventListener('pointercancel', onGrabCancel);
 	}
 
 	function onPointerUp(event: PointerEvent): void {
+		// A flower drag owns this gesture; the window handler resolves the drop. No view swipe.
+		if (drag) {
+			swipeStart = null;
+			return;
+		}
 		if (!swipeStart) return;
 		const dx = event.clientX - swipeStart.x;
 		const dy = event.clientY - swipeStart.y;
@@ -227,6 +267,110 @@
 	function finishSwap(): void {
 		isSwapping = false;
 		onSwap();
+	}
+
+	// --- Flower drag ---------------------------------------------------------------
+	// Picking a flower up and dropping it on another opens the Interaction panel. The state and
+	// the gesture live here, at the screen root, so the lifted clone and the panel can be fixed
+	// overlays clear of the pane's overflow and the strip's translateX.
+	const DRAG_MIN_PX = 8;
+	let drag = $state<{
+		origin: VitalityTarget;
+		size: number;
+		x: number;
+		y: number;
+		hoverRect: FlowerRect | null;
+		hoverKey: string | null;
+	} | null>(null);
+	let interaction = $state<{ origin: VitalityTarget; target: VitalityTarget } | null>(null);
+	// A grab below the drag threshold is still a tap; it becomes a drag only once it moves.
+	let grab: null | {
+		key: string;
+		flower: BattleFlowerSpec;
+		player: PlayerKey;
+		rect: FlowerRect;
+		startX: number;
+		startY: number;
+	} = null;
+	let suppressFocus = false;
+
+	/** The seat copy a strip key (`player:entryId`) names, or null if it is not on the field. */
+	function targetForKey(key: string): VitalityTarget | null {
+		const split = key.indexOf(':');
+		if (split < 0) return null;
+		const player = key.slice(0, split) as PlayerKey;
+		const entryId = key.slice(split + 1);
+		for (const seat of seatFlowers) {
+			if (seat.player !== player) continue;
+			const flower = seat.flowers.find((candidate) => candidate.entryId === entryId);
+			if (flower) return { player, entryId, flower, copy: null };
+		}
+		return null;
+	}
+
+	/** The slot under the pointer, when it is a flower other than the one being dragged. */
+	function hoverSlot(x: number, y: number): { key: string; rect: FlowerRect } | null {
+		const originKey = drag ? `${drag.origin.player}:${drag.origin.entryId}` : null;
+		let found: { key: string; rect: FlowerRect } | null = null;
+		for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-flower-key]'))) {
+			const key = el.dataset.flowerKey;
+			if (!key || key === originKey) continue;
+			const r = el.getBoundingClientRect();
+			if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height)
+				found = { key, rect: { x: r.x, y: r.y, width: r.width } };
+		}
+		return found;
+	}
+
+	function onGrabMove(event: PointerEvent): void {
+		if (!grab) return;
+		if (!drag) {
+			if (Math.hypot(event.clientX - grab.startX, event.clientY - grab.startY) < DRAG_MIN_PX)
+				return;
+			drag = {
+				origin: {
+					player: grab.player,
+					entryId: grab.flower.entryId,
+					flower: grab.flower,
+					copy: null
+				},
+				size: grab.rect.width,
+				x: event.clientX,
+				y: event.clientY,
+				hoverRect: null,
+				hoverKey: null
+			};
+			swipeStart = null;
+		} else {
+			drag.x = event.clientX;
+			drag.y = event.clientY;
+		}
+		const hovered = hoverSlot(drag.x, drag.y);
+		drag.hoverKey = hovered?.key ?? null;
+		drag.hoverRect = hovered?.rect ?? null;
+	}
+
+	function detachGrab(): void {
+		window.removeEventListener('pointermove', onGrabMove);
+		window.removeEventListener('pointerup', onGrabUp);
+		window.removeEventListener('pointercancel', onGrabCancel);
+	}
+
+	function onGrabUp(): void {
+		detachGrab();
+		grab = null;
+		if (!drag) return; // it was a tap - the click that follows focuses the flower
+		suppressFocus = true;
+		const origin = drag.origin;
+		const target = drag.hoverKey ? targetForKey(drag.hoverKey) : null;
+		drag = null;
+		if (target) interaction = { origin, target };
+	}
+
+	function onGrabCancel(): void {
+		detachGrab();
+		grab = null;
+		drag = null;
 	}
 </script>
 
@@ -327,6 +471,7 @@
 						p1={armyViewP1}
 						p2={armyViewP2}
 						dimmed={focus !== null}
+						dragging={drag !== null}
 						{undimmed}
 						onSelect={openFocus}
 					/>
@@ -428,5 +573,32 @@
 		mounted={focusRow.mounted}
 		mountName={focusRow.mount?.name}
 		onClose={() => (focusInfo = false)}
+	/>
+{/if}
+
+<!-- The lifted clone and its drop crosshair, at the screen root: the pane's overflow and the
+     strip's translateX would clip a fixed overlay rendered inside them. -->
+{#if drag}
+	<FlowerDragLayer
+		flower={drag.origin.flower}
+		x={drag.x}
+		y={drag.y}
+		size={drag.size}
+		hoverRect={drag.hoverRect}
+	/>
+{/if}
+
+<!-- The Interaction panel: origin on the left, target on the right, the seven ways one model
+     can act on another between them. -->
+{#if interaction}
+	<FlowerInteraction
+		origin={interaction.origin}
+		target={interaction.target}
+		{onDamage}
+		{onHeal}
+		{onStatuses}
+		{onStagger}
+		{onStun}
+		onClose={() => (interaction = null)}
 	/>
 {/if}

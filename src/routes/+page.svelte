@@ -16,8 +16,10 @@
 		vitalityAfterBoxTap,
 		vitalityAfterDamage,
 		vitalityAfterHeal,
+		vitalityAfterStagger,
 		vitalityAfterStamina,
 		vitalityAfterStatuses,
+		vitalityAfterStun,
 		type ArmyFormat,
 		type ArmyRosterRow,
 		type ArmyView,
@@ -1220,6 +1222,34 @@
 					seat.row.effectiveStats.STA,
 					half,
 					value
+				),
+				target.flower.undead
+			);
+		}}
+		onStagger={(target) => {
+			const seat = seatRowOf(target);
+			if (!seat) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterStagger(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA
+				),
+				target.flower.undead
+			);
+		}}
+		onStun={(target) => {
+			const seat = seatRowOf(target);
+			if (!seat) return;
+			twoPlayerProgressStore.setUnitVitality(
+				target.player,
+				target.entryId,
+				vitalityAfterStun(
+					seat.view.vitality[target.entryId],
+					seat.row.effectiveStats.HP ?? 0,
+					seat.row.effectiveStats.STA
 				),
 				target.flower.undead
 			);
