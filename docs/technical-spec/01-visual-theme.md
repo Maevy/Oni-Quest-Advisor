@@ -89,20 +89,19 @@ glyph — inverted after players missed the translucent version) and the briefin
 `bg-red-500` **← Return**.
 
 Small square icon buttons (steppers, round ±, dialog close) are
-`h-9 w-9 rounded-lg border border-slate-600/60 bg-slate-800/80`, disabled at `opacity-30`. The
-vitality menu's step buttons are the one circular exception: `h-11 w-11 rounded-full`, each
-carrying a `VitalityMarker` glyph with the − or + drawn _inside_ the heart or orb, so the button
-reads as the action it performs. `VitalityMarker.svelte` is the single source of the heart and orb
-glyphs — the row tracks and the menu both render through it, including the depleted and overheal
-states.
+`h-9 w-9 rounded-lg border border-slate-600/60 bg-slate-800/80`, disabled at `opacity-30`.
+`VitalityMarker.svelte` is the single source of the heart and orb glyphs — the read-only roster
+rows (army builder, roster browse) render their tracks through it, including the depleted and
+overheal states. The trackers' vitality editing moved to the flower dialogs, whose round −1/+1
+buttons reuse the same `h-11 w-11 rounded-full` circular shape.
 
 **Touch targets: ≥ 36 px.** The compact unit stepper was deliberately shrunk 40 → 36 px to
 free ~75 px of row width for the unit name on phones; that is the floor, not a target.
 
 ### Status glyphs
 
-`StatusGlyph.svelte` owns the fifteen State markers of the vitality menu, the Army rows, the
-Battle Flower's States band and the status flow's ring of orbs — hand-drawn 24×24 SVG, like every
+`StatusGlyph.svelte` owns the fifteen State markers of the read-only Army rows, the Battle
+Flower's States band and the boxed State picker's orbs — hand-drawn 24×24 SVG, like every
 other glyph in the app. Off, all of them read `slate-500`; on, each State owns a colour. Inner
 cut-outs (skull eyes, poison numbers, the snail's spiral) are `slate-900`, so they read on any
 fill, grey included.

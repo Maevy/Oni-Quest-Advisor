@@ -64,15 +64,15 @@ each `src/lib/` folder.
 - **Battle Flower** — one army copy drawn as its icon in a circular orb ringed by two half-rings
   of boxes: Stamina (yellow) on the left, Life (red) on the right. Lost points empty from the
   bottom end of a half; an overhealed Life repaints blue from the top end instead of growing the
-  ring. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
-  row. Clicking a flower focuses it — blur, a 1.3× clone at the viewport centre — and a ring of
-  six petal buttons blooms outside the ring: the model's card, deal damage, heal, assign a
-  status, remove a status and manage Stamina, glyphed as a grey bang in a ring, a red sword, a
-  green cross, an orange star, a light-blue star and a yellow disc. A pressed petal glows yellow
-  and the card petal opens the unit card. The damage and heal petals' flows are in — a sub-ring
-  of amounts, the field as a target row (living copies for damage, every copy below its overheal
-  cap for heal), a crosshair confirm, the flying glyph and the sequential Life walk; status and
-  Stamina functions are the next iteration. See [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
+  ring. Both local trackers' Army views are the flower board: hot-seat splits it into a sky and
+  an orange half, one flower per row per seat; solo shows one centred column. Two gestures do all
+  the work — a **tap** opens the **Self Interaction dialog** (the model alone between two _Self
+  Interaction_ labels, with Assign Damage, Assign Healing, Assign / Remove Status, Assign /
+  Remove Buff, Model Info and Activation Management), and a **drag** onto another flower opens
+  the cross-model **Interaction panel** (origin left, target right, an _Interaction_ arrow, seven
+  actions including Deal Stagger and Deal Stun). Damage and Healing reuse a 1–9 amount pad,
+  Status a boxed picker of the fourteen orbs; a commit flies the glyph to the target and walks
+  its boxes. See [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 
 ### Online
 
