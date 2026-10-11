@@ -5,12 +5,15 @@ import {
 	damageApplied,
 	healApplied,
 	healableTargetsFor,
+	PAD_AMOUNTS,
 	staminaCap,
 	vitalityAfterBoxTap,
 	vitalityAfterDamage,
 	vitalityAfterHeal,
 	vitalityAfterStamina,
+	vitalityAfterStagger,
 	vitalityAfterStatuses,
+	vitalityAfterStun,
 	type VitalityTarget
 } from './vitalityFlow';
 import type { BattleFlowerSpec } from './savedArmy';
@@ -266,6 +269,52 @@ describe('vitalityAfterStamina', () => {
 		expect(vitalityAfterStamina(undefined, 4, 3, -1)).toEqual({ hp: 4, sta: 2 });
 		expect(vitalityAfterStamina(undefined, 4, 3, 1)).toEqual({ hp: 4, sta: 4 });
 		expect(vitalityAfterStamina({ hp: 2, sta: 0 }, 2, null, 1)).toEqual({ hp: 2, sta: 0 });
+	});
+});
+
+describe('vitalityAfterStagger', () => {
+	it('spends one activation and keeps Life and States', () => {
+		expect(vitalityAfterStagger({ hp: 1, sta: 2, statuses: ['bleeding'] }, 4, 3)).toEqual({
+			hp: 1,
+			sta: 1,
+			statuses: ['bleeding']
+		});
+	});
+
+	it('spends the over-Stamina points first, then never drops below zero', () => {
+		expect(vitalityAfterStagger({ hp: 4, sta: 5 }, 4, 3)).toEqual({ hp: 4, sta: 4 });
+		expect(vitalityAfterStagger({ hp: 4, sta: 0 }, 4, 3)).toEqual({ hp: 4, sta: 0 });
+	});
+
+	it('reads an untouched copy as full, and a null base as nothing to spend', () => {
+		expect(vitalityAfterStagger(undefined, 4, 3)).toEqual({ hp: 4, sta: 2 });
+		expect(vitalityAfterStagger({ hp: 2, sta: 0 }, 2, null)).toEqual({ hp: 2, sta: 0 });
+	});
+});
+
+describe('vitalityAfterStun', () => {
+	it('drops every activation and keeps Life and States', () => {
+		expect(vitalityAfterStun({ hp: 1, sta: 3, statuses: ['bleeding'] }, 4, 3)).toEqual({
+			hp: 1,
+			sta: 0,
+			statuses: ['bleeding']
+		});
+	});
+
+	it('clears the over-Stamina too, and leaves an already-spent copy at zero', () => {
+		expect(vitalityAfterStun({ hp: 4, sta: 6 }, 4, 3)).toEqual({ hp: 4, sta: 0 });
+		expect(vitalityAfterStun({ hp: 2, sta: 0 }, 2, 2)).toEqual({ hp: 2, sta: 0 });
+	});
+
+	it('reads an untouched copy as full then zeroes it, and a null base as nothing to lose', () => {
+		expect(vitalityAfterStun(undefined, 4, 3)).toEqual({ hp: 4, sta: 0 });
+		expect(vitalityAfterStun({ hp: 2, sta: 0 }, 2, null)).toEqual({ hp: 2, sta: 0 });
+	});
+});
+
+describe('PAD_AMOUNTS', () => {
+	it('is the calculator grid of single taps, 1 through 9', () => {
+		expect([...PAD_AMOUNTS]).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 	});
 });
 

@@ -5,6 +5,9 @@ import { toggleUnitStatus, type UnitStatus, type UnitVitality } from './army';
 /** The amount ring's fixed steps; the ring closes with X, which asks for a number. */
 export const AMOUNT_STEPS = [1, 2, 3, 4, 5, 6] as const;
 
+/** The Interaction pad's amounts: a calculator grid of single taps, 1 through 9. */
+export const PAD_AMOUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+
 /** A tracked half overheals to double its base: Life paints the extra points blue, Stamina
  * violet - neither grows the ring. */
 export const OVERHEAL_FACTOR = 2;
@@ -156,6 +159,34 @@ export function vitalityAfterStamina(
 	};
 	if (current?.statuses) vitality.statuses = current.statuses;
 	return vitality;
+}
+
+/**
+ * The vitality record after a Stagger: the target spends one activation, so Stamina drops by
+ * one and never below zero. The over-Stamina points (violet, above base) go first, because the
+ * count simply falls and the ring repaints from the top end. Life and States are kept. A copy
+ * with no tracked Stamina has no activation to lose and is left as it is.
+ */
+export function vitalityAfterStagger(
+	current: UnitVitality | undefined,
+	baseHp: number,
+	baseSta: number | null
+): UnitVitality {
+	return vitalityAfterStamina(current, baseHp, baseSta, -1);
+}
+
+/**
+ * The vitality record after a Stun: the target loses every activation, so Stamina drops to
+ * zero - over-Stamina included - while Life and States are kept. A copy with no tracked
+ * Stamina, or one already spent, is already at zero. It is the full spend of the same path
+ * Stagger walks one box at a time.
+ */
+export function vitalityAfterStun(
+	current: UnitVitality | undefined,
+	baseHp: number,
+	baseSta: number | null
+): UnitVitality {
+	return vitalityAfterStamina(current, baseHp, baseSta, -staminaCap(baseSta ?? 0));
 }
 
 /**
