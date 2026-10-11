@@ -126,60 +126,64 @@ measured clone rendered at the screen root (`BattleFlowerFocus`), because the sl
 transform would trap a `fixed` overlay inside the pane; it grows a third, deliberately not to
 full screen. Once the flower has landed, a ring of five **petals** blooms outside its ring —
 thicker arc buttons, clockwise from 12 o'clock: the model's card, **deal damage**, **heal**,
-**edit statuses**, **manage Stamina**. Damage and heal no longer declare a target — choosing the
-model is the action's own step — and neither do the States, so one orange **star** covers
-assigning and removing alike; a second "remove" petal would only be a second door into the same
-ring. The petals are one dark-blue glass — a very dark fill, a brighter blue outline — because
+**edit statuses**, **manage Stamina**. Since the 2026-10-11 rework every petal acts on **the
+flower at the centre** and on nothing else — choosing a target is no longer a petal's job — and
+one orange **star** covers assigning and removing alike, a second "remove" petal being only a
+second door into the same ring. The petals are one dark-blue glass — a very dark fill, a brighter
+blue outline — because
 the glyph carries the meaning, not a tint: a red **sword**, a green **medic's cross**, an orange
 **star**, a yellow **disc** for Stamina, and a grey exclamation mark in a grey ring for the card. Pressing a petal lights its rim bright yellow with a glow, and only one petal glows at
 a time: pressing another moves the light, hovering shows it transiently, and a dismissal drops
-it as the petals retract. The pressed petal is the selection a later ring of sub-petals will
-bloom from; until then the other three action petals hold their place and keep the focus open. The info
+it as the petals retract. The pressed petal is the selection its own sub-flow opens from; until
+then the other action petals hold their place and keep the focus open. The info
 petal's light is the open card's rather than a standing selection: closing the card returns it
 to the ring's default grey, and keyboard focus wears its own sky rim, so yellow always means
 hover or pressed. The info petal opens the copy's **unit card** above the flower: dismissing the
 card — click outside or Escape — closes one layer and leaves the flower centred, and only the
 next click outside glides it home.
 
-**The damage flow** — the first petal function (2026-10-05). Pressing the sword blooms a third
-ring of seven petals, **1 … 6 and X** — painted beneath the action ring, so it emerges from
-behind it — the last opening a small amount entry; pressing an
-amount brings the whole living field forward: every alive copy of both armies, the focused
-copy's twin among them so a model can hit itself, each drawn as its flower with both rings, in
-a wrapped grid below the flower under the line "Tap on selected model and then confirm it
-again". Seat-coloured rims say whose model it is and a badge numbers duplicate copies. One tap
-selects — a slowly turning green crosshair — and a second tap on the same icon confirms: the red
-sword flies from the focused flower to the target, and on arrival the hit is committed to that
-seat's vitality map, clamped to the Life left, while the target's Life boxes darken one by one;
-when the last one has faded the overlay dismisses itself and the army view returns to normal.
-Dead copies leave the row. Escape and click-outside peel the flow back one layer at a time — the
-amount entry, then the sub-ring and row, then the overlay — and a strike in flight ignores them
-both.
+**Acting on another model: drag and drop** (2026-10-11). Cross-model interaction left the petals
+for a gesture: pick a strip flower up and drag it towards any other flower, friend or foe. Past
+an 8 px threshold the lift becomes a drag — the States bands fade out to clear the field, a
+measured clone of the flower follows the finger at the screen root (the pane's overflow and the
+strip's transform would clip it), and a slowly turning green crosshair rings whichever other
+flower the finger is over. Dropping on one opens the **Interaction panel**; dropping on nothing
+returns the clone to its slot and fades the bands back in. A drag is never a view-swipe — the
+strip's horizontal swipe stands down while a flower owns the gesture — and never a focus: the
+click a finished drag leaves behind is swallowed.
 
-The **heal flow** is the same shape turned around: the cross blooms the same amount ring (its X
-entry labelled "Healing"), the row offers every copy below its **overheal cap** — the fallen and
-the whole alike, because Life overheals to double its base — the green cross flies instead of the
-sword, and the boxes refill one by one, past full into the blue overheal and no further than
-double the base. Whether a heal may raise a fallen copy is still an open ruling.
+The panel puts the **origin flower on the left and the target on the right**, seat-rimmed, with a
+right-pointing arrow and the word _Interaction_ between them, and below them a box of seven
+actions: **Assign Damage** (red sword), **Assign Healing** (green cross), **Assign / Remove
+Status** (orange star), **Assign / Remove Buff** (blue up-arrow, _inert for now_), **Deal
+Stagger** (a yellow Stamina ring broken open), **Deal Stun** (a yellow Stamina ring struck through
+with an X) and **Trade Item** (_inert for now_). All seven are offered regardless of friend or
+foe — the player decides. Damage and Healing open the shared **amount pad**, a calculator grid of
+**1 … 9** with an OK that stays dead until a digit is tapped; Status opens the shared **boxed
+State picker** — the fourteen pickable States as orbs with a tooltip line naming the one under
+the finger and an Accept; Stagger and Stun ask first ("Assign Stagger/Stun to the target?"). On
+confirm the action's glyph **flies from the origin flower through the arrow to the target**, the
+commit lands in the target seat's vitality map, and the target's boxes walk to the new value
+before the panel folds; accepted States fly to the target as a cluster while removed ones simply
+clear. Stagger spends **one** of the target's activations and Stun **every** one — Stamina only,
+no State of their own — so a model with no Stamina track offers neither.
 
-**The status flow** (2026-10-06) is the third petal function, and the first that moves the focus.
-The star opens the same target row — but with **every** copy of both armies in it, fallen and
-untouched alike, because States are not a function of Life — under the line "Tap target to
-select statuses". One tap, not two: the ring the tap leads to is reversible and has its own
-commit, so a mis-tap costs nothing. That tap moves the focus onto the chosen copy — its flower
-takes the centre while the flower the overlay opened from glides back to its slot and stays
-**lit** there, the one bright flower in a dimmed strip, because that is where it now lives — and
-a beat later the fourteen pickable States bloom around the target as orbs on a ring of their own:
-a real
-44 px touch target each, on a radius that fits the smaller screen dimension, with nothing
-competing for the space (the petals went home with the flower they belonged to, and this flow has
-no amount ring). A carried State lights the same yellow rim the pressed petal does and wears its
-own colour; the rest are the petals' dark glass with a grey glyph. Tapping an orb toggles it in a
-**draft** — nothing is written yet — under the line "Tap status effects to add or remove them.
-Tap model icon twice to confirm". The model icon is the commit: the first tap arms the green
-crosshair around it, the second writes the whole draft to that seat's vitality map in one go and
-sends the flower home into **the target's** slot. Toggling an orb disarms a pending commit, so a
-tap after an edit never writes by accident. Escape and click-outside discard the draft and close.
+**The self damage and heal flows.** The sword and the cross open that same amount pad below the
+centred flower, tinted red or green; OK deals or restores the amount **to the model at the
+centre**, clamped to the Life left or to the room under the overheal cap, and its Life boxes walk
+one by one while the pad folds back to the petals and the flower stays centred for the next
+action.
+
+**The self status flow.** The star blooms the fourteen pickable States as orbs on a ring around
+the centred flower — a real 44 px touch target each, on a radius that fits the smaller screen
+dimension — with nothing competing for the space. A carried State lights the same yellow rim the
+pressed petal does and wears its own colour; the rest are the petals' dark glass with a grey
+glyph. Tapping an orb toggles it in a **draft** — nothing is written yet — under the line "Tap
+status effects to add or remove them. Tap model icon twice to confirm". The model icon is the
+commit: the first tap arms the green crosshair around it, the second writes the whole draft to
+the focused copy's seat and glides the flower home. Toggling an orb disarms a pending commit, so
+a tap after an edit never writes by accident. Escape and click-outside discard the draft and
+close.
 
 **Zero Life is a contract, not a pick** (reworked 2026-10-08). Incapacitated left the ring
 entirely: a living model whose Life reaches 0 is forced into Incapacitated and Crouched —
@@ -191,15 +195,15 @@ Dead itself is a pick like any other — killing is a decision — and can also 
 to a standing model; where Dead sits, Incapacitated never sits with it, so turning Dead drops
 it, and taking Dead off a corpse at zero Life lands the copy back on the floor, forced States
 and all. An **Undead** model has no Incapacitated: zero Life puts it straight into Dead, and a
-heal up from zero takes that Dead back off. The heal row lists the Dead like anyone else,
-because a heal of at least one point is exactly what brings a corpse back to play — the rise
-takes the Dead State off whichever copy it lifts; the damage row, in turn, still lists the
-fallen, because the second fall is how Dead arrives. Neither State rides the band: a fallen
-model wears a translucent **yellow wash with the Incapacitated glyph** over its icon and a Dead
-one a slighter **red wash with the skull**, on every flower — strip, centred copy and target row
-alike — so what happened to a model reads across the table without ever looking at the orbs.
+heal up from zero takes that Dead back off. Because any flower is a valid drop target and the
+self petals act on whatever is centred, a heal can always reach a fallen or Dead copy — the rise
+takes the Dead State off whichever copy it lifts — and a second hit on the fallen is still how
+Dead arrives. Neither State rides the band: a fallen model wears a translucent **yellow wash
+with the Incapacitated glyph** over its icon and a Dead one a slighter **red wash with the
+skull**, on every flower — strip and centred copy alike — so what happened to a model reads
+across the table without ever looking at the orbs.
 
-**The Stamina flow** (2026-10-08) is the fourth petal function, and the only one with no row:
+**The Stamina flow** (2026-10-08) is the fourth petal function:
 the yellow disc blooms a third ring of just the two steps Stamina has — **−1 and +1** — dead at
 the floor and at the over-Stamina cap, and each tap acts on the flower already centred, the one
 the petals belong to. The commit lands at once and the centred flower's Stamina boxes walk the
@@ -215,8 +219,8 @@ interaction. On the focused flower — and only there, the strip's flowers stay 
 ring's boxes are themselves tappable while the petals hold their place just outside the ring:
 tapping the n-th box of a half sets that stat straight to n, Life or Stamina alike, the boxes
 walking to the new value and the commit landing at once like a Stamina step. Taps are live only
-while the ring is idle — no flow open, no strike in flight, no card above — because mid-flow the
-player's hand is somewhere else. Over-Stamina has no box of its own (the ring never grows), so
+while the ring is idle — no flow open, no card above — because mid-flow the player's hand is
+somewhere else. Over-Stamina has no box of its own (the ring never grows), so
 it stays the disc's +1; and the boxes are a pointer shortcut rather than a path of their own —
 every value they set is also reachable through the petals — so they carry no keyboard role and
 sit inside the overlay's flower copy, which is hidden from assistive tech as a duplicate of the

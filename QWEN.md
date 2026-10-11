@@ -116,40 +116,40 @@ section.
   in its own colour, a `+n` chip in the last right slot past eight, absent on a clean copy,
   display-only. One flower per copy; a mounted copy is one flower on the mount's
   stats. Hot-seat's Army view is one panel split into a sky and an orange half, one flower per
-  row; clicking a flower **focuses** it (backdrop blur, a 1.3× clone gliding from its slot to the
-  viewport centre, the rest faded; click outside or Escape returns it — the clone lives at the
-  screen root because the strip's transform traps `fixed` overlays), and once landed a ring of
-  five **petal buttons** blooms outside the ring — the model's card, deal damage, heal, edit
-  statuses and manage Stamina — as one dark-blue glass whose pressed petal lights a yellow rim
-  (one at a time; the light is the selection a later sub-ring will bloom from, except the card
-  petal, whose light is the open `UnitCard`'s and drops when it closes). The glyph says the kind
-  and the colour the intent: a grey bang in a grey ring for the card, a red sword, a green
-  medic's cross, an orange star for the States, a yellow disc for Stamina. The card petal opens
-  the copy's `UnitCard` above the flower, and dismissing the card leaves the flower centred until
-  the next click outside. The sword and the cross are wired: pressing one blooms a third ring of
-  amounts (1…6 and X, painted behind the action ring), an amount brings the field forward as a
-  target row — the **living** copies for damage, every copy below its **overheal cap** (double
-  base, blue boxes) for heal, seat rims and copy badges on the icons — one tap selects under a
-  turning crosshair, the second confirms, the glyph flies to the target and its Life boxes walk
-  one by one before the overlay closes with the change committed to that seat's vitality map. The
-  star is wired the third way: its row holds **every** copy, one tap moves the focus onto the
-  target (the flower it left stays lit in its slot), the fourteen pickable States bloom around
-  it as tappable orbs — lit yellow in their own colour when carried, the petals' glass when
-  not, Crouched **locked** while Life is 0 because the store re-applies it — and the model icon
-  commits the draft, its first tap arming the crosshair. Incapacitated is **not a pick**: zero
-  Life forces it (with Crouched) onto a living model and straight **Dead** onto an Undead one,
-  a heal of at least 1 drops it again, and a second hit on a fallen model kills it; Dead — a
-  pick of its own, never sharing a copy with Incapacitated — stays in the heal row, since a
-  heal of at least 1 is what takes it off, while the fallen stay in the damage row. Neither
-  rides the band: the fallen wear a **yellow wash with the Incapacitated glyph** on their icon,
-  the Dead a **red wash with the skull**. The disc is
-  wired the fourth way and is the only flow with no row: it blooms a third ring of two steps,
-  **−1 and +1**, dead at the floor and at the over-Stamina cap, each tap committing at once onto
-  the centred flower and walking its Stamina boxes one step — over-Stamina repainting **violet**
-  from the top end to double the base, like Life's blue. The ring's boxes are tappable on the
-  focused flower as a pointer shortcut — the n-th box of a half sets that stat straight to n,
-  walking and committing at once, live only while the ring is idle — while the strip flowers
-  stay display-only and over-Stamina stays the disc's.
+  row, and **two gestures with two jobs** (reworked 2026-10-11). A **tap focuses** the flower
+  (backdrop blur, a 1.3× clone gliding from its slot to the viewport centre, the rest faded;
+  click outside or Escape returns it — the clone lives at the screen root because the strip's
+  transform traps `fixed` overlays), and once landed a ring of five **petal buttons** blooms
+  outside the ring — the model's card, deal damage, heal, edit statuses and manage Stamina — as
+  one dark-blue glass whose pressed petal lights a yellow rim (one at a time; the light is the
+  selection its sub-flow opens from, except the card petal, whose light is the open `UnitCard`'s
+  and drops when it closes). **Every petal acts on the centred model and on nothing else**: the
+  sword and the cross open the shared **amount pad** (a calculator grid 1…9 + OK, tinted
+  red/green) below the flower and land on it, its Life boxes walking while the pad folds back to
+  the petals; the star blooms the fourteen pickable States as tappable orbs around it — lit
+  yellow in their own colour when carried, the petals' glass when not, Crouched **locked** while
+  Life is 0 because the store re-applies it — and the model icon commits the draft, its first
+  tap arming the crosshair; the disc blooms a third ring of two steps, **−1 and +1**, dead at the
+  floor and at the over-Stamina cap. The ring's boxes are tappable on the focused flower as a
+  pointer shortcut — the n-th box of a half sets that stat straight to n, walking and committing
+  at once, live only while the ring is idle. **A drag acts on another model**: lifting a strip
+  flower past an 8px threshold fades the States bands, follows the finger with a measured clone
+  at the screen root and rings the hovered flower with a crosshair; dropping on one opens the
+  **Interaction panel** (origin left, target right, an _Interaction_ arrow between), dropping on
+  nothing returns the clone and fades the bands back. The panel offers seven actions regardless
+  of friend or foe — Assign Damage, Assign Healing, Assign/Remove Status, Assign/Remove Buff
+  (_inert_), Deal Stagger, Deal Stun, Trade Item (_inert_) — the first three reusing the pad and
+  a boxed State picker, Stagger and Stun a confirmation; on confirm the glyph flies origin→target,
+  the commit lands in the target seat's vitality map and its boxes walk before the panel folds.
+  **Stagger spends one activation, Stun every one** (`vitalityAfterStagger`/`vitalityAfterStun`) —
+  Stamina only, no State of their own. A drag is never the strip's view-swipe and never a focus
+  (the click it leaves is swallowed). Incapacitated is **not a pick**: zero Life forces it (with
+  Crouched) onto a living model and straight **Dead** onto an Undead one, a heal of at least 1
+  drops it again, and a second hit on a fallen model kills it; Dead — a pick of its own, never
+  sharing a copy with Incapacitated — stays reachable because any flower is a valid drop target
+  and the self petals act on whatever is centred. Neither rides the band: the fallen wear a
+  **yellow wash with the Incapacitated glyph** on their icon, the Dead a **red wash with the
+  skull**.
 - **OpenGame** (solo and hot-seat) → `{ missionId, mode }`, the marker that a local run is
   live, and the reason the app can offer to resume. The stored `mode` decides which progress
   store and which tracker the resume lands in; **records written before hot-seat joined the
