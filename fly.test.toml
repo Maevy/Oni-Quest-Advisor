@@ -1,0 +1,44 @@
+# Staging config for the experimental test deployment.
+# Same shape as fly.toml but a separate app + its own fresh volume, so testers
+# can exercise unreleased `develop` features at their own URL without touching
+# production (oni-quest-advisor, still at v0.8.0) and without a prod DB wipe.
+# Deploy with:  flyctl deploy --config fly.test.toml --app oni-quest-advisor-test
+app = "oni-quest-advisor-test"
+primary_region = "fra"
+
+[build]
+
+[mounts]
+  source = "oni_quest_data"
+  destination = "/data"
+
+[env]
+  PORT = "3000"
+  ORIGIN = "https://oni-quest-advisor-test.fly.dev"
+  DATA_DIR = "/data"
+  # Without this, getClientAddress() returns the Fly proxy's internal IP for
+  # every player, keying the rate limiter on one shared bucket. adapter-node
+  # reads the rightmost x-forwarded-for entry (XFF_DEPTH=1) — the one Fly's
+  # edge appends, i.e. the real client IP.
+  ADDRESS_HEADER = "x-forwarded-for"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+# Probes /api/health on running machines (DB reachable, aggregates report).
+# Health checks do not auto-start a stopped machine — requests still do.
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "1m"
+  method = "GET"
+  path = "/api/health"
+  timeout = "5s"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
