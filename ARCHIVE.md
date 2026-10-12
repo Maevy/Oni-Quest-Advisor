@@ -16,13 +16,13 @@ worth knowing before touching the code.
 
 ---
 
-## Unreleased on `develop` — 26 commits, 2026-09-27 … 2026-09-30
+## v0.9.0 — the online rebuild, tournaments, flowers and reports (2026-10-13, 56 commits)
 
-Two features landed in this order and neither is deployed: the tournament, up to its
-match-preparation screen, then a ground-up redesign of the online front door. **Read the
-deploy warning in `PROGRESS.md` before shipping either** — the online half needs the
-production database wiped, and a wipe is database-wide, so it takes the tournament tables
-with it.
+Two features landed in this order and neither is deployed: the tournament, then a ground-up
+redesign of the online front door; the Battle Flowers, the interaction log and both reports
+followed on top. **Read the deploy warning in `PROGRESS.md` before shipping either** — the
+online half needs the production database wiped, and a wipe is database-wide, so it takes the
+tournament tables with it.
 
 ### Tournament (`9367fc1`…`19d7fea`, 9 commits)
 
@@ -317,6 +317,55 @@ prompt-and-abandon pattern.
   and the rule cannot drift (a spec asserts both directions). Verified end to end in a real
   browser (45 assertions: the flow, the draft discard, the lock, the `+n` chip, and the
   damage/heal regression after the petal count changed).
+
+---
+
+### 2026-10-08 … 10-13 — two dialogs replace the petals; the flowers carry to solo and online; the log and the reports
+
+- **The petals are gone** (`07d27ac`, `5300018`, `a396896`, `f9323e1`): a **tap** on a flower
+  opens the **Self Interaction dialog** — the cross-model shell with one inert model at the top
+  and six buttons (Assign Damage / Healing / Status, the inert Buff, Model Info, Activation
+  Management) — and a **drag** past an 8 px threshold lifts a measured clone, rings the hovered
+  flower with a crosshair and opens the **Interaction panel** on drop (seven actions, friend or
+  foe; Stagger spends one activation, Stun every one). Both dialogs reuse the shared amount pad
+  and boxed State picker and render at the screen root, because the strip's transform traps
+  `fixed` overlays. The target rows and the petal rings they served went with them; a finished
+  drag's leftover click is swallowed, and the desktop mouse drags a flower now that the icon no
+  longer native-drags (`4542ee7`).
+- **Solo carried the board** (`70bd405`): its Army view is the flower board with the same two
+  dialogs, committing into `MissionProgress.vitality`; the vitality menu it replaced is gone.
+  A muted line under every board names the two gestures (`6f293cb`).
+- **The interaction log** (`9d2dbd9`): online stores **no vitality at all** — every flower-dialog
+  commit appends a `vitality-committed` row to `game_events` (round server-stamped) and both
+  devices fold the log into their boards (`foldHistory`), so the log *is* the state and the
+  battle report later folds the same rows. An undo appends a `vitality-reverted` the fold skips:
+  **actor-only, and only while their action is still the last one**. The opponent's half of the
+  board arrives through `POST /roster` — each seat publishes its combat list as board entries
+  once the round runs, once only, because the server cannot derive entry ids from a code; the
+  composition opens at play, the importable code never travels. Above the board a history strip
+  previews the latest sentence; tapping it opens the round-grouped dialog with the Undo button.
+- **The reports** (`c36bd2b`, `51a4932`): `domain/pdf.ts` is a hand-written PDF 1.4 writer —
+  no dependency may be installed — deterministic, uncompressed streams, Helvetica widths for
+  wrapping. The **battle report** (finished online screen) carries code, match date, mission
+  with a vector map thumbnail, both armies, rounds with scores and interactions, and the
+  damage/healing rankings; the **tournament report** (conclusion screen, organizer-only
+  `GET /report`) adds the tournament page, the field with the final standing and the matches
+  grouped by round, folding every match's log into the event-wide conclusion. Both are built on
+  the device and **persisted nowhere**; both share `domain/reportLayout.ts`.
+
+**Worth remembering:**
+
+- **A reverted action keeps its sentence but no forced-State lines** — it never changed the
+  state they describe — and the fold narrates commits whose target entry its bases do not know,
+  because a report must list what was recorded even where a board half never published.
+- **The composition reveal survives the finish and a finished match still accepts a publish**,
+  or a device reconnecting after the last round could never field its half of a report.
+- **Dead and Incapacitated never share a copy**: the kill trades the fall's Incapacitated for
+  Dead, so a death must not read as "stands back up" — the lift lines fire only on a rise.
+- **The PDF's uncompressed streams are the verification story**: poppler is not installed here,
+  so the harnesses grep the downloaded bytes; escaped parens (`\(Ada\)`) are the usual surprise.
+- **The API limiter is 120 POSTs/minute/IP** — a tournament harness burns it in one journey;
+  throttle at ~70 and wait the window out between runs.
 
 ---
 
