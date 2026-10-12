@@ -228,7 +228,9 @@ target's activations. Both dialogs reuse the shared amount pad and boxed State p
 land in `MissionProgress.vitality`, keyed by entry id, so they survive reloads and die with the
 run on abandon. Accepting a copy at **0 Life** assigns **Incapacitated** and **Crouched** on its
 behalf — the rulebook's fall — and a fallen model wears a yellow wash with the Incapacitated
-glyph, a Dead one a red wash with the skull, on every flower. See
+glyph, a Dead one a red wash with the skull, on every flower. The board carries the same muted
+hint line under the field as hot-seat — _Tap a flower for Self Interaction · Drag one onto
+another for Interaction between models_ — shown only while an army is attached. See
 [06-two-player-hot-seat.md](./06-two-player-hot-seat.md) for the dialogs' full behaviour; solo
 differs only in fielding a single seat.
 

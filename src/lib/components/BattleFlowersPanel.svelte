@@ -77,4 +77,14 @@
 			{@render half(player)}
 		{/each}
 	</div>
+	{#if present.length > 0}
+		<!-- Neither gesture is visible in the flowers themselves: a strip flower reads as a stat
+		     dial, and drag-and-drop is the only way to reach the cross-model panel. One line for
+		     the whole board, not per seat - a drag may cross halves. -->
+		<p class="mt-3 text-center text-[11px] leading-relaxed text-slate-400">
+			<span class="font-semibold text-slate-300">Tap</span> a flower for Self Interaction<br />
+			<span class="font-semibold text-slate-300">Drag</span> one onto another for Interaction between
+			models
+		</p>
+	{/if}
 </Panel>

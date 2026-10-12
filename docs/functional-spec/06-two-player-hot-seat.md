@@ -140,6 +140,12 @@ returns the clone to its slot and fades the bands back in. A drag is never a vie
 strip's horizontal swipe stands down while a flower owns the gesture — and never a focus: the
 click a finished drag leaves behind is swallowed.
 
+Neither gesture is visible in the flowers themselves — a strip flower reads as a stat dial, and
+the drag is the only way to reach the cross-model panel — so the board names both in one muted
+line under the field: _Tap a flower for Self Interaction · Drag one onto another for Interaction
+between models_. One line for the whole board rather than one per seat, since a drag may cross
+halves, and only while at least one seat fields an army — an empty board has no gestures to name.
+
 The panel puts the **origin flower on the left and the target on the right**, seat-rimmed, with a
 right-pointing arrow and the word _Interaction_ between them, and below them a box of seven
 actions: **Assign Damage** (red sword), **Assign Healing** (green cross), **Assign / Remove
