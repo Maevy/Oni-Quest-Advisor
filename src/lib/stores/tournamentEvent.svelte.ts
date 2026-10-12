@@ -5,6 +5,7 @@ import {
 	createTournament as apiCreateTournament,
 	enterTournamentTableGame as apiEnterTableGame,
 	fetchTournamentPeek,
+	fetchTournamentReport,
 	fetchTournamentView,
 	generateTournamentToken,
 	joinTournament as apiJoinTournament,
@@ -29,7 +30,8 @@ import type {
 	PickedArmy,
 	TournamentEventView,
 	TournamentOccupant,
-	TournamentPeek
+	TournamentPeek,
+	TournamentReportData
 } from '$lib/domain';
 
 function messageOf(error: unknown): string {
@@ -352,6 +354,21 @@ class TournamentEventStore {
 	/** Acknowledges the cancellation notice; the session is already gone by then. */
 	dismissNotice(): void {
 		this.notice = null;
+	}
+
+	/**
+	 * The report's raw material - the organizer's own call; the endpoint refuses everybody else.
+	 * Returns null (with the error surfaced) when the fetch fails, so the button can stay put.
+	 */
+	async fetchReport(): Promise<TournamentReportData | null> {
+		if (!this.session) return null;
+		try {
+			this.error = null;
+			return await fetchTournamentReport(this.session.code, this.session.token);
+		} catch (error) {
+			this.error = messageOf(error);
+			return null;
+		}
 	}
 
 	private async refreshState(): Promise<void> {

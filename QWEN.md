@@ -264,6 +264,12 @@ section.
     because a freed seat would drop that player out of the archived standing the 48-hour report
     window exists to keep — which is also why `/leave` still refuses after the conclusion.
     `completedRounds` (pairing, results, cumulative totals) is the report's raw material.
+  - **The report is a client-side PDF** (`domain/tournamentReport.ts`, on the shared writer in
+    `domain/pdf.ts`): the organizer's conclusion screen fetches `GET /report` — organizer token
+    only — which returns the archived rounds **plus every played match's interaction log** under
+    its derived game id; the device folds the event-wide damage/healing rankings (model with its
+    owner in brackets, self-recorded hits unattributed, undone out) and downloads. Nothing is
+    persisted; a table nobody entered reports an empty log rather than failing.
   - The roadmap (`tournamentRoadmap`) is **derived, not stored**: three steps per configured
     mission plus a final conclusion.
   - **The QR symbol is encoded in-app** (`domain/qr.ts`: byte mode, EC level M, versions 1–6,

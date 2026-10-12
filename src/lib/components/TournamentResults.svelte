@@ -12,9 +12,12 @@
 		 * freeing one would drop that player out of the standing the report window keeps.
 		 */
 		onLeave: () => void;
+		/** Organizer-only: builds the event's PDF on this device and offers it as a download. */
+		onReport: () => void;
+		reportBusy?: boolean;
 	};
 
-	let { view, error = null, onLeave }: Props = $props();
+	let { view, error = null, onLeave, onReport, reportBusy = false }: Props = $props();
 
 	const isOrganizer = $derived(view.role === 'organizer');
 	const rounds = $derived(view.roundsPlayed);
@@ -102,14 +105,15 @@
 			>
 				End Tournament
 			</button>
-			<!-- Inert on purpose: the report is the next iteration of this feature, and the rows it
-			     needs are what the 48-hour retention window exists to keep. -->
+			<!-- The rows this reads are what the 48-hour retention window exists to keep: the
+			     archived rounds, every match's interaction log, and the field's armies. -->
 			<button
 				type="button"
-				class="rounded-xl border-2 border-slate-600/60 bg-slate-900/60 px-6 py-3 font-semibold text-slate-400 backdrop-blur"
-				disabled
+				class="rounded-xl border-2 border-sky-500/50 bg-slate-900/60 px-6 py-3 font-semibold text-sky-100 backdrop-blur transition enabled:hover:bg-sky-500/10 enabled:active:bg-sky-500/20 disabled:opacity-60"
+				onclick={onReport}
+				disabled={reportBusy}
 			>
-				Prepare Tournament Report
+				{reportBusy ? 'Preparing…' : 'Download Tournament Report (PDF)'}
 			</button>
 			<p class="-mt-2 text-center text-xs text-slate-200">
 				This event's results are kept for 48 hours so a report can be generated.

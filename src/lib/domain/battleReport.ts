@@ -11,11 +11,25 @@ import {
 	pdfTextWidth,
 	pdfWrapText,
 	renderPdf,
-	PDF_PAGE_HEIGHT,
-	PDF_PAGE_WIDTH,
 	type PdfColor,
 	type PdfOp
 } from './pdf';
+import {
+	drawHeading,
+	drawReportFooters,
+	drawStatTable,
+	drawText,
+	ensureSpace,
+	newReportLayout,
+	putOp,
+	REPORT_ACCENT,
+	REPORT_CONTENT_WIDTH,
+	REPORT_INK,
+	REPORT_MARGIN,
+	REPORT_MUTED,
+	REPORT_PAGE_HEIGHT,
+	REPORT_PAGE_WIDTH
+} from './reportLayout';
 import type { HistoryEntry } from './vitalityHistory';
 import type { RoundSnapshot } from './online';
 import type { PlayerKey } from './twoPlayer';
@@ -70,6 +84,13 @@ export type BattleReportInput = {
 	healing: BattleReportStat[];
 };
 
+/** The shared ranking order: highest total first, ties by name so the report is deterministic. */
+export function sortStats(totals: Map<string, number>): BattleReportStat[] {
+	return [...totals.entries()]
+		.map(([name, total]) => ({ name, total }))
+		.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+}
+
 /**
  * Damage and healing per acting model, highest first. Cross-model commits name the model that
  * acted; a self commit has no origin - its owner recorded a hit that arrived from off-board - so
@@ -91,11 +112,7 @@ export function battleReportStats(
 		const key = entry.originName ?? `${nicknames[entry.actor]} (unattributed)`;
 		add(entry.action.kind === 'damage' ? damage : healing, key, entry.action.amount);
 	}
-	const sorted = (totals: Map<string, number>): BattleReportStat[] =>
-		[...totals.entries()]
-			.map(([name, total]) => ({ name, total }))
-			.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
-	return { damage: sorted(damage), healing: sorted(healing) };
+	return { damage: sortStats(damage), healing: sortStats(healing) };
 }
 
 /**
@@ -164,105 +181,24 @@ export function battleReportUnits(army: ArmyView): {
 
 // --- layout ---------------------------------------------------------------------
 
-const MARGIN = 48;
-const CONTENT_WIDTH = PDF_PAGE_WIDTH - MARGIN * 2;
-const TOP = 56;
-const BOTTOM = PDF_PAGE_HEIGHT - 56;
-const INK: PdfColor = [0.1, 0.12, 0.18];
-const MUTED: PdfColor = [0.42, 0.46, 0.55];
-const ACCENT: PdfColor = [0.05, 0.35, 0.55];
-const RULE: PdfColor = [0.72, 0.76, 0.82];
-
-type Layout = { pages: PdfOp[][]; y: number };
-
-function newPage(layout: Layout): void {
-	layout.pages.push([]);
-	layout.y = TOP;
-}
-
-function put(layout: Layout, op: PdfOp): void {
-	layout.pages[layout.pages.length - 1].push(op);
-}
-
-function ensure(layout: Layout, needed: number): void {
-	if (layout.y + needed > BOTTOM) newPage(layout);
-}
-
-function drawText(
-	layout: Layout,
-	text: string,
-	options: {
-		size?: number;
-		font?: 'helvetica' | 'helvetica-bold';
-		color?: PdfColor;
-		indent?: number;
-		maxWidth?: number;
-		leading?: number;
-	} = {}
-): void {
-	const size = options.size ?? 9;
-	const font = options.font ?? 'helvetica';
-	const indent = options.indent ?? 0;
-	const maxWidth = options.maxWidth ?? CONTENT_WIDTH - indent;
-	const leading = options.leading ?? size * 1.35;
-	for (const line of pdfWrapText(text, font, size, maxWidth)) {
-		ensure(layout, leading);
-		put(layout, {
-			kind: 'text',
-			x: MARGIN + indent,
-			y: layout.y + size * 0.8,
-			text: line,
-			font,
-			size,
-			color: options.color ?? INK
-		});
-		layout.y += leading;
-	}
-}
-
-function drawHeading(layout: Layout, text: string): void {
-	ensure(layout, 34);
-	layout.y += 8;
-	put(layout, {
-		kind: 'text',
-		x: MARGIN,
-		y: layout.y + 8,
-		text: text.toUpperCase(),
-		font: 'helvetica-bold',
-		size: 11,
-		color: ACCENT
-	});
-	layout.y += 15;
-	put(layout, {
-		kind: 'line',
-		x1: MARGIN,
-		y1: layout.y,
-		x2: MARGIN + CONTENT_WIDTH,
-		y2: layout.y,
-		width: 0.8,
-		color: ACCENT
-	});
-	layout.y += 8;
-}
+const MAP_SIZE = 150;
 
 function formatPlayedAt(playedAt: string | null): string {
 	if (!playedAt) return 'unknown';
 	return `${playedAt.slice(0, 10)} ${playedAt.slice(11, 16)} UTC`;
 }
 
-function hexToColor(value: string, fallback: PdfColor): PdfColor {
+export function hexToColor(value: string, fallback: PdfColor): PdfColor {
 	const match = /^#([0-9a-fA-F]{6})$/.exec(value.trim());
 	if (!match) return fallback;
 	const int = Number.parseInt(match[1], 16);
 	return [((int >> 16) & 255) / 255, ((int >> 8) & 255) / 255, (int & 255) / 255];
 }
 
-const MAP_SIZE = 150;
-
 /** The mission's map as vector ops: field, deployment zones, quarters, markers and labels. */
-function mapOps(map: MapSpec, x: number, y: number): PdfOp[] {
+export function mapOps(map: MapSpec, x: number, y: number, size = MAP_SIZE): PdfOp[] {
 	const ops: PdfOp[] = [];
-	const scale = MAP_SIZE / MAP_SIZE_INCHES;
+	const scale = size / MAP_SIZE_INCHES;
 	const at = (inches: { x: number; y: number }) => ({
 		x: x + inches.x * scale,
 		y: y + inches.y * scale
@@ -305,7 +241,7 @@ function mapOps(map: MapSpec, x: number, y: number): PdfOp[] {
 						wedge.r * scale,
 						startDeg,
 						endDeg
-					).map((point) => ({ x: point.x, y: point.y })),
+					),
 					at(wedge.arcEnd),
 					corner
 				],
@@ -321,24 +257,24 @@ function mapOps(map: MapSpec, x: number, y: number): PdfOp[] {
 			x1: x + mid * scale,
 			y1: y,
 			x2: x + mid * scale,
-			y2: y + MAP_SIZE,
+			y2: y + size,
 			width: 0.5,
-			color: MUTED
+			color: REPORT_MUTED
 		});
 		ops.push({
 			kind: 'line',
 			x1: x,
 			y1: y + mid * scale,
-			x2: x + MAP_SIZE,
+			x2: x + size,
 			y2: y + mid * scale,
 			width: 0.5,
-			color: MUTED
+			color: REPORT_MUTED
 		});
 	}
 
 	for (const marker of map.markers) {
 		const centre = at({ x: marker.x, y: marker.y });
-		const color = hexToColor(marker.color, ACCENT);
+		const color = hexToColor(marker.color, REPORT_ACCENT);
 		const r = 3.4;
 		switch (marker.shape) {
 			case 'box':
@@ -414,92 +350,40 @@ function mapOps(map: MapSpec, x: number, y: number): PdfOp[] {
 			text: marker.label,
 			font: 'helvetica-bold',
 			size: 7,
-			color: INK
+			color: REPORT_INK
 		});
 	}
 
-	ops.push({
-		kind: 'rect',
-		x,
-		y,
-		w: MAP_SIZE,
-		h: MAP_SIZE,
-		stroke: INK,
-		lineWidth: 1
-	});
+	ops.push({ kind: 'rect', x, y, w: size, h: size, stroke: REPORT_INK, lineWidth: 1 });
 	return ops;
-}
-
-function statTable(layout: Layout, title: string, stats: BattleReportStat[], unit: string): void {
-	drawHeading(layout, title);
-	if (stats.length === 0) {
-		drawText(layout, `No ${unit} was recorded.`, { color: MUTED });
-		return;
-	}
-	for (const [index, stat] of stats.entries()) {
-		ensure(layout, 13);
-		const label = `${index + 1}.`;
-		const total = `${stat.total} ${unit}`;
-		put(layout, {
-			kind: 'text',
-			x: MARGIN + 6,
-			y: layout.y + 7.5,
-			text: label,
-			font: 'helvetica',
-			size: 9,
-			color: MUTED
-		});
-		put(layout, {
-			kind: 'text',
-			x: MARGIN + 26,
-			y: layout.y + 7.5,
-			text: stat.name,
-			font: 'helvetica',
-			size: 9,
-			color: INK
-		});
-		const totalWidth = pdfTextWidth(total, 'helvetica-bold', 9);
-		put(layout, {
-			kind: 'text',
-			x: MARGIN + CONTENT_WIDTH - totalWidth,
-			y: layout.y + 7.5,
-			text: total,
-			font: 'helvetica-bold',
-			size: 9,
-			color: ACCENT
-		});
-		layout.y += 13;
-	}
 }
 
 /** The whole report, as PDF bytes. */
 export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
-	const layout: Layout = { pages: [], y: TOP };
-	newPage(layout);
+	const layout = newReportLayout();
 
 	// --- header ---
-	put(layout, {
+	putOp(layout, {
 		kind: 'text',
-		x: MARGIN,
-		y: TOP - 16,
+		x: REPORT_MARGIN,
+		y: 40,
 		text: 'ONI QUEST - BATTLE REPORT',
 		font: 'helvetica-bold',
 		size: 17,
-		color: ACCENT
+		color: REPORT_ACCENT
 	});
-	put(layout, {
+	putOp(layout, {
 		kind: 'line',
-		x1: MARGIN,
-		y1: TOP - 8,
-		x2: MARGIN + CONTENT_WIDTH,
-		y2: TOP - 8,
+		x1: REPORT_MARGIN,
+		y1: 48,
+		x2: REPORT_MARGIN + REPORT_CONTENT_WIDTH,
+		y2: 48,
 		width: 1.2,
-		color: ACCENT
+		color: REPORT_ACCENT
 	});
-	layout.y = TOP + 4;
 	drawText(layout, `Game code ${input.code}   -   Played ${formatPlayedAt(input.playedAt)}`, {
 		size: 9,
-		color: MUTED
+		color: REPORT_MUTED
 	});
 	layout.y += 4;
 
@@ -508,21 +392,22 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 	if (input.map) {
 		// The map sits right of its caption block; reserve its height before writing text.
 		const mapTop = layout.y;
-		for (const op of mapOps(input.map, MARGIN + CONTENT_WIDTH - MAP_SIZE, mapTop)) put(layout, op);
+		for (const op of mapOps(input.map, REPORT_MARGIN + REPORT_CONTENT_WIDTH - MAP_SIZE, mapTop))
+			putOp(layout, op);
 		const zone =
 			input.map.zone.type === 'horizontal'
 				? `horizontal deployment, ${input.map.zone.rangeInches}"`
 				: `radial deployment, ${input.map.zone.rangeInches}"`;
-		const textWidth = CONTENT_WIDTH - MAP_SIZE - 16;
+		const textWidth = REPORT_CONTENT_WIDTH - MAP_SIZE - 16;
 		let y = mapTop;
-		put(layout, {
+		putOp(layout, {
 			kind: 'text',
-			x: MARGIN,
+			x: REPORT_MARGIN,
 			y: y + 8.5,
 			text: `${input.seasonName} - ${input.missionName}`,
 			font: 'helvetica-bold',
 			size: 10,
-			color: INK
+			color: REPORT_INK
 		});
 		y += 15;
 		for (const line of [
@@ -530,14 +415,14 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 			`${input.map.markers.length} objective marker${input.map.markers.length === 1 ? '' : 's'}`
 		]) {
 			for (const wrapped of pdfWrapText(line, 'helvetica', 9, textWidth)) {
-				put(layout, {
+				putOp(layout, {
 					kind: 'text',
-					x: MARGIN,
+					x: REPORT_MARGIN,
 					y: y + 7.5,
 					text: wrapped,
 					font: 'helvetica',
 					size: 9,
-					color: INK
+					color: REPORT_INK
 				});
 				y += 12;
 			}
@@ -548,7 +433,7 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 			font: 'helvetica-bold',
 			size: 10
 		});
-		drawText(layout, 'This mission carries no map.', { color: MUTED });
+		drawText(layout, 'This mission carries no map.', { color: REPORT_MUTED });
 	}
 
 	// --- players and armies ---
@@ -564,23 +449,29 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 		if (player.schemeTitle) {
 			const increments =
 				player.schemeIncrements === null ? '' : `, ${player.schemeIncrements} increments scored`;
-			drawText(layout, `Scheme: ${player.schemeTitle}${increments}`, { indent: 10, color: MUTED });
+			drawText(layout, `Scheme: ${player.schemeTitle}${increments}`, {
+				indent: 10,
+				color: REPORT_MUTED
+			});
 		}
 		for (const unit of player.units) {
-			ensure(layout, 12);
+			ensureSpace(layout, 12);
 			drawText(layout, `${unit.copies}x ${unit.name} - ${unit.size} - ${unit.points} pts`, {
 				indent: 10
 			});
 		}
 		if (player.units.length === 0)
-			drawText(layout, 'Army contents unknown on this device.', { indent: 10, color: MUTED });
+			drawText(layout, 'Army contents unknown on this device.', {
+				indent: 10,
+				color: REPORT_MUTED
+			});
 		layout.y += 4;
 	}
 
 	// --- rounds ---
 	drawHeading(layout, 'Rounds');
 	for (const round of input.rounds) {
-		ensure(layout, 40);
+		ensureSpace(layout, 40);
 		const p1 = input.players.find((player) => player.seat === 'player1');
 		const p2 = input.players.find((player) => player.seat === 'player2');
 		const score =
@@ -589,30 +480,29 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 				: `${p1?.nickname ?? 'Player 1'} ${round.score.player1 ?? '-'} : ${
 						round.score.player2 ?? '-'
 					} ${p2?.nickname ?? 'Player 2'}`;
-		put(layout, {
+		putOp(layout, {
 			kind: 'text',
-			x: MARGIN,
+			x: REPORT_MARGIN,
 			y: layout.y + 8,
 			text: `Round ${round.round}`,
 			font: 'helvetica-bold',
 			size: 10,
-			color: INK
+			color: REPORT_INK
 		});
-		const scoreWidth = pdfTextWidth(score, 'helvetica', 9);
-		put(layout, {
+		putOp(layout, {
 			kind: 'text',
-			x: MARGIN + CONTENT_WIDTH - scoreWidth,
+			x: REPORT_MARGIN + REPORT_CONTENT_WIDTH - pdfTextWidth(score, 'helvetica', 9),
 			y: layout.y + 8,
 			text: score,
 			font: 'helvetica',
 			size: 9,
-			color: ACCENT
+			color: REPORT_ACCENT
 		});
 		layout.y += 15;
 		if (round.interactions.length === 0) {
 			drawText(layout, 'No interactions were recorded in this round.', {
 				indent: 10,
-				color: MUTED
+				color: REPORT_MUTED
 			});
 		}
 		for (const interaction of round.interactions) {
@@ -622,14 +512,14 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 					interaction.undone && index === interaction.lines.length - 1 ? '  [undone]' : '';
 				drawText(layout, `[${tag}] ${line}${suffix}`, {
 					indent: 10,
-					color: interaction.undone ? MUTED : INK
+					color: interaction.undone ? REPORT_MUTED : REPORT_INK
 				});
 			}
 		}
 		layout.y += 4;
 	}
 	if (input.finalScore) {
-		ensure(layout, 24);
+		ensureSpace(layout, 24);
 		const winner =
 			input.winner === 'draw'
 				? 'The match ended in a draw.'
@@ -644,46 +534,13 @@ export function buildBattleReportPdf(input: BattleReportInput): Uint8Array {
 	}
 
 	// --- statistics ---
-	statTable(layout, 'Damage dealt by model', input.damage, 'damage');
-	statTable(layout, 'Healing done by model', input.healing, 'Life');
+	drawStatTable(layout, 'Damage dealt by model', input.damage, 'damage');
+	drawStatTable(layout, 'Healing done by model', input.healing, 'Life');
 
-	// --- footers, once the page count is known ---
-	const pageCount = layout.pages.length;
-	layout.pages.forEach((page, index) => {
-		const footerY = PDF_PAGE_HEIGHT - 34;
-		page.push({
-			kind: 'line',
-			x1: MARGIN,
-			y1: footerY - 8,
-			x2: MARGIN + CONTENT_WIDTH,
-			y2: footerY - 8,
-			width: 0.6,
-			color: RULE
-		});
-		page.push({
-			kind: 'text',
-			x: MARGIN,
-			y: footerY,
-			text: 'Generated by Oni Quest Advisor - not persisted on any server',
-			font: 'helvetica',
-			size: 7.5,
-			color: MUTED
-		});
-		const label = `Page ${index + 1} of ${pageCount}`;
-		page.push({
-			kind: 'text',
-			x: MARGIN + CONTENT_WIDTH - pdfTextWidth(label, 'helvetica', 7.5),
-			y: footerY,
-			text: label,
-			font: 'helvetica',
-			size: 7.5,
-			color: MUTED
-		});
-	});
-
+	drawReportFooters(layout);
 	return renderPdf({
-		width: PDF_PAGE_WIDTH,
-		height: PDF_PAGE_HEIGHT,
+		width: REPORT_PAGE_WIDTH,
+		height: REPORT_PAGE_HEIGHT,
 		title: `Oni Quest battle report ${input.code}`,
 		pages: layout.pages
 	});

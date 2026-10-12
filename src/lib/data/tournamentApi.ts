@@ -3,7 +3,8 @@ import type {
 	PickedArmy,
 	TournamentEventView,
 	TournamentOccupant,
-	TournamentPeek
+	TournamentPeek,
+	TournamentReportData
 } from '$lib/domain';
 
 const BASE = '/api/tournaments';
@@ -209,6 +210,20 @@ export async function markTournamentMessagesRead(code: string, token: string): P
 		headers: { authorization: `Bearer ${token}` }
 	});
 	await parse<{ ok: boolean }>(response);
+}
+
+/**
+ * The report's raw material, organizer-only: the archived rounds and every played match's
+ * interaction log. The device folds it into a PDF; nothing is stored server-side.
+ */
+export async function fetchTournamentReport(
+	code: string,
+	token: string
+): Promise<TournamentReportData> {
+	const response = await fetch(`${BASE}/${code}/report`, {
+		headers: { authorization: `Bearer ${token}` }
+	});
+	return parse<TournamentReportData>(response);
 }
 
 /** Seat tokens are generated client-side; only their hash reaches the server. */

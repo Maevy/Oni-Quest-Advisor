@@ -132,8 +132,8 @@ and opens the lobby; **Not yet** stays on the overview with the draft untouched.
 
 Decisions taken here:
 
-- **The notice is the TO's consent to retention**, and it names the reason: a printable tournament
-  report is a later step of this feature, and a report needs the data to outlive the event.
+- **The notice is the TO's consent to retention**, and it names the reason: the printable
+  tournament report (shipped 2026-10-12) needs the data to outlive the event.
 - **The 48 hours run from the conclusion**, not from creation — an event that runs long is never
   deleted mid-play. An abandoned lobby goes after 7 days and a tournament abandoned mid-play after
   30, the windows online games already use.
@@ -459,18 +459,37 @@ place** and the next rank skips the tie (two 1st, then 3rd), with seat order bre
 order of a tie.
 
 Exits are the last asymmetry between the roles: a **player** gets _Leave Tournament_, the
-**organizer** gets _End Tournament_ (both simply return to the main menu) plus _Prepare Tournament
-Report_, which is inert until the report exists. All three are **local** — no server call. A
-concluded event has no seat to free, and freeing one would drop that player out of the standing the
-48-hour report window exists to keep, which is also why `/leave` still refuses after the conclusion.
-The rows stay on the server for the report; only this device's session goes.
+**organizer** gets _End Tournament_ (both simply return to the main menu) plus the report button
+below. All three are **local** — no server call. A concluded event has no seat to free, and
+freeing one would drop that player out of the standing the 48-hour report window exists to keep,
+which is also why `/leave` still refuses after the conclusion. The rows stay on the server for the
+report; only this device's session goes.
 
-## Next — the tournament report
+## The tournament report
 
-The event concludes and its rounds are archived (`completedRounds`, oldest first: pairing, results
-and the cumulative totals as of each round's end). **Prepare Tournament Report** is the button that
-will use them, and the reason concluded events are kept for 48 hours. What a report contains, in
-what shape, and whether it is generated on the device or on the server, is the next iteration.
+The organizer's **Download Tournament Report (PDF)** builds the event's report **on the organizer's
+device** and offers it as a download; like the battle report, nothing is persisted anywhere. The
+button fetches `GET /api/tournaments/[id]/report` — organizer token only, a player gets 403 — which
+returns the archived rounds with their pairings and results, plus **every played match's
+interaction log** under its derived game id (a table nobody entered reports an empty log rather
+than failing). The device then folds the statistics out of those logs and lays the PDF out:
+
+- **The tournament page**: the event's name and code, the organizer, the external link, the
+  creation and conclusion dates, and the field's size.
+- **Missions played**, one line per round.
+- **Roster armies and final standing**, ranked: place, player, victory points, and their
+  registered army with faction.
+- **Matches by round**, grouped round 1 → round n: each table's pairing and its result — the score
+  and winner, the BYE's five points, or _no result recorded_ for a table whose match never
+  reported.
+- **The conclusion**: damage and healing per model across the whole event, highest first, each
+  model carrying its owner's name in brackets (two players' Chiyohimes are two statistics) and
+  self-recorded hits tallied under their player as _unattributed_. Undone interactions stay out of
+  the totals, exactly as in the battle report.
+
+The field's army _names_ come from the registrations; the faction labels come from the local
+catalogs, which the handler loads first — an organizer's device may never have opened the army
+builder.
 
 ## Open questions
 
@@ -514,8 +533,9 @@ what shape, and whether it is generated on the device or on the server, is the n
 - **Identity beyond the seat token.** A device holds exactly one tournament seat session; whether a
   name can be reused across tournaments, whether a TO can hand their seat over, or whether players
   ever get an account, is open.
-- **The report.** `completedRounds` holds everything a report needs, and concluded events are kept
-  48 hours for it; what the report contains and where it is generated is the next iteration.
+- **The report.** _Resolved 2026-10-12:_ the report is a client-side PDF (see the section above),
+  assembled from `completedRounds` plus every match's interaction log; concluded events are kept
+  48 hours so the organizer's device can still fetch them.
 
 Resolved since the last revision: the round's `game` and `scoring` phases are built — a table's
 match is an ordinary online game the tournament creates and overwatches (see _Playing the round_),

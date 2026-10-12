@@ -16,8 +16,9 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
      screen with its roadmap and table assignment, **and now the round's `game` and `scoring`
      phases**: a table's match is an ordinary online game the tournament creates and overwatches
      (Enter Game, the megaphone, results reporting themselves into a cumulative standing, replays
-     of dead tables, the next round and the conclusion screen with its medal standings). What is
-     left of the feature is the **tournament report** — the button exists and is inert.
+     of dead tables, the next round and the conclusion screen with its medal standings) and the
+     **tournament report** (2026-10-12): the conclusion screen's PDF, folded on the organizer's
+     device from the archived rounds and every match's interaction log.
   2. **The online-mode redesign** (`da407c1`…`4ddd789`) — a game is born set up, both seats
      bring an army, Start Game is gated on per-seat **Ready**, and a match opens with Army
      Reveal → Army Preparation (a Roster is cut to ≤85 in a _borrowed_ army builder) → Scheme
@@ -52,11 +53,15 @@ Nothing has been run against Fly yet, and two decisions are outstanding:
 
 ## What's next
 
-The **tournament report** is deferred by agreement (2026-10-05): `completedRounds` already holds
-everything it needs (each round's pairing, its results and the cumulative totals), concluded
-events are kept 48 hours for it, and the **Prepare Tournament Report** button is on the
-conclusion screen waiting. What a report contains, in what shape, and whether it is generated on
-the device or on the server is the open half.
+The **tournament report** shipped 2026-10-12: the conclusion screen's button is now
+**Download Tournament Report (PDF)**, organizer-only, fetching `GET /api/tournaments/[id]/report`
+(the archived rounds plus every played match's interaction log) and folding the PDF on the
+device — tournament page, missions, roster armies with the final standing, matches grouped by
+round, and the event-wide damage/healing conclusion per model with its owner. Nothing is
+persisted. With it, both unreleased features are feature-complete; what stands between `develop`
+and a production release is the **database wipe decision** below, and the deferred threads:
+online's resume/leave alignment with the tournament pattern, and the pre-redesign reveal prose in
+specs 04/06/07/09.
 
 The current feature is the **Battle Flowers** — the army panel's redesign: every copy drawn as
 its icon in a circular orb ringed by Stamina boxes (yellow, left half) and Life boxes (red,
@@ -127,8 +132,8 @@ first, self-recorded hits tallied under their seat as unattributed. Nothing is p
 bytes live only in the download. Two rules bent for it: the composition reveal survives the
 finish, and a finished match still accepts a roster publish, so a device that reconnects after
 the last round can field its half. Verified by `~/.qwen/tmp/oni-verify/report.mjs` (22
-assertions over the downloaded bytes). The **tournament report** is the next feature and the
-bigger one: standings across tables, BYEs, replays.
+assertions over the downloaded bytes). The **tournament report** followed the same day on top of
+it: same writer, same no-persistence rule, folded across every match of a concluded event.
 
 **The interaction log (2026-10-12)** closed the flower feature and laid the report's foundation:
 online's Army view is now the flower board plus a **history strip** over it (tap → the

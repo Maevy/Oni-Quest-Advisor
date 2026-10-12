@@ -20,6 +20,10 @@
 		resolveArmyEntries,
 		savedArmyFormat,
 		seatPublishedRoster,
+		tournamentReportMatches,
+		tournamentReportStats,
+		tournamentTableLine,
+		buildTournamentReportPdf,
 		undoableAction,
 		vitalityAfterDamage,
 		vitalityAfterHeal,
@@ -37,6 +41,7 @@
 		type PickedArmy,
 		type PlayerKey,
 		type SavedArmy,
+		type TournamentReportInput,
 		type VitalityBases,
 		type VitalityCommitInput,
 		type VitalityTarget
@@ -531,6 +536,67 @@
 			...battleReportStats(onlineGameStore.history, nicknames)
 		};
 		downloadPdf(`oni-quest-battle-report-${view.id}.pdf`, buildBattleReportPdf(input));
+	}
+
+	// --- the tournament report ------------------------------------------------------
+	let tournamentReportBusy = $state(false);
+
+	/**
+	 * The organizer's report: fetches the archived rounds and every match's interaction log,
+	 * folds the field and the statistics out of them with the local catalogs, and hands the PDF
+	 * to the browser. Nothing is stored - not here, not on the server.
+	 */
+	async function downloadTournamentReport(): Promise<void> {
+		const view = tournamentEventStore.view;
+		if (!view || tournamentReportBusy) return;
+		tournamentReportBusy = true;
+		try {
+			// The organizer's device may never have opened the army builder, and the faction
+			// names the report prints come from the army catalogs.
+			await contentStore.loadArmy();
+			const data = await tournamentEventStore.fetchReport();
+			if (!data) return;
+			const titleFor = (missionId: string) =>
+				contentStore.missions.find((mission) => mission.id === missionId)?.name ?? missionId;
+			const factionFor = (factionId: string) =>
+				contentStore.armyFactions.find((faction) => faction.id === factionId)?.name ?? factionId;
+			const stats = tournamentReportStats(tournamentReportMatches(data.rounds, data.matchLogs));
+			const armies = view.standings.map((row) => {
+				const seat = view.seats[row.seatIndex];
+				return {
+					place: row.place,
+					nickname: row.name,
+					armyName: seat?.army?.name ?? 'Unknown army',
+					factionName: seat?.army ? factionFor(seat.army.factionId) : 'Unknown faction',
+					organizer: seat?.organizer ?? false,
+					victoryPoints: row.victoryPoints
+				};
+			});
+			const input: TournamentReportInput = {
+				name: view.name,
+				code: view.code,
+				organizerName: view.organizerName,
+				externalLink: view.externalLink,
+				createdAt: data.createdAt,
+				concludedAt: data.concludedAt,
+				missions: data.rounds.map((round) => ({
+					round: round.number,
+					title: titleFor(round.missionId)
+				})),
+				armies,
+				tableNames: view.tableNames,
+				rounds: data.rounds.map((round) => ({
+					number: round.number,
+					missionTitle: titleFor(round.missionId),
+					tables: round.tables.map((table) => tournamentTableLine(table))
+				})),
+				damage: stats.damage,
+				healing: stats.healing
+			};
+			downloadPdf(`oni-quest-tournament-report-${view.code}.pdf`, buildTournamentReportPdf(input));
+		} finally {
+			tournamentReportBusy = false;
+		}
 	}
 
 	// --- cutting a registered Roster army down to a match list ---
@@ -1249,6 +1315,8 @@
 			view={tournamentEventStore.view}
 			error={tournamentEventStore.error}
 			onLeave={leaveConcludedTournament}
+			onReport={downloadTournamentReport}
+			reportBusy={tournamentReportBusy}
 		/>
 	{:else}
 		<TournamentUnavailable
