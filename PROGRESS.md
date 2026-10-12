@@ -111,18 +111,33 @@ it, an Undead model goes straight to Dead at zero Life, and Dead (still a pick o
 sharing a copy with Incapacitated) stays in the heal row, since a heal of at least one point is
 what takes it off — while the fallen stay in the damage row, where the second fall kills.
 Neither State rides the band any more: the fallen wear a yellow wash with the Incapacitated
-glyph over their icon, the Dead a red wash with the skull, on every flower. What remains of the
-flowers is carrying them to the other modes' army panels. Behaviour spec:
-`docs/functional-spec/06-two-player-hot-seat.md`. **Next: the flowers carry to the solo and
-online army panels.**
+glyph over their icon, the Dead a red wash with the skull, on every flower. Solo carried the
+board and its two dialogs on 2026-10-11 (`70bd405`), and a hint line under the field names the
+two gestures on every board (2026-10-12, `6f293cb`). Behaviour spec:
+`docs/functional-spec/06-two-player-hot-seat.md`.
+
+**The interaction log (2026-10-12)** closed the flower feature and laid the report's foundation:
+online's Army view is now the flower board plus a **history strip** over it (tap → the
+round-grouped Interaction history dialog, click outside closes, **Undo** on your own latest
+standing action). Nothing stores vitality online — every commit is a `vitality-committed` row in
+`game_events`, both devices fold the log (`domain/vitalityHistory.ts`), an undo is an appended
+`vitality-reverted` the fold skips, and the round on each row is server-stamped. The opponent's
+half of the board comes from their device **publishing** its combat list as board entries once
+the round runs (`/roster`, once-only, composition opens at play, codes never travel). Online's
+ownership rule: only your own flowers lift and open the Self Interaction dialog; the opponent's
+are drop targets. Solo and hot-seat do **not** historize. Verified by a two-device Edge harness
+(`~/.qwen/tmp/oni-verify/online-history.mjs`, 26 assertions) driving the whole online journey
+through the API first. The log carries everything the KPIs will want — actor, target seat and
+entry, amounts, added/removed States, round — so the report folds the same rows.
 
 Smaller open threads:
 
 - **Healing can raise the fallen** — the heal row includes copies at 0 Life, so a heal revives
   them and the zero-Life States lift again with the hp change. Whether that is legal is an open
   ruling (2026-10-06), to be revisited; if not, `healableTargetsFor` gains a `current > 0` guard.
-- **The online tracker's Army view is an empty list on purpose** — a placeholder for per-copy
-  tracking, which is where the vitality work from v0.7.0 would land.
+- **The online tracker's Army view placeholder is gone** (2026-10-12): it is the flower board
+  folded from the interaction log, with the history strip above it. Per-copy tracking now lives
+  server-side in `game_events` rather than in any seat's state.
 - **The initiative roll** (rulebook step 8) is unmodelled; its formula and prize are rulebook
   text we do not have. The exposure it exists for (the Leader's M and INT) is already in place.
 - **`activePlayer` is not persisted** in hot-seat. `twoPlayerProgress.svelte.ts` keeps it as

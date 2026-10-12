@@ -19,7 +19,10 @@ import {
 	indexArmyRules,
 	resolveArmyEntries,
 	unitsForFaction,
+	type ArmyEntry,
 	type ArmyFactionConfig,
+	type ArmyFactionId,
+	type ArmyFormat,
 	type ArmyItemSpec,
 	type ArmyRulesSpec,
 	type ArmySpellSpec,
@@ -137,6 +140,60 @@ class ContentStore {
 				indexArmyRules(this.armyItems)
 			),
 			picks: decoded.list.picks ?? [],
+			faction,
+			upgradeIndex,
+			classIndex: indexArmyRules(this.armyClasses),
+			skillIndex: indexArmyRules(this.armySkills),
+			traitIndex: indexArmyRules(this.armyTraits),
+			combatArtIndex: indexArmyRules(this.armyCombatArts),
+			spellcraftIndex: indexArmyRules(this.armySpellcrafts),
+			spells: this.armySpells,
+			stratagemIndex: indexArmyRules(this.armyStratagems),
+			itemIndex: indexArmyRules(this.armyItems),
+			vitality
+		};
+	}
+	/**
+	 * The combat list's entries as the builder holds them - what a seat publishes as its board
+	 * once the round runs. Null when nothing is picked or the code no longer decodes.
+	 */
+	armyEntries(picked: PickedArmy | null): ArmyEntry[] | null {
+		if (!picked || !this.armyLoaded) return null;
+		const decoded = decodeArmy(picked.code, {
+			factions: this.armyFactions,
+			units: this.armyUnits,
+			upgrades: this.armyUpgrades,
+			spellcrafts: this.armySpellcrafts,
+			items: this.armyItems
+		});
+		return decoded.ok ? decoded.list.entries : null;
+	}
+
+	/**
+	 * The same view as {@link armyView}, but from board entries a seat published rather than from
+	 * a code this device holds: the opponent's half of the online flower board. Their entry ids
+	 * arrive as declared, so the fold and their device key the same copies; nothing here decodes,
+	 * and the snapshot carries no code because none ever travelled.
+	 */
+	armyViewFromEntries(
+		army: { name: string; factionId: ArmyFactionId; format: ArmyFormat },
+		entries: ArmyEntry[],
+		vitality: Record<string, UnitVitality>
+	): ArmyView | null {
+		if (!this.armyLoaded) return null;
+		const faction = this.armyFactions.find((candidate) => candidate.id === army.factionId);
+		if (!faction) return null;
+		const upgradeIndex = indexArmyRules(this.armyUpgrades);
+		return {
+			army: { name: army.name, factionId: army.factionId, code: '', format: army.format },
+			rows: resolveArmyEntries(
+				entries,
+				unitsForFaction(army.factionId, this.armyUnits),
+				this.armyUnits.mounts,
+				upgradeIndex,
+				indexArmyRules(this.armyItems)
+			),
+			picks: [],
 			faction,
 			upgradeIndex,
 			classIndex: indexArmyRules(this.armyClasses),

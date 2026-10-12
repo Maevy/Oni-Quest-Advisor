@@ -176,7 +176,7 @@ returned **in full**, secrets included. The opponent goes through `toPublicSeat`
 only:
 
 `nickname`, `army` (a `PublicArmy` = `{ name, factionId, format }`), `rosterCode`, `ready`,
-`combatReady`, `hasLeader`, `leaderStats`,
+`combatReady`, `hasLeader`, `leaderStats`, `combatRoster`,
 `factionId` (= `scheme?.factionId ?? schemeDraft.factionId`), `hasScheme`, `schemeRevealed`,
 `revealedScheme` (**null unless the scheme is both chosen and revealed**),
 `checkedObjectiveCounts`.
@@ -204,6 +204,18 @@ ids; conflating them mis-resolves exactly the two monster factions.
 absence of catalogs is why the Leader's M and INT are **declared by the client** at assignment and
 stored verbatim: the server could not compute them, and the draw count is seeded from the stored
 value rather than accepted from a request.
+
+`combatRoster` is the flower board's half of the same ruling. A seat's `publishedRoster` — its
+combat list as `ArmyEntry[]`, entry ids included — is written by **its own device** through
+`POST /roster`, once, gated on `canPublishRoster` (a running round, a combat army, nothing
+published yet); the server stores it verbatim because it cannot derive entry ids from the stored
+code. The filter exposes it as `combatRoster` only while a round is running
+(`SeatReveal.composition`), so the opponent's board half appears when their device has published
+and the round is live. Rows written before the feature have no field; `seatPublishedRoster()`
+reads it as null. The entries carry the picked upgrades, because those change the effective stats
+the flowers' rings show — and they are the one place where a determined client could re-mint a
+code from published data, which is recorded in the functional spec's visibility rules rather
+than hidden here.
 
 > Gap: `pendingJoinNickname` is placed in the view for _any_ seat and only hidden by the client.
 > It should be filtered to the leader. The pending join's army is not exposed at all, so the
@@ -236,6 +248,10 @@ matching `sha256(token)` against a seat's `tokenHash` · **leader** = seat auth 
 | POST   | `/api/games/[id]/reveal-scheme` | seat        | reveal this seat's scheme, immediately and irreversibly; refuses outside a running round or twice                                 |
 | POST   | `/api/games/[id]/objective`     | seat        | set an objective's checked count                                                                                                  |
 | POST   | `/api/games/[id]/scheme-box`    | seat        | set own scheme increments                                                                                                         |
+| POST   | `/api/games/[id]/roster`        | seat        | publish this seat's combat list as board entries; once, and only in a running round                                               |
+| POST   | `/api/games/[id]/vitality`      | seat        | append one flower-dialog commit to the interaction log; the state document does not change                                        |
+| POST   | `/api/games/[id]/vitality/undo` | seat        | append a revert of the caller's own latest action, while it is still the last one                                                 |
+| GET    | `/api/games/[id]/history`       | seat        | the interaction log in order, reverts joined onto the actions they walk back                                                      |
 | POST   | `/api/games/[id]/advance-phase` | leader      | armies → prep → setup → round 1, rounds 1–4 → next round, round 5 → concluded                                                     |
 | POST   | `/api/games/[id]/close`         | leader      | close/abandon                                                                                                                     |
 
@@ -327,32 +343,41 @@ Game **creation** bypasses the queue (there is nothing to serialise against): `i
 Append-only, written inside the same transaction as the state change. Actor is `player1`,
 `player2` or `server`; leader-only actions record `player1`.
 
-| Type                                               | Payload                                                                            |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `game-created`                                     | `{ nickname, season, missionId }`                                                  |
-| `join-requested` / `join-accepted` / `join-denied` | `{ nickname }`                                                                     |
-| `schemes-drawn`                                    | `{ count }` — the hand itself stays in state and is private                        |
-| `scheme-chosen`                                    | `{ schemeId }`                                                                     |
-| `scheme-deleted`                                   | —                                                                                  |
-| `seat-ready-toggled`                               | `{ ready }` — the seat's own new value                                             |
-| `combat-army-set`                                  | `{ name }` — never the code                                                        |
-| `leader-assigned`                                  | `{ assigned }` — never the entry id, never the statistics                          |
-| `game-started`                                     | —                                                                                  |
-| `scheme-revealed`                                  | — (the scheme itself is in state, filtered as ever)                                |
-| `phase-changed`                                    | `{ round, phase }`                                                                 |
-| `objective-toggled`                                | `{ objectiveId, checkedCount }` (clamped)                                          |
-| `scheme-box-toggled`                               | `{ checkedIncrements }`                                                            |
-| `round-snapshotted`                                | `{ round, player1, player2 }`                                                      |
-| `game-finished`                                    | `{ winner, finalVp1, finalVp2 }`, plus `autoFinished: true` when the server did it |
-| `game-closed`                                      | —                                                                                  |
+| Type                                               | Payload                                                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `game-created`                                     | `{ nickname, season, missionId }`                                                   |
+| `join-requested` / `join-accepted` / `join-denied` | `{ nickname }`                                                                      |
+| `schemes-drawn`                                    | `{ count }` — the hand itself stays in state and is private                         |
+| `scheme-chosen`                                    | `{ schemeId }`                                                                      |
+| `scheme-deleted`                                   | —                                                                                   |
+| `seat-ready-toggled`                               | `{ ready }` — the seat's own new value                                              |
+| `combat-army-set`                                  | `{ name }` — never the code                                                         |
+| `leader-assigned`                                  | `{ assigned }` — never the entry id, never the statistics                           |
+| `game-started`                                     | —                                                                                   |
+| `scheme-revealed`                                  | — (the scheme itself is in state, filtered as ever)                                 |
+| `phase-changed`                                    | `{ round, phase }`                                                                  |
+| `objective-toggled`                                | `{ objectiveId, checkedCount }` (clamped)                                           |
+| `scheme-box-toggled`                               | `{ checkedIncrements }`                                                             |
+| `round-snapshotted`                                | `{ round, player1, player2 }`                                                       |
+| `roster-published`                                 | `{ copies }` — the entries themselves live in state, filtered by round              |
+| `vitality-committed`                               | the commit: target seat/entry/name/copy, origin entry/name or null, action, `round` |
+| `vitality-reverted`                                | `{ revertOf, round }`                                                               |
+| `game-finished`                                    | `{ winner, finalVp1, finalVp2 }`, plus `autoFinished: true` when the server did it  |
+| `game-closed`                                      | —                                                                                   |
 
 `advance-phase` writes `phase-changed` on reveal → scoring, and **both** `round-snapshotted` and
 `phase-changed` on scoring → next round. `finish` writes the round-5 snapshot plus
 `game-finished`.
 
-**There is no `applyEvent` and no replay.** State is produced by calling the transition functions
-directly and persisted alongside the events; `game_events` is write-only history for statistics
-and auditing. Nothing reconstructs state from it.
+**There is no `applyEvent` and no replay** for the game state itself. State is produced by calling
+the transition functions directly and persisted alongside the events; `game_events` is write-only
+history for statistics and auditing. The one exception is the flower board: vitality lives in no
+state field at all, and both devices render it by **folding the `vitality-*` events**
+(`foldHistory` in `domain/vitalityHistory.ts`) against base stats their own catalogs supply — so
+for the board the log _is_ the state, a revert is an appended compensation the fold skips, and
+the mutation transaction reads the log (`mutateAsSeat`'s third callback argument) so an undo is
+validated against exactly the rows the next fold will replay. `round` on those events is stamped
+from `state.currentRound` inside the mutation, never accepted from the request.
 
 ## Hardening (`src/hooks.server.ts`)
 

@@ -3,7 +3,9 @@
 	import { onMount } from 'svelte';
 	import {
 		armyCopyCounts,
+		battleFlowersFor,
 		calculateTwoPlayerVP,
+		foldHistory,
 		getMissionsForSeason,
 		getScoreableResults,
 		getSeasons,
@@ -13,6 +15,8 @@
 		pickedArmyFormat,
 		resolveArmyEntries,
 		savedArmyFormat,
+		seatPublishedRoster,
+		undoableAction,
 		vitalityAfterDamage,
 		vitalityAfterHeal,
 		vitalityAfterStagger,
@@ -27,6 +31,8 @@
 		type PickedArmy,
 		type PlayerKey,
 		type SavedArmy,
+		type VitalityBases,
+		type VitalityCommitInput,
 		type VitalityTarget
 	} from '$lib/domain';
 	import {
@@ -365,6 +371,81 @@
 			m: row.effectiveStats.M,
 			int: row.effectiveStats.INT
 		});
+	}
+
+	// --- the online flower board: the match's log, folded ---------------------------
+	/**
+	 * Both seats' boards and the sentences the history lists. Nothing stores vitality: the first
+	 * pass builds the boards empty to learn each copy's base stats, the fold replays the log
+	 * against those, and the second pass paints the result - so this device and the opponent's
+	 * render the same log into the same maps.
+	 */
+	let onlineBoard = $derived.by(() => {
+		const empty: Record<PlayerKey, ArmyView | null> = { player1: null, player2: null };
+		const view = onlineGameStore.view;
+		if (!view || view.phase !== 'playing') return { boards: empty, sentences: {} };
+		const mine = view.seat;
+		const theirs: PlayerKey = mine === 'player1' ? 'player2' : 'player1';
+		const own = view.self.combatArmy ? contentStore.armyView(view.self.combatArmy, {}) : null;
+		const opponent = view.opponent;
+		const published = opponent?.combatRoster ?? null;
+		const opp =
+			published && opponent
+				? contentStore.armyViewFromEntries(
+						{
+							name: opponent.army.name,
+							factionId: opponent.army.factionId,
+							format: opponent.army.format
+						},
+						published,
+						{}
+					)
+				: null;
+		const bases: VitalityBases = { player1: {}, player2: {} };
+		for (const [seat, board] of [
+			[mine, own],
+			[theirs, opp]
+		] as Array<[PlayerKey, ArmyView | null]>) {
+			if (!board) continue;
+			for (const flower of battleFlowersFor(board)) {
+				bases[seat][flower.entryId] = {
+					hp: flower.life?.max ?? 0,
+					sta: flower.stamina?.max ?? null,
+					undead: flower.undead
+				};
+			}
+		}
+		const fold = foldHistory(onlineGameStore.history, bases);
+		const boards: Record<PlayerKey, ArmyView | null> = { player1: null, player2: null };
+		boards[mine] = own ? { ...own, vitality: fold.vitality[mine] } : null;
+		boards[theirs] = opp ? { ...opp, vitality: fold.vitality[theirs] } : null;
+		return { boards, sentences: fold.sentences };
+	});
+
+	let onlineUndoableSeq = $derived.by(() => {
+		const view = onlineGameStore.view;
+		if (!view) return null;
+		return undoableAction(onlineGameStore.history, view.seat)?.seq ?? null;
+	});
+
+	// The server cannot derive entry ids from the stored code - it loads no army catalogs - so
+	// each device publishes its own board once the round runs. The guard is once-only server-side,
+	// and the store swallows the 409 a duplicate publish races into.
+	$effect(() => {
+		const view = onlineGameStore.view;
+		if (!view || view.phase !== 'playing') return;
+		if (seatPublishedRoster(view.self) !== null) return;
+		const entries = contentStore.armyEntries(view.self.combatArmy);
+		if (!entries) return;
+		void onlineGameStore.publishRoster(entries);
+	});
+
+	function onlineCommit(commit: VitalityCommitInput): void {
+		void onlineGameStore.commitVitality(commit);
+	}
+
+	function onlineUndo(seq: number): void {
+		void onlineGameStore.undoVitality(seq);
 	}
 
 	// --- cutting a registered Roster army down to a match list ---
@@ -953,6 +1034,12 @@
 			onAdvance={() => onlineGameStore.advancePhase()}
 			onReturn={stepAwayFromOnlineGame}
 			megaphone={tableMegaphone}
+			boards={onlineBoard.boards}
+			history={onlineGameStore.history}
+			sentences={onlineBoard.sentences}
+			undoableSeq={onlineUndoableSeq}
+			onCommit={onlineCommit}
+			onUndo={onlineUndo}
 		/>
 	{:else if onlineGameStore.view.status === 'finished'}
 		<OnlineStats

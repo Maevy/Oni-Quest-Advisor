@@ -1,5 +1,10 @@
+import type { Row, Transaction } from '@libsql/client';
 import {
+	HISTORY_EVENT_COMMIT,
+	HISTORY_EVENT_REVERT,
+	historyFromRows,
 	seatForTokenHash,
+	type HistoryEntry,
 	type OnlineGameEventType,
 	type OnlineGameState,
 	type PlayerKey
@@ -95,6 +100,45 @@ function serializeMutation<T>(task: () => Promise<T>): Promise<T> {
 
 type MutationRole = 'anyone' | 'seat' | 'leader';
 
+/** The log's raw rows as the domain's mapper wants them. */
+function rowsToHistory(rows: Row[]): HistoryEntry[] {
+	return historyFromRows(
+		rows.map((row) => ({
+			seq: Number(row[0]),
+			type: String(row[1]),
+			actor: row[2] === null ? null : String(row[2]),
+			payload: JSON.parse(String(row[3])),
+			createdAt: String(row[4])
+		}))
+	);
+}
+
+const HISTORY_SQL = `SELECT seq, type, actor, payload, created_at FROM game_events
+			WHERE game_id = ? AND type IN (?, ?) ORDER BY seq`;
+
+/**
+ * The flower board's append log in seq order, with reverts joined onto the actions they walk
+ * back. Read inside a mutation's transaction as well as by the history endpoint, so an undo can
+ * only ever be validated against the same log the next fold will replay.
+ */
+async function readHistory(tx: Transaction, id: string): Promise<HistoryEntry[]> {
+	const result = await tx.execute({
+		sql: HISTORY_SQL,
+		args: [id, HISTORY_EVENT_COMMIT, HISTORY_EVENT_REVERT]
+	});
+	return rowsToHistory(result.rows);
+}
+
+/** The flower board's log, for the history endpoint and any read outside a mutation. */
+export async function readGameHistory(id: string): Promise<HistoryEntry[]> {
+	const db = await getDb();
+	const result = await db.execute({
+		sql: HISTORY_SQL,
+		args: [id, HISTORY_EVENT_COMMIT, HISTORY_EVENT_REVERT]
+	});
+	return rowsToHistory(result.rows);
+}
+
 /**
  * The complete authenticated read-modify-write cycle for one game action:
  * SELECT the freshest state, authenticate, run the mutation callback, refresh
@@ -107,7 +151,7 @@ function runMutation(
 	id: string,
 	role: MutationRole,
 	token: string | null,
-	mutate: (game: OnlineGameState, seat: PlayerKey | null) => Mutation
+	mutate: (game: OnlineGameState, seat: PlayerKey | null, history: HistoryEntry[]) => Mutation
 ): Promise<OnlineGameState> {
 	return serializeMutation(() => executeMutation(id, role, token, mutate));
 }
@@ -116,7 +160,7 @@ async function executeMutation(
 	id: string,
 	role: MutationRole,
 	token: string | null,
-	mutate: (game: OnlineGameState, seat: PlayerKey | null) => Mutation
+	mutate: (game: OnlineGameState, seat: PlayerKey | null, history: HistoryEntry[]) => Mutation
 ): Promise<OnlineGameState> {
 	const db = await getDb();
 	const tx = await db.transaction('write');
@@ -139,7 +183,8 @@ async function executeMutation(
 			}
 		}
 
-		const { next, events } = mutate(game, seat);
+		const history = await readHistory(tx, id);
+		const { next, events } = mutate(game, seat, history);
 		const list = Array.isArray(events) ? events : [events];
 		const updatedAt = new Date().toISOString();
 		const persisted = { ...next, updatedAt };
@@ -175,13 +220,14 @@ export function mutateOpen(
 	return runMutation(id, 'anyone', null, (game) => mutate(game));
 }
 
-/** Mutates as one of the two seats; the callback receives the caller's seat. */
+/** Mutates as one of the two seats; the callback receives the caller's seat and the flower
+ * board's append log, so an undo can be validated against exactly what the next fold replays. */
 export function mutateAsSeat(
 	id: string,
 	token: string | null,
-	mutate: (game: OnlineGameState, seat: PlayerKey) => Mutation
+	mutate: (game: OnlineGameState, seat: PlayerKey, history: HistoryEntry[]) => Mutation
 ): Promise<OnlineGameState> {
-	return runMutation(id, 'seat', token, (game, seat) => mutate(game, seat!));
+	return runMutation(id, 'seat', token, (game, seat, history) => mutate(game, seat!, history));
 }
 
 /** Mutates as the leader (seat player1); 403 for the other seat. */

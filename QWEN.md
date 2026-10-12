@@ -196,6 +196,14 @@ section.
     `combatReady` _are_ public, because leader buttons are gated on them.
   - **There is no `hydrateOnlineGameState`.** Online state is one server-side JSON document
     with no migration mechanism, so a shape change means **wiping the database**, not merging.
+  - **The flower board's vitality is the interaction log folded**, not a state field: every
+    commit is a `vitality-committed` row in `game_events` (round server-stamped), both devices
+    fold the log into their boards (`foldHistory`), and an undo is an appended
+    `vitality-reverted` that the fold skips — **actor-only, and only while their action is still
+    the last one**. Each seat **publishes its own combat list as board entries** once the round
+    runs (`publishedRoster`, exposed as `combatRoster`), because the server cannot derive entry
+    ids from a code: the composition opens at play, the code never travels. Online, **only your
+    own flowers lift and open the Self Interaction dialog**; the opponent's are drop targets.
 
   Spec: `docs/functional-spec/07-online-two-player.md`,
   `docs/technical-spec/06-online-architecture.md`. `MULTIPLAYER_PLAN.md` (local-only) is

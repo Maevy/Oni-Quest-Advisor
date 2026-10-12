@@ -213,9 +213,37 @@ trade-off is secrecy versus scoring, exactly as on a table.
 
 ### The Army and Mission views
 
-**Army** is, for now, an empty list — _"Nothing tracked here yet."_ — a placeholder for the per-copy
-tracking planned for it. **Mission** is the read-only mission: description, setup, map and quest
-rules, with the Broken Morale / Ceasefire rule cards opening from their labels.
+**Army** is the **Battle Flowers** board plus the match's **history log** (2026-10-12). The board
+carries both seats — your own half and the opponent's — and the same two gestures as solo and
+hot-seat, with one ownership rule: **only your own flowers lift and open the Self Interaction
+dialog**; the opponent's flowers are drop targets and history, never origins and never selves. A
+drag of one of your flowers onto any flower, friend or foe, opens the cross-model Interaction
+panel as elsewhere.
+
+The board renders no stored vitality: every interaction of the match is an entry in the backend's
+append log (`game_events`), and both devices **fold that log** into the Life/Stamina/States maps
+their flowers wear. A commit therefore travels as one structured entry — who acted, on which copy
+of which seat, in which round, by how much — and the round is server-stamped, not declared. The
+log is also what the battle report will later fold for its statistics, so it carries every number
+a KPI could want.
+
+Above the board, under the round bar, sits the **history strip**: a count and the latest
+interaction's sentence (_Citadel Guard takes 2 damage_). Tapping it opens the **Interaction
+history** dialog — the log grouped by round, each entry as its sentences with the acting seat's
+chip; a click outside or Escape closes it. An undone entry stays in the list, struck through and
+marked _undone_, because the log keeps the mis-tap: an undo is an appended **revert** entry, and
+the fold skips the pair. The **Undo** button rides the latest entry while it is **your own** and
+still standing — an opponent's action is not yours to walk back, and once the last thing that
+happened was an undo there is nothing left to undo until a new action lands.
+
+The opponent's half of the board appears once their device has **published** it: the server loads
+no army catalogs and cannot derive entry ids from the stored code, so each seat declares its own
+combat list as board entries when the round starts, once, and the composition opens at play — the
+models are on the table by then. The importable code never travels, and before the round runs the
+composition stays shut as it always was.
+
+**Mission** is the read-only mission: description, setup, map and quest rules, with the Broken
+Morale / Ceasefire rule cards opening from their labels.
 
 **Advance to next round** snapshots both players' cumulative VP for the round (this feeds the
 statistics table) and opens the next one. Objectives stay editable throughout a round — there is no
@@ -281,23 +309,24 @@ add-on:
 
 ## Visibility rules (server-enforced)
 
-| Data                              | Owner sees          | Opponent sees                 |
-| --------------------------------- | ------------------- | ----------------------------- |
-| Player names, seats, leader badge | ✓                   | ✓                             |
-| Army name, faction, format tag    | ✓                   | ✓                             |
-| Roster contents (units, pool)     | own, always         | from the reveal on            |
-| The cut match list                | own, with its code  | **only the flag**             |
-| A Standard list's contents        | own, always         | **nothing until deployment**  |
-| Leader identity                   | own                 | **nothing, ever**             |
-| Leader M and INT                  | own                 | from Scheme selection on      |
-| Combat-ready flag                 | ✓                   | ✓                             |
-| Scheme faction (from the army)    | ✓                   | ✓                             |
-| Drawn scheme hand                 | own cards           | **nothing**                   |
-| Chosen scheme, unrevealed         | full card           | **"Hidden Scheme"**           |
-| Chosen scheme, revealed           | full card           | card + boxes, **read-only**   |
-| Own objective counts              | editable in Scoring | ✓ read-only                   |
-| Reveal intent                     | own, toggleable     | **nothing** (until committed) |
-| Invite link, pending join request | leader only         | —                             |
+| Data                              | Owner sees          | Opponent sees                                 |
+| --------------------------------- | ------------------- | --------------------------------------------- |
+| Player names, seats, leader badge | ✓                   | ✓                                             |
+| Army name, faction, format tag    | ✓                   | ✓                                             |
+| Roster contents (units, pool)     | own, always         | from the reveal on                            |
+| The cut match list                | own, with its code  | **only the flag**, plus board entries in play |
+| A Standard list's contents        | own, always         | **board entries from round 1**, code never    |
+| Leader identity                   | own                 | **nothing, ever**                             |
+| Leader M and INT                  | own                 | from Scheme selection on                      |
+| Combat-ready flag                 | ✓                   | ✓                                             |
+| Interaction log (vitality events) | ✓                   | ✓                                             |
+| Scheme faction (from the army)    | ✓                   | ✓                                             |
+| Drawn scheme hand                 | own cards           | **nothing**                                   |
+| Chosen scheme, unrevealed         | full card           | **"Hidden Scheme"**                           |
+| Chosen scheme, revealed           | full card           | card + boxes, **read-only**                   |
+| Own objective counts              | editable in Scoring | ✓ read-only                                   |
+| Reveal intent                     | own, toggleable     | **nothing** (until committed)                 |
+| Invite link, pending join request | leader only         | —                                             |
 
 The army's `factionId` in the filtered seat view is an **army** faction (7 ids, including
 `oni-clans` and `goblin-wartribes`) and is a separate field from the **scheme** faction (6 ids,
@@ -313,9 +342,11 @@ client could name.
 The one code that does travel is a **roster's**, and only once the game is running: the reveal is
 the rulebook's step 4, and a roster is not a match list, so publishing it leaks nothing about the
 party being cut from it. A Standard registration's code never travels, because for it the two are
-the same list. The cut's code never travels either. Deployment — the rulebook's step 10, where a
-physical table would see both parties — is not modelled, so a Standard player's list stays secret
-for the whole match; that is recorded as an open question below.
+the same list. The cut's code never travels either. What does open at round 1 since the flower
+board arrived is each seat's combat list as **board entries** — entry ids, units, mounts and
+picked upgrades, declared by the owner's own device — which is the physical table's deployment
+step without the importable code: a determined opponent could re-mint a code from the entries,
+but never receives one.
 
 ## Differences from hot-seat
 
@@ -329,11 +360,14 @@ for the whole match; that is recorded as an open question below.
 | Objectives              | own view, editable all round                           | active seat's own sheet       |
 | Round                   | server round engine, leader advances                   | manual, Player 1 only         |
 | Armies                  | a registration **and** a cut combat list, server-side  | one per seat, tracked live    |
+| Per-copy tracking       | the interaction log, folded on both devices            | the seat's vitality map       |
 | Finish / statistics     | yes                                                    | none                          |
 
-An online seat's armies are **registrations**, not tracked forces: the server stores the snapshots
-and shows the registered one's name, faction and format, but nothing scores damage against them.
-Hot-seat tracks Life, stamina and States per copy.
+An online seat's armies are **registrations**, not locally tracked forces: the server stores the
+snapshots and shows the registered one's name, faction and format. What tracks against them is
+the match's interaction log — every damage, heal, State, Stagger, Stun and Stamina step appended
+as an event and folded into the boards on both devices — where hot-seat keeps a vitality map per
+seat in `localStorage` and scores nothing server-side.
 
 ## Open questions
 
@@ -365,11 +399,11 @@ Hot-seat tracks Life, stamina and States per copy.
   catalogs, so "≤ 85 points" and "only what the roster held" are enforced by the borrowed builder
   alone. The code is only ever echoed back to its owner, so a tampered client hurts nobody but
   itself — the same ruling the tournament join already made.
-- **Deployment never reveals a party.** The rulebook's step 10 puts both armies on the table, but
-  our mission screen shows no armies at all — so a Standard player's list stays secret for the
-  whole match and a cut stays secret forever. Whether the game view should show both combat lists
-  once round 1 begins (the physical-table equivalent) is open, and it is the reason a Standard
-  registration has no browse button on the reveal screen.
+- **Deployment never reveals a party.** _Resolved 2026-10-12 by the flower board:_ each seat
+  publishes its combat list as board entries once the round runs, which is the physical table's
+  deployment step; the importable code still never travels, and before round 1 the composition
+  stays shut. What remains open is only whether the reveal screen should grow a browse button for
+  a Standard registration now that its contents open at play anyway.
 
 Resolved since the last revision: the lobby's stale _"Round controls arrive in the next update."_
 placeholder is gone (an `active` game with missing mission content now says so), and the close

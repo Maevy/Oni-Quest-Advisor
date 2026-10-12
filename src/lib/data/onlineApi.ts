@@ -1,9 +1,12 @@
 import type {
+	ArmyEntry,
+	HistoryEntry,
 	OnlineGameSetup,
 	OnlineGameView,
 	PickedArmy,
 	PlayerKey,
-	SeatLeader
+	SeatLeader,
+	VitalityCommitInput
 } from '$lib/domain';
 
 const BASE = '/api/games';
@@ -215,6 +218,53 @@ export async function advancePhase(gameId: string, token: string): Promise<void>
 	const response = await fetch(`${BASE}/${gameId}/advance-phase`, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}` }
+	});
+	await parse<Record<string, never>>(response);
+}
+
+/** Appends one flower-dialog commit to the game's log; the boards refold from it. */
+export async function commitVitality(
+	gameId: string,
+	token: string,
+	commit: VitalityCommitInput
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/vitality`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify(commit)
+	});
+	await parse<Record<string, never>>(response);
+}
+
+/** Walks the caller's own latest interaction back, as an appended revert. */
+export async function undoVitality(gameId: string, token: string, seq: number): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/vitality/undo`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ seq })
+	});
+	await parse<Record<string, never>>(response);
+}
+
+/** The match's interaction log, in order, for the history panel and the boards' fold. */
+export async function fetchHistory(gameId: string, token: string): Promise<HistoryEntry[]> {
+	const response = await fetch(`${BASE}/${gameId}/history`, {
+		headers: { authorization: `Bearer ${token}` }
+	});
+	const body = await parse<{ history: HistoryEntry[] }>(response);
+	return body.history;
+}
+
+/** Publishes this seat's combat list as board entries, once the round is running. */
+export async function publishRoster(
+	gameId: string,
+	token: string,
+	entries: ArmyEntry[]
+): Promise<void> {
+	const response = await fetch(`${BASE}/${gameId}/roster`, {
+		method: 'POST',
+		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+		body: JSON.stringify({ entries })
 	});
 	await parse<Record<string, never>>(response);
 }

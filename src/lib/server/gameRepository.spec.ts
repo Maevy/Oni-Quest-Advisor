@@ -2,10 +2,25 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { acceptJoin, createOnlineGame, requestJoin, type PickedArmy } from '$lib/domain';
+import {
+	acceptJoin,
+	createOnlineGame,
+	requestJoin,
+	undoableAction,
+	type HistoryAction,
+	type HistoryEntry,
+	type PickedArmy
+} from '$lib/domain';
 import { getDb } from './db';
 import { ApiError } from './errors';
-import { getGame, insertGame, mutateAsLeader, mutateAsSeat, mutateOpen } from './gameRepository';
+import {
+	getGame,
+	insertGame,
+	mutateAsLeader,
+	mutateAsSeat,
+	mutateOpen,
+	readGameHistory
+} from './gameRepository';
 import { generateGameCode, generateSeatToken, hashToken } from './ids';
 
 // Point the file database at a throwaway directory before the lazy DB opens.
@@ -177,5 +192,134 @@ describe('gameRepository', () => {
 		const game = await getGame(id);
 		expect(game?.player1.progress.checkedObjectiveCounts[objectiveId]).toBe(10);
 		expect(await eventCount(id)).toBe(11);
+	});
+});
+
+describe('the flower board log', () => {
+	const COMMIT = {
+		targetSeat: 'player2',
+		targetEntryId: 'e1',
+		targetName: 'Clan Champion',
+		targetCopy: null,
+		originEntryId: 'e0',
+		originName: 'Chiyohime',
+		action: { kind: 'damage', amount: 4 }
+	} as const;
+
+	/** A seeded game moved into a running round, where the board is open. */
+	async function playingGame(): Promise<Fixture> {
+		const fixture = await createSeededGame();
+		await mutateAsSeat(fixture.id, fixture.leaderToken, (game) => ({
+			next: { ...game, status: 'active' },
+			events: { type: 'game-started', actor: 'player1' }
+		}));
+		return fixture;
+	}
+
+	it('appends a commit and reads it back with the round the server stamped', async () => {
+		const { id, leaderToken } = await playingGame();
+		await mutateAsSeat(id, leaderToken, (game, seat) => ({
+			next: game,
+			events: {
+				type: 'vitality-committed',
+				actor: seat,
+				payload: { ...COMMIT, round: game.currentRound }
+			}
+		}));
+
+		const history = await readGameHistory(id);
+		expect(history).toHaveLength(1);
+		expect(history[0]).toMatchObject({
+			kind: 'action',
+			actor: 'player1',
+			round: 1,
+			undoneBy: null
+		});
+		expect((history[0] as HistoryAction).action).toEqual({ kind: 'damage', amount: 4 });
+		expect((history[0] as HistoryAction).targetName).toBe('Clan Champion');
+	});
+
+	it('hands a mutation the same log the history endpoint reads, and joins the undo onto it', async () => {
+		const { id, leaderToken } = await playingGame();
+		await mutateAsSeat(id, leaderToken, (game, seat) => ({
+			next: game,
+			events: {
+				type: 'vitality-committed',
+				actor: seat,
+				payload: { ...COMMIT, round: game.currentRound }
+			}
+		}));
+
+		let seen: HistoryEntry[] = [];
+		await mutateAsSeat(id, leaderToken, (game, seat, history) => {
+			seen = history;
+			const target = undoableAction(history, seat);
+			if (!target) throw new ApiError(409, 'Nothing to undo');
+			return {
+				next: game,
+				events: {
+					type: 'vitality-reverted',
+					actor: seat,
+					payload: { revertOf: target.seq, round: game.currentRound }
+				}
+			};
+		});
+		expect(seen).toHaveLength(1);
+
+		const history = await readGameHistory(id);
+		expect(history).toHaveLength(2);
+		expect(history[1]).toMatchObject({ kind: 'revert', revertOf: history[0]?.seq });
+		expect(history[0]).toMatchObject({ kind: 'action', undoneBy: history[1]?.seq });
+		expect(undoableAction(history, 'player1')).toBeNull();
+	});
+
+	it('refuses to undo an opponent’s action', async () => {
+		const { id, leaderToken, player2Token } = await playingGame();
+		await mutateAsSeat(id, leaderToken, (game, seat) => ({
+			next: game,
+			events: {
+				type: 'vitality-committed',
+				actor: seat,
+				payload: { ...COMMIT, round: game.currentRound }
+			}
+		}));
+
+		await expectApiError(
+			mutateAsSeat(id, player2Token, (game, seat, history) => {
+				const target = undoableAction(history, seat);
+				if (!target) throw new ApiError(409, 'Only your own latest interaction can be undone');
+				return {
+					next: game,
+					events: {
+						type: 'vitality-reverted',
+						actor: seat,
+						payload: { revertOf: target.seq, round: game.currentRound }
+					}
+				};
+			}),
+			409
+		);
+		expect(await readGameHistory(id)).toHaveLength(1);
+	});
+
+	it('skips a row whose payload no longer parses', async () => {
+		const { id } = await playingGame();
+		const db = await getDb();
+		const next = await db.execute({
+			sql: 'SELECT COALESCE(MAX(seq), 0) + 1 FROM game_events WHERE game_id = ?',
+			args: [id]
+		});
+		await db.execute({
+			sql: 'INSERT INTO game_events (game_id, seq, type, actor, payload, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+			args: [
+				id,
+				Number(next.rows[0][0]),
+				'vitality-committed',
+				'player1',
+				JSON.stringify({ round: 1, action: { kind: 'damage', amount: 0 } }),
+				new Date().toISOString()
+			]
+		});
+		expect(await readGameHistory(id)).toEqual([]);
 	});
 });

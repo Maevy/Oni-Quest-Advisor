@@ -11,6 +11,7 @@ import {
 	canEditSetup,
 	canLeaveArmies,
 	canLeavePrep,
+	canPublishRoster,
 	canRevealSeatScheme,
 	canRequestJoin,
 	canScoreSeatScheme,
@@ -31,9 +32,12 @@ import {
 	leavePrep,
 	MAX_NICKNAME_LENGTH,
 	normalizeNickname,
+	parsePublishedRoster,
+	publishRoster,
 	requestJoin,
 	revealSeatScheme,
 	seatForTokenHash,
+	seatPublishedRoster,
 	setCombatArmy,
 	setLeader,
 	setSeatDrawnSchemes,
@@ -52,8 +56,9 @@ import {
 
 const CREATED_AT = '2026-08-20T18:00:00.000Z';
 
-const NO_REVEAL: SeatReveal = { roster: false, leaderStats: false };
-const ROSTER_ONLY: SeatReveal = { roster: true, leaderStats: false };
+const NO_REVEAL: SeatReveal = { roster: false, leaderStats: false, composition: false };
+const ROSTER_ONLY: SeatReveal = { roster: true, leaderStats: false, composition: false };
+const COMPOSITION: SeatReveal = { roster: true, leaderStats: true, composition: true };
 
 const ALICE_ARMY: PickedArmy = {
 	name: 'Alice Standard',
@@ -514,7 +519,10 @@ describe('the Leader', () => {
 		expect(toPublicSeat(prep.player1, ROSTER_ONLY).leaderStats).toBeNull();
 		const setup = leavePrep(prep);
 		expect(isLeaderStatsRevealed(setup)).toBe(true);
-		expect(toPublicSeat(setup.player1, { roster: true, leaderStats: true }).leaderStats).toEqual({
+		expect(
+			toPublicSeat(setup.player1, { roster: true, leaderStats: true, composition: false })
+				.leaderStats
+		).toEqual({
 			m: 10,
 			int: 8
 		});
@@ -713,6 +721,38 @@ describe('visibility', () => {
 		expect(view.revealedScheme?.schemeId).toBe('head-hunt');
 	});
 
+	it('keeps the composition shut until the round runs, then opens the published board', () => {
+		const playing = activePlayingGame();
+		expect(canPublishRoster(playing, 'player1')).toBe(true);
+		expect(toPublicSeat(playing.player2!, COMPOSITION).combatRoster).toBeNull();
+		const entries = [{ id: 'e1', unitId: 'citadel-guard' }];
+		const published = publishRoster(playing, 'player1', entries);
+		expect(seatPublishedRoster(published.player1)).toEqual(entries);
+		// The opponent's own half stays shut until their device publishes in turn.
+		expect(toPublicSeat(published.player2!, COMPOSITION).combatRoster).toBeNull();
+		expect(toPublicSeat(published.player1, COMPOSITION).combatRoster).toEqual(entries);
+		// Once only: the board's identity must not shift under a match being played.
+		expect(canPublishRoster(published, 'player1')).toBe(false);
+		expect(publishRoster(published, 'player1', [{ id: 'e2', unitId: 'other' }])).toEqual(published);
+	});
+
+	it('refuses the board before the round runs', () => {
+		expect(canPublishRoster(newGame(), 'player1')).toBe(false);
+		expect(canPublishRoster(inSetup(), 'player1')).toBe(false);
+		expect(publishRoster(inSetup(), 'player1', [{ id: 'e1', unitId: 'u' }])).toEqual(inSetup());
+	});
+
+	it('viewForSeat opens the composition only in a running round', () => {
+		const playing = publishRoster(activePlayingGame(), 'player2', [
+			{ id: 'e1', unitId: 'citadel-guard' }
+		]);
+		expect(viewForSeat(playing, 'player1')?.opponent?.combatRoster).toEqual([
+			{ id: 'e1', unitId: 'citadel-guard' }
+		]);
+		const setup = publishRoster(inSetup(), 'player2', [{ id: 'e1', unitId: 'citadel-guard' }]);
+		expect(viewForSeat(setup, 'player1')?.opponent?.combatRoster).toBeNull();
+	});
+
 	it('viewForSeat gives the seat its own secrets and a filtered opponent', () => {
 		let state = draftAndChooseScheme(inSetup(), 'player1');
 		state = draftAndChooseScheme(state, 'player2');
@@ -750,5 +790,34 @@ describe('visibility', () => {
 		const view = viewForSeat(state, 'player2');
 		expect(view?.resultSummary?.winner).toBe('player1');
 		expect(view?.resultSummary?.finalVp).toEqual({ player1: 7, player2: 4 });
+	});
+});
+
+describe('parsePublishedRoster', () => {
+	it('accepts a bounded board and keeps what the builder needs', () => {
+		expect(
+			parsePublishedRoster([
+				{ id: 'e1', unitId: 'u1', mounted: true, upgrades: ['devotion'] },
+				{ id: 'e2', unitId: 'u2', upgradeChoices: { up: { option: 'a', itemId: 'it' } } }
+			])
+		).toEqual([
+			{ id: 'e1', unitId: 'u1', mounted: true, upgrades: ['devotion'] },
+			{ id: 'e2', unitId: 'u2', upgradeChoices: { up: { option: 'a', itemId: 'it' } } }
+		]);
+	});
+
+	it('rejects an empty or oversized board and malformed entries', () => {
+		expect(parsePublishedRoster([])).toBeNull();
+		expect(
+			parsePublishedRoster(
+				Array.from({ length: 61 }, (_, index) => ({ id: `e${index}`, unitId: 'u' }))
+			)
+		).toBeNull();
+		expect(parsePublishedRoster([{ id: '', unitId: 'u' }])).toBeNull();
+		expect(parsePublishedRoster([{ id: 'e', unitId: 'u', upgrades: ['x'.repeat(65)] }])).toBeNull();
+		expect(
+			parsePublishedRoster([{ id: 'e', unitId: 'u', upgradeChoices: { a: { option: 1 } } }])
+		).toBeNull();
+		expect(parsePublishedRoster('nope')).toBeNull();
 	});
 });

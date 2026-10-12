@@ -2,7 +2,7 @@ import { MAX_ROUND, MIN_ROUND } from './progress';
 import { chooseScheme, setSchemeChecked, type ChosenScheme } from './scheme';
 import { schemeFactionForArmy } from './faction';
 import { pickedArmyFormat, type PickedArmy } from './savedArmy';
-import type { ArmyFactionId, ArmyFormat } from './army';
+import type { ArmyEntry, ArmyFactionId, ArmyFormat, ArmyUpgradeChoice } from './army';
 import type { PlayerKey, SeatProgress } from './twoPlayer';
 
 export type OnlineGameStatus = 'lobby' | 'active' | 'finished' | 'closed';
@@ -36,6 +36,13 @@ export type OnlineSeatState = {
 	progress: SeatProgress;
 	/** Ids of the drawn scheme cards; private to this seat, persisted for reconnects. */
 	drawnSchemeIds: string[];
+	/**
+	 * The seat's own combat list as board entries, published by its own device once the round is
+	 * running - the server loads no catalogs, so it cannot derive entry ids from the stored code.
+	 * This is what opens the composition at play: the models are on the table by then. Absent on
+	 * rows written before the history log existed; read through {@link seatPublishedRoster}.
+	 */
+	publishedRoster?: ArmyEntry[] | null;
 };
 
 /**
@@ -56,6 +63,8 @@ export type SeatReveal = {
 	roster: boolean;
 	/** The leader's M and INT, from Scheme selection on. */
 	leaderStats: boolean;
+	/** The combat list as board entries, from the round's start on - the models are on the table. */
+	composition: boolean;
 };
 
 export type RoundSnapshot = { player1: number; player2: number };
@@ -113,6 +122,14 @@ export function onlineGameTournament(state: OnlineGameState): OnlineGameTourname
 }
 
 /**
+ * The board entries a seat has published for the flower board. Null until its own device sends
+ * them, which it may only do once the round is running.
+ */
+export function seatPublishedRoster(seat: OnlineSeatState): ArmyEntry[] | null {
+	return seat.publishedRoster ?? null;
+}
+
+/**
  * What the opponent's seat card may show: the army's identity, never its code, so
  * nobody can import nobody else's list. The faction is an **army** faction and has
  * nothing to do with `PublicSeatState.factionId`, which is a scheme faction — the two
@@ -142,6 +159,12 @@ export type PublicSeatState = {
 	 * Leader never travels.
 	 */
 	leaderStats: { m: number | null; int: number | null } | null;
+	/**
+	 * The seat's combat list as board entries, from the round's start on: what the opponent's
+	 * half of the flower board renders. Null before that, and null until the seat's own device
+	 * has published it - the codes themselves never travel, so an importable list stays secret.
+	 */
+	combatRoster: ArmyEntry[] | null;
 	/** Lobby readiness — public, since the leader's Start Game is gated on both seats. */
 	ready: boolean;
 	factionId: string | null;
@@ -194,6 +217,9 @@ export type OnlineGameEventType =
 	| 'phase-changed'
 	| 'objective-toggled'
 	| 'scheme-box-toggled'
+	| 'roster-published'
+	| 'vitality-committed'
+	| 'vitality-reverted'
 	| 'round-snapshotted'
 	| 'game-finished'
 	| 'game-closed';
@@ -608,6 +634,95 @@ export function isRoundRunning(state: OnlineGameState): boolean {
 }
 
 /**
+ * A seat may publish its board once the round is running and it has a combat army to field —
+ * and only once: the board's identity must not shift under a match being played. The composition
+ * opens at play because the models are on the table by then; the importable code never travels.
+ */
+export function canPublishRoster(state: OnlineGameState, seat: PlayerKey): boolean {
+	if (!isRoundRunning(state)) return false;
+	const current = state[seat];
+	if (!current || current.combatArmy === null) return false;
+	return seatPublishedRoster(current) === null;
+}
+
+export function publishRoster(
+	state: OnlineGameState,
+	seat: PlayerKey,
+	entries: ArmyEntry[]
+): OnlineGameState {
+	if (!canPublishRoster(state, seat)) return state;
+	const current = state[seat]!;
+	return { ...state, [seat]: { ...current, publishedRoster: entries } };
+}
+
+/** Bounds on a published board: a format cap of 125 points cannot field more copies than this. */
+export const PUBLISHED_ROSTER_MAX = 60;
+const PUBLISHED_ID_MAX = 64;
+
+/**
+ * The board a seat declares, parsed and bounded. Entry ids are the publisher's own - they are
+ * what its device's flowers and vitality map key on, and the server cannot derive them from the
+ * stored code - so they enter the state exactly as declared, only bounded in shape and size.
+ */
+export function parsePublishedRoster(raw: unknown): ArmyEntry[] | null {
+	if (!Array.isArray(raw) || raw.length === 0 || raw.length > PUBLISHED_ROSTER_MAX) return null;
+	const entries: ArmyEntry[] = [];
+	for (const item of raw) {
+		if (typeof item !== 'object' || item === null) return null;
+		const body = item as Record<string, unknown>;
+		if (typeof body.id !== 'string' || body.id.length > PUBLISHED_ID_MAX || body.id.length === 0)
+			return null;
+		if (typeof body.unitId !== 'string' || body.unitId.length > PUBLISHED_ID_MAX) return null;
+		const entry: ArmyEntry = { id: body.id, unitId: body.unitId };
+		if (body.mounted === true) entry.mounted = true;
+		if (body.upgrades !== undefined) {
+			if (!Array.isArray(body.upgrades) || body.upgrades.length > 16) return null;
+			if (!body.upgrades.every((u) => typeof u === 'string' && u.length <= PUBLISHED_ID_MAX))
+				return null;
+			entry.upgrades = body.upgrades as string[];
+		}
+		if (body.spellcraftChoices !== undefined) {
+			if (typeof body.spellcraftChoices !== 'object' || body.spellcraftChoices === null)
+				return null;
+			const choices: Record<string, string> = {};
+			for (const [key, value] of Object.entries(body.spellcraftChoices)) {
+				if (typeof value !== 'string' || value.length > PUBLISHED_ID_MAX) return null;
+				choices[key] = value;
+			}
+			entry.spellcraftChoices = choices;
+		}
+		if (body.upgradeChoices !== undefined) {
+			if (typeof body.upgradeChoices !== 'object' || body.upgradeChoices === null) return null;
+			const choices: Record<string, ArmyUpgradeChoice> = {};
+			for (const [key, value] of Object.entries(body.upgradeChoices)) {
+				if (typeof value !== 'object' || value === null) return null;
+				const choice = value as Record<string, unknown>;
+				if (typeof choice.option !== 'string' || choice.option.length > PUBLISHED_ID_MAX)
+					return null;
+				const parsed: ArmyUpgradeChoice = { option: choice.option };
+				if (choice.itemId !== undefined) {
+					if (typeof choice.itemId !== 'string' || choice.itemId.length > PUBLISHED_ID_MAX)
+						return null;
+					parsed.itemId = choice.itemId;
+				}
+				if (choice.removedElement !== undefined) {
+					if (
+						typeof choice.removedElement !== 'string' ||
+						choice.removedElement.length > PUBLISHED_ID_MAX
+					)
+						return null;
+					parsed.removedElement = choice.removedElement;
+				}
+				choices[key] = parsed;
+			}
+			entry.upgradeChoices = choices;
+		}
+		entries.push(entry);
+	}
+	return entries;
+}
+
+/**
  * Reveals this seat's scheme, immediately and permanently. The reveal is each player's own
  * decision at any moment of a running round — not an intent the leader commits on their behalf at
  * a phase change — so there is nothing to toggle and nothing to take back.
@@ -741,6 +856,7 @@ export function toPublicSeat(seat: OnlineSeatState, reveal: SeatReveal): PublicS
 			reveal.leaderStats && seat.leader !== null
 				? { m: seat.leader.m, int: seat.leader.int }
 				: null,
+		combatRoster: reveal.composition ? (seatPublishedRoster(seat) ?? null) : null,
 		factionId: progress.scheme?.factionId ?? progress.schemeDraft.factionId,
 		hasScheme: progress.scheme !== null,
 		schemeRevealed: progress.schemeRevealed,
@@ -756,7 +872,8 @@ export function viewForSeat(state: OnlineGameState, seat: PlayerKey): OnlineGame
 	const opponent = seat === 'player1' ? state.player2 : state.player1;
 	const reveal: SeatReveal = {
 		roster: isRosterRevealed(state),
-		leaderStats: isLeaderStatsRevealed(state)
+		leaderStats: isLeaderStatsRevealed(state),
+		composition: isRoundRunning(state)
 	};
 	return {
 		id: state.id,
