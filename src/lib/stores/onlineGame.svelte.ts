@@ -59,6 +59,8 @@ class OnlineGameStore {
 	 * vitality folds from. Server-owned like everything else here - a commit refetches it.
 	 */
 	history = $state<HistoryEntry[]>([]);
+	/** When the game was created, from the database: the battle report's match date. */
+	startedAt = $state<string | null>(null);
 
 	private session: OnlineSession | null = null;
 	private eventSource: EventSource | null = null;
@@ -329,8 +331,11 @@ class OnlineGameStore {
 	private async refreshHistory(): Promise<void> {
 		if (!this.session) return;
 		const seq = ++this.historySeq;
-		const history = await apiFetchHistory(this.session.gameId, this.session.token);
-		if (seq === this.historySeq) this.history = history;
+		const body = await apiFetchHistory(this.session.gameId, this.session.token);
+		if (seq === this.historySeq) {
+			this.history = body.history;
+			this.startedAt = body.startedAt;
+		}
 	}
 
 	/** The state document and the interaction log, for screens that show both. */
@@ -364,6 +369,7 @@ class OnlineGameStore {
 		this.session = null;
 		this.view = null;
 		this.history = [];
+		this.startedAt = null;
 		this.pendingJoin = null;
 		this.error = null;
 	}

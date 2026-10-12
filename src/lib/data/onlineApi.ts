@@ -246,13 +246,15 @@ export async function undoVitality(gameId: string, token: string, seq: number): 
 	await parse<Record<string, never>>(response);
 }
 
-/** The match's interaction log, in order, for the history panel and the boards' fold. */
-export async function fetchHistory(gameId: string, token: string): Promise<HistoryEntry[]> {
+/** The match's interaction log and its start date, for the history panel and the report. */
+export async function fetchHistory(
+	gameId: string,
+	token: string
+): Promise<{ history: HistoryEntry[]; startedAt: string | null }> {
 	const response = await fetch(`${BASE}/${gameId}/history`, {
 		headers: { authorization: `Bearer ${token}` }
 	});
-	const body = await parse<{ history: HistoryEntry[] }>(response);
-	return body.history;
+	return parse<{ history: HistoryEntry[]; startedAt: string | null }>(response);
 }
 
 /** Publishes this seat's combat list as board entries, once the round is running. */

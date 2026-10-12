@@ -245,12 +245,14 @@ describe('foldHistory', () => {
 		expect(fold.sentences[clear.seq]).toEqual(['Clan Champion sheds Strong Poison']);
 	});
 
-	it('skips an action against an entry the bases do not know', () => {
+	it('still narrates an action against an entry the bases do not know', () => {
 		seq = 0;
 		const stray = action('player1', 'player2', 'nobody', 'Nobody', damage(3));
 		const fold = foldHistory([stray], BASES);
+		// No base stats, so no vitality and no forced-State lines - but the commit line reads,
+		// which is what a battle report needs when one half of the board never published.
 		expect(fold.vitality.player2).toEqual({});
-		expect(fold.sentences[stray.seq]).toBeUndefined();
+		expect(fold.sentences[stray.seq]).toEqual(['Nobody takes 3 damage']);
 	});
 
 	it('lets a revert walk its action back out of the fold', () => {

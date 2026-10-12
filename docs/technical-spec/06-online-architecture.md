@@ -377,7 +377,21 @@ state field at all, and both devices render it by **folding the `vitality-*` eve
 for the board the log _is_ the state, a revert is an appended compensation the fold skips, and
 the mutation transaction reads the log (`mutateAsSeat`'s third callback argument) so an undo is
 validated against exactly the rows the next fold will replay. `round` on those events is stamped
-from `state.currentRound` inside the mutation, never accepted from the request.
+from `state.currentRound` inside the mutation, never accepted from the request. The fold still
+narrates a commit whose target entry its bases do not know — a board half that never published —
+because the report must list what was recorded even where the board cannot track it.
+
+**The battle report is a client-side PDF.** `domain/pdf.ts` is a hand-written PDF 1.4 writer (no
+dependency may be installed here): deterministic byte output, uncompressed streams, Helvetica and
+Helvetica-Bold with their AFM width tables for wrapping, WinAnsi escaping with typographic
+fallbacks. `domain/battleReport.ts` lays the report out — header, mission with a vector map
+thumbnail, armies, rounds with scores and interactions, damage/healing rankings — and the page
+assembles its input from the view, the folded log and the local catalogs; `GET /history` also
+returns `startedAt` (the games row's `created_at`) as the match date. Nothing is stored: the bytes
+exist only in the browser's download. Two consequences of the report needing both armies: the
+composition reveal (`SeatReveal.composition`) now survives the finish, and `canPublishRoster`
+accepts a publish in a finished match, so a device that reconnects after the last round can still
+field its half.
 
 ## Hardening (`src/hooks.server.ts`)
 

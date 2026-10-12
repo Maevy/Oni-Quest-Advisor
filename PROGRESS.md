@@ -116,6 +116,20 @@ board and its two dialogs on 2026-10-11 (`70bd405`), and a hint line under the f
 two gestures on every board (2026-10-12, `6f293cb`). Behaviour spec:
 `docs/functional-spec/06-two-player-hot-seat.md`.
 
+**The battle report (2026-10-12)** closes the loop the log was built for: the finished screen
+(and a tournament table's match) offers **Download Battle Report (PDF)**, generated entirely on
+the device by a hand-written PDF 1.4 writer (`domain/pdf.ts` — no dependency may be installed,
+deterministic bytes, uncompressed streams) laid out by `domain/battleReport.ts`: game code and
+the match date from the games row, season and mission with the map drawn as a vector thumbnail,
+both armies as grouped unit lines plus their schemes, every round with its score and its
+interactions (undone ones struck through and marked), then damage and healing per model, highest
+first, self-recorded hits tallied under their seat as unattributed. Nothing is persisted — the
+bytes live only in the download. Two rules bent for it: the composition reveal survives the
+finish, and a finished match still accepts a roster publish, so a device that reconnects after
+the last round can field its half. Verified by `~/.qwen/tmp/oni-verify/report.mjs` (22
+assertions over the downloaded bytes). The **tournament report** is the next feature and the
+bigger one: standings across tables, BYEs, replays.
+
 **The interaction log (2026-10-12)** closed the flower feature and laid the report's foundation:
 online's Army view is now the flower board plus a **history strip** over it (tap → the
 round-grouped Interaction history dialog, click outside closes, **Undo** on your own latest

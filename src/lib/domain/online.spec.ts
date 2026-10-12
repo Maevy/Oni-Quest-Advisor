@@ -742,6 +742,16 @@ describe('visibility', () => {
 		expect(publishRoster(inSetup(), 'player1', [{ id: 'e1', unitId: 'u' }])).toEqual(inSetup());
 	});
 
+	it('still accepts the board publish after the finish, for a late battle report', () => {
+		let state = activePlayingGame();
+		state = { ...state, currentRound: MAX_ROUND };
+		state = finishGame(state, { player1: 7, player2: 4 });
+		expect(canPublishRoster(state, 'player1')).toBe(true);
+		expect(
+			seatPublishedRoster(publishRoster(state, 'player1', [{ id: 'e1', unitId: 'u' }]).player1)
+		).toEqual([{ id: 'e1', unitId: 'u' }]);
+	});
+
 	it('viewForSeat opens the composition only in a running round', () => {
 		const playing = publishRoster(activePlayingGame(), 'player2', [
 			{ id: 'e1', unitId: 'citadel-guard' }
@@ -751,6 +761,18 @@ describe('visibility', () => {
 		]);
 		const setup = publishRoster(inSetup(), 'player2', [{ id: 'e1', unitId: 'citadel-guard' }]);
 		expect(viewForSeat(setup, 'player1')?.opponent?.combatRoster).toBeNull();
+	});
+
+	it('keeps the composition open through the finish, for the battle report', () => {
+		let state = publishRoster(activePlayingGame(), 'player2', [
+			{ id: 'e1', unitId: 'citadel-guard' }
+		]);
+		state = { ...state, currentRound: MAX_ROUND };
+		state = finishGame(state, { player1: 7, player2: 4 });
+		expect(state.status).toBe('finished');
+		expect(viewForSeat(state, 'player1')?.opponent?.combatRoster).toEqual([
+			{ id: 'e1', unitId: 'citadel-guard' }
+		]);
 	});
 
 	it('viewForSeat gives the seat its own secrets and a filtered opponent', () => {

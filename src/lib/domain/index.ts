@@ -13,6 +13,8 @@ export * from './online';
 export * from './army';
 export * from './armyCode';
 export * from './armyConstraint';
+export * from './battleReport';
+export * from './pdf';
 export * from './savedArmy';
 export * from './vitalityFlow';
 export * from './vitalityHistory';

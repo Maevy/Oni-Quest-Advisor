@@ -637,9 +637,12 @@ export function isRoundRunning(state: OnlineGameState): boolean {
  * A seat may publish its board once the round is running and it has a combat army to field —
  * and only once: the board's identity must not shift under a match being played. The composition
  * opens at play because the models are on the table by then; the importable code never travels.
+ * A finished match still accepts the publish: a device that reconnects after the last round must
+ * be able to field its half of the battle report.
  */
 export function canPublishRoster(state: OnlineGameState, seat: PlayerKey): boolean {
-	if (!isRoundRunning(state)) return false;
+	if (state.phase !== 'playing') return false;
+	if (state.status !== 'active' && state.status !== 'finished') return false;
 	const current = state[seat];
 	if (!current || current.combatArmy === null) return false;
 	return seatPublishedRoster(current) === null;
@@ -873,7 +876,9 @@ export function viewForSeat(state: OnlineGameState, seat: PlayerKey): OnlineGame
 	const reveal: SeatReveal = {
 		roster: isRosterRevealed(state),
 		leaderStats: isLeaderStatsRevealed(state),
-		composition: isRoundRunning(state)
+		// The composition opens with the round and stays open through the finish: the battle
+		// report lists both armies, and the models were on the table anyway.
+		composition: state.phase === 'playing' && state.status !== 'lobby' && state.status !== 'closed'
 	};
 	return {
 		id: state.id,

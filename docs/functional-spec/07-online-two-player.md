@@ -264,6 +264,16 @@ The **scoring board** replaces the tracker on every device:
   **cumulative VP at the end of that round** (an em dash where no snapshot exists).
 - **Both seats' scheme cards** — player name and faction, the (now revealed) card and its rule
   text, and its increment boxes read-only; _No scheme_ if none was chosen.
+- **Download Battle Report (PDF)** (2026-10-12) — builds the match's report **on the device** and
+  offers it as a download; nothing is persisted on the server or locally. The report carries the
+  game code and the match date (the game row's creation time, straight from the database), the
+  season and mission with its map drawn as a vector thumbnail (field, deployment zones, quarters,
+  objective markers), both players' armies as grouped unit lines with sizes and points plus their
+  schemes, then every round with its score and that round's interactions — undone ones struck
+  through and marked — and finally the damage and healing each model dealt, highest first, with
+  self-recorded hits tallied under their seat as _unattributed_. The tournament's own report is a
+  later, larger feature; this is one match's battle report, and a tournament table's match offers
+  it too.
 - **End game** — each player presses it **separately**, on their own device, when they are done
   reading. It is a local leave: it clears the seat session and returns to the main menu, while the
   concluded game stays on the server for its retention window and the other player's board is

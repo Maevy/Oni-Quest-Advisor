@@ -11,11 +11,13 @@
 		factions: Faction[];
 		schemes: SchemeCard[];
 		onReturnToMenu: () => void;
+		/** Builds the battle report PDF on this device and offers it as a download. */
+		onReport: () => void;
 		/** The organizer's announcements, when this match belonged to a tournament table. */
 		megaphone?: MegaphoneInbox | null;
 	};
 
-	let { view, factions, schemes, onReturnToMenu, megaphone = null }: Props = $props();
+	let { view, factions, schemes, onReturnToMenu, onReport, megaphone = null }: Props = $props();
 
 	/**
 	 * A tournament table's match ends at its table, not at the main menu: the event is still
@@ -154,6 +156,18 @@
 				</div>
 			{/if}
 		{/each}
+
+		<button
+			type="button"
+			class="mt-2 rounded-xl border border-sky-400/60 px-6 py-2.5 font-semibold text-sky-200 transition hover:bg-sky-400/10 active:bg-sky-400/20"
+			onclick={onReport}
+		>
+			Download Battle Report (PDF)
+		</button>
+		<p class="text-center text-xs text-slate-400">
+			Armies, map, every round's score and interactions, and the damage and healing each model
+			dealt. Generated on your device — nothing is stored on the server.
+		</p>
 
 		<button
 			type="button"

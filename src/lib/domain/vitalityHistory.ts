@@ -126,7 +126,13 @@ export function foldHistory(entries: HistoryEntry[], bases: VitalityBases): Hist
 			continue;
 		}
 		const base = bases[entry.targetSeat]?.[entry.targetEntryId];
-		if (!base) continue;
+		// An entry the bases do not know - a board that never published, a report opened on a
+		// device that lacks one half - still narrates its commit; only the vitality and the
+		// forced-State lines need the base stats.
+		if (!base) {
+			sentences[entry.seq] = primary;
+			continue;
+		}
 		const before = vitality[entry.targetSeat][entry.targetEntryId];
 		const previousHp = before?.hp ?? base.hp;
 		let next: UnitVitality;

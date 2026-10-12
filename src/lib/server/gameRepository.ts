@@ -34,6 +34,16 @@ export async function getGame(id: string): Promise<OnlineGameState | null> {
 	return JSON.parse(String(result.rows[0][0])) as OnlineGameState;
 }
 
+/** When the game row was created - the battle report's match date, straight from the database. */
+export async function getGameCreatedAt(id: string): Promise<string | null> {
+	const db = await getDb();
+	const result = await db.execute({
+		sql: 'SELECT created_at FROM games WHERE id = ?',
+		args: [id]
+	});
+	return result.rows.length === 0 ? null : String(result.rows[0][0]);
+}
+
 /**
  * The live state of a set of games, keyed by id and missing the ones that do not exist — what a
  * tournament's table board reads per fetch to tell a match nobody entered from one under way.

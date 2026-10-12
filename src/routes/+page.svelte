@@ -4,6 +4,10 @@
 	import {
 		armyCopyCounts,
 		battleFlowersFor,
+		battleReportRounds,
+		battleReportStats,
+		battleReportUnits,
+		buildBattleReportPdf,
 		calculateTwoPlayerVP,
 		foldHistory,
 		getMissionsForSeason,
@@ -26,6 +30,8 @@
 		type ArmyFormat,
 		type ArmyRosterRow,
 		type ArmyView,
+		type BattleReportInput,
+		type BattleReportPlayer,
 		type Mission,
 		type OpenGame,
 		type PickedArmy,
@@ -35,6 +41,7 @@
 		type VitalityCommitInput,
 		type VitalityTarget
 	} from '$lib/domain';
+	import { downloadPdf } from '$lib/data/reportDownload';
 	import {
 		armyBuilderStore,
 		contentStore,
@@ -446,6 +453,84 @@
 
 	function onlineUndo(seq: number): void {
 		void onlineGameStore.undoVitality(seq);
+	}
+
+	// --- the battle report ----------------------------------------------------------
+	/**
+	 * One seat as the report lists it. The own seat reads its full state, the opponent's the
+	 * public view; both armies come from the folded boards, so the report lists exactly what the
+	 * match's devices were rendering - including an opponent whose board never published.
+	 */
+	function reportPlayer(seat: PlayerKey): BattleReportPlayer | null {
+		const view = onlineGameStore.view;
+		if (!view) return null;
+		const self = view.seat === seat;
+		const seatView = self ? view.self : view.opponent;
+		if (!seatView) return null;
+		const army = seatView.army;
+		const scheme = self ? view.self.progress.scheme : (view.opponent?.revealedScheme ?? null);
+		const board = onlineBoard.boards[seat];
+		const { units, totalPoints } = board
+			? battleReportUnits(board)
+			: { units: [], totalPoints: null };
+		return {
+			seat,
+			nickname: seatView.nickname,
+			armyName: army.name,
+			factionName:
+				contentStore.armyFactions.find((candidate) => candidate.id === army.factionId)?.name ??
+				army.factionId,
+			format: army.format === 'roster' ? 'Roster' : 'Standard',
+			totalPoints,
+			units,
+			schemeTitle: scheme
+				? (contentStore.schemes.find((card) => card.id === scheme.schemeId)?.title ??
+					scheme.schemeId)
+				: null,
+			schemeIncrements: scheme?.checkedIncrements ?? null
+		};
+	}
+
+	/**
+	 * Builds the report and hands it to the browser as a download. Everything is assembled on
+	 * this device from the view, the folded log and the local catalogs; no PDF is ever stored on
+	 * the server or locally.
+	 */
+	function downloadBattleReport(): void {
+		const view = onlineGameStore.view;
+		const mission = onlineMission;
+		if (!view || !mission) return;
+		const nicknames: Record<PlayerKey, string> = {
+			player1: reportPlayer('player1')?.nickname ?? 'Player 1',
+			player2: reportPlayer('player2')?.nickname ?? 'Player 2'
+		};
+		const finalScore = view.resultSummary
+			? {
+					player1: view.resultSummary.finalVp.player1,
+					player2: view.resultSummary.finalVp.player2
+				}
+			: null;
+		const players = [reportPlayer('player1'), reportPlayer('player2')].filter(
+			(player): player is BattleReportPlayer => player !== null
+		);
+		const input: BattleReportInput = {
+			code: view.id,
+			playedAt: onlineGameStore.startedAt,
+			seasonName: view.season ?? 'Unknown season',
+			missionName: mission.name,
+			map: mission.map,
+			players,
+			rounds: battleReportRounds(
+				onlineGameStore.history,
+				onlineBoard.sentences,
+				view.roundSnapshots,
+				finalScore
+			),
+			finalScore,
+			winner: view.resultSummary?.winner ?? null,
+			...battleReportStats(onlineGameStore.history, nicknames)
+		};
+		downloadPdf(`oni-quest-battle-report-${view.id}.pdf`, buildBattleReportPdf(input));
 	}
 
 	// --- cutting a registered Roster army down to a match list ---
@@ -1047,6 +1132,7 @@
 			factions={contentStore.factions}
 			schemes={contentStore.schemes}
 			onReturnToMenu={leaveOnlineGame}
+			onReport={downloadBattleReport}
 			megaphone={tableMegaphone}
 		/>
 	{:else}
