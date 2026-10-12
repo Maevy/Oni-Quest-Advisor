@@ -36,20 +36,21 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Before deploying the unreleased work
 
-**It needs the production database wiped.** `combatArmy` and `leader` are new required fields
-on an online seat, the phase union changed, and there is no `hydrateOnlineGameState` — online
-state is one server-side JSON document with no migration mechanism, so a row written before
-the change would read `undefined !== null` as combat-ready with no army behind it. The dev
-`.data/oni-quest.db` was deleted four times for exactly this reason.
+**Done — v0.9.0 shipped 2026-10-13 with the wipe.** Both outstanding decisions were answered at
+release time: the wipe was **database-wide** (the tournament tables went with it, by choice), and
+the user confirmed it explicitly in the release turn. The procedure that worked: deploy the new
+image first, then `flyctl machines start` (the machine auto-stops, and ssh needs a started VM),
+`flyctl ssh console -C "rm -f /data/oni-quest.db /data/oni-quest.db-wal /data/oni-quest.db-shm"`
+(one command per `-C`; chaining with `&&` mangles in transit), then `flyctl machines restart` —
+the restart is not optional: the running process keeps serving the deleted inode from its open
+handle, so health keeps reporting the old counts until it reopens the file. Afterwards
+`/api/health` reads `games: {}` with a fresh 4 KB database.
 
-Nothing has been run against Fly yet, and two decisions are outstanding:
-
-- **A wipe is database-wide**, so it takes the tournament tables with it. Decide whether that
-  is acceptable or the wipe should be games-only.
-- The app is in beta and the wipe is authorized in principle, but it is destructive on shared
-  infrastructure — **confirm explicitly** before doing it. `flyctl` on this machine needs the
-  user's own interactive `flyctl auth login` first (the agent's shell is headless and the
-  browser flow cannot complete there).
+The reason the wipe was needed, for the record: `combatArmy` and `leader` are required fields on
+an online seat, the phase union changed, and there is no `hydrateOnlineGameState` — online state
+is one server-side JSON document with no migration mechanism, so a row written before the change
+would read `undefined !== null` as combat-ready with no army behind it. Any future change to the
+persisted online shape needs the same conversation.
 
 ## What's next
 
