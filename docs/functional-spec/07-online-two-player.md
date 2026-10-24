@@ -227,6 +227,24 @@ of which seat, in which round, by how much — and the round is server-stamped, 
 log is also what the battle report will later fold for its statistics, so it carries every number
 a KPI could want.
 
+**Summoning** travels through the same log with no new event type: calling a creature is one
+`vitality-committed` entry whose action is `summon`, and Dismiss is one whose action is `dismiss`.
+The creature's identity travels as the entry's target (`summon-N`, minted by the calling device),
+its caller as the entry's origin, and its base Life, Stamina and Undead flag ride along in the
+action itself — the server loads no army catalogs, and the published roster has no row for a
+creature that was never in the list, so the fold learns what it starts at from the very entry that
+put it on the field. Both devices therefore fold the same creature onto the same id without ever
+negotiating one, and the opponent's board grows it below its caller exactly as the owner's does.
+Per the ownership rule above, only your own flowers summon.
+
+The two vanish rules fall out of the replay rather than being stored: a creature at zero Life is
+dropped instead of settling into Incapacitated or Dead, and a model that settles into either State
+drops everything it called. **Healing the summoner back does not return them** — the fold only
+ever replays forward, so once an entry has dropped a creature nothing re-adds it. **Undoing the
+blow that felled the summoner does return them**, and the difference is deliberate: an undo says
+the hit never landed, so the cascade never happened either. A reverted summon or dismissal is
+skipped like any other reverted pair.
+
 Above the board, under the round bar, sits the **history strip**: a count and the latest
 interaction's sentence (_Citadel Guard takes 2 damage_). Tapping it opens the **Interaction
 history** dialog — the log grouped by round, each entry as its sentences with the acting seat's

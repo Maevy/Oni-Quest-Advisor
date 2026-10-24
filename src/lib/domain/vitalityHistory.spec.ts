@@ -352,3 +352,218 @@ describe('parseVitalityCommit', () => {
 		expect(parseVitalityCommit(null)).toBeNull();
 	});
 });
+
+describe('foldHistory - summons', () => {
+	const call = (
+		unitId: string,
+		hp: number,
+		sta: number | null,
+		undead = false
+	): VitalityAction => ({ kind: 'summon', unitId, hp, sta, undead });
+	const dismiss: VitalityAction = { kind: 'dismiss' };
+
+	/** Chiyohime calls a Gargoyle; the creature's bases ride along in the action itself. */
+	function gargoyle(id = 'summon-1'): HistoryAction {
+		return action(
+			'player1',
+			'player1',
+			id,
+			'Gargoyle, Tier I',
+			call('gargoyle-tier-i', 1, 2),
+			'Chiyohime',
+			'chiyohime'
+		);
+	}
+	function riftspawn(id = 'summon-2'): HistoryAction {
+		return action(
+			'player1',
+			'player1',
+			id,
+			'Blighted Riftspawn, Tier V',
+			call('blighted-riftspawn', 16, 3, true),
+			'Chiyohime',
+			'chiyohime'
+		);
+	}
+	const hitSummon = (id: string, name: string, amount: number, seat: PlayerKey = 'player1') =>
+		action('player2', seat, id, name, damage(amount));
+
+	it('puts the creature on the field, with the caller named', () => {
+		const fold = foldHistory([gargoyle()], BASES);
+		expect(fold.summons.player1).toEqual([
+			{ id: 'summon-1', unitId: 'gargoyle-tier-i', summonerId: 'chiyohime' }
+		]);
+		expect(fold.summons.player2).toEqual([]);
+	});
+
+	it('folds a later hit against the declared bases, not the published roster', () => {
+		// 1 Life and 1 damage: the creature leaves rather than falling.
+		const fold = foldHistory([gargoyle(), hitSummon('summon-1', 'Gargoyle, Tier I', 1)], BASES);
+		expect(fold.summons.player1).toEqual([]);
+		expect(fold.vitality.player1['summon-1']).toBeUndefined();
+	});
+
+	it('keeps a wounded creature on the field at its own Life', () => {
+		const fold = foldHistory(
+			[riftspawn(), hitSummon('summon-2', 'Blighted Riftspawn, Tier V', 4)],
+			BASES
+		);
+		expect(fold.summons.player1.map((summon) => summon.id)).toEqual(['summon-2']);
+		expect(fold.vitality.player1['summon-2']?.hp).toBe(12);
+	});
+
+	it('removes an Undead creature at zero Life with no Dead State behind it', () => {
+		const fold = foldHistory(
+			[riftspawn(), hitSummon('summon-2', 'Blighted Riftspawn, Tier V', 16)],
+			BASES
+		);
+		expect(fold.summons.player1).toEqual([]);
+		expect(fold.vitality.player1['summon-2']).toBeUndefined();
+	});
+
+	it('takes a creature off on Dismiss, vitality record and all', () => {
+		const fold = foldHistory(
+			[
+				riftspawn(),
+				action('player1', 'player1', 'summon-2', 'Blighted Riftspawn, Tier V', dismiss)
+			],
+			BASES
+		);
+		expect(fold.summons.player1).toEqual([]);
+		expect(fold.vitality.player1['summon-2']).toBeUndefined();
+	});
+
+	it('a summoner falling takes its creatures, and a later heal does not return them', () => {
+		const fold = foldHistory(
+			[
+				gargoyle(),
+				action('player2', 'player1', 'chiyohime', 'Chiyohime', damage(4)),
+				action('player2', 'player1', 'chiyohime', 'Chiyohime', heal(2))
+			],
+			BASES
+		);
+		// Permanence falls out of replaying forward: nothing re-adds a creature once dropped.
+		expect(fold.summons.player1).toEqual([]);
+		expect(fold.vitality.player1['chiyohime']?.statuses ?? []).not.toContain('incapacitated');
+	});
+
+	it('an Undead summoner going straight to Dead takes them too', () => {
+		const raised = action(
+			'player2',
+			'player2',
+			'summon-1',
+			'Bonewalker, Tier I',
+			call('bonewalker', 10, 2, true),
+			'Ghoul',
+			'ghoul'
+		);
+		const fold = foldHistory(
+			[raised, action('player1', 'player2', 'ghoul', 'Ghoul', damage(2))],
+			BASES
+		);
+		expect(fold.vitality.player2['ghoul']?.statuses).toEqual(['dead']);
+		expect(fold.summons.player2).toEqual([]);
+	});
+
+	it('cascades through a chain of creatures', () => {
+		const nested = action(
+			'player1',
+			'player1',
+			'summon-2',
+			'Golem, Tier II',
+			call('golem-tier-ii', 3, 2),
+			'Gargoyle, Tier I',
+			'summon-1'
+		);
+		const fold = foldHistory(
+			[gargoyle(), nested, action('player2', 'player1', 'chiyohime', 'Chiyohime', damage(4))],
+			BASES
+		);
+		expect(fold.summons.player1).toEqual([]);
+	});
+
+	it('a reverted summon never lands; a reverted dismiss leaves the creature standing', () => {
+		const call1 = gargoyle();
+		const undoCall = foldHistory([call1, revert('player1', call1.seq)], BASES);
+		expect(undoCall.summons.player1).toEqual([]);
+
+		const call2 = gargoyle();
+		const bye = action('player1', 'player1', 'summon-1', 'Gargoyle, Tier I', dismiss);
+		const kept = foldHistory([call2, bye, revert('player1', bye.seq)], BASES);
+		expect(kept.summons.player1.map((summon) => summon.id)).toEqual(['summon-1']);
+	});
+
+	it("keeps the two seats' creatures apart under the same id", () => {
+		const theirs = action(
+			'player2',
+			'player2',
+			'summon-1',
+			'Bonewalker, Tier I',
+			call('bonewalker', 10, 2, true),
+			'Ghoul',
+			'ghoul'
+		);
+		const fold = foldHistory(
+			[gargoyle(), theirs, hitSummon('summon-1', 'Gargoyle, Tier I', 1)],
+			BASES
+		);
+		expect(fold.summons.player1).toEqual([]);
+		expect(fold.summons.player2.map((summon) => summon.id)).toEqual(['summon-1']);
+	});
+
+	it('narrates the call, the removal and the dismissal', () => {
+		const call1 = gargoyle();
+		const bye = action('player1', 'player1', 'summon-1', 'Gargoyle, Tier I', dismiss);
+		const fold = foldHistory([call1, bye], BASES);
+		expect(fold.sentences[call1.seq]).toEqual(['Chiyohime summons Gargoyle, Tier I']);
+		expect(fold.sentences[bye.seq]).toEqual(['Gargoyle, Tier I is dismissed']);
+	});
+
+	it('narrates a creature leaving the field when its summoner falls', () => {
+		const fall = action('player2', 'player1', 'chiyohime', 'Chiyohime', damage(4));
+		const fold = foldHistory([gargoyle(), fall], BASES);
+		expect(fold.sentences[fall.seq]).toContain('Gargoyle, Tier I leaves the field');
+	});
+});
+
+describe('parseVitalityCommit - summons', () => {
+	const identity = {
+		targetSeat: 'player1' as PlayerKey,
+		targetEntryId: 'summon-1',
+		targetName: 'Gargoyle, Tier I',
+		targetCopy: null,
+		originEntryId: 'chiyohime',
+		originName: 'Chiyohime'
+	};
+	const call = { kind: 'summon', unitId: 'gargoyle-tier-i', hp: 1, sta: 2, undead: false };
+
+	it('accepts a summon carrying its bases', () => {
+		const parsed = parseVitalityCommit({ ...identity, action: call });
+		expect(parsed?.action).toEqual(call);
+	});
+
+	it('rejects a summon with no caller to hang below', () => {
+		expect(parseVitalityCommit({ ...identity, originEntryId: null, action: call })).toBeNull();
+	});
+
+	it('rejects a Life base that could not be a creature', () => {
+		for (const hp of [0, -1, 1.5, 100])
+			expect(parseVitalityCommit({ ...identity, action: { ...call, hp } })).toBeNull();
+	});
+
+	it('rejects an empty or over-long unit id', () => {
+		expect(parseVitalityCommit({ ...identity, action: { ...call, unitId: '' } })).toBeNull();
+		expect(
+			parseVitalityCommit({ ...identity, action: { ...call, unitId: 'x'.repeat(49) } })
+		).toBeNull();
+	});
+
+	it('accepts a dismiss, and coerces an undeclared Undead flag to false', () => {
+		expect(parseVitalityCommit({ ...identity, action: { kind: 'dismiss' } })?.action).toEqual({
+			kind: 'dismiss'
+		});
+		expect(
+			parseVitalityCommit({ ...identity, action: { ...call, undead: 'yes' } })?.action
+		).toEqual({ ...call, undead: false });
+	});
+});

@@ -62,17 +62,21 @@ traps: `ARCHIVE.md`. Behaviour specs: `docs/functional-spec/06-two-player-hot-se
 `07-online-two-player.md`, `09-tournament.md` and
 `docs/technical-spec/06-online-architecture.md`.
 
-The live thread is **summoning** (2026-10-24). Phase 1 (data) and phase 2 (local UI) are
-committed: the six faction-less tokens are content now, in their own bucket **outside
-`codeUnitPool()`** so no army code shifts; `SUMMON_SPECS` in the importer stamps tier and route
-onto all nine summonable creatures; `domain/summoning.ts` gates who may call what (Conjuration by
-Affinity element and tier, Necromancy by tier and faction-agnostically, the Deathweaving Fan
-lifting that cap); and the Self Interaction dialog carries **Summon Creature** and **Dismiss**,
-with a summoned creature hanging below its caller in a lilac beam. **Phase 3 — online — is not
-built**: it needs a summon event type in `game_events` and fold support in `vitalityHistory` so
-both devices derive the same board. That is additive to the log, so unlike v0.9.0 it needs **no
-database wipe**. Behaviour is specified in `docs/functional-spec/06-two-player-hot-seat.md`
-(_Summoning_), the content shape in `docs/technical-spec/05-army-data-format.md`.
+The live thread is **summoning** (2026-10-24), now **complete across all three modes**: the data
+layer, the local-mode UI, and online (so tournament tables inherit it, their matches being
+ordinary online games). Online needed no new event type — a summon is a `vitality-committed`
+entry whose action is `summon`, carrying the creature's `unitId` and its base Life/Stamina/Undead
+because the server loads no catalogs and neither published roster has a row for a creature that
+was never in the list; Dismiss is one whose action is `dismiss`. That is additive to the log, so
+unlike v0.9.0 it needed **no database wipe**. Behaviour is specified in
+`docs/functional-spec/06-two-player-hot-seat.md` (_Summoning_) and `07-online-two-player.md`; the
+content shape in `docs/technical-spec/05-army-data-format.md` and the log in
+`docs/technical-spec/06-online-architecture.md`.
+
+One asymmetry worth remembering: healing a fallen summoner does **not** return its creatures
+(permanent by ruling), but **undoing** the blow that felled it does — an undo says the hit never
+landed, so the cascade never happened either. Both fall out of the fold replaying forward, with
+no removal record anywhere. Deliberately unmodelled: the rulebook's **Summoning Limit**.
 
 The older deferred thread is the two buttons those dialogs still render inert — **Trade Item** and
 **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — one of

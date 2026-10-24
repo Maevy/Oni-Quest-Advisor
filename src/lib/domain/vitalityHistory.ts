@@ -13,14 +13,21 @@ import {
 	vitalityAfterStun
 } from './vitalityFlow';
 import type { PlayerKey } from './twoPlayer';
+import { summonedBy, type SummonedModel } from './summoning';
 
 /**
  * One flower-dialog commit, as the backend's append log carries it. The kinds are exactly the
  * dialogs' live actions - Assign Damage, Assign Healing, Assign/Remove Status, Deal Stagger,
- * Deal Stun and Activation Management's net step; Assign/Remove Buff and Trade Item are inert
- * and never reach the log. This is the record the battle report will later fold for its KPIs,
- * so it carries every number a statistic could want: who acted, on whom, in which round, and
- * by how much.
+ * Deal Stun, Activation Management's net step, Summon Creature and Dismiss; Assign/Remove Buff
+ * and Trade Item are inert and never reach the log. This is the record the battle report will
+ * later fold for its KPIs, so it carries every number a statistic could want: who acted, on
+ * whom, in which round, and by how much.
+ *
+ * A `summon` names its caller through the entry's `originEntryId` rather than a field of its
+ * own - that slot already means "the model on the actor's seat that acted", which is what a
+ * summoner is. Its bases ride along because the server loads no army catalogs and the published
+ * roster has no row for a creature that was never in the list: the fold learns what the creature
+ * starts at from the very action that put it on the field.
  */
 export type VitalityAction =
 	| { kind: 'damage'; amount: number }
@@ -28,7 +35,9 @@ export type VitalityAction =
 	| { kind: 'statuses'; statuses: UnitStatus[]; added: UnitStatus[]; removed: UnitStatus[] }
 	| { kind: 'stagger' }
 	| { kind: 'stun' }
-	| { kind: 'stamina'; delta: number };
+	| { kind: 'stamina'; delta: number }
+	| { kind: 'summon'; unitId: string; hp: number; sta: number | null; undead: boolean }
+	| { kind: 'dismiss' };
 
 /**
  * One historized interaction. `seq`, `round`, `actor` and `at` are server-stamped at mutation
@@ -47,7 +56,8 @@ export type HistoryAction = {
 	targetName: string;
 	/** Numbers the copy inside its seat when the unit name is not unique there; else null. */
 	targetCopy: number | null;
-	/** The model on the actor's seat that acted, on cross-model commits; null on self commits. */
+	/** The model on the actor's seat that acted, on cross-model commits; null on self commits.
+	 * On a `summon` it is the model that called the creature, and is required. */
 	originEntryId: string | null;
 	originName: string | null;
 	action: VitalityAction;
@@ -80,6 +90,12 @@ export type HistoryFold = {
 	vitality: Record<PlayerKey, Record<string, UnitVitality>>;
 	/** Per action seq, the sentences the log reads as: the commit first, forced States after. */
 	sentences: Record<number, string[]>;
+	/**
+	 * The creatures still on the field per seat, in the order they were called. A summon is not
+	 * in the published roster, so the board cannot derive it - the fold is the only place that
+	 * knows which ones are still standing, because removal is a replay fact, not a stored one.
+	 */
+	summons: Record<PlayerKey, SummonedModel[]>;
 };
 
 /**
@@ -114,9 +130,35 @@ export function foldHistory(entries: HistoryEntry[], bases: VitalityBases): Hist
 		player2: {}
 	};
 	const sentences: Record<number, string[]> = {};
+	const summons: Record<PlayerKey, SummonedModel[]> = { player1: [], player2: [] };
+	// A summon's bases are declared by the action that called it, so the fold grows its own table
+	// instead of needing the caller to know the creatures in advance: the published roster has no
+	// row for a creature that was never in the list, and the server loads no catalogs.
+	const live: VitalityBases = {
+		player1: { ...bases.player1 },
+		player2: { ...bases.player2 }
+	};
+	// Keyed by seat because both seats' decoded entry ids are position-based and collide.
+	const called = new Set<string>();
+	const named: Record<string, string> = {};
+	const key = (seat: PlayerKey, id: string) => `${seat}:${id}`;
+
+	/** Takes creatures off the field and their records with them, as the local rules do. */
+	const drop = (seat: PlayerKey, ids: string[]): void => {
+		for (const id of ids) {
+			called.delete(key(seat, id));
+			delete vitality[seat][id];
+			delete live[seat][id];
+		}
+		summons[seat] = summons[seat].filter((summon) => !ids.includes(summon.id));
+	};
+	const leaving = (seat: PlayerKey, ids: string[]): string[] =>
+		ids.map((id) => `${named[key(seat, id)] ?? id} leaves the field`);
 
 	for (const entry of entries) {
 		if (entry.kind !== 'action') continue;
+		const seat = entry.targetSeat;
+		const id = entry.targetEntryId;
 		const primary = primaryLines(entry);
 		// A reverted action still reads in the list - the log keeps the mis-tap - but it never
 		// touched the board, so it keeps its commit line and gets no forced-State lines, which
@@ -125,7 +167,32 @@ export function foldHistory(entries: HistoryEntry[], bases: VitalityBases): Hist
 			sentences[entry.seq] = primary;
 			continue;
 		}
-		const base = bases[entry.targetSeat]?.[entry.targetEntryId];
+
+		if (entry.action.kind === 'summon') {
+			live[seat][id] = {
+				hp: entry.action.hp,
+				sta: entry.action.sta,
+				undead: entry.action.undead
+			};
+			called.add(key(seat, id));
+			named[key(seat, id)] = copySuffix(entry.targetName, entry.targetCopy);
+			summons[seat] = [
+				...summons[seat],
+				// The caller travels in originEntryId; parseVitalityCommit refuses one without it.
+				{ id, unitId: entry.action.unitId, summonerId: entry.originEntryId ?? id }
+			];
+			// No vitality record yet: absent means untouched, exactly as it does for a recruit.
+			sentences[entry.seq] = primary;
+			continue;
+		}
+		if (entry.action.kind === 'dismiss') {
+			const lost = [id, ...summonedBy(summons[seat], id)];
+			drop(seat, lost);
+			sentences[entry.seq] = primary;
+			continue;
+		}
+
+		const base = live[seat]?.[id];
 		// An entry the bases do not know - a board that never published, a report opened on a
 		// device that lacks one half - still narrates its commit; only the vitality and the
 		// forced-State lines need the base stats.
@@ -133,7 +200,7 @@ export function foldHistory(entries: HistoryEntry[], bases: VitalityBases): Hist
 			sentences[entry.seq] = primary;
 			continue;
 		}
-		const before = vitality[entry.targetSeat][entry.targetEntryId];
+		const before = vitality[seat][id];
 		const previousHp = before?.hp ?? base.hp;
 		let next: UnitVitality;
 		switch (entry.action.kind) {
@@ -155,12 +222,38 @@ export function foldHistory(entries: HistoryEntry[], bases: VitalityBases): Hist
 			case 'statuses':
 				next = vitalityAfterStatuses(before, base.hp, base.sta, entry.action.statuses);
 				break;
+			default:
+				next = before ?? { hp: base.hp, sta: base.sta };
+				break;
 		}
+
+		// A summoned creature at zero Life leaves the field instead of falling, so it never
+		// reaches the zero-Life contract at all - no Incapacitated, no Crouched, no Dead.
+		if (called.has(key(seat, id)) && next.hp <= 0) {
+			const lost = [id, ...summonedBy(summons[seat], id)];
+			const lines = [...primary, ...leaving(seat, lost)];
+			drop(seat, lost);
+			sentences[entry.seq] = lines;
+			continue;
+		}
+
 		const settled = settleVitalityStates(next, previousHp, base.undead);
-		vitality[entry.targetSeat][entry.targetEntryId] = settled;
-		sentences[entry.seq] = [...primary, ...stateLines(entry, before ?? null, settled)];
+		vitality[seat][id] = settled;
+		const lines = [...primary, ...stateLines(entry, before ?? null, settled)];
+		// A model that has fallen controls nothing: everything it called leaves with it. Because
+		// the fold only ever replays forward, a later heal cannot bring them back - permanence
+		// falls out of the replay instead of needing a stored removal.
+		const statuses = settled.statuses ?? [];
+		if (statuses.includes('incapacitated') || statuses.includes('dead')) {
+			const lost = summonedBy(summons[seat], id);
+			if (lost.length > 0) {
+				lines.push(...leaving(seat, lost));
+				drop(seat, lost);
+			}
+		}
+		sentences[entry.seq] = lines;
 	}
-	return { vitality, sentences };
+	return { vitality, sentences, summons };
 }
 
 /**
@@ -228,6 +321,12 @@ function primaryLines(entry: HistoryAction): string[] {
 			if (lines.length === 0) lines.push(`${target}'s States are confirmed unchanged`);
 			break;
 		}
+		case 'summon':
+			lines.push(who === null ? `${target} is called to the field` : `${who} summons ${target}`);
+			break;
+		case 'dismiss':
+			lines.push(`${target} is dismissed`);
+			break;
 	}
 	return lines;
 }
@@ -372,6 +471,30 @@ export function parseVitalityCommit(raw: unknown): VitalityCommitInput | null {
 				}
 			};
 		}
+		case 'summon': {
+			const unitId = act.unitId;
+			if (typeof unitId !== 'string' || unitId.length === 0 || unitId.length > HISTORY_NAME_MAX)
+				return null;
+			const hp = act.hp;
+			if (typeof hp !== 'number' || !Number.isInteger(hp) || hp < 1 || hp > HISTORY_AMOUNT_MAX)
+				return null;
+			const sta = act.sta;
+			if (
+				sta !== null &&
+				(typeof sta !== 'number' || !Number.isInteger(sta) || sta < 0 || sta > HISTORY_AMOUNT_MAX)
+			)
+				return null;
+			const identity = commitIdentity(body);
+			// The caller travels in originEntryId. A summon with no caller could not be placed
+			// below anything, and the cascade would have nothing to hang off.
+			if (identity.originEntryId === null) return null;
+			return {
+				...identity,
+				action: { kind: 'summon', unitId, hp, sta, undead: act.undead === true }
+			};
+		}
+		case 'dismiss':
+			return { ...commitIdentity(body), action: { kind: 'dismiss' } };
 		default:
 			return null;
 	}

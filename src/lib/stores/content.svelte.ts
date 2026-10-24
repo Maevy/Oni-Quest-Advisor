@@ -122,9 +122,10 @@ class ContentStore {
 	/**
 	 * Resolves a run's summoned creatures against the catalogs. A creature whose unit the
 	 * current content no longer has is dropped rather than drawn blank - the same ruling as a
-	 * code that no longer decodes: better absent than wrong.
+	 * code that no longer decodes: better absent than wrong. Public because online's board folds
+	 * its summons out of the interaction log rather than holding them in a store.
 	 */
-	private summonRows(summons: SummonedModel[]): SummonedRow[] {
+	summonRows(summons: SummonedModel[]): SummonedRow[] {
 		if (summons.length === 0) return [];
 		const pool = summonableUnits(this.armyUnits);
 		const rows: SummonedRow[] = [];

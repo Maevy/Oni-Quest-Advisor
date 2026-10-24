@@ -381,6 +381,18 @@ from `state.currentRound` inside the mutation, never accepted from the request. 
 narrates a commit whose target entry its bases do not know — a board half that never published —
 because the report must list what was recorded even where the board cannot track it.
 
+The fold's action kinds are exactly the dialogs' live actions, so **summoning joined the log with
+no new event type**: a `summon` action carries the creature's `unitId` plus its base `hp`, `sta`
+and `undead`, and a `dismiss` carries nothing. Both ride inside the existing `vitality-committed`
+payload, which is why adding them needed **no schema change and no database wipe** — `type` is a
+plain text column, and a client that does not know a kind gets null from `parseVitalityCommit` and
+skips the row rather than failing the whole board. The bases travel with the action because the
+creature is in neither published roster, so the fold registers them as it replays and learns what
+it starts at from the entry that put it on the field. Removal is likewise never stored: the fold
+replays forward, so a creature dropped by a zero-Life hit or by its summoner's fall stays dropped
+when a later heal lifts the summoner again — while a **revert** of the felling blow does bring it
+back, because that blow then never landed.
+
 **The battle report is a client-side PDF.** `domain/pdf.ts` is a hand-written PDF 1.4 writer (no
 dependency may be installed here): deterministic byte output, uncompressed streams, Helvetica and
 Helvetica-Bold with their AFM width tables for wrapping, WinAnsi escaping with typographic

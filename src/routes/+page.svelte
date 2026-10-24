@@ -430,8 +430,22 @@
 		}
 		const fold = foldHistory(onlineGameStore.history, bases);
 		const boards: Record<PlayerKey, ArmyView | null> = { player1: null, player2: null };
-		boards[mine] = own ? { ...own, vitality: fold.vitality[mine] } : null;
-		boards[theirs] = opp ? { ...opp, vitality: fold.vitality[theirs] } : null;
+		// The folded summons ride along with the vitality: a creature is not in either published
+		// roster, so the log is the only thing that knows it is out there at all.
+		boards[mine] = own
+			? {
+					...own,
+					vitality: fold.vitality[mine],
+					summons: contentStore.summonRows(fold.summons[mine])
+				}
+			: null;
+		boards[theirs] = opp
+			? {
+					...opp,
+					vitality: fold.vitality[theirs],
+					summons: contentStore.summonRows(fold.summons[theirs])
+				}
+			: null;
 		return { boards, sentences: fold.sentences };
 	});
 
@@ -1213,6 +1227,7 @@
 			undoableSeq={onlineUndoableSeq}
 			onCommit={onlineCommit}
 			onUndo={onlineUndo}
+			{summonPool}
 		/>
 	{:else if onlineGameStore.view.status === 'finished'}
 		<OnlineStats

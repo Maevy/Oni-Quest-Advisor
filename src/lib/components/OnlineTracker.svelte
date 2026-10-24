@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { battleFlowersFor, MAX_ROUND } from '$lib/domain';
+	import { availableSummons, battleFlowersFor, MAX_ROUND, nextSummonId } from '$lib/domain';
 	import type {
+		ArmyUnitSpec,
 		ArmyView,
 		BattleFlowerSpec,
 		HistoryEntry,
@@ -77,6 +78,8 @@
 		/** One flower-dialog commit, appended to the log; both boards refold from it. */
 		onCommit: (commit: VitalityCommitInput) => void;
 		onUndo: (seq: number) => void;
+		/** Every creature a spell can put on the field; the dialog gates it per model. */
+		summonPool: ArmyUnitSpec[];
 	};
 
 	let {
@@ -100,7 +103,8 @@
 		sentences,
 		undoableSeq,
 		onCommit,
-		onUndo
+		onUndo,
+		summonPool
 	}: Props = $props();
 
 	let activeView = $state<TrackerView>('p1');
@@ -363,6 +367,82 @@
 		onCommit(commitFor(target, { kind: 'stun' }));
 	}
 
+	/** The spec behind a board id on one seat: an army copy's upgraded unit, or a summon's own. */
+	function unitInArmy(army: ArmyView, entryId: string): ArmyUnitSpec | null {
+		const summon = army.summons.find((candidate) => candidate.id === entryId);
+		if (summon) return summon.unit;
+		return army.rows.find((row) => row.entryId === entryId)?.upgradedUnit ?? null;
+	}
+
+	/**
+	 * What the self dialog's model may call. Reads the effective unit, because an upgrade-granted
+	 * Affinity is exactly what can unlock a creature the base model could not reach.
+	 */
+	let selfSummons = $derived.by(() => {
+		const current = selfDialog;
+		if (!current) return [];
+		const unit = unitInArmy(current.army, current.target.entryId);
+		return unit ? availableSummons(unit, summonPool) : [];
+	});
+
+	/** The tapped creature's own spec, while its card is open; a summon has no roster row. */
+	let selfSummonUnit = $derived.by(() => {
+		const current = selfDialog;
+		if (!current || !selfInfo) return null;
+		return current.army.summons.find((c) => c.id === current.target.entryId)?.unit ?? null;
+	});
+
+	/** A candidate's card opened from the picker; closing it leaves the picker up. */
+	let summonCard = $state<ArmyUnitSpec | null>(null);
+
+	/**
+	 * Calling a creature is one log entry like any other commit. Its identity is minted here -
+	 * `summon-N`, one past what this board already holds - and travels as the commit's target, so
+	 * the opponent's device folds the same creature onto the same id without the two ever having
+	 * to agree on one. The bases ride along because the server loads no catalogs and the
+	 * published roster has no row for a creature that was never in the list.
+	 */
+	function onSummon(target: VitalityTarget, unitId: string): void {
+		const creature = summonPool.find((candidate) => candidate.id === unitId);
+		const hp = creature?.stats.HP;
+		if (!creature || hp === null || hp === undefined || !selfDialog) return;
+		const id = nextSummonId(
+			selfDialog.army.summons.map((summon) => ({
+				id: summon.id,
+				unitId: summon.unit.id,
+				summonerId: summon.summonerId
+			}))
+		);
+		onCommit({
+			targetSeat: target.player,
+			targetEntryId: id,
+			targetName: creature.name,
+			targetCopy: null,
+			originEntryId: target.entryId,
+			originName: target.flower.name,
+			action: {
+				kind: 'summon',
+				unitId,
+				hp,
+				sta: creature.stats.STA,
+				undead: (creature.traits ?? []).some((trait) => trait.id === 'undead')
+			}
+		});
+	}
+
+	/** Dismissing one is a commit too, so the opponent's board drops it on the same refold. */
+	function onDismissSummon(target: VitalityTarget): void {
+		onCommit({
+			targetSeat: target.player,
+			targetEntryId: target.entryId,
+			targetName: target.flower.name,
+			targetCopy: target.copy,
+			originEntryId: null,
+			originName: null,
+			action: { kind: 'dismiss' }
+		});
+	}
+
 	function openSelf(
 		flower: BattleFlowerSpec,
 		_rect: FlowerRect,
@@ -566,6 +646,16 @@
 		{onStagger}
 		{onStun}
 		{onStamina}
+		summons={selfSummons}
+		onSummon={(unitId) => {
+			const current = selfDialog;
+			if (current) onSummon(current.target, unitId);
+		}}
+		onSummonInfo={(unit) => (summonCard = unit)}
+		onDismiss={() => {
+			const current = selfDialog;
+			if (current) onDismissSummon(current.target);
+		}}
 		onInfo={() => (selfInfo = true)}
 		onClose={closeSelf}
 	/>
@@ -589,6 +679,38 @@
 		mountName={selfRow.mount?.name}
 		onClose={() => (selfInfo = false)}
 	/>
+{/if}
+
+<!-- A summoned creature's card. No faction prop: it belongs to none, not even the seat that
+     called it, so the card frames itself in the summoning hue. No roster row either - its own
+     spec carries the stats and size. Shared by Model Info on a summoned copy and by a portrait
+     tapped in the summon picker. -->
+{#snippet summonCardView(unit: ArmyUnitSpec, army: ArmyView, onClose: () => void)}
+	<UnitCard
+		{unit}
+		classIndex={army.classIndex}
+		skillIndex={army.skillIndex}
+		traitIndex={army.traitIndex}
+		combatArtIndex={army.combatArtIndex}
+		spellcraftIndex={army.spellcraftIndex}
+		spells={army.spells}
+		stratagemIndex={army.stratagemIndex}
+		itemIndex={army.itemIndex}
+		stats={unit.stats}
+		size={unit.size}
+		mounted={false}
+		{onClose}
+	/>
+{/snippet}
+
+{#if selfDialog && selfSummonUnit}
+	{@render summonCardView(selfSummonUnit, selfDialog.army, () => (selfInfo = false))}
+{/if}
+
+<!-- After the dialog, so its own backdrop is the layer an outside click meets first: closing the
+     card leaves the picker open underneath it. -->
+{#if selfDialog && summonCard}
+	{@render summonCardView(summonCard, selfDialog.army, () => (summonCard = null))}
 {/if}
 
 <!-- The lifted clone and its drop crosshair, at the screen root: the pane's overflow and the
