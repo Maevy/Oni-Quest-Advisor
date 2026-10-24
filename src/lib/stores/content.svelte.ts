@@ -41,7 +41,12 @@ class ContentStore {
 	missions = $state<Mission[]>([]);
 	factions = $state<Faction[]>([]);
 	armyFactions = $state<ArmyFactionConfig[]>([]);
-	armyUnits = $state<ArmyUnitContent>({ factionUnits: {}, neutralUnits: [], mounts: [] });
+	armyUnits = $state<ArmyUnitContent>({
+		factionUnits: {},
+		neutralUnits: [],
+		mounts: [],
+		summons: []
+	});
 	armyClasses = $state<ArmyRulesSpec[]>([]);
 	armySkills = $state<ArmyRulesSpec[]>([]);
 	armyTraits = $state<ArmyRulesSpec[]>([]);

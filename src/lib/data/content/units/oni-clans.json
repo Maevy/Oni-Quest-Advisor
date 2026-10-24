@@ -171,7 +171,13 @@
 				"id": "shield",
 				"qty": 1
 			}
-		]
+		],
+		"summon": {
+			"tier": 1,
+			"source": {
+				"kind": "necromancy"
+			}
+		}
 	},
 	{
 		"id": "chiyohime",
@@ -303,7 +309,13 @@
 				"id": "corroded-piercing-dagger",
 				"qty": 1
 			}
-		]
+		],
+		"summon": {
+			"tier": 2,
+			"source": {
+				"kind": "necromancy"
+			}
+		}
 	},
 	{
 		"id": "oni-marauder",
@@ -621,6 +633,12 @@
 				"id": "spectral-weapon",
 				"qty": 1
 			}
-		]
+		],
+		"summon": {
+			"tier": 1,
+			"source": {
+				"kind": "necromancy"
+			}
+		}
 	}
 ]

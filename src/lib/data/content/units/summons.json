@@ -1,0 +1,410 @@
+[
+	{
+		"id": "blighted-riftspawn",
+		"name": "Blighted Riftspawn, Tier V",
+		"points": 0,
+		"limit": 0,
+		"classes": ["creature"],
+		"stats": {
+			"STA": 3,
+			"SPD": 4,
+			"OFF": 16,
+			"DEF": 13,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 8,
+			"T": 18,
+			"ARM": 4,
+			"HP": 16,
+			"M": 20
+		},
+		"size": "epic",
+		"traits": [
+			{
+				"id": "elemental-essence--element",
+				"level": 1,
+				"dynamicValue": "Profane"
+			},
+			{
+				"id": "menacing",
+				"level": 3
+			},
+			{
+				"id": "resistance--x",
+				"level": 1,
+				"dynamicValue": "All Damage"
+			},
+			{
+				"id": "undead",
+				"level": 2
+			},
+			{
+				"id": "unstoppable",
+				"level": 1
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		],
+		"inventorySpace": 10,
+		"inventory": [
+			{
+				"id": "raging-thrash",
+				"qty": 1
+			},
+			{
+				"id": "blighted-relic-blade",
+				"qty": 1
+			},
+			{
+				"id": "profane-arc",
+				"qty": 1
+			}
+		],
+		"summon": {
+			"tier": 5,
+			"source": {
+				"kind": "necromancy"
+			}
+		}
+	},
+	{
+		"id": "colossus-tier-iv",
+		"name": "Colossus, Tier IV",
+		"points": 0,
+		"limit": 0,
+		"classes": ["creature"],
+		"stats": {
+			"STA": 3,
+			"SPD": 4,
+			"OFF": 14,
+			"DEF": 14,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 6,
+			"T": 17,
+			"ARM": 10,
+			"HP": 6,
+			"M": 20
+		},
+		"size": "colossal",
+		"skills": [
+			{
+				"id": "taunt",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "construct",
+				"level": 1
+			},
+			{
+				"id": "intimidating",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			},
+			{
+				"id": "trample",
+				"level": 1
+			},
+			{
+				"id": "unstoppable",
+				"level": 1
+			}
+		],
+		"inventorySpace": 2,
+		"inventory": [
+			{
+				"id": "hack-and-thrash",
+				"qty": 1
+			}
+		],
+		"summon": {
+			"tier": 4,
+			"source": {
+				"kind": "conjuration",
+				"element": "earth"
+			}
+		}
+	},
+	{
+		"id": "earth-elemental-tier-iii",
+		"name": "Earth Elemental, Tier III",
+		"points": 0,
+		"limit": 0,
+		"classes": ["creature"],
+		"stats": {
+			"STA": 2,
+			"SPD": 4,
+			"OFF": 12,
+			"DEF": 14,
+			"ACC": 10,
+			"INT": 8,
+			"AG": 6,
+			"T": 16,
+			"ARM": 10,
+			"HP": 4,
+			"M": 20
+		},
+		"size": "gigantic",
+		"skills": [
+			{
+				"id": "hurl",
+				"level": 1
+			},
+			{
+				"id": "regeneration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Earth"]
+			},
+			{
+				"id": "elemental",
+				"level": 1
+			},
+			{
+				"id": "elemental-essence--element",
+				"level": 1,
+				"dynamicValue": "Earth"
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching, Forest, Swamp"
+			},
+			{
+				"id": "watchful",
+				"level": 1
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "rooting-embrace",
+				"level": 1
+			}
+		],
+		"inventorySpace": 2,
+		"inventory": [
+			{
+				"id": "earthen-fists",
+				"qty": 1
+			}
+		],
+		"summon": {
+			"tier": 3,
+			"source": {
+				"kind": "conjuration",
+				"element": "earth"
+			}
+		}
+	},
+	{
+		"id": "gargoyle-tier-i",
+		"name": "Gargoyle, Tier I",
+		"points": 0,
+		"limit": 0,
+		"classes": ["creature"],
+		"stats": {
+			"STA": 2,
+			"SPD": 5,
+			"OFF": 12,
+			"DEF": 8,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 8,
+			"T": 12,
+			"ARM": 5,
+			"HP": 1,
+			"M": 20
+		},
+		"size": "small",
+		"skills": [
+			{
+				"id": "climbing",
+				"level": 1
+			},
+			{
+				"id": "leap",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "construct",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		],
+		"inventorySpace": 2,
+		"inventory": [
+			{
+				"id": "gargoyles-claws",
+				"qty": 1
+			}
+		],
+		"summon": {
+			"tier": 1,
+			"source": {
+				"kind": "conjuration",
+				"element": "earth"
+			}
+		}
+	},
+	{
+		"id": "golem-tier-ii",
+		"name": "Golem, Tier II",
+		"points": 0,
+		"limit": 0,
+		"classes": ["creature"],
+		"stats": {
+			"STA": 2,
+			"SPD": 3,
+			"OFF": 10,
+			"DEF": 13,
+			"ACC": 8,
+			"INT": 8,
+			"AG": 6,
+			"T": 15,
+			"ARM": 8,
+			"HP": 3,
+			"M": 20
+		},
+		"size": "huge",
+		"skills": [
+			{
+				"id": "protector",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "construct",
+				"level": 1
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Scorching"
+			}
+		],
+		"inventorySpace": 2,
+		"inventory": [
+			{
+				"id": "fists-of-stone",
+				"qty": 1
+			}
+		],
+		"summon": {
+			"tier": 2,
+			"source": {
+				"kind": "conjuration",
+				"element": "earth"
+			}
+		}
+	},
+	{
+		"id": "water-elemental-tier-iii",
+		"name": "Water Elemental, Tier III",
+		"points": 0,
+		"limit": 0,
+		"classes": ["creature"],
+		"stats": {
+			"STA": 2,
+			"SPD": 4,
+			"OFF": 14,
+			"DEF": 14,
+			"ACC": 14,
+			"INT": 8,
+			"AG": 8,
+			"T": 14,
+			"ARM": 2,
+			"HP": 5,
+			"M": 20
+		},
+		"size": "gigantic",
+		"skills": [
+			{
+				"id": "regeneration",
+				"level": 1
+			}
+		],
+		"traits": [
+			{
+				"id": "affinity--element",
+				"level": 1,
+				"dynamicElements": ["Water"]
+			},
+			{
+				"id": "elemental",
+				"level": 1
+			},
+			{
+				"id": "elemental-essence--element",
+				"level": 1,
+				"dynamicValue": "Water"
+			},
+			{
+				"id": "resistance--x",
+				"level": 1,
+				"dynamicValue": "non-spell"
+			},
+			{
+				"id": "resistance--x",
+				"level": 2,
+				"dynamicValue": "Burn"
+			},
+			{
+				"id": "survival--x-environment",
+				"level": 1,
+				"dynamicValue": "Aquatic"
+			},
+			{
+				"id": "vigilance",
+				"level": 1
+			}
+		],
+		"spellcrafts": [
+			{
+				"id": "wellspring",
+				"level": 1
+			}
+		],
+		"inventorySpace": 2,
+		"inventory": [
+			{
+				"id": "water-tentacle",
+				"qty": 1
+			},
+			{
+				"id": "ice-pick",
+				"qty": 1
+			},
+			{
+				"id": "tidal-wave",
+				"qty": 1
+			}
+		],
+		"summon": {
+			"tier": 3,
+			"source": {
+				"kind": "conjuration",
+				"element": "water"
+			}
+		}
+	}
+]

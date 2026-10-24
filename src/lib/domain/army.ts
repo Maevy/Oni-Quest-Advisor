@@ -447,6 +447,24 @@ export type ArmyTraitRef = {
 	dynamicElements?: string[];
 };
 
+/**
+ * How a summonable creature enters play. Conjuration is bound to an Affinity element
+ * (lowercase, matching {@link affinityElements}); Necromancy is not bound to an element
+ * at all - it reaches any Undead creature under its tier gate, whatever faction owns it.
+ */
+export type ArmySummonSource = { kind: 'conjuration'; element: string } | { kind: 'necromancy' };
+
+/**
+ * A creature a spell can put on the field. `tier` is the creature's tier: the Necromancy
+ * gate, and the Conjuration spellcraft level required to call it. The producer levels every
+ * summon spell exactly at its creature's tier, which `lib/data/summons.spec.ts` asserts so a
+ * future dump that breaks the coincidence fails loudly instead of gating silently wrong.
+ */
+export type ArmySummonSpec = {
+	tier: number;
+	source: ArmySummonSource;
+};
+
 export type ArmyUnitSpec = {
 	id: string;
 	name: string;
@@ -481,6 +499,8 @@ export type ArmyUnitSpec = {
 	 * can resolve a mounted model without the mounts list.
 	 */
 	mount?: { unitId: string; points: number; size: ArmyUnitSize };
+	/** Present on a creature a spell can put on the field; absent on every recruitable unit. */
+	summon?: ArmySummonSpec;
 	icon?: string;
 };
 
@@ -1799,6 +1819,12 @@ export type ArmyUnitContent = {
 	factionUnits: Partial<Record<ArmyFactionId, ArmyUnitSpec[]>>;
 	neutralUnits: ArmyUnitSpec[];
 	mounts: ArmyUnitSpec[];
+	/**
+	 * Faction-less summoned creatures. Deliberately outside the recruitable pool, and so
+	 * outside the army-code fingerprint: a summon is never recruited, and letting one into
+	 * `codeUnitPool` would shift every unit index and invalidate every saved army.
+	 */
+	summons: ArmyUnitSpec[];
 };
 
 /** Monster factions cannot recruit from the neutral pool. */

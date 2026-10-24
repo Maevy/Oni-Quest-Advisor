@@ -416,7 +416,8 @@ describe('unitsForFaction', () => {
 				classes: ['soldier']
 			}
 		],
-		mounts: MOUNTS
+		mounts: MOUNTS,
+		summons: []
 	};
 
 	it('combines the faction exclusives with the neutral pool', () => {

@@ -56,7 +56,8 @@
  * - faction availability from attributes.factions:
  *   - exactly one faction -> that faction's exclusive file
  *   - NEUTRAL-tagged (alone or combined) -> neutral.json, available to every faction
- *   - no factions (summoned/token creatures) -> skipped, listed below
+ *   - SUMMON_CODES (faction-less summoned creatures) -> summons.json, never recruitable
+ *   - anything else without a resolvable faction -> skipped, listed below
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -99,12 +100,53 @@ const FACTIONS = {
 };
 
 const buckets = Object.fromEntries(
-	[...Object.values(FACTIONS), 'neutral', 'mounts'].map((key) => [key, []])
+	[...Object.values(FACTIONS), 'neutral', 'mounts', 'summons'].map((key) => [key, []])
 );
 const skipped = [];
 
 /** Mount units: never recruitable standalone, they belong under a rider. */
 const MOUNT_CODES = new Set(['LUPUS_REX']);
+
+/**
+ * Summoned creatures: the producer leaves them faction-less with cost/limit 0, because
+ * they enter play through a Conjuration or Necromancy spell rather than by recruitment.
+ * They go to summons.json, which loadArmyUnits() keeps out of both the recruitable pool
+ * and the army-code fingerprint - a summon must never shift a unit index.
+ */
+const SUMMON_CODES = new Set([
+	'GARGOYLE_TIER_I',
+	'GOLEM_TIER_II',
+	'EARTH_ELEMENTAL_TIER_III',
+	'WATER_ELEMENTAL_TIER_III',
+	'COLOSSUS_TIER_IV',
+	'BLIGHTED_RIFTSPAWN'
+]);
+
+/**
+ * Summon metadata, hand-authored because the producer carries none of it: there is no tier
+ * field anywhere in the dump (tier survives only inside the display name) and nothing links a
+ * Conjuration spell to the creature it calls. `tier` is the Necromancy gate and the Conjuration
+ * spellcraft level required; `element` binds a Conjuration to the caster's Affinity. The three
+ * Undead here are ordinary Oni Clans recruits as well - they are summoned OR bought - so this
+ * table is deliberately wider than SUMMON_CODES, which only routes the faction-less tokens.
+ * lib/data/summons.spec.ts asserts the tiers and elements still match the spell catalog.
+ */
+const SUMMON_SPECS = {
+	GARGOYLE_TIER_I: { tier: 1, source: { kind: 'conjuration', element: 'earth' } },
+	GOLEM_TIER_II: { tier: 2, source: { kind: 'conjuration', element: 'earth' } },
+	EARTH_ELEMENTAL_TIER_III: { tier: 3, source: { kind: 'conjuration', element: 'earth' } },
+	WATER_ELEMENTAL_TIER_III: { tier: 3, source: { kind: 'conjuration', element: 'water' } },
+	COLOSSUS_TIER_IV: { tier: 4, source: { kind: 'conjuration', element: 'earth' } },
+	BLIGHTED_RIFTSPAWN: { tier: 5, source: { kind: 'necromancy' } },
+	BONEWALKER: { tier: 1, source: { kind: 'necromancy' } },
+	VENGEFUL_SPIRIT: { tier: 1, source: { kind: 'necromancy' } },
+	FORGOTTEN_HERO: { tier: 2, source: { kind: 'necromancy' } }
+};
+
+// A token routed to summons.json without metadata would enter the pool unsummonable.
+for (const code of SUMMON_CODES) {
+	if (!SUMMON_SPECS[code]) throw new Error('SUMMON_CODES entry missing from SUMMON_SPECS: ' + code);
+}
 
 /** Rider code -> mount code; mount cost is the mount's own recruitment_cost. */
 const MOUNT_ASSIGNMENTS = { SLAYER_DRAGON: 'LUPUS_REX' };
@@ -565,6 +607,8 @@ for (const character of characters) {
 	if (UPGRADE_LOCKED_CODES.has(attributes.code)) {
 		unit.upgradesLocked = true;
 	}
+	const summon = SUMMON_SPECS[attributes.code];
+	if (summon) unit.summon = summon;
 	if (isMount && Object.keys(statChanges).length > 0) {
 		unit.statChanges = statChanges;
 	}
@@ -581,6 +625,8 @@ for (const character of characters) {
 	}
 	if (MOUNT_CODES.has(attributes.code)) {
 		buckets.mounts.push(unit);
+	} else if (SUMMON_CODES.has(attributes.code)) {
+		buckets.summons.push(unit);
 	} else if (codes.includes('NEUTRAL')) {
 		buckets.neutral.push(unit);
 	} else if (codes.length === 1 && FACTIONS[codes[0]]) {
@@ -722,6 +768,6 @@ if (unmapped.length > 0) {
 	console.log('WARNING: upgrades without curated effects: ' + unmapped.join(', '));
 }
 if (skipped.length > 0) {
-	console.log('skipped ' + skipped.length + ' units without factions (summons/tokens):');
+	console.log('skipped ' + skipped.length + ' units with no resolvable faction:');
 	for (const entry of skipped) console.log(' - ' + entry);
 }

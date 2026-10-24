@@ -91,6 +91,7 @@ export async function loadArmyUnits(): Promise<ArmyUnitContent> {
 	const factionUnits: ArmyUnitContent['factionUnits'] = {};
 	let neutralUnits: ArmyUnitSpec[] = [];
 	let mounts: ArmyUnitSpec[] = [];
+	let summons: ArmyUnitSpec[] = [];
 	for (const [path, module] of entries) {
 		const key = path.split('/').pop()?.replace('.json', '') ?? '';
 		if (
@@ -110,11 +111,15 @@ export async function loadArmyUnits(): Promise<ArmyUnitContent> {
 			neutralUnits = withIcons(module.default, iconsByName);
 		} else if (key === 'mounts') {
 			mounts = withIcons(module.default, iconsByName);
+		} else if (key === 'summons') {
+			// Not a faction: falling through to factionUnits would put summons in the
+			// recruitable pool and shift every army-code index.
+			summons = withIcons(module.default, iconsByName);
 		} else {
 			factionUnits[key as ArmyFactionId] = withIcons(module.default, iconsByName);
 		}
 	}
-	return { factionUnits, neutralUnits, mounts };
+	return { factionUnits, neutralUnits, mounts, summons };
 }
 
 async function rulesFile(fileName: string): Promise<ArmyRulesSpec[]> {

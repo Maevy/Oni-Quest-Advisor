@@ -96,7 +96,8 @@ const UNITS: ArmyUnitContent = {
 			size: 'huge',
 			classes: ['mount']
 		}
-	]
+	],
+	summons: []
 };
 
 const UPGRADES: ArmyUpgradeSpec[] = [
@@ -464,5 +465,34 @@ describe('decodeArmy', () => {
 		]) {
 			expect(decodeArmy(head + entries, CATALOG)).toEqual({ ok: false, error: 'invalid' });
 		}
+	});
+});
+
+describe('the summon pool', () => {
+	it('never shifts a unit index, so a saved army survives new summons', () => {
+		// 'aaa-summon' sorts ahead of every fixture unit: were the summon pool part of
+		// codeUnitPool it would take index 0, shift every recruitable unit by one, and every
+		// code already shared with a player would decode to the wrong army.
+		const withSummons: ArmyCodeCatalog = {
+			...CATALOG,
+			units: {
+				...CATALOG.units,
+				summons: [
+					{
+						id: 'aaa-summon',
+						name: 'AAA Summon',
+						points: 0,
+						limit: 0,
+						stats: STATS,
+						size: 'small',
+						classes: ['creature'],
+						summon: { tier: 1, source: { kind: 'conjuration', element: 'earth' } }
+					}
+				]
+			}
+		};
+		const code = encodeArmy(SAND_ARMY, CATALOG);
+		expect(encodeArmy(SAND_ARMY, withSummons)).toBe(code);
+		expect(decodeArmy(code, withSummons)).toEqual(decodeArmy(code, CATALOG));
 	});
 });
