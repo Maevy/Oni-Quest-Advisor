@@ -9,6 +9,9 @@ import type {
 	ArmyUpgradeSpec
 } from './army';
 import { decodeArmy, encodeArmy, type ArmyCodeCatalog, type ArmyList } from './armyCode';
+// Lives in savedArmy.ts because it produces a PickedArmy, but tested against the code fixtures:
+// everything it does is decode, gate on format and re-encode.
+import { pickedArmyFromCode } from './savedArmy';
 
 const STATS: ArmyStats = {
 	STA: 1,
@@ -494,5 +497,89 @@ describe('the summon pool', () => {
 		const code = encodeArmy(SAND_ARMY, CATALOG);
 		expect(encodeArmy(SAND_ARMY, withSummons)).toBe(code);
 		expect(decodeArmy(code, withSummons)).toEqual(decodeArmy(code, CATALOG));
+	});
+});
+
+describe('pickedArmyFromCode', () => {
+	const standard = encodeArmy(SAND_ARMY, CATALOG);
+	const roster = encodeArmy(HELIAN_ARMY, CATALOG);
+	const options = { name: 'Player 1 army', format: 'standard' } as const;
+
+	it('attaches a pasted code under the name it is given', () => {
+		expect(pickedArmyFromCode(standard, CATALOG, options)).toEqual({
+			ok: true,
+			army: {
+				name: 'Player 1 army',
+				factionId: 'sand-kingdoms',
+				code: standard,
+				format: 'standard'
+			}
+		});
+	});
+
+	it('refuses a Roster code where a mission run fields Standard', () => {
+		expect(pickedArmyFromCode(roster, CATALOG, options)).toEqual({
+			ok: false,
+			error: 'wrong-format'
+		});
+	});
+
+	it('refuses a Standard code where a Roster is wanted', () => {
+		expect(pickedArmyFromCode(standard, CATALOG, { name: 'x', format: 'roster' })).toEqual({
+			ok: false,
+			error: 'wrong-format'
+		});
+	});
+
+	it("passes the decoder's own refusals through", () => {
+		expect(pickedArmyFromCode('not-a-code', CATALOG, options)).toEqual({
+			ok: false,
+			error: 'invalid'
+		});
+	});
+
+	it('refuses a code built on a different roster', () => {
+		// A unit ahead of the pool shifts every index after it, so the fingerprint differs.
+		const changed: ArmyCodeCatalog = {
+			...CATALOG,
+			units: {
+				...CATALOG.units,
+				neutralUnits: [
+					{
+						id: 'aaa-intruder',
+						name: 'Intruder',
+						points: 1,
+						limit: 1,
+						stats: STATS,
+						size: 'medium',
+						classes: ['rogue']
+					},
+					...CATALOG.units.neutralUnits
+				]
+			}
+		};
+		expect(pickedArmyFromCode(standard, changed, options)).toEqual({
+			ok: false,
+			error: 'roster-mismatch'
+		});
+	});
+
+	it('tolerates the whitespace and case a paste arrives with', () => {
+		const result = pickedArmyFromCode(`  ${standard.toUpperCase()}\n`, CATALOG, options);
+		expect(result.ok).toBe(true);
+	});
+
+	it('stores a re-encoded code, folding a legacy format character', () => {
+		const legacy = withFormatChar(roster, 't');
+		const result = pickedArmyFromCode(legacy, CATALOG, { name: 'Player army', format: 'roster' });
+		if (!result.ok) throw new Error('expected the legacy code to attach');
+		expect(result.army.format).toBe('roster');
+		expect(result.army.code).not.toBe(legacy);
+		const decoded = decodeArmy(result.army.code, CATALOG);
+		expect(decoded.ok).toBe(true);
+		if (decoded.ok) {
+			expect(decoded.list.factionId).toBe('helian-league');
+			expect(semantic(decoded.list.entries)).toEqual(semantic(HELIAN_ARMY.entries));
+		}
 	});
 });

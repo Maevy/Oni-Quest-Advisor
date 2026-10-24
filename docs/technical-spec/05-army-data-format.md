@@ -267,6 +267,19 @@ and deleted with the run on abandon. Snapshotting (rather than referencing the s
 deliberate: editing or deleting the save afterwards must not change a game in progress.
 
 - The briefing's **Pick Army** picker lists only saves whose `savedArmyFormat` is `standard`.
+- The single-phone slots (solo, P1, P2) can also attach a list by **pasting its code**, through
+  `pickedArmyFromCode(code, catalog, { name, format })`: it decodes, refuses a code whose format
+  is not the slot's (`'wrong-format'`, so a mission run cannot be handed a Roster list), and
+  re-encodes what it stores — which folds a legacy `t` format character to `r` and guarantees the
+  snapshot decodes against the current catalogs. Nothing is written to `saved-armies`; the whole
+  point is to skip building and naming a save at the table. The decoder's own refusals
+  (`invalid`, `roster-mismatch`) pass through unchanged, and `contentStore.armyCodeCatalog` is
+  the one catalog every decode in the app uses, so a pasted code is checked against exactly the
+  content that will later render it.
+- An empty save list only dead-ends into the "create one?" prompt on the multi-phone slots.
+  Where a code can be pasted, the picker opens anyway — with no saves listed, its code field, and
+  a **Create an army** button — because a player who has never saved an army is exactly the one
+  the shortcut is for.
 - Display resolves the snapshot with `decodeArmy` + `resolveArmyEntries`
   (`missionProgressStore.pickedArmyRows()`), so the read-only Army view shows exactly what the
   code encodes, upgrades and mount included.

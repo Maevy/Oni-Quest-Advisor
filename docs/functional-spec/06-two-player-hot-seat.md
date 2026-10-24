@@ -16,7 +16,9 @@ read-only **Mission Briefing**, whose **Start Game** button records the open gam
 tracker. Hot-seat's briefing differs from solo's only in its army slots: the header carries
 **Pick P1 Army** (sky) and **Pick P2 Army** (orange) instead of one **Pick Army**, and each seat's
 attached list renders as its own panel — **Player 1 Army** / **Player 2 Army** — between the
-Description and Setup panels. See
+Description and Setup panels. Both pickers carry the _Or import an army code_ field, so a seat can
+be attached by pasting a code instead of building and naming a save first — it lands as
+**Player 1 army** / **Player 2 army** and nothing is written to the saved-army list. See
 [01-navigation-flow.md](./01-navigation-flow.md#screen-4a--mission-briefing-mission-briefing-both-local-modes).
 
 Starting with a seat that has no army asks _"It is strongly recommended to start a game with both

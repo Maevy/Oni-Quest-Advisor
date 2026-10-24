@@ -20,6 +20,7 @@ import {
 	resolveArmyEntries,
 	summonableUnits,
 	unitsForFaction,
+	type ArmyCodeCatalog,
 	type ArmyEntry,
 	type ArmyFactionConfig,
 	type ArmyFactionId,
@@ -137,6 +138,20 @@ class ContentStore {
 	}
 
 	/**
+	 * The catalogs an army code indexes into. Every decode in the app goes through this, so a
+	 * code and the fingerprint that guards it are always computed against the same content.
+	 */
+	get armyCodeCatalog(): ArmyCodeCatalog {
+		return {
+			factions: this.armyFactions,
+			units: this.armyUnits,
+			upgrades: this.armyUpgrades,
+			spellcrafts: this.armySpellcrafts,
+			items: this.armyItems
+		};
+	}
+
+	/**
 	 * Resolves a run's attached-army snapshot into everything the read-only Army view renders.
 	 * Null when nothing is picked, the catalogs are still loading, or the snapshot no longer
 	 * decodes against the current roster — a code from before a content update must refuse to
@@ -148,13 +163,7 @@ class ContentStore {
 		summons: SummonedModel[] = []
 	): ArmyView | null {
 		if (!picked || !this.armyLoaded) return null;
-		const decoded = decodeArmy(picked.code, {
-			factions: this.armyFactions,
-			units: this.armyUnits,
-			upgrades: this.armyUpgrades,
-			spellcrafts: this.armySpellcrafts,
-			items: this.armyItems
-		});
+		const decoded = decodeArmy(picked.code, this.armyCodeCatalog);
 		if (!decoded.ok) return null;
 		const faction = this.armyFactions.find((candidate) => candidate.id === decoded.list.factionId);
 		if (!faction) return null;
@@ -189,13 +198,7 @@ class ContentStore {
 	 */
 	armyEntries(picked: PickedArmy | null): ArmyEntry[] | null {
 		if (!picked || !this.armyLoaded) return null;
-		const decoded = decodeArmy(picked.code, {
-			factions: this.armyFactions,
-			units: this.armyUnits,
-			upgrades: this.armyUpgrades,
-			spellcrafts: this.armySpellcrafts,
-			items: this.armyItems
-		});
+		const decoded = decodeArmy(picked.code, this.armyCodeCatalog);
 		return decoded.ok ? decoded.list.entries : null;
 	}
 

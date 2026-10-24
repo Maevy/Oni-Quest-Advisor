@@ -16,6 +16,7 @@
 		groupResults,
 		groupSavedArmies,
 		indexArmyRules,
+		pickedArmyFromCode,
 		pickedArmyFormat,
 		resolveArmyEntries,
 		savedArmyFormat,
@@ -34,6 +35,7 @@
 		vitalityAfterStun,
 		type ArmyFormat,
 		type ArmyRosterRow,
+		type ArmyImportError,
 		type ArmyView,
 		type BattleReportInput,
 		type BattleReportPlayer,
@@ -940,6 +942,23 @@
 		return 'standard';
 	}
 
+	/**
+	 * The slots that may attach a list by pasting its code: the single-phone mission runs, where
+	 * building a list and naming a save before you can play is the slow part. Online and
+	 * tournament keep the saved-army flow - there each device picks for itself, and a code would
+	 * have to be retyped on the phone that owns it anyway.
+	 */
+	function allowsCodeImport(slotId: string | null): boolean {
+		return slotId === 'solo' || isSeatSlot(slotId);
+	}
+
+	/** The name a pasted code gets; there is no save to take one from. */
+	function defaultArmyName(slotId: string | null): string {
+		if (slotId === 'player1') return 'Player 1 army';
+		if (slotId === 'player2') return 'Player 2 army';
+		return 'Player army';
+	}
+
 	async function openPickArmy(slotId: string): Promise<void> {
 		await contentStore.loadArmy();
 		armyBuilderStore.refreshSavedArmies();
@@ -947,7 +966,10 @@
 		const listed = armyBuilderStore.savedArmies.filter(
 			(army) => format === null || savedArmyFormat(army) === format
 		);
-		if (listed.length === 0) {
+		// An empty list only dead-ends where a code cannot be pasted instead. Otherwise the
+		// picker opens with its code field and a way into the builder - the player who has never
+		// saved an army is exactly the one the shortcut is for.
+		if (listed.length === 0 && !allowsCodeImport(slotId)) {
 			showCreateArmyPrompt = true;
 			return;
 		}
@@ -960,20 +982,43 @@
 		return slotId === 'player1' || slotId === 'player2';
 	}
 
-	function selectPickedArmy(army: SavedArmy): void {
-		const picked: PickedArmy = {
-			name: army.name,
-			factionId: army.factionId,
-			code: army.code,
-			format: savedArmyFormat(army)
-		};
+	/** Routes an attached list to whichever slot the picker is open for. */
+	function attachPickedArmy(picked: PickedArmy): void {
 		if (pickTarget === 'tournament') tournamentStore.setOrganizerArmy(picked);
 		else if (pickTarget === 'tournament-join') joinArmy = picked;
 		else if (pickTarget === 'online-create') onlineCreateArmy = picked;
 		else if (pickTarget === 'online-join') onlineJoinArmy = picked;
 		else if (isSeatSlot(pickTarget)) twoPlayerProgressStore.pickArmy(pickTarget, picked);
 		else missionProgressStore.pickArmy(picked);
+	}
+
+	function selectPickedArmy(army: SavedArmy): void {
+		attachPickedArmy({
+			name: army.name,
+			factionId: army.factionId,
+			code: army.code,
+			format: savedArmyFormat(army)
+		});
 		showPickArmy = false;
+	}
+
+	/**
+	 * Attaches a pasted code to the run the picker is open for, and saves nothing: the point is
+	 * to skip the build-and-name step at the table, and a friend's code pasted once should not
+	 * clutter the saved-army list. Null on success, the reason otherwise.
+	 */
+	function importPickedArmyCode(code: string): ArmyImportError | null {
+		const format = pickFormatFor(pickTarget);
+		// Only the single-phone slots offer the field, and every one of them fields Standard.
+		if (format === null) return 'wrong-format';
+		const result = pickedArmyFromCode(code, contentStore.armyCodeCatalog, {
+			name: defaultArmyName(pickTarget),
+			format
+		});
+		if (!result.ok) return result.error;
+		attachPickedArmy(result.army);
+		showPickArmy = false;
+		return null;
 	}
 
 	function clearPickedArmy(slotId: string): void {
@@ -1688,6 +1733,13 @@
 				? 'A Standard army is combat-ready at once; a Roster army is cut down to 85 points once the game starts.'
 				: undefined}
 		onPick={selectPickedArmy}
+		onImportCode={allowsCodeImport(pickTarget) ? importPickedArmyCode : undefined}
+		onCreate={allowsCodeImport(pickTarget) && pickArmies.length === 0
+			? () => {
+					showPickArmy = false;
+					navigationStore.selectArmyBuilder();
+				}
+			: undefined}
 		onCancel={() => (showPickArmy = false)}
 	/>
 {/if}

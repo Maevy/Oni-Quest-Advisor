@@ -10,12 +10,12 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
   2026-10-13, deployed the same day), the big one: the tournament, the ground-up online
   redesign, the Battle Flowers, the interaction log and both PDF reports. Day-to-day work
   happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` is ahead of v0.9.0 with one unreleased feature in progress: summoning.** The data
-  layer (`2fab769`) and the local-mode UI (`e25105f`) are committed and verified; **online is not
-  built yet** — see What's next. The rest of the lead is housekeeping: `ba775c3` (the doc fold
-  that stopped these notes describing v0.8.0 as current), `46fb48d` (the wipe procedure below)
-  and `e316fc9` (the lockfile version fields the release commit missed). What shipped in v0.9.0,
-  with its decisions and traps, is `ARCHIVE.md`'s section for it; that file is the index into
+- **`develop` is ahead of v0.9.0 with the unreleased v0.10.0 work.** That is **summoning,
+  complete in all three modes** (`2fab769` data layer, `e25105f` local UI, `6353c28` online) and
+  the **paste-an-army-code shortcut** on the single-phone slots. The rest of the lead is
+  housekeeping: `a5d1711` and `ba775c3` (doc folds), `46fb48d` (the wipe procedure below) and
+  `e316fc9` (the lockfile version fields the release commit missed). What shipped in v0.9.0, with
+  its decisions and traps, is `ARCHIVE.md`'s section for it; that file is the index into
   `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
@@ -77,6 +77,16 @@ One asymmetry worth remembering: healing a fallen summoner does **not** return i
 (permanent by ruling), but **undoing** the blow that felled it does — an undo says the hit never
 landed, so the cascade never happened either. Both fall out of the fold replaying forward, with
 no removal record anywhere. Deliberately unmodelled: the rulebook's **Summoning Limit**.
+
+The other v0.10.0 item is a quality-of-life one: the **paste-an-army-code shortcut** on the
+single-phone slots (solo, P1, P2). Building a list and naming a save before you can play was the
+slow part at the table, so `PickArmyDialog` now carries an _Or import an army code_ field that
+attaches the list straight to the run under a default name (**Player army** / **Player 1 army** /
+**Player 2 army**) and saves nothing. A Roster code is refused rather than attached, because a
+mission run fields Standard. The side effect worth knowing: an empty save list no longer
+dead-ends into the "create one?" prompt on those slots — the picker opens with its code field and
+a **Create an army** button, which is exactly the player the shortcut is for. Online and
+tournament keep the old flow, since each device picks for itself there.
 
 The older deferred thread is the two buttons those dialogs still render inert — **Trade Item** and
 **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — one of

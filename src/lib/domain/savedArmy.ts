@@ -1,5 +1,6 @@
 import type { ArmyFactionId, ArmyFormat } from './army';
 import { unitStatuses, vitalityRingStates } from './army';
+import { decodeArmy, encodeArmy, type ArmyCodeCatalog, type ArmyCodeDecodeError } from './armyCode';
 import type {
 	ArmyFactionConfig,
 	ArmyItemSpec,
@@ -69,6 +70,38 @@ export type PickedArmy = {
 export function pickedArmyFormat(army: PickedArmy): ArmyFormat {
 	if ((army.format as string | undefined) === LEGACY_ROSTER_FORMAT) return 'roster';
 	return army.format ?? 'standard';
+}
+
+/** Why a pasted army code could not be attached to a run. */
+export type ArmyImportError = ArmyCodeDecodeError | 'wrong-format';
+
+/**
+ * Turns a pasted army code into the snapshot a run attaches, saving nothing. At the table,
+ * building a list and naming a save before you can play is too slow when the code already
+ * carries the whole list - and a friend's code, pasted once, should not clutter the saves.
+ *
+ * `format` is what the slot fields, so a mission run refuses a Roster code here rather than
+ * attaching it and discovering the mismatch mid-game. The stored code is re-encoded from the
+ * decoded list rather than kept as pasted: a legacy `t` format character folds to the modern
+ * `r`, and whatever is stored is guaranteed to decode against the current catalogs.
+ */
+export function pickedArmyFromCode(
+	code: string,
+	catalog: ArmyCodeCatalog,
+	options: { name: string; format: ArmyFormat }
+): { ok: true; army: PickedArmy } | { ok: false; error: ArmyImportError } {
+	const decoded = decodeArmy(code, catalog);
+	if (!decoded.ok) return { ok: false, error: decoded.error };
+	if (decoded.list.format !== options.format) return { ok: false, error: 'wrong-format' };
+	return {
+		ok: true,
+		army: {
+			name: options.name,
+			factionId: decoded.list.factionId,
+			code: encodeArmy(decoded.list, catalog),
+			format: decoded.list.format
+		}
+	};
 }
 
 /** One summoned creature resolved for the board: its identity, its summoner, and its spec. */

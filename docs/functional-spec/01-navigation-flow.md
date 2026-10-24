@@ -172,11 +172,26 @@ hot-seat brings one per seat:
 Each slot's button opens the same saved-army picker, and each attached army renders as its own
 panel between the Description and Setup panels with an **✕** that detaches just that seat. The
 picker lists the device's saved **standard**-format armies (Roster saves are excluded — a mission
-run fields a standard list). With none saved it instead asks _"It seems you don't have any saved
-armies. Do you want to create one?"_ — **Create one** jumps to the army builder, **Not now**
-closes. Picking attaches a **snapshot** (`PickedArmy`: name, faction, code) to that seat, so later
-edits or deletion of the save cannot change a run that is already under way. Two seats may attach
-the same save; their vitality maps stay separate.
+run fields a standard list). Picking attaches a **snapshot** (`PickedArmy`: name, faction, code)
+to that seat, so later edits or deletion of the save cannot change a run that is already under
+way. Two seats may attach the same save; their vitality maps stay separate.
+
+**Or paste a code** (2026-10-25). Building a list and naming a save before you can play is slow at
+the table, so the single-phone slots — solo, P1 and P2 — also carry an _Or import an army code_
+field with an **Import Army** button. It attaches the list straight to the run under a default
+name (**Player army**, **Player 1 army**, **Player 2 army**) and **saves nothing**: a friend's
+code pasted once should not clutter the saved-army list, and the run only ever needed the snapshot.
+A code whose format is not the slot's is refused with _"This is a Roster list; a mission run
+fields a Standard one"_ rather than attached and discovered mid-game; the decoder's own refusals
+(_"This is not a valid army code"_, _"This code was created with a different roster version"_)
+read the same as they do in the builder, and the dialog stays open on any of them.
+
+Because the code field is there, **an empty save list no longer dead-ends** on these slots: the
+picker opens with _No saved armies yet_, its code field, and a **Create an army** button into the
+builder. The multi-phone slots keep the old behaviour and still ask _"It seems you don't have any
+saved armies. Do you want to create one?"_ — **Create one** jumps to the army builder, **Not now**
+closes — because online and tournament each pick on their own device, where a pasted code would
+have to be retyped on the phone that owns it anyway.
 
 **Start Game is the boundary between browsing and playing**: it records the mission as the **open
 game** (with the mode, so a reload resumes into the right tracker) and switches to
