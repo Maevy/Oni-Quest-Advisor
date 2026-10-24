@@ -25,7 +25,8 @@ function flower(
 	hp: number | null,
 	max = 3,
 	statuses: UnitStatus[] = [],
-	undead = false
+	undead = false,
+	summoned = false
 ): BattleFlowerSpec {
 	return {
 		entryId,
@@ -34,7 +35,9 @@ function flower(
 		stamina: null,
 		life: hp === null ? null : { current: hp, max, states: [] },
 		statuses,
-		undead
+		undead,
+		summoned,
+		summonerId: summoned ? 'summoner' : null
 	};
 }
 

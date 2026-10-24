@@ -141,7 +141,9 @@
 
 	type Props = {
 		unit: ArmyUnitSpec;
-		faction: ArmyFactionConfig;
+		/** Absent on a summoned creature, which belongs to no faction - not even the caller's,
+		 * since Necromancy reaches another faction's Undead. */
+		faction?: ArmyFactionConfig;
 		classIndex: Record<string, ArmyRulesSpec>;
 		skillIndex: Record<string, ArmyRulesSpec>;
 		traitIndex: Record<string, ArmyRulesSpec>;
@@ -178,6 +180,10 @@
 
 	/** Open rules popups, stacked - a link inside a popup pushes the next layer. */
 	let popupStack = $state<ArmyRulesPopup[]>([]);
+
+	/** The frame's hue: the faction's colour, or the summoning mechanic's lilac without one. */
+	const SUMMON_ACCENT = '#d8b4fe';
+	let accent = $derived(faction?.color ?? SUMMON_ACCENT);
 
 	let indexes = $derived<ArmyRulesIndexes>({
 		classes: classIndex,
@@ -271,7 +277,7 @@
 		tabindex="-1"
 		aria-label={unit.name}
 		class="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl"
-		style="border-color: {faction.color}"
+		style="border-color: {accent}"
 	>
 		<div class="flex items-start gap-3">
 			{#if unit.icon}
@@ -279,7 +285,7 @@
 					src={unit.icon}
 					alt=""
 					class="h-[70px] w-[70px] shrink-0 rounded-lg border-2 bg-slate-800/60 object-contain"
-					style="border-color: {faction.color}"
+					style="border-color: {accent}"
 				/>
 			{/if}
 			<div class="min-w-0">
@@ -287,7 +293,9 @@
 				<p class="text-xs font-medium tracking-wide text-slate-100">
 					Size: {armyUnitSizeLabel(size)}
 				</p>
-				<p class="text-sm font-semibold" style="color: {faction.color}">{faction.name}</p>
+				{#if faction}
+					<p class="text-sm font-semibold" style="color: {accent}">{faction.name}</p>
+				{/if}
 				<div class="mt-1.5 flex flex-wrap gap-1.5">
 					{#each classTags as tag (tag.title)}
 						<button
@@ -508,7 +516,7 @@
 				aria-label={popup.title}
 				class={'max-h-[75dvh] w-full overflow-y-auto rounded-2xl border-2 bg-slate-900/95 p-4 shadow-xl ' +
 					(popup.spells ? 'max-w-md' : 'max-w-sm')}
-				style="border-color: {faction.color}"
+				style="border-color: {accent}"
 			>
 				<h3 class="text-sm font-semibold tracking-wide text-sky-300 uppercase">{popup.title}</h3>
 				{#if popup.spells}

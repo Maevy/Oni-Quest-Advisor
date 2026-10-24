@@ -60,6 +60,16 @@
 		--neon-glow: rgb(196 181 253 / 0.75);
 		box-shadow: 0 0 20px rgb(167 139 250 / 0.3);
 	}
+
+	/* Lilac beam: the summoning mechanic's hue, matching the Summon Creature glyph. Worn by a
+	   summoned creature's portrait ring for as long as it is on the field, which is how the board
+	   tells a called creature from a recruited one without spending a label on it. */
+	.neon-lilac {
+		--neon-beam: #d8b4fe;
+		--neon-beam-bright: #faf5ff;
+		--neon-glow: rgb(216 180 254 / 0.75);
+		box-shadow: 0 0 20px rgb(192 132 252 / 0.3);
+	}
 }
 
 @keyframes neon-sweep {

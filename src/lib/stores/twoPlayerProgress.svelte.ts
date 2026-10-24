@@ -108,13 +108,21 @@ class TwoPlayerProgressStore {
 		undead = false
 	): void {
 		if (!this.progress) return;
-		const previousHp = this.progress[player].vitality?.[entryId]?.hp;
-		this.progress = domain.setTwoPlayerVitality(
-			this.progress,
-			player,
-			entryId,
-			domain.settleVitalityStates(vitality, previousHp, undead)
-		);
+		this.progress = domain.setTwoPlayerVitality(this.progress, player, entryId, vitality, undead);
+		this.persist();
+	}
+
+	/** Calls a creature onto the field for one seat, below the model that summoned it. */
+	summonCreature(player: PlayerKey, summonerId: string, unitId: string): void {
+		if (!this.progress) return;
+		this.progress = domain.summonTwoPlayerCreature(this.progress, player, summonerId, unitId);
+		this.persist();
+	}
+
+	/** Dismisses one seat's creature; anything it called leaves with it. */
+	dismissSummon(player: PlayerKey, summonId: string): void {
+		if (!this.progress) return;
+		this.progress = domain.dismissTwoPlayerSummon(this.progress, player, summonId);
 		this.persist();
 	}
 
@@ -124,7 +132,11 @@ class TwoPlayerProgressStore {
 	 */
 	armyView(player: PlayerKey): ArmyView | null {
 		const seat = this.progress?.[player];
-		return contentStore.armyView(seat?.pickedArmy ?? null, seat?.vitality ?? {});
+		return contentStore.armyView(
+			seat?.pickedArmy ?? null,
+			seat?.vitality ?? {},
+			seat?.summons ?? []
+		);
 	}
 
 	setDraftFaction(player: PlayerKey, factionId: string | null): void {

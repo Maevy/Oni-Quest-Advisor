@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type {
+		ArmyUnitSpec,
 		ArmyView,
 		BattleFlowerSpec,
 		Faction,
@@ -11,7 +12,7 @@
 		TwoPlayerMissionProgress,
 		UnitStatus
 	} from '$lib/domain';
-	import { battleFlowersFor, type VitalityTarget } from '$lib/domain';
+	import { availableSummons, battleFlowersFor, type VitalityTarget } from '$lib/domain';
 	import ActivePlayerPanel from './ActivePlayerPanel.svelte';
 	import type { FlowerRect } from './BattleFlower.svelte';
 	import BattleFlowersPanel from './BattleFlowersPanel.svelte';
@@ -83,6 +84,12 @@
 		onStagger: (target: VitalityTarget) => void;
 		/** The Interaction panel dealt a Stun: spend every one of the target's activations. */
 		onStun: (target: VitalityTarget) => void;
+		/** Every creature a spell can put on the field; the dialog gates it per model. */
+		summonPool: ArmyUnitSpec[];
+		/** Summon was pressed: put the creature on the field for the target's seat. */
+		onSummon: (target: VitalityTarget, unitId: string) => void;
+		/** Dismiss was pressed: take that seat's creature off the field. */
+		onDismissSummon: (target: VitalityTarget) => void;
 	};
 
 	let {
@@ -115,7 +122,10 @@
 		onStatuses,
 		onStamina,
 		onStagger,
-		onStun
+		onStun,
+		summonPool,
+		onSummon,
+		onDismissSummon
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -133,6 +143,8 @@
 	let selfDialog = $state<{ target: VitalityTarget; army: ArmyView } | null>(null);
 	// The card the tapped model's icon opens, kept separate so closing it leaves the dialog up.
 	let selfInfo = $state(false);
+	/** A creature's card opened from the summon picker; closing it leaves the picker up. */
+	let summonCard = $state<ArmyUnitSpec | null>(null);
 
 	/** Which of the three view buttons the spotlight sits under. */
 	let activeIndex = $derived(VIEWS.findIndex((candidate) => candidate.id === view));
@@ -144,6 +156,35 @@
 		return (
 			current.army.rows.find((candidate) => candidate.entryId === current.target.entryId) ?? null
 		);
+	});
+
+	/**
+	 * The tapped creature's own spec, while its card is open. A summoned copy has no roster row,
+	 * so Model Info on one resolves here instead - and the card frames itself in the summoning
+	 * hue, since the creature belongs to no faction (not even the seat that called it).
+	 */
+	let selfSummonUnit = $derived.by(() => {
+		const current = selfDialog;
+		if (!current || !selfInfo) return null;
+		return (
+			current.army.summons.find((candidate) => candidate.id === current.target.entryId)?.unit ??
+			null
+		);
+	});
+
+	/**
+	 * What the tapped model may call, from its own seat's army. An army copy resolves to its
+	 * upgraded unit, because an upgrade-granted Affinity is exactly what can unlock a creature
+	 * the base model could not call.
+	 */
+	let selfSummons = $derived.by(() => {
+		const current = selfDialog;
+		if (!current) return [];
+		const summon = current.army.summons.find((c) => c.id === current.target.entryId);
+		const unit =
+			summon?.unit ??
+			current.army.rows.find((row) => row.entryId === current.target.entryId)?.upgradedUnit;
+		return unit ? availableSummons(unit, summonPool) : [];
 	});
 
 	function openSelf(
@@ -492,6 +533,14 @@
 		{onStagger}
 		{onStun}
 		{onStamina}
+		summons={selfSummons}
+		onSummon={(unitId) => {
+			if (selfDialog) onSummon(selfDialog.target, unitId);
+		}}
+		onSummonInfo={(unit) => (summonCard = unit)}
+		onDismiss={() => {
+			if (selfDialog) onDismissSummon(selfDialog.target);
+		}}
 		onInfo={() => (selfInfo = true)}
 		onClose={closeSelf}
 	/>
@@ -519,6 +568,38 @@
 		mountName={selfRow.mount?.name}
 		onClose={() => (selfInfo = false)}
 	/>
+{/if}
+
+<!-- A summoned creature's card. No faction prop: it belongs to none, not even the seat that
+     called it, so the card frames itself in the summoning hue. No roster row either - its own
+     spec carries the stats and size, and it has no upgrades or mount behind it. Shared by Model
+     Info on a summoned copy and by a portrait tapped in the summon picker. -->
+{#snippet summonCardView(unit: ArmyUnitSpec, army: ArmyView, onClose: () => void)}
+	<UnitCard
+		{unit}
+		classIndex={army.classIndex}
+		skillIndex={army.skillIndex}
+		traitIndex={army.traitIndex}
+		combatArtIndex={army.combatArtIndex}
+		spellcraftIndex={army.spellcraftIndex}
+		spells={army.spells}
+		stratagemIndex={army.stratagemIndex}
+		itemIndex={army.itemIndex}
+		stats={unit.stats}
+		size={unit.size}
+		mounted={false}
+		{onClose}
+	/>
+{/snippet}
+
+{#if selfDialog && selfSummonUnit}
+	{@render summonCardView(selfSummonUnit, selfDialog.army, () => (selfInfo = false))}
+{/if}
+
+<!-- After the dialog, so its own backdrop is the layer an outside click meets first: closing the
+     card leaves the picker open underneath it. -->
+{#if selfDialog && summonCard}
+	{@render summonCardView(summonCard, selfDialog.army, () => (summonCard = null))}
 {/if}
 
 <!-- The lifted clone and its drop crosshair, at the screen root: the pane's overflow and the

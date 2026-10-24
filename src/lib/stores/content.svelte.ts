@@ -18,6 +18,7 @@ import {
 	decodeArmy,
 	indexArmyRules,
 	resolveArmyEntries,
+	summonableUnits,
 	unitsForFaction,
 	type ArmyEntry,
 	type ArmyFactionConfig,
@@ -34,6 +35,8 @@ import {
 	type Mission,
 	type PickedArmy,
 	type SchemeCard,
+	type SummonedModel,
+	type SummonedRow,
 	type UnitVitality
 } from '$lib/domain';
 
@@ -117,12 +120,32 @@ class ContentStore {
 	}
 
 	/**
+	 * Resolves a run's summoned creatures against the catalogs. A creature whose unit the
+	 * current content no longer has is dropped rather than drawn blank - the same ruling as a
+	 * code that no longer decodes: better absent than wrong.
+	 */
+	private summonRows(summons: SummonedModel[]): SummonedRow[] {
+		if (summons.length === 0) return [];
+		const pool = summonableUnits(this.armyUnits);
+		const rows: SummonedRow[] = [];
+		for (const summon of summons) {
+			const unit = pool.find((candidate) => candidate.id === summon.unitId);
+			if (unit) rows.push({ id: summon.id, summonerId: summon.summonerId, unit });
+		}
+		return rows;
+	}
+
+	/**
 	 * Resolves a run's attached-army snapshot into everything the read-only Army view renders.
 	 * Null when nothing is picked, the catalogs are still loading, or the snapshot no longer
 	 * decodes against the current roster — a code from before a content update must refuse to
 	 * render rather than resolve the wrong units.
 	 */
-	armyView(picked: PickedArmy | null, vitality: Record<string, UnitVitality>): ArmyView | null {
+	armyView(
+		picked: PickedArmy | null,
+		vitality: Record<string, UnitVitality>,
+		summons: SummonedModel[] = []
+	): ArmyView | null {
 		if (!picked || !this.armyLoaded) return null;
 		const decoded = decodeArmy(picked.code, {
 			factions: this.armyFactions,
@@ -145,6 +168,7 @@ class ContentStore {
 				indexArmyRules(this.armyItems)
 			),
 			picks: decoded.list.picks ?? [],
+			summons: this.summonRows(summons),
 			faction,
 			upgradeIndex,
 			classIndex: indexArmyRules(this.armyClasses),
@@ -191,6 +215,8 @@ class ContentStore {
 		const upgradeIndex = indexArmyRules(this.armyUpgrades);
 		return {
 			army: { name: army.name, factionId: army.factionId, code: '', format: army.format },
+			// Online has no summons yet: they arrive with the interaction log's own event type.
+			summons: [],
 			rows: resolveArmyEntries(
 				entries,
 				unitsForFaction(army.factionId, this.armyUnits),

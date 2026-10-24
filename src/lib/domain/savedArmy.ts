@@ -8,6 +8,7 @@ import type {
 	ArmyRulesSpec,
 	ArmySpellSpec,
 	ArmyStratagemSpec,
+	ArmyUnitSpec,
 	ArmyUpgradeSpec,
 	UnitStatus,
 	UnitVitality,
@@ -70,6 +71,13 @@ export function pickedArmyFormat(army: PickedArmy): ArmyFormat {
 	return army.format ?? 'standard';
 }
 
+/** One summoned creature resolved for the board: its identity, its summoner, and its spec. */
+export type SummonedRow = {
+	id: string;
+	summonerId: string;
+	unit: ArmyUnitSpec;
+};
+
 /**
  * Everything the read-only army view needs, resolved once per render: the snapshot,
  * its copies joined with unit specs, and the catalogs the unit card resolves against.
@@ -79,6 +87,8 @@ export type ArmyView = {
 	rows: ArmyRosterRow[];
 	/** The roster's equipment pool; empty for Standard lists, which carry no pool. */
 	picks: ArmyRosterPick[];
+	/** Creatures called onto the field during the run, in the order they were summoned. */
+	summons: SummonedRow[];
 	faction: ArmyFactionConfig;
 	upgradeIndex: Record<string, ArmyUpgradeSpec>;
 	classIndex: Record<string, ArmyRulesSpec>;
@@ -118,6 +128,14 @@ export type BattleFlowerSpec = {
 	/** Whether the model carries the Undead trait: it has no Incapacitated, and zero Life
 	 * puts it straight into Dead. */
 	undead: boolean;
+	/**
+	 * True on a creature called onto the field rather than recruited. It wears the flashy
+	 * border, offers Dismiss in place of Summon Creature, and at zero Life it leaves the field
+	 * instead of falling - so nothing may read it as an ordinary copy.
+	 */
+	summoned: boolean;
+	/** The flower this one hangs below; null on an army copy. */
+	summonerId: string | null;
 };
 
 function battleRing(max: number | null, current: number | null): BattleRingSpec | null {
@@ -125,11 +143,51 @@ function battleRing(max: number | null, current: number | null): BattleRingSpec 
 	return { current, max, states: vitalityRingStates(current, max) };
 }
 
-/** Projects an army view into the flowers its panel draws: one per copy, in list order. */
+/** One summoned creature as a flower: its own identity, its spec's bases, and never a mount. */
+function summonFlower(row: SummonedRow, vitality: UnitVitality | undefined): BattleFlowerSpec {
+	const stats = row.unit.stats;
+	return {
+		entryId: row.id,
+		name: row.unit.name,
+		icon: row.unit.icon,
+		mountedOn: null,
+		stamina: battleRing(stats.STA, vitality?.sta ?? stats.STA),
+		life: battleRing(stats.HP, vitality?.hp ?? stats.HP),
+		statuses: unitStatuses(vitality),
+		undead: (row.unit.traits ?? []).some((trait) => trait.id === 'undead'),
+		summoned: true,
+		summonerId: row.summonerId
+	};
+}
+
+/**
+ * Projects an army view into the flowers its panel draws: one per copy in list order, each
+ * followed by the creatures it called. A summon hangs below its summoner and a summon's own
+ * summons below it, so the board reads as the tree it is rather than as two unrelated lists.
+ */
 export function battleFlowersFor(view: ArmyView): BattleFlowerSpec[] {
-	return view.rows.map((row) => {
+	const bySummoner = new Map<string, SummonedRow[]>();
+	for (const summon of view.summons) {
+		const owned = bySummoner.get(summon.summonerId);
+		if (owned) owned.push(summon);
+		else bySummoner.set(summon.summonerId, [summon]);
+	}
+	const flowers: BattleFlowerSpec[] = [];
+	const placed = new Set<string>();
+	// Depth-first, with `placed` as the guard: a stored chain that ever looped would otherwise
+	// recurse forever, and a creature whose summoner is not on the board is appended below
+	// rather than dropped - an unreachable flower could never be dismissed.
+	const appendOwnedBy = (ownerId: string): void => {
+		for (const summon of bySummoner.get(ownerId) ?? []) {
+			if (placed.has(summon.id)) continue;
+			placed.add(summon.id);
+			flowers.push(summonFlower(summon, view.vitality[summon.id]));
+			appendOwnedBy(summon.id);
+		}
+	};
+	for (const row of view.rows) {
 		const vitality = view.vitality[row.entryId];
-		return {
+		flowers.push({
 			entryId: row.entryId,
 			name: row.name,
 			icon: row.icon,
@@ -139,9 +197,18 @@ export function battleFlowersFor(view: ArmyView): BattleFlowerSpec[] {
 			statuses: unitStatuses(vitality),
 			undead: [row.upgradedUnit, row.mount].some((unit) =>
 				(unit?.traits ?? []).some((trait) => trait.id === 'undead')
-			)
-		};
-	});
+			),
+			summoned: false,
+			summonerId: null
+		});
+		appendOwnedBy(row.entryId);
+	}
+	for (const summon of view.summons) {
+		if (placed.has(summon.id)) continue;
+		placed.add(summon.id);
+		flowers.push(summonFlower(summon, view.vitality[summon.id]));
+	}
+	return flowers;
 }
 
 /** Groups saved armies by faction (in `factionOrder`), newest first within each group. */

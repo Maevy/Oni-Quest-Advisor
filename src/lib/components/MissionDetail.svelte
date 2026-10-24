@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type {
 		ArmyRosterRow,
+		ArmyUnitSpec,
 		ArmyView,
 		BattleFlowerSpec,
 		Faction,
@@ -12,7 +13,7 @@
 		UnitStatus,
 		VitalityTarget
 	} from '$lib/domain';
-	import { battleFlowersFor } from '$lib/domain';
+	import { availableSummons, battleFlowersFor } from '$lib/domain';
 	import BattleFlowersPanel from './BattleFlowersPanel.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import DescriptionPanel from './DescriptionPanel.svelte';
@@ -66,6 +67,10 @@
 		onStagger: (target: VitalityTarget) => void;
 		onStun: (target: VitalityTarget) => void;
 		onStamina: (target: VitalityTarget, delta: number) => void;
+		/** Every creature a spell can put on the field; the dialog gates it per model. */
+		summonPool: ArmyUnitSpec[];
+		onSummon: (target: VitalityTarget, unitId: string) => void;
+		onDismissSummon: (target: VitalityTarget) => void;
 	};
 
 	let {
@@ -92,7 +97,10 @@
 		onStatuses,
 		onStagger,
 		onStun,
-		onStamina
+		onStamina,
+		summonPool,
+		onSummon,
+		onDismissSummon
 	}: Props = $props();
 
 	/** A started game always opens on the score sheet; the other two views are reference. */
@@ -103,6 +111,8 @@
 	// a transform, which would become the containing block for their fixed overlays and trap
 	// them inside a pane.
 	let armyCardRow = $state<ArmyRosterRow | null>(null);
+	/** A creature's card opened from the summon picker, or a summoned copy's Model Info. */
+	let summonCard = $state<ArmyUnitSpec | null>(null);
 	let openRule = $state<RuleCallout | null>(null);
 
 	/** Which of the three view buttons the spotlight sits under. */
@@ -134,6 +144,23 @@
 	let suppressSelf = false;
 
 	let seatFlowers = $derived.by(() => (armyView ? battleFlowersFor(armyView) : []));
+
+	/**
+	 * The spec behind a board id: an army copy resolves to its upgraded unit (so an upgrade that
+	 * granted an Affinity is what unlocks a creature), a summoned copy to its own.
+	 */
+	function unitForEntryId(entryId: string): ArmyUnitSpec | null {
+		if (!armyView) return null;
+		const summon = armyView.summons.find((candidate) => candidate.id === entryId);
+		if (summon) return summon.unit;
+		return armyView.rows.find((row) => row.entryId === entryId)?.upgradedUnit ?? null;
+	}
+
+	/** What the self dialog's model may call; empty for the great majority of the board. */
+	let selfSummons = $derived.by(() => {
+		const unit = selfDialog ? unitForEntryId(selfDialog.entryId) : null;
+		return unit ? availableSummons(unit, summonPool) : [];
+	});
 
 	/** The copy a strip key (`player1:entryId`) names, or null if it is not on the field. */
 	function targetForKey(key: string): VitalityTarget | null {
@@ -426,9 +453,28 @@
 		{onStagger}
 		{onStun}
 		{onStamina}
+		summons={selfSummons}
+		onSummon={(unitId) => {
+			if (selfDialog) onSummon(selfDialog, unitId);
+		}}
+		onSummonInfo={(unit) => (summonCard = unit)}
+		onDismiss={() => {
+			if (selfDialog) onDismissSummon(selfDialog);
+		}}
 		onInfo={() => {
-			if (armyView)
-				armyCardRow = armyView.rows.find((row) => row.entryId === selfDialog?.entryId) ?? null;
+			if (!armyView) return;
+			// Read the id out first: `{#if selfDialog}` does not narrow inside the find callback,
+			// since selfDialog is mutable state the closure could outlive.
+			const entryId = selfDialog?.entryId;
+			if (!entryId) return;
+			const row = armyView.rows.find((candidate) => candidate.entryId === entryId);
+			if (row) {
+				armyCardRow = row;
+				return;
+			}
+			// A summoned creature has no roster row: its card is its own spec, and it wears the
+			// summoning hue rather than a faction it does not belong to.
+			summonCard = unitForEntryId(entryId);
 		}}
 		onClose={closeSelf}
 	/>
@@ -465,6 +511,27 @@
 		mounted={armyCardRow.mounted}
 		mountName={armyCardRow.mount?.name}
 		onClose={() => (armyCardRow = null)}
+	/>
+{/if}
+
+<!-- No faction prop: a summoned creature belongs to none, so the card frames itself in the
+     summoning hue instead. Its own spec carries the stats and size - there are no upgrades,
+     no mount and no roster row behind it. -->
+{#if armyView && summonCard}
+	<UnitCard
+		unit={summonCard}
+		classIndex={armyView.classIndex}
+		skillIndex={armyView.skillIndex}
+		traitIndex={armyView.traitIndex}
+		combatArtIndex={armyView.combatArtIndex}
+		spellcraftIndex={armyView.spellcraftIndex}
+		spells={armyView.spells}
+		stratagemIndex={armyView.stratagemIndex}
+		itemIndex={armyView.itemIndex}
+		stats={summonCard.stats}
+		size={summonCard.size}
+		mounted={false}
+		onClose={() => (summonCard = null)}
 	/>
 {/if}
 

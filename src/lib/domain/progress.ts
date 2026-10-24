@@ -1,6 +1,7 @@
 import { getScoreableResults, type Mission } from './mission';
 import { schemeVp, type ChosenScheme, type SchemeCard } from './scheme';
 import type { PickedArmy } from './savedArmy';
+import { addSummon, commitVitality, dismissSummon, type SummonedModel } from './summoning';
 import type { UnitVitality } from './army';
 
 export type SchemeDraft = {
@@ -27,6 +28,12 @@ export type MissionProgress = {
 	pickedArmy: PickedArmy | null;
 	/** Live Life/stamina per army copy (entry id), for copies that took damage or were healed. */
 	vitality: Record<string, UnitVitality>;
+	/**
+	 * Creatures called onto the field during the run. They share the vitality map with army
+	 * copies, keyed by their own id - a removal is stored here, which is what makes a summoner's
+	 * fall take its summons off for good.
+	 */
+	summons: SummonedModel[];
 };
 
 export function createEmptyProgress(missionId: string): MissionProgress {
@@ -37,7 +44,8 @@ export function createEmptyProgress(missionId: string): MissionProgress {
 		schemeDraft: { factionId: null, intelligence: null },
 		currentRound: MIN_ROUND,
 		pickedArmy: null,
-		vitality: {}
+		vitality: {},
+		summons: []
 	};
 }
 
@@ -67,6 +75,49 @@ export function setObjectiveChecked(
 
 export function clearScheme(progress: MissionProgress): MissionProgress {
 	return { ...progress, scheme: null };
+}
+
+/**
+ * Commits one copy's Life/stamina/States, applying the summon rules on the way: a summon at zero
+ * Life leaves the field instead of falling, and a model that falls loses every creature it
+ * called. The settling this wraps used to live in the store, which meant a caller could write a
+ * vitality record that skipped it - it lives here so it cannot.
+ */
+export function setMissionVitality(
+	progress: MissionProgress,
+	entryId: string,
+	vitality: UnitVitality,
+	undead = false
+): MissionProgress {
+	return {
+		...progress,
+		...commitVitality(
+			{ summons: progress.summons, vitality: progress.vitality },
+			entryId,
+			vitality,
+			undead
+		)
+	};
+}
+
+/** Puts a creature on the field, below the model that called it. */
+export function summonCreature(
+	progress: MissionProgress,
+	summonerId: string,
+	unitId: string
+): MissionProgress {
+	return {
+		...progress,
+		...addSummon({ summons: progress.summons, vitality: progress.vitality }, summonerId, unitId)
+	};
+}
+
+/** Takes a creature off the field, and anything it called with it. */
+export function dismissCreature(progress: MissionProgress, summonId: string): MissionProgress {
+	return {
+		...progress,
+		...dismissSummon({ summons: progress.summons, vitality: progress.vitality }, summonId)
+	};
 }
 
 export function calculateTotalVP(

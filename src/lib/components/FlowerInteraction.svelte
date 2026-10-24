@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { UnitStatus, VitalityTarget } from '$lib/domain';
+	import type { ArmyUnitSpec, AvailableSummon, UnitStatus, VitalityTarget } from '$lib/domain';
 	import { damageApplied, healApplied, staminaCap, vitalityRingStates } from '$lib/domain';
 	import BattleFlower from './BattleFlower.svelte';
 	import AmountPad from './AmountPad.svelte';
 	import StatusPicker from './StatusPicker.svelte';
+	import SummonPicker from './SummonPicker.svelte';
 	import StatusGlyph from './StatusGlyph.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import { playerAccent } from './playerAccent';
@@ -31,6 +32,18 @@
 		onStamina?: (target: VitalityTarget, delta: number) => void;
 		/** Model Info was pressed: the screen opens the model's card above this dialog. Self only. */
 		onInfo?: () => void;
+		/**
+		 * The creatures this model may call, already gated by its spellcraft, Affinity and tier.
+		 * Empty hides the Summon Creature button, which is the common case - only a handful of
+		 * models in the game summon at all. Self only.
+		 */
+		summons?: AvailableSummon[];
+		/** Summon was pressed in the picker: the screen puts the creature on the field. */
+		onSummon?: (unitId: string) => void;
+		/** A picker portrait was tapped: the screen opens that creature's card. */
+		onSummonInfo?: (unit: ArmyUnitSpec) => void;
+		/** Dismiss was pressed on a summoned creature: the screen takes it off the field. */
+		onDismiss?: () => void;
 		onClose: () => void;
 	};
 
@@ -45,6 +58,10 @@
 		onStun,
 		onStamina,
 		onInfo,
+		summons = [],
+		onSummon,
+		onSummonInfo,
+		onDismiss,
 		onClose
 	}: Props = $props();
 
@@ -53,7 +70,7 @@
 	const SETTLE_MS = 340;
 
 	/** Which sub-flow the menu has opened; null shows the action buttons. */
-	type Sub = 'damage' | 'heal' | 'status' | 'stagger' | 'stun' | 'stamina';
+	type Sub = 'damage' | 'heal' | 'status' | 'stagger' | 'stun' | 'stamina' | 'summon';
 	let sub = $state<Sub | null>(null);
 
 	type StrikeKind = 'damage' | 'heal' | 'stagger' | 'stun';
@@ -295,7 +312,17 @@
 	});
 
 	type ActionId =
-		'damage' | 'heal' | 'status' | 'buff' | 'stagger' | 'stun' | 'trade' | 'info' | 'stamina';
+		| 'damage'
+		| 'heal'
+		| 'status'
+		| 'buff'
+		| 'stagger'
+		| 'stun'
+		| 'trade'
+		| 'info'
+		| 'stamina'
+		| 'summon'
+		| 'dismiss';
 	type Action = { id: ActionId; label: string; enabled: boolean };
 	const CROSS_ACTIONS: Action[] = [
 		{ id: 'damage', label: 'Assign Damage', enabled: true },
@@ -317,13 +344,33 @@
 		{ id: 'info', label: 'Model Info', enabled: true },
 		{ id: 'stamina', label: 'Activation Management', enabled: true }
 	];
-	let actions = $derived(self ? SELF_ACTIONS : CROSS_ACTIONS);
+	// Summon Creature appears only on a model that can actually call something: most cannot, and
+	// a dead button on every dialog would be noise rather than information. Dismiss is added on a
+	// summoned creature, the one thing on the board that can leave the field on purpose.
+	let actions = $derived.by(() => {
+		if (!self) return CROSS_ACTIONS;
+		const list = [...SELF_ACTIONS];
+		if (summons.length > 0) list.push({ id: 'summon', label: 'Summon Creature', enabled: true });
+		if (target.flower.summoned) list.push({ id: 'dismiss', label: 'Dismiss', enabled: true });
+		return list;
+	});
 
 	function openAction(action: Action): void {
 		if (closing || animating || !action.enabled) return;
 		if (action.id === 'buff' || action.id === 'trade') return;
 		if (action.id === 'info') {
 			onInfo?.();
+			return;
+		}
+		if (action.id === 'summon') {
+			sub = 'summon';
+			return;
+		}
+		if (action.id === 'dismiss') {
+			// No confirmation: the creature is gone but nothing is lost - it can be called again,
+			// and the model that called it is still on the board to do it.
+			onDismiss?.();
+			close();
 			return;
 		}
 		if (action.id === 'stamina') {
@@ -410,6 +457,48 @@
 					stroke-linecap="round"
 					fill="none"
 				/>
+			{:else if kind === 'summon'}
+				<!-- Summon Creature: a lilac horned smiley, the summoning mechanic's hue and the
+				     same lilac the summoned creature's portrait ring beams in. -->
+				<g class="fill-purple-300">
+					<path d="M -4.9 -2.2 L -4.2 -5.4 L -2.1 -3.4 Z" />
+					<path d="M 4.9 -2.2 L 4.2 -5.4 L 2.1 -3.4 Z" />
+					<circle cy="0.2" r="4.3" />
+				</g>
+				<g class="fill-slate-950">
+					<circle cx="-1.6" cy="-0.7" r="0.62" />
+					<circle cx="1.6" cy="-0.7" r="0.62" />
+				</g>
+				<path
+					d="M -2.2 1.3 Q 0 3.1 2.2 1.3"
+					fill="none"
+					stroke="currentColor"
+					class="text-slate-950"
+					stroke-width="0.85"
+					stroke-linecap="round"
+				/>
+			{:else if kind === 'dismiss'}
+				<!-- Dismiss: the same horned face in red, brows angled in and the smile turned over. -->
+				<g class="fill-red-400">
+					<path d="M -4.9 -2.2 L -4.2 -5.4 L -2.1 -3.4 Z" />
+					<path d="M 4.9 -2.2 L 4.2 -5.4 L 2.1 -3.4 Z" />
+					<circle cy="0.2" r="4.3" />
+				</g>
+				<g class="fill-slate-950">
+					<circle cx="-1.6" cy="-0.4" r="0.62" />
+					<circle cx="1.6" cy="-0.4" r="0.62" />
+				</g>
+				<g
+					fill="none"
+					stroke="currentColor"
+					class="text-slate-950"
+					stroke-width="0.8"
+					stroke-linecap="round"
+				>
+					<path d="M -2.7 -2.0 L -1.0 -1.4" />
+					<path d="M 2.7 -2.0 L 1.0 -1.4" />
+					<path d="M -2.2 2.7 Q 0 1.0 2.2 2.7" />
+				</g>
 			{:else}
 				<!-- Trade: two arrows passing - inert until the feature lands. -->
 				<g
@@ -568,6 +657,16 @@
 					</button>
 				</div>
 			</div>
+		{:else if sub === 'summon'}
+			<SummonPicker
+				{summons}
+				onInfo={(unit) => onSummonInfo?.(unit)}
+				onSummon={(unitId) => {
+					onSummon?.(unitId);
+					close();
+				}}
+				onCancel={() => (sub = null)}
+			/>
 		{:else if !animating}
 			<div
 				class="grid grid-cols-2 gap-2 rounded-2xl border border-slate-600/40 bg-slate-950/70 p-3"

@@ -269,6 +269,15 @@
 				</path>
 			{/each}
 		</svg>
+		<!-- A summoned creature's ring: the lilac beam, so the board tells a called creature from a
+		     recruited one at a glance. A sibling of the orb rather than a class on it, because the
+		     orb clips to its circle for the portrait and would clip the beam with it. -->
+		{#if flower.summoned}
+			<div
+				class="neon-border neon-lilac pointer-events-none absolute inset-[12.5%] rounded-full"
+				aria-hidden="true"
+			></div>
+		{/if}
 		<!-- The orb's box is exactly the ring's inner circle (2 * INNER of the 120 viewBox), so its
 		     border and the ring's inner stroke sit on the same line: the flower reads as one
 		     object, separated only by those two borders, with no background gap in between. -->

@@ -84,14 +84,21 @@ class MissionProgressStore {
 	/** Commits a copy's Life/stamina once the vitality menu is accepted. */
 	setUnitVitality(entryId: string, vitality: UnitVitality, undead = false): void {
 		if (!this.progress) return;
-		const previousHp = this.progress.vitality[entryId]?.hp;
-		this.progress = {
-			...this.progress,
-			vitality: {
-				...this.progress.vitality,
-				[entryId]: domain.settleVitalityStates(vitality, previousHp, undead)
-			}
-		};
+		this.progress = domain.setMissionVitality(this.progress, entryId, vitality, undead);
+		this.persist();
+	}
+
+	/** Calls a creature onto the field below the model that summoned it. */
+	summonCreature(summonerId: string, unitId: string): void {
+		if (!this.progress) return;
+		this.progress = domain.summonCreature(this.progress, summonerId, unitId);
+		this.persist();
+	}
+
+	/** Dismisses a creature; anything it called leaves with it. */
+	dismissSummon(summonId: string): void {
+		if (!this.progress) return;
+		this.progress = domain.dismissCreature(this.progress, summonId);
 		this.persist();
 	}
 
@@ -100,7 +107,11 @@ class MissionProgressStore {
 	 * still loading, or the snapshot no longer decodes against the current roster.
 	 */
 	armyView(): ArmyView | null {
-		return contentStore.armyView(this.progress?.pickedArmy ?? null, this.progress?.vitality ?? {});
+		return contentStore.armyView(
+			this.progress?.pickedArmy ?? null,
+			this.progress?.vitality ?? {},
+			this.progress?.summons ?? []
+		);
 	}
 
 	setDraftFaction(factionId: string | null): void {

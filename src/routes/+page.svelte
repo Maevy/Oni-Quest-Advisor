@@ -20,6 +20,7 @@
 		resolveArmyEntries,
 		savedArmyFormat,
 		seatPublishedRoster,
+		summonableUnits,
 		tournamentReportMatches,
 		tournamentReportStats,
 		tournamentTableLine,
@@ -728,23 +729,44 @@
 	let armyViewP2 = $derived(twoPlayerProgressStore.armyView('player2'));
 
 	/**
-	 * A vitality flow's target resolved against the seat that owns it: the base stats a commit
-	 * needs live on the roster row, and the copy's committed record lives in the seat's own
-	 * vitality map. Null when that seat fields nothing or its snapshot no longer decodes.
+	 * Every creature a spell can put on the field, across both the summon tokens and the Undead
+	 * that live in a faction's file. Each screen gates this per model - who may call what depends
+	 * on the summoner's own spellcraft, Affinity and inventory, not on the pool.
 	 */
-	function seatRowOf(target: VitalityTarget): { view: ArmyView; row: ArmyRosterRow } | null {
-		const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
-		const row = view?.rows.find((candidate) => candidate.entryId === target.entryId);
-		return view && row ? { view, row } : null;
+	let summonPool = $derived(summonableUnits(contentStore.armyUnits));
+
+	/** The bases a vitality commit needs for one board id, plus the view holding its record. */
+	type VitalityBasesOf = { view: ArmyView; hp: number; sta: number | null };
+
+	/**
+	 * One board's bases for an id. An army copy reads them off its roster row, where upgrades and
+	 * the mount are already applied; a summoned creature has no row, so it reads them off its own
+	 * spec. Without that second branch a summon resolves to null and every flow against it -
+	 * damage, healing, States, Stagger, Stun, activations - would silently no-op.
+	 */
+	function basesWithin(view: ArmyView, entryId: string): VitalityBasesOf | null {
+		const summon = view.summons.find((candidate) => candidate.id === entryId);
+		if (summon) return { view, hp: summon.unit.stats.HP ?? 0, sta: summon.unit.stats.STA };
+		const row = view.rows.find((candidate) => candidate.entryId === entryId);
+		return row ? { view, hp: row.effectiveStats.HP ?? 0, sta: row.effectiveStats.STA } : null;
 	}
 
 	/**
-	 * The solo run's roster row a vitality target names. Solo fields one army, so unlike
-	 * seatRowOf there is no seat to look up - the target's entry id is the whole key.
+	 * A vitality flow's target resolved against the seat that owns it: the base stats a commit
+	 * needs, plus the seat's own vitality map. Null when that seat fields nothing, its snapshot
+	 * no longer decodes, or the id is on neither board.
 	 */
-	function soloRowOf(target: VitalityTarget): { view: ArmyView; row: ArmyRosterRow } | null {
-		const row = armyView?.rows.find((candidate) => candidate.entryId === target.entryId);
-		return armyView && row ? { view: armyView, row } : null;
+	function seatBasesOf(target: VitalityTarget): VitalityBasesOf | null {
+		const view = target.player === 'player1' ? armyViewP1 : armyViewP2;
+		return view ? basesWithin(view, target.entryId) : null;
+	}
+
+	/**
+	 * The solo run's bases for a vitality target. Solo fields one army, so unlike seatBasesOf
+	 * there is no seat to look up - the target's entry id is the whole key.
+	 */
+	function soloBasesOf(target: VitalityTarget): VitalityBasesOf | null {
+		return armyView ? basesWithin(armyView, target.entryId) : null;
 	}
 
 	function factionOf(army: PickedArmy | null) {
@@ -1400,93 +1422,70 @@
 		onSetRound={(round) => twoPlayerProgressStore.setRound(round)}
 		onSwap={() => twoPlayerProgressStore.swapPlayer()}
 		onDamage={(target, amount) => {
-			const seat = seatRowOf(target);
+			const seat = seatBasesOf(target);
 			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
-				vitalityAfterDamage(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					amount
-				),
+				vitalityAfterDamage(seat.view.vitality[target.entryId], seat.hp, seat.sta, amount),
 				target.flower.undead
 			);
 		}}
 		onHeal={(target, amount) => {
-			const seat = seatRowOf(target);
+			const seat = seatBasesOf(target);
 			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
-				vitalityAfterHeal(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					amount
-				),
+				vitalityAfterHeal(seat.view.vitality[target.entryId], seat.hp, seat.sta, amount),
 				target.flower.undead
 			);
 		}}
 		onStatuses={(target, statuses) => {
-			const seat = seatRowOf(target);
+			const seat = seatBasesOf(target);
 			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
-				vitalityAfterStatuses(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					statuses
-				),
+				vitalityAfterStatuses(seat.view.vitality[target.entryId], seat.hp, seat.sta, statuses),
 				target.flower.undead
 			);
 		}}
 		onStamina={(target, delta) => {
-			const seat = seatRowOf(target);
+			const seat = seatBasesOf(target);
 			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
-				vitalityAfterStamina(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					delta
-				),
+				vitalityAfterStamina(seat.view.vitality[target.entryId], seat.hp, seat.sta, delta),
 				target.flower.undead
 			);
 		}}
 		onStagger={(target) => {
-			const seat = seatRowOf(target);
+			const seat = seatBasesOf(target);
 			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
-				vitalityAfterStagger(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA
-				),
+				vitalityAfterStagger(seat.view.vitality[target.entryId], seat.hp, seat.sta),
 				target.flower.undead
 			);
 		}}
 		onStun={(target) => {
-			const seat = seatRowOf(target);
+			const seat = seatBasesOf(target);
 			if (!seat) return;
 			twoPlayerProgressStore.setUnitVitality(
 				target.player,
 				target.entryId,
-				vitalityAfterStun(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA
-				),
+				vitalityAfterStun(seat.view.vitality[target.entryId], seat.hp, seat.sta),
 				target.flower.undead
 			);
 		}}
+		{summonPool}
+		onSummon={(target, unitId) =>
+			twoPlayerProgressStore.summonCreature(target.player, target.entryId, unitId)}
+		onDismissSummon={(target) =>
+			twoPlayerProgressStore.dismissSummon(target.player, target.entryId)}
 	/>
 {:else if selectedMission && missionProgressStore.progress}
 	<MissionDetail
@@ -1513,87 +1512,62 @@
 		onDeleteScheme={() => missionProgressStore.deleteScheme()}
 		onSetRound={(round) => missionProgressStore.setRound(round)}
 		onDamage={(target, amount) => {
-			const seat = soloRowOf(target);
+			const seat = soloBasesOf(target);
 			if (!seat) return;
 			missionProgressStore.setUnitVitality(
 				target.entryId,
-				vitalityAfterDamage(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					amount
-				),
+				vitalityAfterDamage(seat.view.vitality[target.entryId], seat.hp, seat.sta, amount),
 				target.flower.undead
 			);
 		}}
 		onHeal={(target, amount) => {
-			const seat = soloRowOf(target);
+			const seat = soloBasesOf(target);
 			if (!seat) return;
 			missionProgressStore.setUnitVitality(
 				target.entryId,
-				vitalityAfterHeal(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					amount
-				),
+				vitalityAfterHeal(seat.view.vitality[target.entryId], seat.hp, seat.sta, amount),
 				target.flower.undead
 			);
 		}}
 		onStatuses={(target, statuses) => {
-			const seat = soloRowOf(target);
+			const seat = soloBasesOf(target);
 			if (!seat) return;
 			missionProgressStore.setUnitVitality(
 				target.entryId,
-				vitalityAfterStatuses(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					statuses
-				),
+				vitalityAfterStatuses(seat.view.vitality[target.entryId], seat.hp, seat.sta, statuses),
 				target.flower.undead
 			);
 		}}
 		onStagger={(target) => {
-			const seat = soloRowOf(target);
+			const seat = soloBasesOf(target);
 			if (!seat) return;
 			missionProgressStore.setUnitVitality(
 				target.entryId,
-				vitalityAfterStagger(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA
-				),
+				vitalityAfterStagger(seat.view.vitality[target.entryId], seat.hp, seat.sta),
 				target.flower.undead
 			);
 		}}
 		onStun={(target) => {
-			const seat = soloRowOf(target);
+			const seat = soloBasesOf(target);
 			if (!seat) return;
 			missionProgressStore.setUnitVitality(
 				target.entryId,
-				vitalityAfterStun(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA
-				),
+				vitalityAfterStun(seat.view.vitality[target.entryId], seat.hp, seat.sta),
 				target.flower.undead
 			);
 		}}
 		onStamina={(target, delta) => {
-			const seat = soloRowOf(target);
+			const seat = soloBasesOf(target);
 			if (!seat) return;
 			missionProgressStore.setUnitVitality(
 				target.entryId,
-				vitalityAfterStamina(
-					seat.view.vitality[target.entryId],
-					seat.row.effectiveStats.HP ?? 0,
-					seat.row.effectiveStats.STA,
-					delta
-				),
+				vitalityAfterStamina(seat.view.vitality[target.entryId], seat.hp, seat.sta, delta),
 				target.flower.undead
 			);
 		}}
+		{summonPool}
+		onSummon={(target, unitId) => missionProgressStore.summonCreature(target.entryId, unitId)}
+		onDismissSummon={(target) => missionProgressStore.dismissSummon(target.entryId)}
 	/>
 {/if}
 

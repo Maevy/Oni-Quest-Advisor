@@ -2,6 +2,7 @@ import type { UnitVitality } from './army';
 import { getScoreableResults, type Mission } from './mission';
 import { MAX_TOTAL_VP, MIN_ROUND, MAX_ROUND, type SchemeDraft } from './progress';
 import type { PickedArmy } from './savedArmy';
+import { addSummon, commitVitality, dismissSummon, type SummonedModel } from './summoning';
 import {
 	chooseScheme,
 	schemeVp,
@@ -33,6 +34,8 @@ export type PlayerProgress = SeatProgress & {
 	pickedArmy: PickedArmy | null;
 	/** Live Life/stamina/States per army copy (entry id), for copies that are not untouched. */
 	vitality: Record<string, UnitVitality>;
+	/** Creatures this seat called onto the field; keyed into the same vitality map. */
+	summons: SummonedModel[];
 };
 
 export type TwoPlayerMissionProgress = {
@@ -50,7 +53,8 @@ function createEmptyPlayerProgress(): PlayerProgress {
 		schemeDraft: { factionId: null, intelligence: null },
 		schemeRevealed: false,
 		pickedArmy: null,
-		vitality: {}
+		vitality: {},
+		summons: []
 	};
 }
 
@@ -182,16 +186,47 @@ export function setTwoPlayerPickedArmy(
 	return updatePlayer(progress, player, (p) => ({ ...p, pickedArmy: army }));
 }
 
-/** Commits one copy's Life/stamina/States for one seat. */
+/**
+ * Commits one copy's Life/stamina/States for one seat, applying the summon rules on the way: a
+ * summon at zero Life leaves the field instead of falling, and a model that falls loses every
+ * creature it called. The settling this wraps used to live in the store, which meant a caller
+ * could write a vitality record that skipped it - it lives here so it cannot.
+ */
 export function setTwoPlayerVitality(
 	progress: TwoPlayerMissionProgress,
 	player: PlayerKey,
 	entryId: string,
-	vitality: UnitVitality
+	vitality: UnitVitality,
+	undead = false
 ): TwoPlayerMissionProgress {
 	return updatePlayer(progress, player, (p) => ({
 		...p,
-		vitality: { ...p.vitality, [entryId]: vitality }
+		...commitVitality({ summons: p.summons, vitality: p.vitality }, entryId, vitality, undead)
+	}));
+}
+
+/** Puts a creature on the field for one seat, below the model that called it. */
+export function summonTwoPlayerCreature(
+	progress: TwoPlayerMissionProgress,
+	player: PlayerKey,
+	summonerId: string,
+	unitId: string
+): TwoPlayerMissionProgress {
+	return updatePlayer(progress, player, (p) => ({
+		...p,
+		...addSummon({ summons: p.summons, vitality: p.vitality }, summonerId, unitId)
+	}));
+}
+
+/** Takes one seat's creature off the field, and anything it called with it. */
+export function dismissTwoPlayerSummon(
+	progress: TwoPlayerMissionProgress,
+	player: PlayerKey,
+	summonId: string
+): TwoPlayerMissionProgress {
+	return updatePlayer(progress, player, (p) => ({
+		...p,
+		...dismissSummon({ summons: p.summons, vitality: p.vitality }, summonId)
 	}));
 }
 
