@@ -56,6 +56,32 @@ function undo(revertOf: number): HistoryRevert {
 	};
 }
 
+/** A log row that calls a creature onto the field or takes it off - neither is damage or healing. */
+function summonRow(
+	actor: PlayerKey,
+	targetEntryId: string,
+	targetName: string,
+	originName: string | null,
+	action: HistoryAction['action']
+): HistoryAction {
+	seq += 1;
+	return {
+		kind: 'action',
+		seq,
+		round: 1,
+		actor,
+		at: '2026-10-24T10:00:00.000Z',
+		targetSeat: actor,
+		targetEntryId,
+		targetName,
+		targetCopy: null,
+		originEntryId: originName ? `o${seq}` : null,
+		originName,
+		action,
+		undoneBy: null
+	};
+}
+
 describe('battleReportStats', () => {
 	it('tallies damage per acting model, highest first', () => {
 		seq = 0;
@@ -103,6 +129,39 @@ describe('battleReportStats', () => {
 			{ name: 'Sister', total: 2 }
 		]);
 		expect(damage).toEqual([{ name: 'Chiyohime', total: 1 }]);
+	});
+
+	it('keeps summon rows out of the rankings, but credits a creature that fought', () => {
+		seq = 0;
+		const history: HistoryEntry[] = [
+			summonRow('player1', 'summon-1', 'Gargoyle, Tier I', 'Vizier of Conjurations', {
+				kind: 'summon',
+				unitId: 'gargoyle-tier-i',
+				hp: 1,
+				sta: 2,
+				undead: false
+			}),
+			// The creature lands a hit of its own: that belongs to the creature, not its caller.
+			hit('player1', 2, 'Gargoyle, Tier I'),
+			// The hit that removes it is credited to whoever landed it, not to the creature.
+			hit('player2', 1, 'Citadel Guard', 1, 'player1'),
+			summonRow('player1', 'summon-2', 'Golem, Tier II', 'Vizier of Conjurations', {
+				kind: 'summon',
+				unitId: 'golem-tier-ii',
+				hp: 3,
+				sta: 2,
+				undead: false
+			}),
+			summonRow('player1', 'summon-2', 'Golem, Tier II', null, { kind: 'dismiss' })
+		];
+		const { damage, healing } = battleReportStats(history, NICKNAMES);
+		// Calling and dismissing are not damage: the caller ranks nowhere and no row is invented,
+		// which is what keeps a summon-heavy match from reporting damage nobody dealt.
+		expect(damage).toEqual([
+			{ name: 'Gargoyle, Tier I', total: 2 },
+			{ name: 'Citadel Guard', total: 1 }
+		]);
+		expect(healing).toEqual([]);
 	});
 });
 
