@@ -27,6 +27,7 @@ what the producer altered.
 | `adventurers-guild.json`    | "                                            | **0**   |
 | `neutral.json`              | `characterList` (NEUTRAL tag)                | 15      |
 | `mounts.json`               | `characterList` (`MOUNT_CODES`)              | 1       |
+| `summons.json`              | `characterList` (`SUMMON_CODES`)             | 6       |
 | `classes.json`              | `classList`                                  | 23      |
 | `skills.json`               | `skillGroupList`                             | 24      |
 | `traits.json`               | `traitGroupList`                             | 68      |
@@ -46,9 +47,17 @@ does not carry as an item but that upgrade effects reference.
 ### Bucketing rules
 
 A character goes to `mounts.json` if its code is in `MOUNT_CODES` (currently just `LUPUS_REX`);
-else to `neutral.json` if it carries the NEUTRAL tag; else to its faction file if it has exactly
-one known faction; else it is **skipped and logged** (faction-less summons and tokens — Colossus,
-Elementals, Gargoyle, Golem, Blighted Riftspawn).
+else to `summons.json` if its code is in `SUMMON_CODES` (the six faction-less summon tokens —
+Gargoyle, Golem, the Earth and Water Elementals, Colossus, Blighted Riftspawn); else to
+`neutral.json` if it carries the NEUTRAL tag; else to its faction file if it has exactly one
+known faction; else it is **skipped and logged**.
+
+`summons.json` is a bucket of its own on `ArmyUnitContent` and, like `mounts.json`, is
+**deliberately outside `codeUnitPool()`**. That pool is `factionUnits + neutralUnits` sorted by
+id and is what the army-code fingerprint hashes, so a token landing in either would take an
+index, shift every unit after it, and reject every code a player has ever saved or been sent.
+`armyCode.spec.ts` pins the invariant by encoding the same list with an `aaa-summon` in the pool
+— a name that sorts to index 0 — and asserting the code comes out byte-identical.
 
 NEUTRAL units are recruitable by every faction **except** the monster ones
 (`NON_NEUTRAL_FACTION_IDS = ['oni-clans', 'goblin-wartribes']`). Mounts are never recruitable
@@ -75,7 +84,21 @@ files. The importer's `throw`s are the only gate — see below.
 (any key may be `null` when a model has no value), a **required** `size`, an optional portrait,
 catalog refs (`classes`, and `{ id, level }` refs for skills / traits / combat arts /
 spellcrafts), `stratagems`, `inventorySpace` + inventory `{ id, qty }` slots, optional
-`upgradesLocked`, and an optional `mount: { unitId, points, size }`.
+`upgradesLocked`, an optional `mount: { unitId, points, size }`, and an optional
+`summon: { tier, source }`.
+
+`summon` marks a creature a spell can put on the field, and is **hand-authored rather than
+imported**: the producer carries no tier field anywhere (tier survives only inside the display
+name) and nothing links a Conjuration spell to the creature it calls. `SUMMON_SPECS` in the
+importer, keyed by producer code, stamps `{ tier, source }` onto all nine summonable creatures
+wherever they land — the six tokens in `summons.json`, and the three Undead (Bonewalker,
+Vengeful Spirit, Forgotten Hero) that stay in `oni-clans.json` because they are recruitable as
+well as summonable. Blighted Riftspawn is the one summon-only creature. `source` is
+`{ kind: 'conjuration', element }` or `{ kind: 'necromancy' }`; the eligibility rule that reads
+it is in `domain/summoning.ts` and is specified in
+[06-two-player-hot-seat.md](../functional-spec/06-two-player-hot-seat.md). `lib/data/summons.spec.ts`
+asserts every conjuration creature's tier and element still match its summon spell, so a producer
+dump that breaks the coincidence fails loudly instead of gating silently wrong.
 
 Trait refs may carry `dynamicValue` / `dynamicElements`, which fill the `(X)` and `(Element)`
 placeholders in a rule's text at display time (`substituteArmyTemplate`).

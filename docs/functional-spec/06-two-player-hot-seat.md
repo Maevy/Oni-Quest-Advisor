@@ -124,9 +124,11 @@ the cross-model panel, rendered at the screen root, but with **one model, inert,
 centred between two _Self Interaction_ labels, and a box of six actions below it: **Assign
 Damage** (red sword), **Assign Healing** (green cross), **Assign / Remove Status** (orange star),
 **Assign / Remove Buff** (blue up-arrow, _inert for now_), **Model Info** (a grey bang in a grey
-ring) and **Activation Management** (a plain yellow orb). The model at the top is a picture, not a
-control: it takes no taps of its own — everything you can do to it is one of the six buttons, so
-there is no box-tap shortcut and no tap-for-card on the flower itself. The dialog's backdrop blurs
+ring) and **Activation Management** (a plain yellow orb). Two more join them conditionally:
+**Summon Creature** (a lilac horned smiley) on a model that can call one, and **Dismiss** (the same
+face in red, unsmiling) on a creature already on the field — see _Summoning_ below. The model at
+the top is a picture, not a control: it takes no taps of its own — everything you can do to it is
+one of those buttons, so there is no box-tap shortcut and no tap-for-card on the flower itself. The dialog's backdrop blurs
 and dims the strip behind it; a click outside or Escape folds it, one layer at a time when a
 sub-flow or the card is open above it.
 
@@ -201,6 +203,57 @@ new value: a spend empties a box from the bottom end exactly like Life, a gain r
 way, and past the base the extra point repaints its box **violet** from the top end, over-Stamina
 overhealing to double the base the way Life's blue does. Cancel discards the staged change. A
 model with no Stamina value gets a dead button instead.
+
+**Summoning** (2026-10-24). Some models call creatures onto the field during a game rather than
+fielding them from the list. The Self Interaction dialog is the only place that happens: a summon
+is a play decision, not an army-building one, so summoned creatures never appear in the army
+builder and never enter an army code.
+
+_Who can call what._ Two spellcrafts summon and they gate differently. **Conjuration** is bound to
+an Affinity: each creature carries the element it is called through, and the caster needs that
+element among its Affinity elements _and_ a Conjuration level reaching the creature's tier. The
+Vizier of Conjurations (Conjuration IV, Elder + Earth) therefore reaches the Gargoyle, Golem,
+Earth Elemental and Colossus but **not** the Water Elemental — only an upgrade that grants or
+replaces an Affinity with Water (Elemental Lineage, Mana Catalyst) opens that one, which is why
+the dialog reads a model's _effective_ spec rather than its catalog original. **Necromancy** is
+element-blind and gates on tier alone: any necromancer raises Tier I and II Undead, and the
+**Deathweaving Fan** lifts that cap — the only thing that reaches the Tier V Blighted Riftspawn.
+Necromancy gates on the spellcraft's **presence, not its level**, so Na'ra at Necromancy III
+raises Tier I/II Undead even though Raise the Undead is a level 5 spell. It is also
+**faction-agnostic**: Na'ra of the Sand Kingdoms raises an Oni Clans Bonewalker. Three of the
+Undead (Bonewalker, Vengeful Spirit, Forgotten Hero) are dual-nature — bought into a list for
+points, or raised during a game — while the Riftspawn is summon-only. The rulebook's **Summoning
+Limit** is deliberately not modelled; the app does not police how many of a creature are out.
+
+_The picker._ Summon Creature appears only on a model that can actually call something — most of
+the board cannot, and a dead button on every dialog would be noise. It opens a picker of what that
+model may reach, in tier order, each row showing the creature's portrait, its name and a line
+naming its tier and route (_Tier III · Conjuration (Earth)_). Tapping the **portrait** opens that
+creature's model card — the same card the army builder shows, framed in the summoning hue rather
+than a faction colour, since a summoned creature belongs to no faction, not even the seat that
+called it. Tapping **Summon** puts the creature on the field and folds the dialog.
+
+_Where it lands._ A summoned creature's flower hangs **directly below the flower that called it**,
+and its own summons below that, so the board reads as the tree it is rather than as two unrelated
+lists. It wears a **lilac beam** around its portrait (`.neon-lilac`, reduced-motion aware like the
+rest of the neon treatment); that ring, not a label, is how the board tells a called creature from
+a recruited one. Its rings come from its own statline, not its summoner's.
+
+_Leaving the field._ A summoned creature's own dialog offers **Dismiss** in place of Summon
+Creature, and pressing it removes the creature at once with no confirmation — nothing is lost,
+since it can be called again. Otherwise summoned creatures take part in every interaction exactly
+like any other model, with two exceptions. At **0 Life** a summon does not fall: it is **removed**
+instead of going Incapacitated or Dead, so it never wears the yellow or red wash. And when its
+**summoner** goes Incapacitated **or Dead**, every creature it called leaves the field too,
+transitively — both States count, because an Undead summoner goes straight to Dead with no
+Incapacitated step. That removal is **permanent** by ruling: healing the summoner back above
+0 Life does not return its creatures, which have to be summoned again.
+
+_State._ Each seat keeps its own `summons` list of `{ id, unitId, summonerId }`, and the
+creatures' Life, Stamina and States live in that seat's existing `vitality` map under `summon-N`
+ids, which can never collide with an army entry id (those are random UUIDs). Leaving the field
+deletes the vitality record with the creature. Like the rest of a seat's progress, summons survive
+a reload and die with the run on Abandon. Solo carries the same list on `MissionProgress`.
 
 Because decoded entry ids are position-based (`imported-1` for a list's first copy), both seats
 can hold the same id; the two `vitality` maps keep them apart.

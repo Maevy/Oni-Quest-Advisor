@@ -10,10 +10,13 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
   2026-10-13, deployed the same day), the big one: the tournament, the ground-up online
   redesign, the Battle Flowers, the interaction log and both PDF reports. Day-to-day work
   happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` carries no unreleased feature work.** It sits two housekeeping commits past the
-  tag — `46fb48d` (the wipe procedure recorded below) and `e316fc9` (the lockfile version
-  fields the release commit missed). What shipped, with its decisions and traps, is
-  `ARCHIVE.md`'s v0.9.0 section; that file is the index into `git log`, not a replacement.
+- **`develop` is ahead of v0.9.0 with one unreleased feature in progress: summoning.** The data
+  layer (`2fab769`) and the local-mode UI (`e25105f`) are committed and verified; **online is not
+  built yet** — see What's next. The rest of the lead is housekeeping: `ba775c3` (the doc fold
+  that stopped these notes describing v0.8.0 as current), `46fb48d` (the wipe procedure below)
+  and `e316fc9` (the lockfile version fields the release commit missed). What shipped in v0.9.0,
+  with its decisions and traps, is `ARCHIVE.md`'s section for it; that file is the index into
+  `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
@@ -59,10 +62,22 @@ traps: `ARCHIVE.md`. Behaviour specs: `docs/functional-spec/06-two-player-hot-se
 `07-online-two-player.md`, `09-tournament.md` and
 `docs/technical-spec/06-online-architecture.md`.
 
-The live thread is the two buttons those dialogs still render inert — **Trade Item** and
-**Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — which
-the v0.9.0 announcement already promised the players. Everything else that is open was deferred
-on purpose; the list follows.
+The live thread is **summoning** (2026-10-24). Phase 1 (data) and phase 2 (local UI) are
+committed: the six faction-less tokens are content now, in their own bucket **outside
+`codeUnitPool()`** so no army code shifts; `SUMMON_SPECS` in the importer stamps tier and route
+onto all nine summonable creatures; `domain/summoning.ts` gates who may call what (Conjuration by
+Affinity element and tier, Necromancy by tier and faction-agnostically, the Deathweaving Fan
+lifting that cap); and the Self Interaction dialog carries **Summon Creature** and **Dismiss**,
+with a summoned creature hanging below its caller in a lilac beam. **Phase 3 — online — is not
+built**: it needs a summon event type in `game_events` and fold support in `vitalityHistory` so
+both devices derive the same board. That is additive to the log, so unlike v0.9.0 it needs **no
+database wipe**. Behaviour is specified in `docs/functional-spec/06-two-player-hot-seat.md`
+(_Summoning_), the content shape in `docs/technical-spec/05-army-data-format.md`.
+
+The older deferred thread is the two buttons those dialogs still render inert — **Trade Item** and
+**Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — one of
+which the v0.9.0 announcement already promised the players. Everything else that is open was
+deferred on purpose; the list follows.
 
 Smaller open threads:
 

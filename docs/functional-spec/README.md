@@ -68,11 +68,19 @@ each `src/lib/` folder.
   an orange half, one flower per row per seat; solo shows one centred column. Two gestures do all
   the work — a **tap** opens the **Self Interaction dialog** (the model alone between two _Self
   Interaction_ labels, with Assign Damage, Assign Healing, Assign / Remove Status, Assign /
-  Remove Buff, Model Info and Activation Management), and a **drag** onto another flower opens
+  Remove Buff, Model Info and Activation Management — plus Summon Creature on a model that can
+  call one and Dismiss on a creature already out), and a **drag** onto another flower opens
   the cross-model **Interaction panel** (origin left, target right, an _Interaction_ arrow, seven
   actions including Deal Stagger and Deal Stun). Damage and Healing reuse a 1–9 amount pad,
   Status a boxed picker of the fourteen orbs; a commit flies the glyph to the target and walks
   its boxes. See [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
+- **Summoned creature** — a model a spell puts on the field during a game rather than one fielded
+  from the list: never recruitable, and never part of an army code. Its flower hangs below the
+  flower that called it and wears a lilac beam. At 0 Life it is removed rather than falling, and
+  it leaves for good when its summoner goes Incapacitated or Dead — healing the summoner does not
+  bring it back. Conjuration reaches creatures by Affinity element and tier, Necromancy any
+  faction's Undead by tier, with the Deathweaving Fan lifting that cap. See
+  [06-two-player-hot-seat.md](./06-two-player-hot-seat.md).
 
 ### Online
 

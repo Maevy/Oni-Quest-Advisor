@@ -221,14 +221,17 @@ back at the briefing's Pick Army.
 The board carries the same two gestures as hot-seat. A **tap** opens the **Self Interaction
 dialog** — the model alone at the top between two _Self Interaction_ labels, and six buttons:
 Assign Damage, Assign Healing, Assign / Remove Status, Assign / Remove Buff (_inert_), Model Info
-and Activation Management. A **drag** onto another of your own flowers opens the cross-model
-**Interaction panel** (origin left, target right, an _Interaction_ arrow), whose seven actions let
-one of your models act on another — including Deal Stagger and Deal Stun, which spend the
-target's activations. Both dialogs reuse the shared amount pad and boxed State picker; commits
+and Activation Management — plus **Summon Creature** on a model that can call one, and **Dismiss**
+on a creature already on the field. A **drag** onto another of your own flowers opens the
+cross-model **Interaction panel** (origin left, target right, an _Interaction_ arrow), whose seven
+actions let one of your models act on another — including Deal Stagger and Deal Stun, which spend
+the target's activations. Both dialogs reuse the shared amount pad and boxed State picker; commits
 land in `MissionProgress.vitality`, keyed by entry id, so they survive reloads and die with the
-run on abandon. Accepting a copy at **0 Life** assigns **Incapacitated** and **Crouched** on its
-behalf — the rulebook's fall — and a fallen model wears a yellow wash with the Incapacitated
-glyph, a Dead one a red wash with the skull, on every flower. The board carries the same muted
+run on abandon. Summoned creatures share that map under their own `summon-N` ids and are listed
+alongside it in `MissionProgress.summons`. Accepting a copy at **0 Life** assigns
+**Incapacitated** and **Crouched** on its behalf — the rulebook's fall — and a fallen model wears
+a yellow wash with the Incapacitated glyph, a Dead one a red wash with the skull, on every flower.
+A summoned creature at 0 Life does neither: it leaves the field. The board carries the same muted
 hint line under the field as hot-seat — _Tap a flower for Self Interaction · Drag one onto
 another for Interaction between models_ — shown only while an army is attached. See
 [06-two-player-hot-seat.md](./06-two-player-hot-seat.md) for the dialogs' full behaviour; solo
