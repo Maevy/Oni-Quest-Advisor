@@ -18,11 +18,13 @@ worth knowing before touching the code.
 
 ## v0.9.0 — the online rebuild, tournaments, flowers and reports (2026-10-13, 56 commits)
 
-Two features landed in this order and neither is deployed: the tournament, then a ground-up
-redesign of the online front door; the Battle Flowers, the interaction log and both reports
-followed on top. **Read the deploy warning in `PROGRESS.md` before shipping either** — the
-online half needs the production database wiped, and a wipe is database-wide, so it takes the
-tournament tables with it.
+Two features landed in this order: the tournament, then a ground-up redesign of the online front
+door; the Battle Flowers, the interaction log and both reports followed on top. **Deployed
+2026-10-13 with a database-wide wipe** — the online half could not carry its pre-redesign rows
+(a seat gained required `army`/`combatArmy`/`leader` fields, the phase union changed, and there is
+no `hydrateOnlineGameState` to migrate with), and a wipe takes the tournament tables too, which
+was accepted by choice. The procedure that worked, and the rule for any future change to the
+persisted online shape, is in `PROGRESS.md`.
 
 ### Tournament (`9367fc1`…`19d7fea`, 9 commits)
 
@@ -337,7 +339,7 @@ prompt-and-abandon pattern.
   A muted line under every board names the two gestures (`6f293cb`).
 - **The interaction log** (`9d2dbd9`): online stores **no vitality at all** — every flower-dialog
   commit appends a `vitality-committed` row to `game_events` (round server-stamped) and both
-  devices fold the log into their boards (`foldHistory`), so the log *is* the state and the
+  devices fold the log into their boards (`foldHistory`), so the log _is_ the state and the
   battle report later folds the same rows. An undo appends a `vitality-reverted` the fold skips:
   **actor-only, and only while their action is still the last one**. The opponent's half of the
   board arrives through `POST /roster` — each seat publishes its combat list as board entries

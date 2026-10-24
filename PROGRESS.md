@@ -6,39 +6,27 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Where things stand
 
-- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.8.0** (tagged on `main`,
-  2026-09-26), the hot-seat parity release. Day-to-day work happens on **`develop`**, pushed
-  to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` is ahead of v0.8.0** (2026-09-27 … today) with **two unreleased features**, in this
-  order:
-  1. **Tournament** (`9367fc1`…, extended 2026-10-02) — the configuration wizard, server-side
-     creation, the shared lobby, joining by link or QR, resume/abandon, the match-preparation
-     screen with its roadmap and table assignment, **and now the round's `game` and `scoring`
-     phases**: a table's match is an ordinary online game the tournament creates and overwatches
-     (Enter Game, the megaphone, results reporting themselves into a cumulative standing, replays
-     of dead tables, the next round and the conclusion screen with its medal standings) and the
-     **tournament report** (2026-10-12): the conclusion screen's PDF, folded on the organizer's
-     device from the archived rounds and every match's interaction log.
-  2. **The online-mode redesign** (`da407c1`…`4ddd789`) — a game is born set up, both seats
-     bring an army, Start Game is gated on per-seat **Ready**, and a match opens with Army
-     Reveal → Army Preparation (a Roster is cut to ≤85 in a _borrowed_ army builder) → Scheme
-     Selection. The Roster format's internal id changed from `'tournament'` to `'roster'`
-     behind a decode migration.
-- Both are described in `ARCHIVE.md`'s unreleased section, which also carries their traps and
-  open questions.
+- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.9.0** (tagged on `main`,
+  2026-10-13, deployed the same day), the big one: the tournament, the ground-up online
+  redesign, the Battle Flowers, the interaction log and both PDF reports. Day-to-day work
+  happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
+- **`develop` carries no unreleased feature work.** It sits two housekeeping commits past the
+  tag — `46fb48d` (the wipe procedure recorded below) and `e316fc9` (the lockfile version
+  fields the release commit missed). What shipped, with its decisions and traps, is
+  `ARCHIVE.md`'s v0.9.0 section; that file is the index into `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
-- `docs/` was caught up against the code on 2026-09-11 and has been kept current since: 14
+- `docs/` was caught up against the code on 2026-09-11 and has been kept current since: 15
   spec documents plus two READMEs. Where the code and `MULTIPLAYER_PLAN.md` disagree, **`docs/`
   is the spec and the plan is design history** — the eight as-built divergences are listed in
   `docs/technical-spec/06-online-architecture.md`.
 
-## Before deploying the unreleased work
+## Changing the persisted online shape means a database wipe
 
-**Done — v0.9.0 shipped 2026-10-13 with the wipe.** Both outstanding decisions were answered at
-release time: the wipe was **database-wide** (the tournament tables went with it, by choice), and
-the user confirmed it explicitly in the release turn. The procedure that worked: deploy the new
+v0.9.0 is the precedent to follow. Both of its outstanding decisions were answered at release
+time: the wipe was **database-wide** (the tournament tables went with it, by choice), and the
+user confirmed it explicitly in the release turn. The procedure that worked: deploy the new
 image first, then `flyctl machines start` (the machine auto-stops, and ssh needs a started VM),
 `flyctl ssh console -C "rm -f /data/oni-quest.db /data/oni-quest.db-wal /data/oni-quest.db-shm"`
 (one command per `-C`; chaining with `&&` mangles in transit), then `flyctl machines restart` —
@@ -54,110 +42,33 @@ persisted online shape needs the same conversation.
 
 ## What's next
 
-The **tournament report** shipped 2026-10-12: the conclusion screen's button is now
-**Download Tournament Report (PDF)**, organizer-only, fetching `GET /api/tournaments/[id]/report`
-(the archived rounds plus every played match's interaction log) and folding the PDF on the
-device — tournament page, missions, roster armies with the final standing, matches grouped by
-round, and the event-wide damage/healing conclusion per model with its owner. Nothing is
-persisted. With it, both unreleased features are feature-complete; what stands between `develop`
-and a production release is the **database wipe decision** below, and the deferred threads:
-online's resume/leave alignment with the tournament pattern, and the pre-redesign reveal prose in
-specs 04/06/07/09.
+v0.9.0 closed both feature threads. The **tournament** now runs its rounds as ordinary online
+games it owns — pairing and the BYE, Enter Game, the megaphone, results reporting themselves
+into a cumulative standing, replays of dead tables, and the conclusion screen's medal standings
+with its report. An **online match opens the way the rulebook does**: born set up, Start Game
+gated on per-seat **Ready**, then Army Reveal → Army Preparation (a Roster cut to ≤85 in a
+_borrowed_ army builder) → Scheme Selection, the draw count coming from the Leader's INT.
 
-The current feature is the **Battle Flowers** — the army panel's redesign: every copy drawn as
-its icon in a circular orb ringed by Stamina boxes (yellow, left half) and Life boxes (red,
-right half). Phase 1 shipped in `e895afe`: the hot-seat tracker's two army panes became a single
-Army view holding one panel split into a sky and an orange half, one flower per row, and
-clicking a flower focuses it — backdrop blur, a 1.3× clone gliding to the viewport centre, the
-rest faded; once landed, a ring of petals blooms outside the ring and retracts before the flower
-glides home on click-outside or Escape. The ring is now **five petals** (2026-10-07): the model's
-card, deal damage, heal, edit statuses and manage Stamina — one dark-blue glass, a pressed petal
-lighting a yellow rim (one at a time; the light is the selection a later sub-ring will bloom from
-— except the info petal, whose light is the open card's and drops when the card closes), and the
-card petal opening the copy's unit card above the flower, which a click outside dismisses while
-the flower stays centred until the next one. The glyphs: a grey bang in a ring for the card, a red
-sword, a green medic's cross, an orange star for the States and a yellow disc for Stamina; the
-assign/remove pair collapsed into the one star when the status flow made both directions one
-ring. The damage flow landed 2026-10-05 as the first petal function: pressing the sword blooms a
-third ring (1…6 and X, blooming from behind the action ring, with X's own amount entry), an
-amount brings the living field forward as a target row (seat rims, copy badges, the focused
-copy's twin among them), one tap selects under a turning crosshair, the second confirms, the
-sword flies, the Life boxes darken one by one and the overlay closes with the hit committed to
-the seat's vitality map. The heal flow followed the same day, the shape turned around: the row
-offers every copy below its overheal cap (the fallen and the whole alike), the green cross flies,
-and the boxes refill one by one, past full into the blue overheal up to double the base. The
-**status flow** (2026-10-07) is the third petal function and the first that moves the focus: the
-star's row holds every copy of both seats, one tap moves the focus onto the target — its flower
-takes the centre while the flower it left glides home and stays **lit** in its slot — and a beat
-later all fifteen States bloom around it as tappable orbs on a ring of their own (44 px each,
-radius fitted to the smaller screen dimension; the petals went home with the flower they belonged
-to and this flow has no amount ring, so nothing competes for the space). A carried State lights
-the yellow rim and wears its own colour, the rest are the petals' glass with a grey glyph, and
-Incapacitated and Crouched are locked orbs while Life is 0, because the store re-applies them to
-every commit. Taps edit a **draft**; the model icon commits it — the first tap arms the crosshair,
-the second writes the whole draft in one go and sends the flower home into **the target's** slot —
-and toggling an orb disarms a pending commit. The States a copy carries also hang off its strip
-flower as a **band of orbs over its shoulders** — four slots down the left, four down the right,
-the `+n` chip taking the last right slot past eight (own glyph, own colour, absent on a clean
-copy) — which is the default state's read of them. The **Stamina flow** (2026-10-08) is the
-fourth petal function and the only one with no row: the disc blooms a third ring of two steps,
-−1 and +1, dead at the floor and at the over-Stamina cap; each tap commits at once onto the
-centred flower and walks its Stamina boxes one step — a spend emptying from the bottom end like
-Life, a gain refilling the same way, and past the base the extra point repainting its box
-**violet** from the top end, over-Stamina running to double the base like Life's blue. The step
-ring stays out between taps, so several points cost several taps; a model with no Stamina gets a
-dead disc instead of two disabled steps. **Box taps** (2026-10-08) closed the flower
-interaction: on the focused flower the ring's boxes are themselves tappable while the petals
-hold their place — the n-th box of a half sets that stat straight to n, walking and committing
-at once — live only while the ring is idle; the strip flowers stay display-only and
-over-Stamina stays the disc's +1. The same day reworked what zero Life means: Incapacitated left
-the ring for good — a living model that falls is forced into it with Crouched, and any heal of
-at least one point drops it again as the model stands up; a second hit on a fallen model kills
-it, an Undead model goes straight to Dead at zero Life, and Dead (still a pick of its own, never
-sharing a copy with Incapacitated) stays in the heal row, since a heal of at least one point is
-what takes it off — while the fallen stay in the damage row, where the second fall kills.
-Neither State rides the band any more: the fallen wear a yellow wash with the Incapacitated
-glyph over their icon, the Dead a red wash with the skull, on every flower. Solo carried the
-board and its two dialogs on 2026-10-11 (`70bd405`), and a hint line under the field names the
-two gestures on every board (2026-10-12, `6f293cb`). Behaviour spec:
-`docs/functional-spec/06-two-player-hot-seat.md`.
+On top of them landed the **Battle Flowers** (every copy an icon in a ring of Stamina and Life
+boxes; a tap opens the Self Interaction dialog, a drag the cross-model Interaction panel; on all
+three boards), the **interaction log** (online stores no vitality at all — every commit is a
+`game_events` row both devices fold, and an undo is an appended revert, actor-only and only
+while it is still the last one) and the **two reports** (battle and tournament PDFs, written on
+the device by the hand-rolled `domain/pdf.ts`, persisted nowhere). Build stories, decisions and
+traps: `ARCHIVE.md`. Behaviour specs: `docs/functional-spec/06-two-player-hot-seat.md`,
+`07-online-two-player.md`, `09-tournament.md` and
+`docs/technical-spec/06-online-architecture.md`.
 
-**The battle report (2026-10-12)** closes the loop the log was built for: the finished screen
-(and a tournament table's match) offers **Download Battle Report (PDF)**, generated entirely on
-the device by a hand-written PDF 1.4 writer (`domain/pdf.ts` — no dependency may be installed,
-deterministic bytes, uncompressed streams) laid out by `domain/battleReport.ts`: game code and
-the match date from the games row, season and mission with the map drawn as a vector thumbnail,
-both armies as grouped unit lines plus their schemes, every round with its score and its
-interactions (undone ones struck through and marked), then damage and healing per model, highest
-first, self-recorded hits tallied under their seat as unattributed. Nothing is persisted — the
-bytes live only in the download. Two rules bent for it: the composition reveal survives the
-finish, and a finished match still accepts a roster publish, so a device that reconnects after
-the last round can field its half. Verified by `~/.qwen/tmp/oni-verify/report.mjs` (22
-assertions over the downloaded bytes). The **tournament report** followed the same day on top of
-it: same writer, same no-persistence rule, folded across every match of a concluded event.
-
-**The interaction log (2026-10-12)** closed the flower feature and laid the report's foundation:
-online's Army view is now the flower board plus a **history strip** over it (tap → the
-round-grouped Interaction history dialog, click outside closes, **Undo** on your own latest
-standing action). Nothing stores vitality online — every commit is a `vitality-committed` row in
-`game_events`, both devices fold the log (`domain/vitalityHistory.ts`), an undo is an appended
-`vitality-reverted` the fold skips, and the round on each row is server-stamped. The opponent's
-half of the board comes from their device **publishing** its combat list as board entries once
-the round runs (`/roster`, once-only, composition opens at play, codes never travel). Online's
-ownership rule: only your own flowers lift and open the Self Interaction dialog; the opponent's
-are drop targets. Solo and hot-seat do **not** historize. Verified by a two-device Edge harness
-(`~/.qwen/tmp/oni-verify/online-history.mjs`, 26 assertions) driving the whole online journey
-through the API first. The log carries everything the KPIs will want — actor, target seat and
-entry, amounts, added/removed States, round — so the report folds the same rows.
+The live thread is the two buttons those dialogs still render inert — **Trade Item** and
+**Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — which
+the v0.9.0 announcement already promised the players. Everything else that is open was deferred
+on purpose; the list follows.
 
 Smaller open threads:
 
 - **Healing can raise the fallen** — the heal row includes copies at 0 Life, so a heal revives
   them and the zero-Life States lift again with the hp change. Whether that is legal is an open
   ruling (2026-10-06), to be revisited; if not, `healableTargetsFor` gains a `current > 0` guard.
-- **The online tracker's Army view placeholder is gone** (2026-10-12): it is the flower board
-  folded from the interaction log, with the history strip above it. Per-copy tracking now lives
-  server-side in `game_events` rather than in any seat's state.
 - **The initiative roll** (rulebook step 8) is unmodelled; its formula and prize are rulebook
   text we do not have. The exposure it exists for (the Leader's M and INT) is already in place.
 - **`activePlayer` is not persisted** in hot-seat. `twoPlayerProgress.svelte.ts` keeps it as
@@ -190,11 +101,10 @@ copy-pasted class strings, which is why disabled styling has drifted between scr
 
 ## Verification on this machine
 
-`npm run check`, `npm run lint`, `npm run test` after every change (636 tests as of the tournament
-round's game/scoring phases). Beyond that, the habit here has been **throwaway browser and API
-passes** — a real multi-context Playwright run asserting the journey, deleted afterwards; the
-unreleased work was verified by a dozen of them, from 8 to 65 assertions. Five traps cost a run
-each and recur:
+`npm run check`, `npm run lint`, `npm run test` after every change (743 tests as of v0.9.0).
+Beyond that, the habit here has been **throwaway browser and API passes** — a real multi-context
+Playwright run asserting the journey, deleted afterwards; v0.9.0 alone was verified by a dozen of
+them, from 8 to 65 assertions. Five traps cost a run each and recur:
 
 - **`npm install` is blocked**, so no new dependencies. This is why the QR encoder is in-app
   (`domain/qr.ts`) rather than a package.

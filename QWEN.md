@@ -209,7 +209,7 @@ section.
   `docs/technical-spec/06-online-architecture.md`. `MULTIPLAYER_PLAN.md` (local-only) is
   design history.
 
-- **Tournament** (under construction) → an event run by a Tournament Organizer (TO).
+- **Tournament** → an event run by a Tournament Organizer (TO).
   Configuration is a **local three-pane wizard** on a `TournamentDraft`
   (`domain/tournament.ts`, panes in `TOURNAMENT_SETUP_STEPS`): basics, Missions & Tables,
   Overview. **Nothing is persisted or sent while configuring**; Create Tournament first shows
@@ -410,15 +410,15 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
   and push branch + tag. Commit messages here are detailed by design — they are the
   authoritative record of why a change was made.
-- Current release: **v0.8.0** (hot-seat parity). `develop` is ahead of it with two
-  unreleased features — the tournament (up to its match-prep screen) and the online-mode
-  redesign. **Deploying them needs the production database wiped**: no
-  `hydrateOnlineGameState` exists, and seats gained required `army`/`combatArmy`/`leader`
-  fields, so an older row would read a missing combat army as combat-ready. The app
-  is in beta and the wipe is authorized in principle, but it is destructive on shared
-  infrastructure and database-wide (it takes the tournament tables with it): **confirm
-  explicitly**, and note `flyctl` on this machine needs the user's own interactive
-  `flyctl auth login` first. Details and the outstanding decisions: `PROGRESS.md`.
+- Current release: **v0.9.0** (2026-10-13 — the online rebuild, tournaments, Battle Flowers,
+  the interaction log and both PDF reports), tagged on `main` and deployed the same day.
+- **The persisted online shape has no migration mechanism** — no `hydrateOnlineGameState`
+  exists, so a field added to an online seat or game leaves older rows reading as corrupt (a
+  missing combat army reads as combat-ready). v0.9.0 needed a database-wide wipe for exactly
+  that, and a wipe takes the tournament tables with it. It is destructive on shared
+  infrastructure: **confirm explicitly before every one**. The procedure that worked is in
+  `PROGRESS.md`; `flyctl` on this machine needs the user's own interactive `flyctl auth login`
+  first.
 - **Online mode needs a Fly volume**: before the first deploy containing it, run
   `fly volumes create oni_quest_data -a oni-quest-advisor --size 1` (the `[mounts]`
   entry in `fly.toml` expects it; the deploy fails without it). It has existed since v0.5.0,
@@ -432,7 +432,7 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 
 - `QWEN.md` (this file) — stack, the domain invariants, layered architecture, conventions,
   commands and the release process. Loaded every session, so it stays rules-only.
-- `PROGRESS.md` — live state: where things stand, what is next, the deploy warning,
+- `PROGRESS.md` — live state: where things stand, what is next, the wipe rule,
   verification traps and ops facts.
 - `ARCHIVE.md` — what shipped per release, with the decisions and traps still worth knowing
   and the `git log` range for full detail.
