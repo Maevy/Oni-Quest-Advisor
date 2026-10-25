@@ -183,7 +183,7 @@ section.
     overlap on five and resolve against different catalogs.
   - **`startGame` is a total function** — a caller that forgets readiness gets no error, it
     silently keeps a lobby. Test fixtures go through a `readyUp()` helper.
-  - The **client declares** the Leader's M and INT, because the server loads no army catalogs
+  - The **client declares** the Leader's M and INT, because the game flow loads no army catalogs
     and cannot compute effective stats from a code — the same "client's word" ruling army
     legality rests on. Only those two numbers are published, only from `setup` on; the
     identity never travels.
