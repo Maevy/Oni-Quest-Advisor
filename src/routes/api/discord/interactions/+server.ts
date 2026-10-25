@@ -119,12 +119,20 @@ export const POST: RequestHandler = async ({ request, url }) => {
 	// and the call resolves in well under the idle window Fly waits before auto-stopping. The
 	// trailing catch is not decoration: an unhandled rejection can take the Node process down.
 	void (async () => {
-		const delivered = await postInteractionFollowUp(
+		const result = await postInteractionFollowUp(
 			applicationId,
 			token,
 			await resolveCard(url.origin, code)
 		);
-		if (!delivered) console.error('discord follow-up was not accepted', { interaction: id });
+		if (!result.delivered) {
+			// The player is left staring at "thinking", so this line is the only trace there is -
+			// which is why it carries the reason and the attempt count, not just the fact.
+			console.error('discord follow-up was not accepted', {
+				interaction: id,
+				attempts: result.attempts,
+				reason: result.reason
+			});
+		}
 	})().catch((error) => console.error('discord follow-up threw', error));
 	return json({ type: RESPONSE_DEFERRED });
 };

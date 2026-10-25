@@ -240,36 +240,91 @@ export function armyCard({ sheet, origin, code }: ArmyCardRequest): DiscordMessa
 	};
 }
 
+/** Discord's answer to a webhook post; `status` is what separates its refusals from a call that never landed. */
+export type DiscordTransport = (
+	url: string,
+	init: RequestInit
+) => Promise<{ ok: boolean; status?: number }>;
+
+/** How the card's delivery ended, and how many times it was tried. */
+export type FollowUpResult =
+	{ delivered: true; attempts: number } | { delivered: false; reason: string; attempts: number };
+
+const FOLLOW_UP_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 400;
+
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** One delivery attempt: either it landed, or it says why and whether another try could help. */
+type FollowUpAttempt =
+	{ delivered: true } | { delivered: false; reason: string; retryable: boolean };
+
+async function attemptFollowUp(
+	webhook: string,
+	init: RequestInit,
+	transport: DiscordTransport
+): Promise<FollowUpAttempt> {
+	try {
+		const response = await transport(webhook, init);
+		if (response.ok) return { delivered: true };
+		const status = response.status ?? 0;
+		// A rate limit or a server-side failure is Discord's problem and worth another try; any
+		// other 4xx means our payload is wrong and the same bytes are refused identically.
+		return {
+			delivered: false,
+			reason: `Discord answered ${status}`,
+			retryable: status === 429 || status >= 500
+		};
+	} catch (error) {
+		return {
+			delivered: false,
+			reason: error instanceof Error ? error.message : String(error),
+			retryable: true
+		};
+	}
+}
+
 /**
  * Posts the card to the interaction's own webhook. The interaction token in the URL is the
  * credential, so the bot token is not needed at runtime - it is used once, by the command
- * registration script. Returns whether Discord accepted it; a failure leaves the player staring
- * at "thinking", which is why the caller logs it.
+ * registration script.
+ *
+ * A failure here leaves the player staring at "thinking" forever, which is the worst outcome the
+ * bot can produce - and one observed on staging, where the first command after a cold start
+ * deferred correctly and the card never landed. That failure was undiagnosable, because delivery
+ * returned a bare boolean and threw away both Discord's status and the transport error. So the
+ * result carries the reason, and anything transient is tried once more.
+ *
+ * A 4xx other than 429 is deliberately not retried: Discord refused the payload itself, and the
+ * same bytes are refused identically a moment later.
  *
  * The transport is a parameter rather than the global `fetch` so the delivery path is testable
- * without mutating globals: a spec passes its own transport and asserts the webhook URL, the
- * headers and the body that would have been sent.
+ * without mutating globals: a spec passes its own and asserts the webhook URL, the headers and the
+ * body that would have been sent.
  */
-export type DiscordTransport = (url: string, init: RequestInit) => Promise<{ ok: boolean }>;
 
 export async function postInteractionFollowUp(
 	applicationId: string,
 	interactionToken: string,
 	message: DiscordMessage,
 	transport: DiscordTransport = fetch
-): Promise<boolean> {
-	try {
-		const response = await transport(
-			`https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}`,
-			{
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(message)
-			}
-		);
-		return response.ok;
-	} catch (error) {
-		console.error('discord follow-up failed', error);
-		return false;
+): Promise<FollowUpResult> {
+	const webhook = `https://discord.com/api/v10/webhooks/${applicationId}/${interactionToken}`;
+	const init: RequestInit = {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(message)
+	};
+
+	// Every path returns, so the loop cannot run past FOLLOW_UP_ATTEMPTS.
+	for (let attempt = 1; ; attempt += 1) {
+		if (attempt > 1) await delay(RETRY_DELAY_MS);
+		const outcome = await attemptFollowUp(webhook, init, transport);
+		if (outcome.delivered) return { delivered: true, attempts: attempt };
+		if (!outcome.retryable || attempt >= FOLLOW_UP_ATTEMPTS) {
+			return { delivered: false, reason: outcome.reason, attempts: attempt };
+		}
 	}
 }

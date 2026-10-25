@@ -78,6 +78,16 @@ Every failure is a _message_, never a stack trace and never silence:
   The residual case is the machine still booting when Discord calls: right after a deploy the first
   command may show _"The application did not respond"_. Warm wakes are 1–2 s and fit inside
   Discord's 3 s.
+- **The card never lands.** Observed on staging 2026-10-25, and so far the only failure the bot has
+  actually produced: the first command after a cold start deferred correctly (`200` in 76 ms — the
+  first catalog load) and the webhook post failed, leaving that player on _"Chiyo-Bot is thinking…"_
+  permanently while the four commands that followed all delivered. It was undiagnosable, because
+  delivery returned a bare boolean and discarded both Discord's status and the transport error. The
+  result now carries the reason and the attempt count into the log, and a transient failure — a
+  transport error, a 429, a 5xx — is retried once after 400 ms. Any other 4xx is not: Discord
+  refused the payload itself, and the same bytes are refused identically a moment later. **The
+  original cause is still unknown and the retry is a mitigation, not a fix** — the next occurrence
+  will say which it was.
 
 ## Architecture decisions
 

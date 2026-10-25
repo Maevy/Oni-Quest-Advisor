@@ -247,36 +247,65 @@ describe('postInteractionFollowUp', () => {
 	it('posts the message to the interaction webhook, which the token alone authenticates', async () => {
 		const calls: Array<{ url: string; init: RequestInit }> = [];
 		const message = { content: 'hello' };
-		const delivered = await postInteractionFollowUp('app-1', 'token-1', message, (url, init) => {
+		const result = await postInteractionFollowUp('app-1', 'token-1', message, (url, init) => {
 			calls.push({ url, init });
-			return Promise.resolve({ ok: true });
+			return Promise.resolve({ ok: true, status: 200 });
 		});
 		// Asserted before the outcome: a transport that never ran would also read as a failure.
 		expect(calls).toHaveLength(1);
-		expect(delivered).toBe(true);
+		expect(result).toEqual({ delivered: true, attempts: 1 });
 		expect(calls[0].url).toBe('https://discord.com/api/v10/webhooks/app-1/token-1');
 		expect(calls[0].init.method).toBe('POST');
 		expect(calls[0].init.headers).toEqual({ 'content-type': 'application/json' });
 		expect(JSON.parse(String(calls[0].init.body))).toEqual(message);
 	});
 
-	it('reports a refusal instead of throwing it at the caller', async () => {
+	it('does not retry a payload Discord refused, and says which status', async () => {
 		let called = 0;
-		const delivered = await postInteractionFollowUp('app-1', 'token-1', {}, () => {
+		const result = await postInteractionFollowUp('app-1', 'token-1', {}, () => {
 			called += 1;
-			return Promise.resolve({ ok: false });
+			return Promise.resolve({ ok: false, status: 400 });
 		});
+		// Retrying the same bytes at a 400 would only be refused identically.
 		expect(called).toBe(1);
-		expect(delivered).toBe(false);
+		expect(result).toEqual({ delivered: false, reason: 'Discord answered 400', attempts: 1 });
 	});
 
-	it('reports a network failure as a refusal too', async () => {
+	it('retries a rate limit and a server-side failure once', async () => {
+		for (const status of [429, 503]) {
+			let called = 0;
+			const result = await postInteractionFollowUp('app-1', 'token-1', {}, () => {
+				called += 1;
+				return Promise.resolve({ ok: false, status });
+			});
+			expect(called).toBe(2);
+			expect(result).toEqual({
+				delivered: false,
+				reason: `Discord answered ${status}`,
+				attempts: 2
+			});
+		}
+	});
+
+	it('retries a transport failure and reports the error it ended on', async () => {
 		let called = 0;
-		const delivered = await postInteractionFollowUp('app-1', 'token-1', {}, () => {
+		const result = await postInteractionFollowUp('app-1', 'token-1', {}, () => {
 			called += 1;
-			return Promise.reject(new Error('offline'));
+			return Promise.reject(new Error('socket hang up'));
 		});
-		expect(called).toBe(1);
-		expect(delivered).toBe(false);
+		expect(called).toBe(2);
+		expect(result).toEqual({ delivered: false, reason: 'socket hang up', attempts: 2 });
+	});
+
+	it('lands the card on the second try when the first fails - the staging cold-start case', async () => {
+		let called = 0;
+		const result = await postInteractionFollowUp('app-1', 'token-1', { content: 'card' }, () => {
+			called += 1;
+			return called === 1
+				? Promise.reject(new Error('socket hang up'))
+				: Promise.resolve({ ok: true, status: 200 });
+		});
+		expect(called).toBe(2);
+		expect(result).toEqual({ delivered: true, attempts: 2 });
 	});
 });
