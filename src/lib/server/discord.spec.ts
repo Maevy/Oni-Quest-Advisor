@@ -179,7 +179,23 @@ describe('armyCard', () => {
 		expect(description).toContain(
 			'**2\u00d7 Alpha** \u00b7 12 pts each \u00b7 Additional Protection'
 		);
-		expect(description).toContain('**1\u00d7 Bravo** \u00b7 17 pts each \u00b7 on Lupus');
+		expect(description).toContain('**1\u00d7 Bravo** \u00b7 17 pts \u00b7 on Lupus');
+	});
+
+	it('says "each" only when there is more than one copy to divide the cost between', () => {
+		const solo = {
+			unitId: 'solo',
+			name: 'Solo',
+			copies: 1,
+			pointsEach: 19,
+			size: 'medium' as const,
+			upgrades: [] as string[]
+		};
+		const one = cardOf({ ...SHEET, lines: [solo] }).embed.description ?? '';
+		const many = cardOf({ ...SHEET, lines: [{ ...solo, copies: 3 }] }).embed.description ?? '';
+		expect(one).toContain('**1\u00d7 Solo** \u00b7 19 pts');
+		expect(one).not.toContain('pts each');
+		expect(many).toContain('**3\u00d7 Solo** \u00b7 19 pts each');
 	});
 
 	it('puts a Roster equipment pool in its own field', () => {

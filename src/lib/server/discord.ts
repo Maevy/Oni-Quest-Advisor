@@ -134,7 +134,9 @@ export function verifyInteractionSignature(signed: InteractionSignature): boolea
 
 /** One line of the card: how many of what, at what cost, on what, carrying what. */
 function unitLine(line: ArmySheetLine): string {
-	const parts = [`**${line.copies}\u00d7 ${line.name}**`, `${line.pointsEach} pts each`];
+	// "each" only earns its place when there is more than one copy to divide the cost between.
+	const cost = line.copies === 1 ? `${line.pointsEach} pts` : `${line.pointsEach} pts each`;
+	const parts = [`**${line.copies}\u00d7 ${line.name}**`, cost];
 	if (line.mount) parts.push(`on ${line.mount}`);
 	if (line.upgrades.length > 0) parts.push(line.upgrades.join(', '));
 	return parts.join(' \u00b7 ');
