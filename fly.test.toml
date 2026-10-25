@@ -1,7 +1,8 @@
 # Staging config for the experimental test deployment.
 # Same shape as fly.toml but a separate app + its own fresh volume, so testers
 # can exercise unreleased `develop` features at their own URL without touching
-# production (oni-quest-advisor, still at v0.8.0) and without a prod DB wipe.
+# production (oni-quest-advisor, which runs the released tag) and without a prod
+# DB wipe.
 # Deploy with:  flyctl deploy --config fly.test.toml --app oni-quest-advisor-test
 app = "oni-quest-advisor-test"
 primary_region = "fra"
@@ -27,7 +28,12 @@ primary_region = "fra"
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  # One machine stays up. Discord allows 3s to an interaction and a boot from stopped
+  # measured 3-4s to listening (2026-10-25: start 17:37:50, Node listening 17:37:53,
+  # health passing 17:37:54), so the whole budget is spent before the handler runs a line -
+  # deferring the response cannot help, and the interaction is dropped unseen. auto_stop
+  # will not go below this minimum. Costs ~$2.19/mo at shared-cpu-1x/256mb.
+  min_machines_running = 1
 
 # Probes /api/health on running machines (DB reachable, aggregates report).
 # Health checks do not auto-start a stopped machine — requests still do.
