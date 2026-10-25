@@ -24,11 +24,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// ADDRESS_HEADER set but absent (e.g. direct internal request) —
 			// all such traffic shares one bucket, the conservative direction.
 		}
-		const allowed =
-			event.url.pathname === '/api/games' || event.url.pathname === '/api/tournaments'
-				? checkRateLimit(`create:${ip}`, GAME_CREATION_LIMIT_PER_HOUR, 60 * 60 * 1000)
-				: checkRateLimit(`action:${ip}`, ACTION_LIMIT_PER_MINUTE, 60 * 1000);
-		if (!allowed) return json({ error: 'Too many requests' }, { status: 429 });
+		// Discord's interactions are the one POST not limited per IP: every one arrives from
+		// Discord's own address range, so a shared bucket would throttle the whole bot and one
+		// busy server would starve every other. That path authenticates with an Ed25519 signature
+		// over the raw body instead, and refuses an unverified request with a 401.
+		if (event.url.pathname !== '/api/discord/interactions') {
+			const allowed =
+				event.url.pathname === '/api/games' || event.url.pathname === '/api/tournaments'
+					? checkRateLimit(`create:${ip}`, GAME_CREATION_LIMIT_PER_HOUR, 60 * 60 * 1000)
+					: checkRateLimit(`action:${ip}`, ACTION_LIMIT_PER_MINUTE, 60 * 1000);
+			if (!allowed) return json({ error: 'Too many requests' }, { status: 429 });
+		}
 	}
 
 	const startedAt = performance.now();
