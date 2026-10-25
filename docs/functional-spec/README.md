@@ -211,8 +211,11 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
    upgrades, the Roster equipment pool, army codes and saved armies.
 9. [09-tournament.md](./09-tournament.md) — the Tournament Organizer's event: configuration
    wizard, creation, the lobby and joining, table assignment, the round's matches, scoring, the
-   megaphone and the conclusion (all built); the report is what is left. Under construction; grows
+   megaphone, the conclusion and the client-side PDF report (all built). Under construction; grows
    step by step.
+10. [10-discord-bot.md](./10-discord-bot.md) — Chiyo-Bot: an army code pasted into Discord answers
+    with a card and a deep link into the builder. **Planned; nothing built yet** — the hosting
+    model, the output and the command surface are decided, the image is not.
 
 ## Open questions
 
