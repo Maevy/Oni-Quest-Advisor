@@ -6,16 +6,12 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Where things stand
 
-- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.9.0** (tagged on `main`,
-  2026-10-13, deployed the same day), the big one: the tournament, the ground-up online
-  redesign, the Battle Flowers, the interaction log and both PDF reports. Day-to-day work
-  happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` is ahead of v0.9.0 with the unreleased v0.10.0 work.** That is **summoning,
-  complete in all three modes** (`2fab769` data layer, `e25105f` local UI, `6353c28` online) and
-  the **paste-an-army-code shortcut** on the single-phone slots. The rest of the lead is
-  housekeeping: `a5d1711` and `ba775c3` (doc folds), `46fb48d` (the wipe procedure below) and
-  `e316fc9` (the lockfile version fields the release commit missed). What shipped in v0.9.0, with
-  its decisions and traps, is `ARCHIVE.md`'s section for it; that file is the index into
+- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.10.0** (tagged on `main`,
+  2026-10-25, deployed the same day with **no database wipe**): summoning across all three modes
+  and the paste-an-army-code shortcut. Day-to-day work happens on **`develop`**, pushed to
+  `git@github.com:Maevy/Oni-Quest-Advisor.git`.
+- **`develop` carries no unreleased feature work** — it is level with the v0.10.0 tag. What
+  shipped, with its decisions and traps, is in `ARCHIVE.md`; that file is the index into
   `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
@@ -45,50 +41,22 @@ persisted online shape needs the same conversation.
 
 ## What's next
 
-v0.9.0 closed both feature threads. The **tournament** now runs its rounds as ordinary online
-games it owns — pairing and the BYE, Enter Game, the megaphone, results reporting themselves
-into a cumulative standing, replays of dead tables, and the conclusion screen's medal standings
-with its report. An **online match opens the way the rulebook does**: born set up, Start Game
-gated on per-seat **Ready**, then Army Reveal → Army Preparation (a Roster cut to ≤85 in a
-_borrowed_ army builder) → Scheme Selection, the draw count coming from the Leader's INT.
-
-On top of them landed the **Battle Flowers** (every copy an icon in a ring of Stamina and Life
-boxes; a tap opens the Self Interaction dialog, a drag the cross-model Interaction panel; on all
-three boards), the **interaction log** (online stores no vitality at all — every commit is a
-`game_events` row both devices fold, and an undo is an appended revert, actor-only and only
-while it is still the last one) and the **two reports** (battle and tournament PDFs, written on
-the device by the hand-rolled `domain/pdf.ts`, persisted nowhere). Build stories, decisions and
-traps: `ARCHIVE.md`. Behaviour specs: `docs/functional-spec/06-two-player-hot-seat.md`,
-`07-online-two-player.md`, `09-tournament.md` and
-`docs/technical-spec/06-online-architecture.md`.
-
-The live thread is **summoning** (2026-10-24), now **complete across all three modes**: the data
-layer, the local-mode UI, and online (so tournament tables inherit it, their matches being
-ordinary online games). Online needed no new event type — a summon is a `vitality-committed`
-entry whose action is `summon`, carrying the creature's `unitId` and its base Life/Stamina/Undead
-because the server loads no catalogs and neither published roster has a row for a creature that
-was never in the list; Dismiss is one whose action is `dismiss`. That is additive to the log, so
-unlike v0.9.0 it needed **no database wipe**. Behaviour is specified in
-`docs/functional-spec/06-two-player-hot-seat.md` (_Summoning_) and `07-online-two-player.md`; the
-content shape in `docs/technical-spec/05-army-data-format.md` and the log in
-`docs/technical-spec/06-online-architecture.md`.
+v0.10.0 (2026-10-25) shipped **summoning** across all three modes and the **paste-an-army-code**
+shortcut on the single-phone slots. `ARCHIVE.md` carries their decisions and traps; the two that
+will bite a future change are that a summoned creature has **no `ArmyRosterRow`** — so a vitality
+flow must resolve its bases through `basesWithin(view, entryId)` and not `view.rows.find(...)`, or
+it silently no-ops — and that online carries a summon as an **action kind inside the existing
+`vitality-committed` payload**, not a new event type, with the creature's bases riding in the
+action because the server loads no catalogs. Behaviour specs:
+`docs/functional-spec/06-two-player-hot-seat.md` (_Summoning_), `07-online-two-player.md`,
+`docs/technical-spec/05-army-data-format.md` and `06-online-architecture.md`.
 
 One asymmetry worth remembering: healing a fallen summoner does **not** return its creatures
 (permanent by ruling), but **undoing** the blow that felled it does — an undo says the hit never
 landed, so the cascade never happened either. Both fall out of the fold replaying forward, with
 no removal record anywhere. Deliberately unmodelled: the rulebook's **Summoning Limit**.
 
-The other v0.10.0 item is a quality-of-life one: the **paste-an-army-code shortcut** on the
-single-phone slots (solo, P1, P2). Building a list and naming a save before you can play was the
-slow part at the table, so `PickArmyDialog` now carries an _Or import an army code_ field that
-attaches the list straight to the run under a default name (**Player army** / **Player 1 army** /
-**Player 2 army**) and saves nothing. A Roster code is refused rather than attached, because a
-mission run fields Standard. The side effect worth knowing: an empty save list no longer
-dead-ends into the "create one?" prompt on those slots — the picker opens with its code field and
-a **Create an army** button, which is exactly the player the shortcut is for. Online and
-tournament keep the old flow, since each device picks for itself there.
-
-The older deferred thread is the two buttons those dialogs still render inert — **Trade Item** and
+The live thread is the two buttons those dialogs still render inert — **Trade Item** and
 **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — one of
 which the v0.9.0 announcement already promised the players. Everything else that is open was
 deferred on purpose; the list follows.
@@ -130,7 +98,7 @@ copy-pasted class strings, which is why disabled styling has drifted between scr
 
 ## Verification on this machine
 
-`npm run check`, `npm run lint`, `npm run test` after every change (743 tests as of v0.9.0).
+`npm run check`, `npm run lint`, `npm run test` after every change (815 tests as of v0.10.0).
 Beyond that, the habit here has been **throwaway browser and API passes** — a real multi-context
 Playwright run asserting the journey, deleted afterwards; v0.9.0 alone was verified by a dozen of
 them, from 8 to 65 assertions. Five traps cost a run each and recur:

@@ -16,6 +16,104 @@ worth knowing before touching the code.
 
 ---
 
+## v0.10.0 — summoning, and attaching an army by pasting its code (2026-10-25, 9 commits)
+
+Two features: **summoning**, across all three modes, and the **paste-an-army-code shortcut** on the
+single-phone slots. **Deployed with no database wipe** — unlike v0.9.0 this release touches
+neither `domain/online.ts`, `lib/server` nor `routes/api`, so the persisted online shape and the
+schema are unchanged (verified by `git diff v0.9.0..develop --stat` over those paths coming back
+empty). The only online change is two new action kinds inside the existing `vitality-committed`
+payload, which a client that does not know them skips rather than chokes on. Army codes are also
+unaffected: the new content bucket sits outside `codeUnitPool()`, so the fingerprint never moved.
+
+### Summoning (`2fab769`, `e25105f`, `6353c28`, `a5d1711`, `23a178a`)
+
+Creatures a spell puts on the field during a game, which the producer dump has carried since the
+first import and the importer has skipped all along — nothing could recruit a model with cost 0
+and limit 0. Nine are summonable: six faction-less tokens (Gargoyle, Golem, the Earth and Water
+Elementals, Colossus, Blighted Riftspawn) plus three Undead that are **dual-nature**, bought into
+a list _or_ raised mid-game (Bonewalker, Vengeful Spirit, Forgotten Hero). The Riftspawn is the
+one summon-only creature. The phased-out Imp gets no creature; `summon-imp` stays in the spell
+catalog unlinked.
+
+Decisions still worth knowing:
+
+- **The bucket is outside `codeUnitPool()`, deliberately.** That pool is `factionUnits +
+neutralUnits` sorted by id and is what the army-code fingerprint hashes, so a token landing in
+  either would take an index, shift every unit after it and reject every code a player had ever
+  saved or been sent. `armyCode.spec.ts` pins it by encoding a list with an `aaa-summon` in the
+  pool — a name that sorts to index 0 — and asserting the code is byte-identical.
+- **Tier and the spell→creature link are hand-authored** (`SUMMON_SPECS`, beside
+  `MOUNT_ASSIGNMENTS` and `UPGRADE_LOCKED_CODES`), because the producer carries neither: there is
+  no tier field anywhere in the dump, tier survives only inside the display name, and a summon
+  spell names its creature in free text. `lib/data/summons.spec.ts` asserts every conjuration
+  creature's tier and element still match its spell, so a dump that breaks the coincidence fails
+  loudly instead of gating silently wrong.
+- **Conjuration binds on Affinity**, so the Vizier of Conjurations (Conjuration IV, Elder + Earth)
+  reaches four Earth creatures and _not_ the Water Elemental — only an Elemental Lineage or Mana
+  Catalyst choice grants Water. Eligibility must therefore read the **effective** unit, never the
+  catalog original. **Necromancy** is element-blind, **faction-agnostic** (a Sand Kingdoms
+  necromancer raises an Oni Clans Bonewalker) and gates on the spellcraft's **presence, not its
+  level** — a ruling, since Na'ra carries Necromancy III while Raise the Undead is level 5. The
+  Deathweaving Fan lifts the Tier I/II cap, which is the only thing that reaches the Tier V
+  Riftspawn. The rulebook's Summoning Limit is deliberately unmodelled.
+
+The two traps that cost real debugging:
+
+1. **A summoned creature has no `ArmyRosterRow`.** Every vitality flow in `+page.svelte` resolved
+   its base HP/STA through a roster row, so damage, healing, States, Stagger, Stun and Activation
+   Management all **silently no-opped** against a summon — the flower sat there untouched no
+   matter what was done to it. Unit tests could not catch it; a browser pass did. All twelve sites
+   now go through `basesWithin(view, entryId)`, which falls back to the creature's own spec.
+2. **Online needed no new event type.** A summon is a `vitality-committed` row whose action is
+   `{ kind: 'summon', unitId, hp, sta, undead }`; Dismiss is `{ kind: 'dismiss' }`. The **bases
+   ride inside the action** because the server loads no catalogs and neither published roster has
+   a row for the creature, so `foldHistory` registers them as it replays. The caller travels in
+   the entry's existing `originEntryId` — which already means "the model on the actor's seat that
+   acted" — so the commit shape grew no field either.
+
+The three vanish rules: a summon at zero Life is **removed** rather than going Incapacitated or
+Dead; a summoner going Incapacitated **or Dead** drops everything it called, transitively (both
+States count, because an Undead summoner goes straight to Dead); and removal is **permanent** —
+healing the summoner back does not return its creatures. Online stores no removal at all: the fold
+only replays forward, so permanence falls out of that. Which produces one deliberate asymmetry —
+**undoing the blow that felled the summoner does bring them back**, because that blow then never
+landed and neither did the cascade. `settleVitalityStates` moved out of both stores and into
+`setMissionVitality`/`setTwoPlayerVitality` so no caller can commit a vitality record that
+skipped the rules.
+
+Also: `.neon-lilac` is the summoning mechanic's hue (violet is the hot-seat swap's) and inherits
+`.neon-border`'s reduced-motion fallback; a summon's `UnitCard` takes **no** `faction` prop (now
+optional), because Necromancy is faction-agnostic and the caller's faction would be a lie; and
+`battleReportStats` counts damage and heal rows only, so calling a creature never inflates a
+ranking — pinned by a test, since these reports are the play data that goes onward to Freecompany.
+
+### Attaching an army by pasting its code (`badf557`)
+
+Building a list and naming a save before you can play was the slow part at the table. The
+single-phone slots (solo, P1, P2) now carry an _Or import an army code_ field that attaches the
+list straight to the run under a default name (**Player army** / **Player 1 army** / **Player 2
+army**) and **saves nothing** — a friend's code pasted once should not clutter the saved-army
+list. Online and tournament keep the saved-army flow, since each device picks for itself there.
+
+`pickedArmyFromCode` decodes, refuses a code whose format is not the slot's (`'wrong-format'`, so
+a mission run cannot be handed a Roster list and discover it mid-game), and **re-encodes what it
+stores** — folding a legacy `t` format character to `r` and guaranteeing the snapshot decodes
+against the current catalogs rather than trusting the paste. `contentStore.armyCodeCatalog` became
+the one catalog every decode in the app uses, replacing two inline literals, so a pasted code is
+checked against exactly the content that later renders it.
+
+The fix hiding inside it: `openPickArmy` used to dead-end into _"It seems you don't have any saved
+armies. Do you want to create one?"_ whenever the save list was empty, so **a brand-new player
+could never reach the picker at all** — precisely the person holding a code from a friend. On the
+code-capable slots the picker now opens anyway, with _No saved armies yet_, its code field, and a
+**Create an army** button; the old prompt survives only on the multi-phone slots.
+
+Verified by 815 unit tests and three Edge harnesses (53 + 36 + 24 assertions): the picker's
+gating for both families, portrait→card, placement below the caller, the lilac ring, both vanish
+rules, heal-does-not-return versus undo-does, two devices folding the same creature onto the same
+id, the report over a summon-carrying log, and the code field's refusals and default names.
+
 ## v0.9.0 — the online rebuild, tournaments, flowers and reports (2026-10-13, 56 commits)
 
 Two features landed in this order: the tournament, then a ground-up redesign of the online front

@@ -410,8 +410,9 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
   and push branch + tag. Commit messages here are detailed by design — they are the
   authoritative record of why a change was made.
-- Current release: **v0.9.0** (2026-10-13 — the online rebuild, tournaments, Battle Flowers,
-  the interaction log and both PDF reports), tagged on `main` and deployed the same day.
+- Current release: **v0.10.0** (2026-10-25 — summoning across all three modes, and attaching an
+  army by pasting its code), tagged on `main` and deployed the same day with **no database wipe**:
+  it touches neither `domain/online.ts`, `lib/server` nor `routes/api`.
 - **The persisted online shape has no migration mechanism** — no `hydrateOnlineGameState`
   exists, so a field added to an online seat or game leaves older rows reading as corrupt (a
   missing combat army reads as combat-ready). v0.9.0 needed a database-wide wipe for exactly
