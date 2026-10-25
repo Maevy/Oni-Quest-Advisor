@@ -183,9 +183,13 @@ the endpoint URL switches to production at release.
   failures showing their own wording, both dialog exits, and the deep link outranking a seeded
   open-game resume — with a control pass proving that same seed does prompt when the param is
   absent, so the negative assertion is not vacuous.
-- **A signed interaction against the running dev server** — _not yet done._ Needs a self-generated
-  keypair in the environment and a stubbed webhook listener, to assert the deferred response and the
-  follow-up payload end to end.
+- **A signed interaction against a spawned dev server** — _done, 12 assertions_
+  (`~/.qwen/tmp/oni-verify/endpoint.mjs`). It generates its own Ed25519 keypair and starts vite on a
+  spare port with that public key in the environment, then posts real signed payloads: unsigned,
+  forged, stale-replayed and body-swapped are all refused with a 401; a PING is answered `{type:1}`;
+  a command is answered `{type:5}` with nothing unhandled; and the server's own log proves the chain
+  ran through to the follow-up call. Spawn vite through `node node_modules/vite/bin/vite.js` rather
+  than `npm.cmd` — Node 24 on Windows refuses to spawn a `.cmd` without `shell: true`.
 - **Real Discord** only after a staging deploy — _not yet done._
 - `npm run check`, `npm run lint`, `npm run test` as usual.
 
