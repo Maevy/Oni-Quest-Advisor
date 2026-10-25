@@ -133,10 +133,23 @@ them, from 8 to 65 assertions. Five traps cost a run each and recur:
   mutation queue) cannot run on two — their databases would diverge. The legacy second machine
   was destroyed during the v0.5.0 deploy; after any manual scaling, check `fly machines list`
   and keep it at one.
-- `min_machines_running = 0` in `fly.toml` — machines stop when idle and cold-start on the next
-  request. Online mode is built around this: state lives in SQLite, phones refetch and
-  resubscribe SSE on wake. Measured: ~9 s cold start right after a deploy, ~1–2 s for later
-  auto-stop wakes.
+- `min_machines_running`: **0 in `fly.toml` (prod), 1 in `fly.test.toml`** (staging, since
+  2026-10-25). Prod machines stop when idle and cold-start on the next request; online mode is
+  built around that — state lives in SQLite, phones refetch and resubscribe SSE on wake. Staging
+  is always-on because Discord gives an interactions webhook only **3 s** and a cold wake costs
+  more than that: measured, `curl /api/health` against a stopped machine took **4.71 s** end to
+  end, the proxy's own `machine became reachable` line read 2.4 s, and the boot ran start → Node
+  listening ~3 s → health passing ~4 s. Cost ~$2.19/mo at shared-cpu-1x/256mb (cheapest-region
+  figure; `fra` may differ).
+- **`min_machines_running` is a floor on auto-stop, not a resurrection guarantee.** Proven
+  2026-10-25: `flyctl machine stop`, then five `flyctl status` polls over 5.3 min with no traffic
+  sent to the app — Fly never restarted it. A _running_ machine is kept running indefinitely
+  (12 m 22 s of zero traffic observed, where the same idle had auto-stopped it in ~4.6 min), but a
+  stopped one stays stopped until a request arrives. So **warm the machine after every deploy**:
+  `curl -s -o nul -w "health %{http_code} in %{time_total}s\n" https://<app>.fly.dev/api/health`
+  — ~4 s cold, under 1 s warm, and it doubles as the reachability check. Skip it and the first
+  request after a deploy is cold, which for a Discord interaction means it is dropped unseen.
+  Restore a stopped machine by hand with `flyctl machine start <id> -a <app>`.
 - Bump the version in `package.json` for a release; `vite.config.ts` injects it as
   `__APP_VERSION__` into the site-wide footer.
 - Don't stage local tooling state: `.idea/` and `.qwen/` are untracked and not gitignored.

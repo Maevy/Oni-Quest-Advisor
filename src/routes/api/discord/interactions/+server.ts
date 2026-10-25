@@ -132,6 +132,16 @@ export const POST: RequestHandler = async ({ request, url }) => {
 				attempts: result.attempts,
 				reason: result.reason
 			});
+		} else if (result.attempts > 1) {
+			// A retry that *succeeded* is otherwise invisible, and invisible is exactly how the
+			// 2026-10-25 staging failure stayed undiagnosed: a recovered transient and one that
+			// never happened leave the same log. This is the only way to learn how often the
+			// webhook call really needs a second try, which is what decides whether the cause
+			// still needs finding.
+			console.log('discord follow-up needed a retry', {
+				interaction: id,
+				attempts: result.attempts
+			});
 		}
 	})().catch((error) => console.error('discord follow-up threw', error));
 	return json({ type: RESPONSE_DEFERRED });
