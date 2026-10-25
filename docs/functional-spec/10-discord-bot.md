@@ -5,11 +5,13 @@ answers with a card describing that list, and the card carries a button that ope
 the app on their phone. It exists for one reason: **so nobody has to screenshot their phone to show
 a list on Discord.**
 
-> **Planned — nothing is built yet.** This document is the agreed design, written before the first
-> line of code. The hosting model, the output format, the command surface and the cold-start
-> behaviour are all decided (see _Architecture decisions_); the phases and the order they land in
-> are in _Rollout_. What is genuinely undecided — above all whether the bot ever posts a rendered
-> image — is listed under **Open questions** at the end.
+> **Built, not yet live.** Phases 1–3 are implemented and committed: the sheet, the interactions
+> endpoint, the card, and the `?army=<code>` deep link. Nothing has happened on Discord's side yet —
+> the two secrets, the Interactions Endpoint URL, the command registration and a first pass against
+> a real server — so no player can reach it. The hosting model, the output format, the command
+> surface and the cold-start behaviour are all decided (see _Architecture decisions_); what is
+> genuinely undecided — above all whether the bot ever posts a rendered image — is listed under
+> **Open questions** at the end.
 
 ## The shape of the feature
 
@@ -137,31 +139,54 @@ Following the layering rules — `routes/api → server → domain`, and `domain
 
 ## Rollout
 
-Phase 1 needs nothing from Discord and is worth landing alone.
+Phase 1 needed nothing from Discord, which is why it landed on its own.
 
-1. **The sheet** — `armySheet.ts`, `armyCatalog.ts`, specs. No secrets, no deploy, no Discord
+1. **The sheet** — _built._ `domain/armySheet.ts` and its spec, plus `getArmyCodeCatalog()` added to
+   the existing `lib/server/content.ts` rather than a new file. No secrets, no deploy, no Discord
    account. It is also the seam any future image renderer or link-unfurl route would reuse.
-2. **Discord plumbing** — the route, signature verification, the embed, the hooks exemption,
-   secrets, command registration. **Ordering constraint:** the developer portal validates the
+2. **Discord plumbing** — _built._ `lib/server/discord.ts` holds the signature verification, the
+   card, the follow-up call and every player-facing string; the route answers PING and defers a
+   command; `hooks.server.ts` carries the rate-limit exemption; `scripts/registerDiscordCommand.mjs`
+   registers `/chiyo army code:`. **Ordering constraint:** the developer portal validates the
    Interactions Endpoint URL by sending a live PING, so the PING handler must be deployed before the
    URL can be saved.
-3. **The deep link** — so the card's button lands somewhere.
+3. **The deep link** — _built._ `?army=<code>` on the single page: it consumes the param before
+   awaiting anything, loads the lazy catalogs, replays the code through `importArmy` and opens the
+   builder. It **outranks the resume chain**, because a click on _Open in Army Builder_ is a more
+   explicit intent than a run left open — and it leaves that run untouched in storage, so it still
+   resumes on the next plain launch. A code that will not resolve offers the builder's own paste
+   field rather than a dead end.
+4. **Discord-side wiring** — _outstanding, and the only thing between here and a player._ The two
+   secrets on the staging app, the bot invited with the `bot` + `applications.commands` scopes, a
+   deploy, then the endpoint URL, then command registration with `DISCORD_GUILD_ID` set so it is
+   instant rather than up to an hour.
 
 Development points at the staging app (`oni-quest-advisor-test.fly.dev`, which runs `develop`);
 the endpoint URL switches to production at release.
 
 ## Verification
 
-- **vitest** — the sheet against a real minted code, the two error kinds, a Roster list's equipment
-  pool, and the truncation rule at its boundary.
-- **vitest for the signature check** — generate an Ed25519 keypair with node `crypto` inside the
-  test, sign `timestamp + body`, and assert it verifies, and that a tampered body or a swapped
-  timestamp does not. This makes the security-critical piece testable without Discord at all.
-- **A throwaway local harness** (in `~/.qwen/tmp/oni-verify/`, outside the project root so the dev
-  server does not full-page-reload every browser) posting a signed interaction at the dev server
-  with a self-generated keypair in the environment and a stubbed webhook listener, asserting the
-  deferred response and the follow-up payload.
-- **Real Discord** only after a staging deploy.
+- **vitest** — _done, 11 tests._ The sheet against a real minted code, both decoder refusals, the
+  collapse rules (identical copies merge, a mounted copy and a differing spellcraft choice do not,
+  upgrade order does not split a line), a Roster list's equipment pool, line order, and parity with
+  `armyPoints` + `rosterPickPoints` so the card cannot disagree with the builder's counter.
+- **vitest for the signature check** — _done, 6 tests._ A real Ed25519 keypair generated inside the
+  spec signs `timestamp + body`; the check accepts it and refuses a tampered body, a signature
+  carried onto another timestamp, a stale replay and malformed keys. The security-critical piece is
+  covered without Discord at all.
+- **vitest for the card** — _done, 10 tests._ Colour, thumbnail absolutization, the unit lines, the
+  roster field, the fingerprint footer, the encoded deep link, and truncation held under Discord's
+  4096-character description limit at 400 rows.
+- **A throwaway Edge harness** — _done, 22 assertions_ (`~/.qwen/tmp/oni-verify/deep-link.mjs`,
+  outside the project root so the dev server does not full-page-reload every browser): a valid code
+  reaching the builder with all four decoded units present and the param consumed, both decode
+  failures showing their own wording, both dialog exits, and the deep link outranking a seeded
+  open-game resume — with a control pass proving that same seed does prompt when the param is
+  absent, so the negative assertion is not vacuous.
+- **A signed interaction against the running dev server** — _not yet done._ Needs a self-generated
+  keypair in the environment and a stubbed webhook listener, to assert the deferred response and the
+  follow-up payload end to end.
+- **Real Discord** only after a staging deploy — _not yet done._
 - `npm run check`, `npm run lint`, `npm run test` as usual.
 
 ## Deferred

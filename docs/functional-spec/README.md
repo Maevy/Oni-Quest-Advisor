@@ -214,8 +214,9 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
    megaphone, the conclusion and the client-side PDF report (all built). Under construction; grows
    step by step.
 10. [10-discord-bot.md](./10-discord-bot.md) — Chiyo-Bot: an army code pasted into Discord answers
-    with a card and a deep link into the builder. **Planned; nothing built yet** — the hosting
-    model, the output and the command surface are decided, the image is not.
+    with a card and a deep link into the builder. **Built, not yet live** — the sheet, the
+    interactions endpoint, the card and `?army=<code>` are in; the Discord-side wiring and a first
+    real pass are not. The image is still undecided.
 
 ## Open questions
 

@@ -22,9 +22,12 @@
   queue, so a lobby's concurrent joins can never double-book a seat.
 - `payload.ts` parses request-body shapes the server stores as snapshots (a `PickedArmy`, a string
   list) with hard length caps. A `PickedArmy` must carry its `format` explicitly
-  (`'standard' | 'roster'`) — the server has **no army catalogs loaded**, so it can neither read the
+  (`'standard' | 'roster'`) — **the game flow loads no army catalogs**, so it can neither read the
   format back out of a code nor check a point total. Army legality is therefore the client's word;
-  what the server does check is shape, length and the format value itself.
+  what the server does check is shape, length and the format value itself. The single exception is
+  `content.ts`'s `getArmyCodeCatalog()`, which the Discord route uses to resolve a _pasted_ share
+  code into a card; no online or tournament path reads it, and a seat's registered army is still
+  never decoded server-side.
   `sse.ts` is an in-process change-notification registry — one per
   entity family, capped subscribers per entity (8 games, 40 tournaments). Events are hints — the
   client refetches the full visibility-filtered state on notification, so no event replay logic

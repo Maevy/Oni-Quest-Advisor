@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import {
 		armyCopyCounts,
@@ -33,6 +35,7 @@
 		vitalityAfterStamina,
 		vitalityAfterStatuses,
 		vitalityAfterStun,
+		type ArmyCodeDecodeError,
 		type ArmyFormat,
 		type ArmyRosterRow,
 		type ArmyImportError,
@@ -99,10 +102,44 @@
 	/** The lobby's own ← asked whether to abandon; same dialog, same server call. */
 	let abandoningFromLobby = $state(false);
 	let abandoningTournament = $state(false);
+	/** Why a shared army code could not be opened; null until one fails. */
+	let sharedArmyError = $state<string | null>(null);
 
-	// Resume an online seat from a previous visit if any, then a tournament seat, and only
-	// then offer the open local game.
+	/** The query parameter a shared army code arrives on — a Discord card's button. */
+	const SHARED_ARMY_PARAM = 'army';
+
+	/** The wording the builder's own paste field uses, so one failure reads the same everywhere. */
+	const SHARED_ARMY_ERRORS: Record<ArmyCodeDecodeError, string> = {
+		invalid: 'This is not a valid army code.',
+		'roster-mismatch': 'This code was created with a different roster version.'
+	};
+
+	/**
+	 * Opens an army shared by code. The catalogs are lazy, so they have to be loaded before the
+	 * code can be read against them — without that the fingerprint never matches and every shared
+	 * list is refused as stale.
+	 */
+	async function openSharedArmy(code: string): Promise<void> {
+		// Consumed before anything awaits: a reload part-way through cannot import it twice, and a
+		// later reload — possibly after a mission was started — is not pulled back into the builder.
+		await goto(resolve('/'), { replaceState: true });
+		await contentStore.loadArmy();
+		const error = armyBuilderStore.importArmy(code);
+		if (error === null) navigationStore.openImportedArmy();
+		else sharedArmyError = SHARED_ARMY_ERRORS[error];
+	}
+
+	// A shared army code is an explicit intent, so it wins over the resume chain: whoever clicked
+	// "Open in Army Builder" did not ask to be dropped back into a game they left open, and no
+	// resume prompt may surface over the builder a moment later either.
+	// Otherwise: resume an online seat from a previous visit if any, then a tournament seat, and
+	// only then offer the open local game.
 	onMount(() => {
+		const sharedCode = new URLSearchParams(window.location.search).get(SHARED_ARMY_PARAM);
+		if (sharedCode) {
+			void openSharedArmy(sharedCode);
+			return;
+		}
 		void onlineGameStore.resumeSession().then(async (resumed) => {
 			if (resumed) {
 				navigationStore.enterOnlineGame();
@@ -1754,5 +1791,24 @@
 			navigationStore.selectArmyBuilder();
 		}}
 		onCancel={() => (showCreateArmyPrompt = false)}
+	/>
+{/if}
+
+<!--
+	A shared code that no longer resolves. After a content re-import every code in circulation
+	mismatches at once, so this is the common failure rather than an edge case - and the way out is
+	the builder's own paste field, which is where a re-exported code goes anyway.
+-->
+{#if sharedArmyError}
+	<ConfirmDialog
+		text="That army code could not be opened."
+		errorText={sharedArmyError}
+		confirmLabel="Army Builder"
+		cancelLabel="Main Menu"
+		onConfirm={() => {
+			sharedArmyError = null;
+			navigationStore.selectArmyBuilder();
+		}}
+		onCancel={() => (sharedArmyError = null)}
 	/>
 {/if}
