@@ -22,7 +22,14 @@ primary_region = "fra"
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  # One machine stays up, same reasoning as staging (fly.test.toml): Chiyo-Bot answers a Discord
+  # interaction, and Discord allows 3s for the first response while a boot from stopped measured
+  # 4.71s end to end (2026-10-25) - the budget is gone before the handler runs a line, so the
+  # interaction is dropped and never logged. This is a floor on auto_stop, not a resurrection
+  # guarantee: a machine that is already stopped stays stopped until a request arrives, so warm
+  # it with a health probe after every deploy. Players benefit too - no more 4s first click.
+  # Costs ~$2.19/mo at shared-cpu-1x/256mb.
+  min_machines_running = 1
 
 # Probes /api/health on running machines (DB reachable, aggregates report).
 # Health checks do not auto-start a stopped machine — requests still do.

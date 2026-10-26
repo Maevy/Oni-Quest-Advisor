@@ -34,14 +34,15 @@ const TRUNCATION_RESERVE = 64;
 const MAX_TIMESTAMP_SKEW_SECONDS = 60;
 
 export const MESSAGES = {
-	notConfigured: 'Chiyo-Bot is not configured on this server yet.',
+	notConfigured:
+		'i am not wired up yet, so i cannot read anything - that one is on the maintainer, not on you.',
 	notACode:
-		'That does not look like an army code. Copy one from the Army Builder and paste the whole thing.',
+		'that does not look like an army code to me. copy one out of the Army Builder and paste the whole thing - they are long, and every character counts.',
 	rosterMismatch:
-		'That list was built against an older roster, so its code no longer resolves. Export it again in the app and paste the new code.',
+		'that list was built against an older roster, so its code does not line up any more - the units it points at have moved since. open the list in the app, export it again, and the new code will read fine.',
 	failed:
-		'I could not read that list. Try once more, and tell the maintainer if it keeps happening.',
-	unknownCommand: 'I only know how to read an army code so far.'
+		'i could not read that one, and that is on me rather than on your code. give it another go, and ping me if it keeps happening.',
+	unknownCommand: 'reading army codes is the only trick i know so far.'
 };
 
 export type DiscordEmbedField = { name: string; value: string; inline?: boolean };
