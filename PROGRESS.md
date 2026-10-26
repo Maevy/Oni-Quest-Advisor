@@ -10,9 +10,11 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
   2026-10-26, deployed the same day with **no database wipe**): Chiyo-Bot, the Discord bot that
   reads an army code into an embed card plus a deep link back into the builder. Day-to-day work
   happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` carries no unreleased feature work** — it is one ops commit ahead of the v0.11.0
-  tag (staging back to `min_machines_running = 0`). What shipped, with its decisions and traps,
-  is in `ARCHIVE.md`; that file is the index into `git log`, not a replacement.
+- **`develop` carries no unreleased feature work** — only ops and tooling commits past the
+  v0.11.0 tag (staging back to on-demand, the Vite watcher ignore, doc corrections). Count them
+  with `git rev-list --count v0.11.0..develop` rather than trusting a number written here; this
+  bullet has been stale inside the session that wrote it, twice. What shipped, with its decisions
+  and traps, is in `ARCHIVE.md` — that file is the index into `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
