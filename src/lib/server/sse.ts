@@ -45,10 +45,12 @@ function createChannelRegistry(): ChannelRegistry {
 
 			// The one cleanup path, reached from three triggers: the consumer cancelling, the
 			// request's abort signal firing when the client disconnects, and the heartbeat finding
-			// the stream already dead. Idempotent because whichever fires first wins. It has to be
-			// reachable from more than cancel() alone because a sender left behind in the channel
-			// keeps occupying a slot of the subscriber cap — eight per game — so a leak eventually
-			// locks out the real players reconnecting to that game.
+			// the stream already dead. Idempotent because whichever fires first wins.
+			// cancel() alone does cover ordinary teardown - a page refresh was observed reclaiming
+			// its stream, so the count did not climb - but it is the *consumer's* callback, and it
+			// is not established that every disconnect path reaches it. The other two triggers
+			// cover the ones that might not. Worth covering because a sender left in the channel
+			// keeps occupying one of the eight subscriber slots a game allows.
 			const detach = () => {
 				if (detached) return;
 				detached = true;
@@ -87,10 +89,11 @@ function createChannelRegistry(): ChannelRegistry {
 					channel.add(send);
 					controller.enqueue(encoder.encode(': connected\n\n'));
 					heartbeat = setInterval(() => {
-						// desiredSize is null once the stream is closed or errored. A consumer that
-						// vanishes without cancelling never reaches cancel(), so this is the backstop
-						// that stops the interval — and frees the cap slot — instead of letting both
-						// run for the lifetime of the process.
+						// desiredSize is null once the stream is closed or errored. This is the
+						// backstop for a consumer that stops reading without cancelling and without
+						// aborting — a case not demonstrated here, but cheap to cover because the
+						// interval already runs every 25s, so it costs one comparison to detach
+						// rather than let the timer and the cap slot outlive the client.
 						if (controller.desiredSize === null) {
 							detach();
 							return;
@@ -134,9 +137,11 @@ export function notifyTournamentChanged(tournamentId: string, eventType: string)
 }
 
 /**
- * Opens a stream on a game's channel. Pass the route's `request.signal`: it aborts when the client
- * disconnects, which is what frees the subscriber slot. Omitting it leaves cleanup to `cancel()`
- * alone, and a consumer that vanishes without cancelling is never reclaimed.
+ * Opens a stream on a game's channel. Pass the route's `request.signal`: SvelteKit aborts it when
+ * the client disconnects, giving cleanup a second trigger beside the consumer's `cancel()`. It is
+ * optional because `cancel()` handles the ordinary paths — no disconnect has been observed that it
+ * misses — so the signal is defence for the paths that have not been ruled out, not a fix for a
+ * leak that has been seen.
  */
 export function subscribeToGame(gameId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
 	return games.subscribe(gameId, signal);
