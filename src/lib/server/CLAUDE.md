@@ -32,6 +32,14 @@
   entity family, capped subscribers per entity (8 games, 40 tournaments). Events are hints — the
   client refetches the full visibility-filtered state on notification, so no event replay logic
   exists anywhere.
+- `guildhallContent.ts` serves `guildhall/catalog.json`, the generated artifact of Freecompany's
+  **verbatim** Strapi objects that `domain/guildhallExport.ts` needs in order to write an army their
+  builder can import. It lives here rather than in `lib/data` deliberately: `lib/data` content is
+  pulled into the client bundle by eager `import.meta.glob`, while `$lib/server/**` turns a client
+  import into a build error — and ~590 KB of someone else's rules prose must never reach a phone.
+  `scripts/importUnits.mjs` regenerates it from the same dump as `content/units`, minified and
+  listed in `.prettierignore`, so it cannot drift from our own content. Loaded lazily behind a
+  memoized promise, the way `getArmyCodeCatalog()` is.
 - `ids.ts` / `http.ts` / `errors.ts` provide entity codes, seat tokens (plain tokens are returned
   to clients exactly once; only SHA-256 hashes are stored), `ApiError` and the shared auth/error
   handling for the routes.

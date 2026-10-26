@@ -777,3 +777,71 @@ if (skipped.length > 0) {
 	console.log('skipped ' + skipped.length + ' units with no resolvable faction:');
 	for (const entry of skipped) console.log(' - ' + entry);
 }
+
+/**
+ * The Guildhall export artifact. Freecompany's builder stores the **verbatim** Strapi objects -
+ * descriptions, image metadata, per-stat row ids and all - and an army exported to it has to carry
+ * theirs, not our reduced form. That is why this sits beside the catalogs above rather than being
+ * derived from them: everything the importer strips is exactly what their format needs back.
+ *
+ * It lands under `lib/server`, where SvelteKit turns a client import into a build error, because
+ * ~590 KB of someone else's rules prose must never reach a phone. Written minified: it is generated,
+ * so a pretty-printed diff would be unreadable anyway, and .prettierignore keeps `npm run lint` off
+ * it. Regenerating from this same dump is what stops it drifting from content/units.
+ */
+const guildhallDir = join(root, 'src', 'lib', 'server', 'guildhall');
+mkdirSync(guildhallDir, { recursive: true });
+
+// Only trait groups an upgrade can *grant* have to be reconstructible from scratch; every other
+// trait reaches the export inside its character object. Derived from UPGRADE_EFFECTS rather than
+// listed a second time, so it tracks the curation automatically.
+const grantedTraitIds = new Set();
+for (const effects of Object.values(UPGRADE_EFFECTS)) {
+	for (const effect of effects ?? []) {
+		if (effect.kind === 'trait') grantedTraitIds.add(effect.traitId);
+		for (const option of effect.options ?? []) {
+			if (option.grantTrait?.traitId) grantedTraitIds.add(option.grantTrait.traitId);
+		}
+	}
+}
+const guildhallTraitGroups = pageProps.traitGroupList.data.filter((wrapper) =>
+	grantedTraitIds.has(kebab(wrapper.attributes.code))
+);
+// Throw rather than ship a catalog that quietly cannot build some granted trait - the export would
+// refuse at runtime with no hint that the artifact is missing a group. Same reasoning as sizeId().
+const missingTraitGroups = [...grantedTraitIds].filter(
+	(id) => !guildhallTraitGroups.some((wrapper) => kebab(wrapper.attributes.code) === id)
+);
+if (missingTraitGroups.length > 0) {
+	throw new Error(
+		'UPGRADE_EFFECTS grants traits missing from traitGroupList: ' + missingTraitGroups.join(', ')
+	);
+}
+
+const guildhallCatalog = {
+	characters: pageProps.characterList.data,
+	upgrades: pageProps.upgradeList.data,
+	items: pageProps.itemList.data,
+	factions: pageProps.factionList.data,
+	// All seven elements, not just the four a choice upgrade currently offers: Mana Catalyst and
+	// Elemental Lineage between them cover Fire/Water/Earth/Air today, and the extra three cost
+	// ~17 KB against the risk of a future grant refusing to export.
+	elements: pageProps.elementList.data,
+	traitGroups: guildhallTraitGroups
+};
+writeFileSync(join(guildhallDir, 'catalog.json'), JSON.stringify(guildhallCatalog));
+console.log(
+	'guildhall catalog: ' +
+		guildhallCatalog.characters.length +
+		' characters, ' +
+		guildhallCatalog.upgrades.length +
+		' upgrades, ' +
+		guildhallCatalog.items.length +
+		' items, ' +
+		guildhallCatalog.factions.length +
+		' factions, ' +
+		guildhallCatalog.elements.length +
+		' elements, ' +
+		guildhallTraitGroups.length +
+		' grantable trait groups'
+);

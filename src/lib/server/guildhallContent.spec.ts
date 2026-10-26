@@ -1,0 +1,62 @@
+import { describe, expect, it } from 'vitest';
+import { getGuildhallCatalog } from './guildhallContent';
+
+/**
+ * Reads the generated artifact for real, so this doubles as the canary that `guildhall/catalog.json`
+ * is present and loadable - a missing or truncated artifact would otherwise surface only when a
+ * player asks for an export. Counts are deliberately not pinned: they legitimately change whenever
+ * the producer dump is re-imported.
+ */
+describe('getGuildhallCatalog', () => {
+	it('indexes every section by the producer row id', async () => {
+		const catalog = await getGuildhallCatalog();
+
+		expect(Object.keys(catalog.characters).length).toBeGreaterThan(0);
+		expect(Object.keys(catalog.upgrades).length).toBeGreaterThan(0);
+		expect(Object.keys(catalog.items).length).toBeGreaterThan(0);
+		expect(Object.keys(catalog.factions).length).toBeGreaterThan(0);
+
+		// Character 84 is BLADEBRETHREN_ELITE in both the producer dump and Freecompany's own export,
+		// which is the mapping the whole export rests on.
+		const bladebrethren = catalog.characters[84] as {
+			id: number;
+			attributes: { code: string; name: string };
+		};
+		expect(bladebrethren.attributes.code).toBe('BLADEBRETHREN_ELITE');
+		expect(bladebrethren.attributes.name).toBe('Bladebrethren Elite');
+	});
+
+	it('carries the verbatim producer object, not a reduced form', async () => {
+		const catalog = await getGuildhallCatalog();
+		const character = catalog.characters[84] as { attributes: Record<string, unknown> };
+
+		// The export copies these through untouched, so the bulk our own importer strips has to
+		// survive here: nested rule text, image metadata and the per-stat row ids.
+		expect(character.attributes.skills).toBeTruthy();
+		expect(character.attributes.image).toBeTruthy();
+		const statline = character.attributes.attributes as Record<
+			string,
+			{ id: number; value: number | null }
+		>;
+		expect(typeof statline.STA.id).toBe('number');
+		expect(statline.STA.value).toBe(2);
+	});
+
+	it('keys elements by the title-cased code our content uses, keeping their spells', async () => {
+		const catalog = await getGuildhallCatalog();
+
+		// ArmyTraitRef.dynamicElements holds 'Elder', not 11 or 'ELDER', so the lookup has to match.
+		const elder = catalog.elements.Elder as { attributes: Record<string, unknown> };
+		expect(elder.attributes.code).toBe('ELDER');
+		// An element an upgrade grants is written full size, `spells` included; an inherited one is
+		// reused bare from the character. Dropping these would corrupt every granted Affinity.
+		expect(elder.attributes.spells).toBeTruthy();
+		expect(catalog.elements.Fire).toBeTruthy();
+	});
+
+	it('memoizes, so the artifact is parsed once per process', async () => {
+		const first = await getGuildhallCatalog();
+		const second = await getGuildhallCatalog();
+		expect(second).toBe(first);
+	});
+});

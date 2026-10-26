@@ -10,3 +10,7 @@ bun.lockb
 
 # Vendored producer exports (input for scripts/importUnits.mjs)
 data-import/
+
+# Generated Guildhall export artifact (output of scripts/importUnits.mjs). Minified on purpose:
+# it is ~590 KB of verbatim producer objects, so a pretty-printed diff would be unreadable anyway.
+src/lib/server/guildhall/catalog.json
