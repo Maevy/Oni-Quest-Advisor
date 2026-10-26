@@ -130,8 +130,10 @@ function catalog(overrides: Partial<GuildhallCatalog> = {}): GuildhallCatalog {
 			10: { id: 10, attributes: { name: 'Coalition of Thenion', code: 'COALITION_OF_THENION' } }
 		},
 		elements: {
-			// `Fire` carries the `spells` array the producer dump includes, to pin that the export
-			// strips it - their own saved armies carry trimmed element objects.
+			// Both entries mirror the producer's elementList, which nests every spell of the element.
+			// `Elder` deliberately carries a `name` the base character's innate Elder does not, so an
+			// assertion can tell which source an emitted element came from: inherited elements must
+			// arrive without it, granted ones with the whole catalog object.
 			Fire: { id: 3, attributes: { code: 'FIRE', name: 'Fire', spells: { data: [{ id: 44 }] } } },
 			Elder: { id: 1, attributes: { code: 'ELDER', name: 'Elder' } }
 		},
@@ -324,13 +326,15 @@ describe('buildGuildhallArmy - patching the verbatim producer object', () => {
 		expect(spellcrafts[0].id).toBe(20);
 	});
 
-	it('patches a trait level and replaces its chosen elements wholesale', () => {
-		const withTrait = producerCharacter({
+	/** A character carrying one Affinity (Element) trait whose innate element is Elder. */
+	const affinityCharacter = () =>
+		producerCharacter({
 			traits: [
 				{
 					id: 245,
 					dynamic_value: null,
 					name__: null,
+					// The innate element as the character object carries it: no `spells`.
 					dynamic_elements: { data: [{ id: 1, attributes: { code: 'ELDER' } }] },
 					trait: {
 						data: {
@@ -344,28 +348,48 @@ describe('buildGuildhallArmy - patching the verbatim producer object', () => {
 				}
 			]
 		});
+
+	const affinityRows = (dynamicElements: string[]) => [
+		row({
+			upgradedUnit: unit({
+				// Note the double hyphen: their code is AFFINITY__ELEMENT, and kebab() maps each
+				// underscore to one hyphen, so collapsing repeats would miss it.
+				traits: [{ id: 'affinity--element', level: 2, dynamicElements }]
+			})
+		})
+	];
+
+	it('keeps an inherited element verbatim and takes only a granted one from the catalog', () => {
 		const doc = build({
-			catalog: catalog({ characters: { 84: withTrait, 53: producerCharacter() } }),
-			rows: [
-				row({
-					upgradedUnit: unit({
-						// Note the double hyphen: their code is AFFINITY__ELEMENT, and kebab() maps
-						// each underscore to one hyphen, so collapsing repeats would miss it.
-						traits: [{ id: 'affinity--element', level: 2, dynamicElements: ['Elder', 'Fire'] }]
-					})
-				})
-			]
+			catalog: catalog({ characters: { 84: affinityCharacter(), 53: producerCharacter() } }),
+			rows: affinityRows(['Elder', 'Fire'])
 		});
 		const traits = attrsOf(charactersOf(doc)[0]).traits as Record<string, Json>[];
 		expect(traits[0].id).toBe(245);
+		// Elder came with the model, so it is the base object untouched and has no `spells`. Fire was
+		// granted, so it is the catalog element with `spells` intact - that is how their own builder
+		// writes it. Academy Expeditioner after Elemental Lineage is [ELDER bare, WATER with 20].
 		expect(traits[0].dynamic_elements).toEqual({
 			data: [
-				{ id: 1, attributes: { code: 'ELDER', name: 'Elder' } },
-				{ id: 3, attributes: { code: 'FIRE', name: 'Fire' } }
+				{ id: 1, attributes: { code: 'ELDER' } },
+				{ id: 3, attributes: { code: 'FIRE', name: 'Fire', spells: { data: [{ id: 44 }] } } }
 			]
 		});
 		const traitData = (traits[0].trait as Record<string, Json>).data as Record<string, Json>;
 		expect((traitData.attributes as Record<string, Json>).level).toBe(2);
+	});
+
+	it('drops a replaced element and writes the new one from the catalog', () => {
+		const doc = build({
+			catalog: catalog({ characters: { 84: affinityCharacter(), 53: producerCharacter() } }),
+			rows: affinityRows(['Fire'])
+		});
+		const traits = attrsOf(charactersOf(doc)[0]).traits as Record<string, Json>[];
+		// Mana Catalyst replaces rather than appends, so the inherited Elder is gone and Earth-or-here
+		// Fire arrives full size from elementList.
+		expect(traits[0].dynamic_elements).toEqual({
+			data: [{ id: 3, attributes: { code: 'FIRE', name: 'Fire', spells: { data: [{ id: 44 }] } } }]
+		});
 	});
 
 	it('keeps an existing inventory row id and patches its QTY', () => {

@@ -136,6 +136,16 @@ function kebab(code: unknown): string {
 		.replace(/_/g, '-');
 }
 
+/**
+ * Mirrors the importer's element naming: our `dynamicElements` hold `titleCase(code)`, so 'ELDER'
+ * becomes 'Elder'. Has to match `scripts/importUnits.mjs` exactly or inherited elements stop being
+ * recognised as inherited and get re-fetched from the catalog in the wrong shape.
+ */
+function titleCase(code: unknown): string {
+	const text = String(code ?? '');
+	return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
+
 /** Walks `a.b.c` through unknown JSON, throwing one error naming the path that broke. */
 function path(value: Json | undefined, steps: string[]): Json | undefined {
 	let current = value;
@@ -222,18 +232,31 @@ function buildCharacter(
 			ref.level;
 		if (ref.dynamicValue !== undefined) entry.dynamic_value = ref.dynamicValue;
 		if (ref.dynamicElements) {
+			// Two provenances, two shapes, and their exports preserve the difference. An element the
+			// model was born with rides inside the character object and carries no `spells`; one an
+			// upgrade granted is pulled from their elementList and does - Elder alone nests 19 spells
+			// with full rules text. Academy Expeditioner after Elemental Lineage is stored as
+			// [ELDER without spells, WATER with 20]: the inherited element untouched, only the new one
+			// full size. So reuse whatever the base already carries and reach for the catalog only for
+			// elements that are not there yet. Trimming every element, which an earlier revision did,
+			// matches the no-grant case and silently corrupts every granted one.
+			const current = entry.dynamic_elements;
+			const currentList = isRecord(current) && Array.isArray(current.data) ? current.data : [];
+			const inherited = new Map<string, Json>();
+			for (const element of currentList) {
+				const code = path(element, ['attributes', 'code']);
+				if (typeof code === 'string') inherited.set(titleCase(code), element);
+			}
 			const elements: Json[] = [];
 			for (const name of ref.dynamicElements) {
+				const carried = inherited.get(name);
+				if (carried !== undefined) {
+					elements.push(clone(carried));
+					continue;
+				}
 				const element = catalog.elements[name];
 				if (element === undefined) return { error: { kind: 'unknown-element', element: name } };
-				const copy = asRecord(clone(element), `elements.${name}`);
-				const elementAttrs = asRecord(copy.attributes, `elements.${name}.attributes`);
-				// Their saved armies carry *trimmed* element objects with no `spells` array, while the
-				// producer dump puts every spell of that element in there with full rules text - 19
-				// entries for Elder alone. Emitting it would balloon the file and diverge from what
-				// their own builder writes, so the trim is a fidelity rule, not an optimization.
-				delete elementAttrs.spells;
-				elements.push(copy);
+				elements.push(clone(element));
 			}
 			entry.dynamic_elements = { data: elements };
 		}
