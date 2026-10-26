@@ -233,6 +233,15 @@ describe('armyCard', () => {
 		expect(button?.style).toBe(5);
 	});
 
+	it('offers the Guildhall download, carrying the same code as a query param', () => {
+		const button = cardOf(SHEET, 'afwh:2s:weird code').message.components?.[0].components?.[1];
+		expect(button?.label).toBe('Download for Guildhall');
+		// A query param rather than a path segment: codes carry `:` and `*` (the mount marker), and
+		// `*` in a path segment is exactly what proxies handle inconsistently.
+		expect(button?.url).toBe(`${ORIGIN}/api/guildhall-export?code=afwh%3A2s%3Aweird%20code`);
+		expect(button?.style).toBe(5);
+	});
+
 	it('omits the colour rather than send a wrong one', () => {
 		expect(cardOf({ ...SHEET, factionColor: 'rebecca-purple' }).embed.color).toBeUndefined();
 	});

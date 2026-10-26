@@ -216,6 +216,10 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
     with a card and a deep link into the builder. **Live in production** — the sheet, the
     interactions endpoint, the card and `?army=<code>` are in, and `/chiyo army` answers on the
     production endpoint. The image is still undecided.
+11. [11-guildhall-export.md](./11-guildhall-export.md) — exporting a list as a file Freecompany's
+    own Guildhall builder can import, and why it has to be a file rather than a link. **Built, not
+    yet released**; granted traits are refused rather than guessed at, pending one ground-truth
+    sample.
 
 ## Open questions
 

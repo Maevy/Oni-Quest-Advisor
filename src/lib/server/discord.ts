@@ -236,6 +236,16 @@ export function armyCard({ sheet, origin, code }: ArmyCardRequest): DiscordMessa
 						style: 5,
 						label: 'Open in Army Builder',
 						url: `${origin}/?army=${encodeURIComponent(code.trim())}`
+					},
+					{
+						// Guildhall cannot be deep-linked - six static routes, armies in browser
+						// localStorage, import by file drop - so this hands over a file to drop
+						// rather than a list to load. One more click for the player, and the only
+						// door their builder has.
+						type: 2,
+						style: 5,
+						label: 'Download for Guildhall',
+						url: `${origin}/api/guildhall-export?code=${encodeURIComponent(code.trim())}`
 					}
 				]
 			}

@@ -45,7 +45,12 @@ export type GuildhallCatalog = {
 	characters: Record<number, Json>;
 	upgrades: Record<number, Json>;
 	items: Record<number, Json>;
-	factions: Record<number, Json>;
+	/**
+	 * Keyed by **our** faction id, not their row id - the bridge here is their faction `code`, which
+	 * kebabs to exactly our id (`COALITION_OF_THENION` -> `coalition-of-thenion`). Keying it their way
+	 * would make every caller resolve a mapping that the loader can do once.
+	 */
+	factions: Record<string, Json>;
 	/** Element wrappers keyed by our title-cased element name ('Fire', 'Elder', ...). */
 	elements: Record<string, Json>;
 };
@@ -61,8 +66,8 @@ export type GuildhallExportOptions = {
 	armyName: string;
 	/** Their id is a client-side timestamp; injected so this stays pure. */
 	armyId: number;
-	/** Producer row id of the army's faction. */
-	factionProducerId: number;
+	/** Our faction id, which keys `GuildhallCatalog.factions` directly. */
+	factionId: string;
 	/** Roster equipment pool, as upgrade ids resolved through `upgradeIndex`. */
 	rosterUpgradeIds?: string[];
 };
@@ -73,7 +78,7 @@ export type GuildhallExportError =
 	| { kind: 'unknown-upgrade'; upgradeId: string }
 	| { kind: 'unknown-item'; itemId: string }
 	| { kind: 'unknown-element'; element: string }
-	| { kind: 'missing-faction' }
+	| { kind: 'missing-faction'; factionId: string }
 	| { kind: 'malformed-catalog'; path: string }
 	/** An upgrade grants a trait the base model lacks; emitting it needs their trait catalog. */
 	| { kind: 'granted-trait'; traitId: string };
@@ -343,8 +348,10 @@ export function buildGuildhallArmy(input: GuildhallExportInput): GuildhallExport
 	const isRoster = format === 'roster';
 
 	try {
-		const faction = catalog.factions[options.factionProducerId];
-		if (faction === undefined) return { ok: false, error: { kind: 'missing-faction' } };
+		const faction = catalog.factions[options.factionId];
+		if (faction === undefined) {
+			return { ok: false, error: { kind: 'missing-faction', factionId: options.factionId } };
+		}
 
 		const characters: Json[] = [];
 		for (const row of rows) {

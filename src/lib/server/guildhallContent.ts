@@ -42,6 +42,27 @@ function indexById(records: ProducerRecord[]): Record<number, Json> {
 	return indexed;
 }
 
+/** Their `CODE_IN_CAPS` to our `code-in-kebab` — the same convention the importer uses. */
+function kebab(code: string): string {
+	return code.toLowerCase().replace(/_/g, '-');
+}
+
+/**
+ * Factions are keyed by **our** id rather than their row id, because their faction `code` kebabs to
+ * exactly our id (`COALITION_OF_THENION` -> `coalition-of-thenion`). A decoded army carries our
+ * `factionId` and nothing else, so this is what makes the catalog addressable straight from it
+ * instead of making every caller resolve a mapping first.
+ */
+function indexFactionsByOurId(records: ProducerRecord[]): Record<string, Json> {
+	const indexed: Record<string, Json> = {};
+	for (const record of records) {
+		const code = record.attributes?.code;
+		if (typeof code !== 'string') continue;
+		indexed[kebab(code)] = record as unknown as Json;
+	}
+	return indexed;
+}
+
 /**
  * Elements are keyed by the name our content uses, not by id: `ArmyTraitRef.dynamicElements` holds
  * `titleCase(code)`, so 'ELDER' is looked up as 'Elder'. This has to match `scripts/importUnits.mjs`
@@ -68,7 +89,7 @@ export function getGuildhallCatalog(): Promise<GuildhallCatalog> {
 			characters: indexById(artifact.characters),
 			upgrades: indexById(artifact.upgrades),
 			items: indexById(artifact.items),
-			factions: indexById(artifact.factions),
+			factions: indexFactionsByOurId(artifact.factions),
 			elements: indexElementsByTitleCasedCode(artifact.elements)
 		};
 		return catalog;

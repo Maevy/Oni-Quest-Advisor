@@ -14,7 +14,14 @@ describe('getGuildhallCatalog', () => {
 		expect(Object.keys(catalog.characters).length).toBeGreaterThan(0);
 		expect(Object.keys(catalog.upgrades).length).toBeGreaterThan(0);
 		expect(Object.keys(catalog.items).length).toBeGreaterThan(0);
-		expect(Object.keys(catalog.factions).length).toBeGreaterThan(0);
+
+		// Factions are keyed by *our* id, not their row id: a decoded army carries nothing else, so
+		// this is what lets the export route address the catalog directly.
+		const faction = catalog.factions['coalition-of-thenion'] as {
+			attributes: { code: string; name: string };
+		};
+		expect(faction.attributes.code).toBe('COALITION_OF_THENION');
+		expect(faction.attributes.name).toBe('Coalition of Thenion');
 
 		// Character 84 is BLADEBRETHREN_ELITE in both the producer dump and Freecompany's own export,
 		// which is the mapping the whole export rests on.

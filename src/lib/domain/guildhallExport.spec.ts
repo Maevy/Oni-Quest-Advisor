@@ -127,7 +127,10 @@ function catalog(overrides: Partial<GuildhallCatalog> = {}): GuildhallCatalog {
 			94: { id: 94, attributes: { name: 'Mastercrafted Sword', code: 'MASTERCRAFTED_SWORD' } }
 		},
 		factions: {
-			10: { id: 10, attributes: { name: 'Coalition of Thenion', code: 'COALITION_OF_THENION' } }
+			'coalition-of-thenion': {
+				id: 10,
+				attributes: { name: 'Coalition of Thenion', code: 'COALITION_OF_THENION' }
+			}
 		},
 		elements: {
 			// Both entries mirror the producer's elementList, which nests every spell of the element.
@@ -148,7 +151,7 @@ function build(overrides: Partial<GuildhallExportInput> = {}) {
 		catalog: catalog(),
 		itemIndex: { 'mastercrafted-sword': item() },
 		upgradeIndex: { 'devotion-anras-coalition-of-thenion': upgrade() },
-		options: { armyName: 'Test Army', armyId: 1789401602244, factionProducerId: 10 },
+		options: { armyName: 'Test Army', armyId: 1789401602244, factionId: 'coalition-of-thenion' },
 		...overrides
 	};
 	const result = buildGuildhallArmy(input);
@@ -191,7 +194,7 @@ describe('buildGuildhallArmy - document shell', () => {
 			options: {
 				armyName: 'Roster',
 				armyId: 1,
-				factionProducerId: 10,
+				factionId: 'coalition-of-thenion',
 				rosterUpgradeIds: ['devotion-anras-coalition-of-thenion']
 			}
 		});
@@ -208,7 +211,7 @@ describe('buildGuildhallArmy - document shell', () => {
 			options: {
 				armyName: 'Roster',
 				armyId: 1,
-				factionProducerId: 10,
+				factionId: 'coalition-of-thenion',
 				rosterUpgradeIds: [
 					'devotion-anras-coalition-of-thenion',
 					'devotion-anras-coalition-of-thenion'
@@ -492,7 +495,7 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 			catalog: catalog(),
 			itemIndex: {},
 			upgradeIndex: {},
-			options: { armyName: 'x', armyId: 1, factionProducerId: 10 }
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
 		});
 		expect(result).toEqual({ ok: false, error: { kind: 'unknown-unit', unitId: 'test-knight' } });
 	});
@@ -504,7 +507,7 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 			catalog: catalog(),
 			itemIndex: {},
 			upgradeIndex: {},
-			options: { armyName: 'x', armyId: 1, factionProducerId: 10 }
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
 		});
 		expect(result).toEqual({ ok: false, error: { kind: 'unknown-unit', unitId: 'test-knight' } });
 	});
@@ -516,9 +519,12 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 			catalog: catalog(),
 			itemIndex: {},
 			upgradeIndex: {},
-			options: { armyName: 'x', armyId: 1, factionProducerId: 404 }
+			options: { armyName: 'x', armyId: 1, factionId: 'not-a-faction' }
 		});
-		expect(result).toEqual({ ok: false, error: { kind: 'missing-faction' } });
+		expect(result).toEqual({
+			ok: false,
+			error: { kind: 'missing-faction', factionId: 'not-a-faction' }
+		});
 	});
 
 	it('refuses a trait the base model does not have, since emitting it needs their trait catalog', () => {
@@ -528,7 +534,7 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 			catalog: catalog(),
 			itemIndex: {},
 			upgradeIndex: {},
-			options: { armyName: 'x', armyId: 1, factionProducerId: 10 }
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
 		});
 		expect(result).toEqual({
 			ok: false,
@@ -543,7 +549,7 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 			catalog: catalog(),
 			itemIndex: { 'missing-item': item({ id: 'missing-item', producerId: 777 }) },
 			upgradeIndex: {},
-			options: { armyName: 'x', armyId: 1, factionProducerId: 10 }
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
 		});
 		expect(result).toEqual({ ok: false, error: { kind: 'unknown-item', itemId: 'missing-item' } });
 	});

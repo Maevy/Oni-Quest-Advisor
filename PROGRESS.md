@@ -18,7 +18,7 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
-- `docs/` was caught up against the code on 2026-09-11 and has been kept current since: 16
+- `docs/` was caught up against the code on 2026-09-11 and has been kept current since: 17
   spec documents plus two READMEs. Where the code and `MULTIPLAYER_PLAN.md` disagree, **`docs/`
   is the spec and the plan is design history** — the eight as-built divergences are listed in
   `docs/technical-spec/06-online-architecture.md`.

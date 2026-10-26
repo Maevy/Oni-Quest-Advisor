@@ -1,9 +1,9 @@
 # Discord bot — Chiyo-Bot
 
 Chiyo-Bot is the app's presence in the community Discord. A player pastes an army code, the bot
-answers with a card describing that list, and the card carries a button that opens the same list in
-the app on their phone. It exists for one reason: **so nobody has to screenshot their phone to show
-a list on Discord.**
+answers with a card describing that list, and the card carries two buttons: one opens the same list
+in the app on their phone, the other downloads it as a file Freecompany's own builder can import. It
+exists for one reason: **so nobody has to screenshot their phone to show a list on Discord.**
 
 > **Live in production.** All four phases are complete: the sheet, the interactions endpoint, the
 > card, the `?army=<code>` deep link, and the Discord-side wiring — the two secrets, the
@@ -11,6 +11,9 @@ a list on Discord.**
 > hosting model, the output format, the command surface and the cold-start behaviour are all
 > decided (see _Architecture decisions_); what is genuinely undecided — above all whether the bot
 > ever posts a rendered image — is listed under **Open questions** at the end.
+>
+> The card's **second** button, _Download for Guildhall_, is built and verified but **not yet
+> released**. It has its own spec: [11-guildhall-export.md](./11-guildhall-export.md).
 
 ## The shape of the feature
 
@@ -18,9 +21,12 @@ a list on Discord.**
    code as its argument.
 2. **Read the card** — the bot answers with a Discord embed: the list's faction, its format, its
    point total against the format's cap, and the units, one line per unit rather than one per copy.
-3. **Open it** — the card's button deep-links into the app with the list already loaded, so a phone
-   shows the real Army Builder view instead of a picture of it.
-4. **Render it** — _deferred._ A picture of the card as the builder draws it. See _Deferred_.
+3. **Open it** — the card's _Open in Army Builder_ button deep-links into the app with the list
+   already loaded, so a phone shows the real Army Builder view instead of a picture of it.
+4. **Take it to Guildhall** — the card's second button downloads the same list as a file
+   Freecompany's own builder imports, because theirs cannot be deep-linked. Built, not yet released;
+   see [11-guildhall-export.md](./11-guildhall-export.md).
+5. **Render it** — _deferred._ A picture of the card as the builder draws it. See _Deferred_.
 
 ## The player's view
 
@@ -56,7 +62,9 @@ One embed, in the channel the command was run in:
 - **Roster equipment pool** — for a Roster list, the shared upgrades and their quantities as their
   own block, since they belong to no single unit.
 - **Footer** — Chiyo's voice, plus the roster fingerprint the code was read against.
-- **Button** — _Open in Army Builder_, the deep link.
+- **Buttons** — _Open in Army Builder_, the deep link; and _Download for Guildhall_, which serves
+  the same list as a file Freecompany's own builder imports, because theirs cannot be deep-linked.
+  Spec 11 covers that second path.
 
 The persona, the footer text and the wording of every message the bot sends are the maintainer's to
 write — they are community-facing voice, not implementation detail. They live in one module so they
@@ -132,10 +140,12 @@ Following the layering rules — `routes/api → server → domain`, and `domain
 
 - `src/lib/domain/armySheet.ts` — pure. Code plus an `ArmyCodeCatalog` in, a sheet or a typed error
   out (`invalid` / `roster-mismatch`). Knows nothing about Discord. Colocated `armySheet.spec.ts`.
-- `src/lib/server/armyCatalog.ts` — assembles the catalog the code indexes into by awaiting the
-  existing `loadArmy*()` functions in `$lib/data`. Those are plain async `import.meta.glob` loaders
-  with no browser APIs, so they run server-side unchanged; the result is memoized, the content being
-  static. Lives in `server`, not `domain`, because `domain` may not import `data`.
+- `src/lib/server/content.ts` — `getArmyCodeCatalog()` assembles the catalog the code indexes into
+  by awaiting the existing `loadArmy*()` functions in `$lib/data`. Those are plain async
+  `import.meta.glob` loaders with no browser APIs, so they run server-side unchanged; the result is
+  memoized, the content being static. Lives in `server`, not `domain`, because `domain` may not
+  import `data`. This is the server's **one sanctioned** reason to load army content — online games
+  still never decode a code, and army legality stays the client's word.
 - `src/lib/server/discord.ts` — signature verification over the **raw request bytes**, the command
   definition, the embed builder, the follow-up call, and every player-facing string.
 - `src/routes/api/discord/interactions/+server.ts` — the thin handler: PING, verify, defer, sheet,
@@ -145,6 +155,11 @@ Following the layering rules — `routes/api → server → domain`, and `domain
 - Deep link: `?army=<code>` handled on mount in `+page.svelte` → `armyBuilderStore.importArmy(code)`
   → the builder screen. That replays every pick through the domain guards, so **a deep-linked list
   can never be invalid**, and it reuses the paste-a-code path that shipped in v0.10.0.
+- Guildhall export: `domain/guildhallExport.ts` (a pure serializer), `server/guildhallContent.ts`
+  with its generated `server/guildhall/catalog.json` artifact, and `routes/api/guildhall-export`.
+  Same layering, and the same guarantee by the same route: it resolves through `decodeArmy` →
+  `resolveArmyEntries`, so an exported file cannot disagree with the card next to the button that
+  produced it. See [11-guildhall-export.md](./11-guildhall-export.md).
 
 ## Rollout
 
