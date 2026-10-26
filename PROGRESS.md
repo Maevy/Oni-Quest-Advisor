@@ -10,11 +10,15 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
   2026-10-26, deployed the same day with **no database wipe**): Chiyo-Bot, the Discord bot that
   reads an army code into an embed card plus a deep link back into the builder. Day-to-day work
   happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` carries no unreleased feature work** — only ops and tooling commits past the
-  v0.11.0 tag (staging back to on-demand, the Vite watcher ignore, doc corrections). Count them
-  with `git rev-list --count v0.11.0..develop` rather than trusting a number written here; this
-  bullet has been stale inside the session that wrote it, twice. What shipped, with its decisions
-  and traps, is in `ARCHIVE.md` — that file is the index into `git log`, not a replacement.
+- **`develop` carries one unreleased feature** — the **Guildhall export** (spec 11): a serializer
+  for Freecompany's builder format, a generated server-only catalog artifact, a public download
+  route and a second button on the Chiyo-Bot card. Built and verified end to end, **not deployed**,
+  and it still refuses granted traits. Count what is past the tag with
+  `git rev-list --count v0.11.0..develop` rather than trusting a number here; this bullet has gone
+  stale inside the session that wrote it three times, which is why it no longer carries a count —
+  and why naming the feature matters more than counting the commits. What shipped, with its
+  decisions and traps, is in `ARCHIVE.md` — that file is the index into `git log`, not a
+  replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
@@ -62,6 +66,18 @@ alike in the aggregate. Behind that sit the two deferred paths: **link unfurling
 `/army/[code]` with `og:` tags — cheap, and the same route an image renderer would want) and **the
 image**, which needs either a browser-side canvas on a share route or a hand-rolled PNG encoder
 plus a font asset to supply and license.
+
+The newest thread is the **Guildhall export** (spec 11), built 2026-10-26 and unreleased. It exists
+because Freecompany's builder cannot be deep-linked — six static routes, saved armies in browser
+localStorage, import by file drop — so the card's second button hands over a file rather than a link.
+Three things gate it. **Granted traits are refused** (Poisoned Weapons, Seasoned Combatant, Tactical
+Expertise, Traveling Duelist) pending one ground-truth export of a model that gained a trait it was
+not born with. **`expedition-leader` and `journeyman-adventurer` diverge** — we model effects their
+client has no handler for, so it is undecided whether an export carries our rulebook-correct reading
+or mirrors their record-only one. And **`data-import/units.json` is stale** (2026-08-31, against
+their 2026-09-10 edits), which is why the round-trip showed array-ordering noise and why one
+Glyphscribe sample still cannot be explained; a fresh dump is wanted regardless, since that staleness
+affects the whole app's content and not only this export.
 
 The app's live thread is unchanged: the two buttons those dialogs still render inert — **Trade
 Item** and **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action
