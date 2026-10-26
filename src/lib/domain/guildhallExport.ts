@@ -226,7 +226,14 @@ function buildCharacter(
 			for (const name of ref.dynamicElements) {
 				const element = catalog.elements[name];
 				if (element === undefined) return { error: { kind: 'unknown-element', element: name } };
-				elements.push(clone(element));
+				const copy = asRecord(clone(element), `elements.${name}`);
+				const elementAttrs = asRecord(copy.attributes, `elements.${name}.attributes`);
+				// Their saved armies carry *trimmed* element objects with no `spells` array, while the
+				// producer dump puts every spell of that element in there with full rules text - 19
+				// entries for Elder alone. Emitting it would balloon the file and diverge from what
+				// their own builder writes, so the trim is a fidelity rule, not an optimization.
+				delete elementAttrs.spells;
+				elements.push(copy);
 			}
 			entry.dynamic_elements = { data: elements };
 		}
@@ -281,7 +288,8 @@ function buildCharacter(
 
 function buildMount(
 	mount: ArmyUnitSpec | undefined,
-	catalog: GuildhallCatalog
+	catalog: GuildhallCatalog,
+	applyUpgrades: boolean
 ): { character: Json } | { error: GuildhallExportError } | null {
 	if (!mount) return null;
 	const producerId = mount.producerId;
@@ -289,7 +297,14 @@ function buildMount(
 	const base = catalog.characters[producerId];
 	if (base === undefined) return { error: { kind: 'unknown-mount', unitId: mount.id } };
 	// Verbatim: the sample shows a mount's statline untouched, its bonuses living in `prefix`.
-	return { character: clone(base) };
+	const character = clone(base);
+	const attrs = asRecord(path(character, ['attributes']), 'attributes');
+	// A mount takes no upgrades, but their standard-format exports still carry the key as an empty
+	// array on every character - and roster exports omit it. Caught by the round-trip harness, which
+	// is the only reason this is right: nothing about a mount suggests the key is expected.
+	if (applyUpgrades) attrs.appliedArmyCharacterUpgrades = [];
+	else delete attrs.appliedArmyCharacterUpgrades;
+	return { character };
 }
 
 /**
@@ -316,7 +331,7 @@ export function buildGuildhallArmy(input: GuildhallExportInput): GuildhallExport
 
 			// A mounted copy is two unlinked entries: the rider, then its mount.
 			if (row.mounted) {
-				const mount = buildMount(row.mount, catalog);
+				const mount = buildMount(row.mount, catalog, !isRoster);
 				if (mount && 'error' in mount) return { ok: false, error: mount.error };
 				if (mount) characters.push(mount.character);
 			}

@@ -130,7 +130,9 @@ function catalog(overrides: Partial<GuildhallCatalog> = {}): GuildhallCatalog {
 			10: { id: 10, attributes: { name: 'Coalition of Thenion', code: 'COALITION_OF_THENION' } }
 		},
 		elements: {
-			Fire: { id: 3, attributes: { code: 'FIRE', name: 'Fire' } },
+			// `Fire` carries the `spells` array the producer dump includes, to pin that the export
+			// strips it - their own saved armies carry trimmed element objects.
+			Fire: { id: 3, attributes: { code: 'FIRE', name: 'Fire', spells: { data: [{ id: 44 }] } } },
 			Elder: { id: 1, attributes: { code: 'ELDER', name: 'Elder' } }
 		},
 		...overrides
@@ -242,6 +244,41 @@ describe('buildGuildhallArmy - copies and mounts', () => {
 		// Neither entry carries the mount's contribution: their app combines them at display time,
 		// so writing effectiveStats here would double-count the mount.
 		expect(statValue(entries[0], 'SPD')).toBe(6);
+	});
+
+	// The default fixture's mount already carries appliedArmyCharacterUpgrades, which is why the
+	// rest of this suite missed it: the real Lupus Rex object has no such key, and only a round-trip
+	// against Freecompany's own export showed that theirs adds `[]` to every standard-format
+	// character, mounts included.
+	const bareMount = () => {
+		const mount = producerCharacter({ code: 'LUPUS_REX' }) as { attributes: Record<string, Json> };
+		delete mount.attributes.appliedArmyCharacterUpgrades;
+		return mount as unknown as Json;
+	};
+	const mountedRow = () => [
+		row({ mounted: true, mount: unit({ id: 'lupus-rex', producerId: 53 }), upgradedUnit: unit() })
+	];
+
+	it('gives a mount entry the empty upgrade key their standard exports carry', () => {
+		const doc = build({
+			catalog: catalog({ characters: { 84: producerCharacter(), 53: bareMount() } }),
+			rows: mountedRow()
+		});
+		const mountEntry = charactersOf(doc)[1];
+		expect(attrsOf(mountEntry).code).toBe('LUPUS_REX');
+		expect(attrsOf(mountEntry).appliedArmyCharacterUpgrades).toEqual([]);
+	});
+
+	it('omits that key on a mount entry in roster format, like every other roster unit', () => {
+		const doc = build({
+			format: 'roster',
+			catalog: catalog({ characters: { 84: producerCharacter(), 53: bareMount() } }),
+			rows: mountedRow()
+		});
+		const roster = doc.roster as Record<string, Json>;
+		const entries = roster.characterList as Record<string, Json>[];
+		expect(entries).toHaveLength(2);
+		expect(Object.keys(attrsOf(entries[1]))).not.toContain('appliedArmyCharacterUpgrades');
 	});
 });
 
