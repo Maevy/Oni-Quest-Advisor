@@ -6,10 +6,9 @@ shapes, rendering geometry, colours and server architecture see
 rules each layer must follow, see the root [QWEN.md](../../QWEN.md) and the `CLAUDE.md` inside
 each `src/lib/` folder.
 
-> These specs describe the app **as built**, verified against the code at v0.10.0 plus the
-> unreleased Chiyo-Bot work on `develop`. Where the app is mid-iteration or internally
-> inconsistent, the relevant document says so explicitly and lists it under **Open questions** —
-> those sections are live to-do lists, not rhetorical.
+> These specs describe the app **as built**, verified against the code at v0.11.0. Where the app
+> is mid-iteration or internally inconsistent, the relevant document says so explicitly and lists
+> it under **Open questions** — those sections are live to-do lists, not rhetorical.
 
 ## Entity glossary
 
@@ -214,9 +213,9 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
    megaphone, the conclusion and the client-side PDF report (all built). Under construction; grows
    step by step.
 10. [10-discord-bot.md](./10-discord-bot.md) — Chiyo-Bot: an army code pasted into Discord answers
-    with a card and a deep link into the builder. **Built, not yet live** — the sheet, the
-    interactions endpoint, the card and `?army=<code>` are in; the Discord-side wiring and a first
-    real pass are not. The image is still undecided.
+    with a card and a deep link into the builder. **Live in production** — the sheet, the
+    interactions endpoint, the card and `?army=<code>` are in, and `/chiyo army` answers on the
+    production endpoint. The image is still undecided.
 
 ## Open questions
 

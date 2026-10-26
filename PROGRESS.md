@@ -6,17 +6,17 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Where things stand
 
-- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.10.0** (tagged on `main`,
-  2026-10-25, deployed the same day with **no database wipe**): summoning across all three modes
-  and the paste-an-army-code shortcut. Day-to-day work happens on **`develop`**, pushed to
-  `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` carries no unreleased feature work** — it is level with the v0.10.0 tag. What
+- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.11.0** (tagged on `main`,
+  2026-10-26, deployed the same day with **no database wipe**): Chiyo-Bot, the Discord bot that
+  reads an army code into an embed card plus a deep link back into the builder. Day-to-day work
+  happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
+- **`develop` carries no unreleased feature work** — it is level with the v0.11.0 tag. What
   shipped, with its decisions and traps, is in `ARCHIVE.md`; that file is the index into
   `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
-- `docs/` was caught up against the code on 2026-09-11 and has been kept current since: 15
+- `docs/` was caught up against the code on 2026-09-11 and has been kept current since: 16
   spec documents plus two READMEs. Where the code and `MULTIPLAYER_PLAN.md` disagree, **`docs/`
   is the spec and the plan is design history** — the eight as-built divergences are listed in
   `docs/technical-spec/06-online-architecture.md`.
@@ -41,6 +41,30 @@ persisted online shape needs the same conversation.
 
 ## What's next
 
+v0.11.0 (2026-10-26) shipped **Chiyo-Bot**: `/chiyo army code:<code>` in Discord answers with an
+embed card describing the list and a button that opens that same list in the builder.
+`ARCHIVE.md` carries its decisions and traps; the two that will bite a future change are that
+**`getArmyCodeCatalog()` is the server's one sanctioned reason to load army content** — online
+games still never decode a code, and army legality stays the client's word — and that a deep link
+**must await `contentStore.loadArmy()` before importing**, because an empty catalog cannot
+reproduce the fingerprint, so every shared code would read as `roster-mismatch` rather than
+invalid. Spec: `docs/functional-spec/10-discord-bot.md`.
+
+The bot's own live thread is the **cold-start follow-up failure — mitigated, not explained**. The
+first command after a boot once deferred correctly and then failed to post its card, leaving that
+player on "thinking…" while every command after it delivered. Delivery now returns its reason and
+attempt count and retries a transient (transport error, 429, 5xx) once; a retry that _succeeds_ logs
+`discord follow-up needed a retry`, which is the line to watch in
+`flyctl logs -a oni-quest-advisor` — until it fires, "recovered" and "never happened" still look
+alike in the aggregate. Behind that sit the two deferred paths: **link unfurling** (an SSR'd
+`/army/[code]` with `og:` tags — cheap, and the same route an image renderer would want) and **the
+image**, which needs either a browser-side canvas on a share route or a hand-rolled PNG encoder
+plus a font asset to supply and license.
+
+The app's live thread is unchanged: the two buttons those dialogs still render inert — **Trade
+Item** and **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action
+lists) — one of which the v0.9.0 announcement already promised the players.
+
 v0.10.0 (2026-10-25) shipped **summoning** across all three modes and the **paste-an-army-code**
 shortcut on the single-phone slots. `ARCHIVE.md` carries their decisions and traps; the two that
 will bite a future change are that a summoned creature has **no `ArmyRosterRow`** — so a vitality
@@ -56,10 +80,7 @@ One asymmetry worth remembering: healing a fallen summoner does **not** return i
 landed, so the cascade never happened either. Both fall out of the fold replaying forward, with
 no removal record anywhere. Deliberately unmodelled: the rulebook's **Summoning Limit**.
 
-The live thread is the two buttons those dialogs still render inert — **Trade Item** and
-**Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action lists) — one of
-which the v0.9.0 announcement already promised the players. Everything else that is open was
-deferred on purpose; the list follows.
+Everything else that is open was deferred on purpose; the list follows.
 
 Smaller open threads:
 
@@ -98,7 +119,7 @@ copy-pasted class strings, which is why disabled styling has drifted between scr
 
 ## Verification on this machine
 
-`npm run check`, `npm run lint`, `npm run test` after every change (815 tests as of v0.10.0).
+`npm run check`, `npm run lint`, `npm run test` after every change (848 tests as of v0.11.0).
 Beyond that, the habit here has been **throwaway browser and API passes** — a real multi-context
 Playwright run asserting the journey, deleted afterwards; v0.9.0 alone was verified by a dozen of
 them, from 8 to 65 assertions. Five traps cost a run each and recur:
@@ -133,14 +154,14 @@ them, from 8 to 65 assertions. Five traps cost a run each and recur:
   mutation queue) cannot run on two — their databases would diverge. The legacy second machine
   was destroyed during the v0.5.0 deploy; after any manual scaling, check `fly machines list`
   and keep it at one.
-- `min_machines_running`: **0 in `fly.toml` (prod), 1 in `fly.test.toml`** (staging, since
-  2026-10-25). Prod machines stop when idle and cold-start on the next request; online mode is
-  built around that — state lives in SQLite, phones refetch and resubscribe SSE on wake. Staging
-  is always-on because Discord gives an interactions webhook only **3 s** and a cold wake costs
-  more than that: measured, `curl /api/health` against a stopped machine took **4.71 s** end to
-  end, the proxy's own `machine became reachable` line read 2.4 s, and the boot ran start → Node
-  listening ~3 s → health passing ~4 s. Cost ~$2.19/mo at shared-cpu-1x/256mb (cheapest-region
-  figure; `fra` may differ).
+- `min_machines_running`: **1 in both `fly.toml` (prod, since v0.11.0) and `fly.test.toml`**
+  (staging, since 2026-10-25). Discord gives an interactions webhook only **3 s** and a cold wake
+  costs more than that: measured, `curl /api/health` against a stopped machine took **4.71 s** end
+  to end, the proxy's own `machine became reachable` line read 2.4 s, and the boot ran start → Node
+  listening ~3 s → health passing ~4 s. Prod went always-on with the bot rather than ship a command
+  that silently drops the first interaction after every idle period; players get the same benefit,
+  since online mode's state lives in SQLite and phones refetch and resubscribe SSE on wake either
+  way. Cost ~$2.19/mo per app at shared-cpu-1x/256mb (cheapest-region figure; `fra` may differ).
 - **`min_machines_running` is a floor on auto-stop, not a resurrection guarantee.** Proven
   2026-10-25: `flyctl machine stop`, then five `flyctl status` polls over 5.3 min with no traffic
   sent to the app — Fly never restarted it. A _running_ machine is kept running indefinitely

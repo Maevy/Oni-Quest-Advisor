@@ -285,7 +285,7 @@ Layered structure. Dependencies only point downward — never sideways, never up
 ```
 src/
   routes/          → presentation: the page(s), just wire stores to components
-                      (+ api/games/** and api/tournaments/** endpoints)
+                      (+ api/games/**, api/tournaments/** and api/discord/** endpoints)
   lib/
     components/    → presentation: reusable UI pieces (props in, callbacks out)
     stores/        → application/state layer (class-based singletons)
@@ -410,9 +410,13 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
   and push branch + tag. Commit messages here are detailed by design — they are the
   authoritative record of why a change was made.
-- Current release: **v0.10.0** (2026-10-25 — summoning across all three modes, and attaching an
-  army by pasting its code), tagged on `main` and deployed the same day with **no database wipe**:
-  it touches neither `domain/online.ts`, `lib/server` nor `routes/api`.
+- Current release: **v0.11.0** (2026-10-26 — Chiyo-Bot, the Discord bot that reads an army code
+  into an embed card plus a deep link back into the builder), tagged on `main` and deployed the
+  same day with **no database wipe**: it only _adds_ to `lib/server` and `routes/api`
+  (`discord.ts`, `routes/api/discord/interactions`, an additive `getArmyCodeCatalog()`) and
+  touches neither the schema nor `domain/online.ts`. It also moved **production to
+  `min_machines_running = 1`**, because Discord allows an interaction 3 s and a cold wake measured
+  4.71 s — a dropped interaction is never logged, so the bot would have looked broken.
 - **The persisted online shape has no migration mechanism** — no `hydrateOnlineGameState`
   exists, so a field added to an online seat or game leaves older rows reading as corrupt (a
   missing combat army reads as combat-ready). v0.9.0 needed a database-wide wipe for exactly
@@ -438,8 +442,8 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
 - `ARCHIVE.md` — what shipped per release, with the decisions and traps still worth knowing
   and the `git log` range for full detail.
 - `docs/functional-spec/` — behaviour: navigation flow, the mission panels, Results, Schemes,
-  the score/round controls, hot-seat mode, the online player journey, the army builder and the
-  tournament. Entity glossary and screen map in its README.
+  the score/round controls, hot-seat mode, the online player journey, the army builder, the
+  tournament and Chiyo-Bot. Entity glossary and screen map in its README.
 - `docs/technical-spec/` — visual theme, mission JSON format, map rendering, faction and
   Scheme JSON, army content and the import pipeline, and the online architecture (state model,
   API, SSE, SQLite, lifecycle).

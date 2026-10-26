@@ -5,13 +5,12 @@ answers with a card describing that list, and the card carries a button that ope
 the app on their phone. It exists for one reason: **so nobody has to screenshot their phone to show
 a list on Discord.**
 
-> **Built, not yet live.** Phases 1–3 are implemented and committed: the sheet, the interactions
-> endpoint, the card, and the `?army=<code>` deep link. Nothing has happened on Discord's side yet —
-> the two secrets, the Interactions Endpoint URL, the command registration and a first pass against
-> a real server — so no player can reach it. The hosting model, the output format, the command
-> surface and the cold-start behaviour are all decided (see _Architecture decisions_); what is
-> genuinely undecided — above all whether the bot ever posts a rendered image — is listed under
-> **Open questions** at the end.
+> **Live in production.** All four phases are complete: the sheet, the interactions endpoint, the
+> card, the `?army=<code>` deep link, and the Discord-side wiring — the two secrets, the
+> Interactions Endpoint URL and the command registration, which went global at v0.11.0. The
+> hosting model, the output format, the command surface and the cold-start behaviour are all
+> decided (see _Architecture decisions_); what is genuinely undecided — above all whether the bot
+> ever posts a rendered image — is listed under **Open questions** at the end.
 
 ## The shape of the feature
 
@@ -166,13 +165,15 @@ Phase 1 needed nothing from Discord, which is why it landed on its own.
    explicit intent than a run left open — and it leaves that run untouched in storage, so it still
    resumes on the next plain launch. A code that will not resolve offers the builder's own paste
    field rather than a dead end.
-4. **Discord-side wiring** — _outstanding, and the only thing between here and a player._ The two
-   secrets on the staging app, the bot invited with the `bot` + `applications.commands` scopes, a
-   deploy, then the endpoint URL, then command registration with `DISCORD_GUILD_ID` set so it is
-   instant rather than up to an hour.
+4. **Discord-side wiring** — _done, and it is what put the bot in front of a player._ The two
+   secrets on the app, the bot invited with the `bot` + `applications.commands` scopes, a deploy,
+   then the endpoint URL, then command registration. Development registered **guild-scoped** with
+   `DISCORD_GUILD_ID` set, so it was instant rather than up to an hour; production registers
+   **globally** by leaving that unset, so allow up to an hour for `/chiyo` to appear on every
+   server the bot is on.
 
-Development points at the staging app (`oni-quest-advisor-test.fly.dev`, which runs `develop`);
-the endpoint URL switches to production at release.
+Development pointed at the staging app (`oni-quest-advisor-test.fly.dev`, which runs `develop`);
+the endpoint URL moved to production with v0.11.0.
 
 ## Verification
 
@@ -200,7 +201,10 @@ the endpoint URL switches to production at release.
   a command is answered `{type:5}` with nothing unhandled; and the server's own log proves the chain
   ran through to the follow-up call. Spawn vite through `node node_modules/vite/bin/vite.js` rather
   than `npm.cmd` — Node 24 on Windows refuses to spawn a `.cmd` without `shell: true`.
-- **Real Discord** only after a staging deploy — _not yet done._
+- **Real Discord** — _done._ A live pass on staging first (endpoint URL saved, command registered
+  guild-scoped, cards delivering with a working deep-link button), then production at v0.11.0 with
+  the command registered globally. Staging is where the one real failure was caught: see
+  _Cold start_ in `ARCHIVE.md`'s v0.11.0 entry.
 - `npm run check`, `npm run lint`, `npm run test` as usual.
 
 ## Deferred

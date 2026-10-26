@@ -16,6 +16,153 @@ worth knowing before touching the code.
 
 ---
 
+## v0.11.0 — Chiyo-Bot: an army code read in Discord (2026-10-26, 12 commits)
+
+Sharing a list meant screenshotting a phone and squinting at it in a channel. **Chiyo-Bot** replaces
+that: `/chiyo army code:<code>` answers with an embed card describing the list — faction colour and
+logo, format, total against its cap, one line per distinct pick, the Roster equipment pool, the
+fingerprint in the footer — plus a button that opens the same list in the app's Army Builder.
+
+**Deployed with no database wipe.** The documented test over `domain/online.ts`, `lib/server` and
+`routes/api` returns new files only (`discord.ts`, its spec, the interactions route) plus an
+additive memoized `getArmyCodeCatalog()` in `content.ts` and one rate-limit exemption in
+`hooks.server.ts`. `db.ts`, the schema and the persisted online shape are untouched, so live games
+and tournaments survive the deploy.
+
+The release is **not** purely additive on the ops side: **production went always-on**
+(`min_machines_running = 1` in `fly.toml`, matching staging), for the reason in _Cold start_ below.
+
+### The four locked decisions (`f825dd8`)
+
+Each was taken over a concrete alternative, and each still constrains what the bot can become:
+
+- **A route in the existing app**, not a new repo or a second Fly app. An army code is base36
+  _indexes_ into the content catalogs behind a roster fingerprint, so a bot carrying its own copy of
+  the content would mis-decode after any re-import; resolving in-process through `decodeArmy` →
+  `resolveArmyEntries` cannot contradict the app's own Army view. A second app would also have met
+  this org's IP-provisioning failure on its first deploy.
+- **An embed, not an image.** Nothing in-repo can rasterize text: there is no webfont anywhere in
+  `src` (the UI is Tailwind's system stack), `pdf.ts` uses viewer-side Helvetica and embeds no glyph
+  outlines, the production image is `node:22-slim` with dev dependencies stripped on a 256 MB
+  machine, and the SPA has no URL for an army a browser could be pointed at.
+- **Slash commands only**, over Discord's HTTP interactions endpoint. A gateway websocket would be
+  killed every idle period.
+- **Defer, then follow up**, for Discord's 3 s first-response limit.
+
+`getArmyCodeCatalog()` is the **one sanctioned exception** to "the game flow loads no army
+catalogs". The ruling it looks like it breaks still holds: `payload.ts` cannot read a format out of
+a code, army legality stays the client's word, and no seat's registered army is ever decoded
+server-side. Both `lib/server/CLAUDE.md` and `QWEN.md` were amended to name the exception rather
+than leave the rules file asserting something the layer file contradicts (`fd25dd4`).
+
+### The three phases (`55b73de`, `b2f9640`, `ba891cd`)
+
+1. **The sheet** — `domain/armySheet.ts` resolves a code into a flat, presentation-free sheet. It
+   knows nothing about Discord or its character budgets, so an unfurl route or an image renderer
+   would read the same thing. The total is **not recomputed**: it is `armyPoints + rosterPickPoints`
+   over `unitsForFaction`, the exact expression the builder's points derived uses, with a test
+   asserting parity so a card cannot disagree with the counter it stands in for.
+2. **The endpoint** — `lib/server/discord.ts` holds the whole protocol (Ed25519 verification over
+   the raw bytes, the card, the follow-up call) and every player-facing string in one `MESSAGES`
+   object, so the maintainer's voice can be rewritten without touching logic. No dependencies:
+   `node:crypto` verifies and global `fetch` talks to Discord — the same reason `pdf.ts` and `qr.ts`
+   are hand-rolled. The **bot token is never needed at runtime**; the follow-up is authenticated by
+   the interaction token, so the deployed app needs only the application id and the public key.
+3. **The deep link** — `?army=<code>` on the single page, reusing the paste-a-code path from
+   v0.10.0. It replays every pick through the domain guards, so **a deep-linked list can never be
+   invalid**.
+
+Three traps that cost real time:
+
+- **Copies collapse on the `ArmyEntry`, not on the resolved row.** The row has already lost which
+  spellcraft or option was chosen inside an upgrade, so keying on it merged two copies leveling
+  different spellcrafts into one line and silently hid one of them. Upgrade order deliberately does
+  _not_ split a line — the same set in a different order is the same list. Both are pinned by tests,
+  as is a mounted copy staying out of an unmounted one's count.
+- **`contentStore.loadArmy()` must be awaited before an import.** The catalogs are non-eager globs,
+  so an unresolved code is not read as invalid but as `roster-mismatch`, because an empty catalog
+  cannot reproduce the fingerprint. Every shared code would have looked stale — which reads like a
+  content bug rather than a missing await.
+- **The signature covers the bytes as they arrived**, so the body is read once as a buffer and
+  parsed from that rather than through `request.json()`; equivalent re-serialized JSON will not
+  verify. Verification also refuses a timestamp more than 60 s off, which is what stops a captured
+  interaction being replayed.
+
+`hooks.server.ts` gained its **one rate-limit exemption**: every interaction arrives from Discord's
+own address range, so a shared per-IP bucket would throttle the whole bot and let one busy server
+starve every other. The Ed25519 signature replaces the limiter as the authentication and an
+unverified request gets a 401; the 64 KB body cap still applies.
+
+The deep link **outranks the resume chain** and returns early rather than suppressing it — a click
+on _Open in Army Builder_ is a more explicit intent than a run left open — but it **leaves that run
+untouched in storage**, so it still resumes on the next plain launch. The link borrows the session,
+it does not consume it.
+
+### Cold start: the failure the bot actually produced (`7c00e1e`, `9c49a3f`, `a2481a8`)
+
+Staging caught one real failure. The first command after a cold start deferred correctly (200 in
+76 ms — the first catalog load) and **the webhook post failed**, leaving that player on
+"thinking…" forever while the four commands after it all delivered. It was undiagnosable because
+delivery returned a bare boolean, collapsing "Discord answered a 4xx" and "the call never reached
+Discord" into the same `false`. Delivery now returns the reason and the attempt count, and a
+transient (transport error, 429, 5xx) is retried once after 400 ms. Any other 4xx deliberately is
+not: Discord refused the payload itself and would refuse the same bytes identically.
+
+**The cause is still unknown.** The machine had been listening 29 s before that request, which
+weakens a just-booted network story, but a payload Discord rejected would have failed every attempt
+rather than only the first. The retry is a mitigation, not a fix, and the spec records it as
+observed behaviour with its evidence. `a2481a8` closes the other half of the blind spot: a retry
+that _succeeded_ used to log nothing, so "recovered" and "never happened" were indistinguishable.
+
+The measurement that changed the ops posture: a health probe against a **stopped** machine took
+**4.71 s end to end** (the proxy's own `machine became reachable` line read 2.4 s; boot ran start →
+Node listening ~3 s → health passing ~4 s). Discord allows 3 s and starts that clock when it sends,
+so the entire budget is gone before the handler runs a line — **deferring cannot help**, because the
+deferred response is exactly what Discord never stays connected long enough to receive, and the
+interaction is dropped without the app ever logging it.
+
+**`min_machines_running` is a floor on auto-stop, not a resurrection guarantee.** Proven by
+`flyctl machine stop` then five `flyctl status` polls over 5.3 min with no traffic sent to the app
+(flyctl talks to Fly's API and cannot wake a machine): Fly never restarted it. A _running_ machine
+is kept running indefinitely (12 m 22 s of zero traffic observed, where the same idle had
+auto-stopped it in ~4.6 min), but a stopped one stays stopped until a request arrives. Hence the
+step that must not be skipped: **warm the machine with a health probe after every deploy.**
+
+Staging went to `min = 1` in `9c49a3f`; **production follows in this release**, because shipping a
+bot to a machine that auto-stops would drop the first interaction after every idle period
+silently. Players get the same benefit — no more 4 s first click on an online game. ~$2.19/mo at
+shared-cpu-1x/256mb (cheapest-region figure; `fra` may differ).
+
+### Verification
+
+848 unit tests. The security-critical piece is covered without Discord at all: a real Ed25519
+keypair generated inside the spec signs `timestamp + body`, and the check refuses a tampered body, a
+signature carried onto another timestamp, a stale replay and malformed keys. Beyond that, two
+throwaway harnesses (in `~/.qwen/tmp/oni-verify/`, outside the project root so the dev server does
+not full-page-reload every browser): **22 assertions** on the deep link in Edge, including a
+control pass proving the resume prompt _does_ fire without the param so the negative assertion is
+not vacuous; and **12 assertions** posting real signed payloads at a spawned vite — unsigned,
+forged, stale-replayed and body-swapped all 401, PING answered `{type:1}`, a command answered
+`{type:5}` with nothing unhandled. Then a **live pass against real Discord on staging**: endpoint
+URL saved, command registered guild-scoped, cards delivering with a working deep-link button.
+
+Two harness traps worth keeping: spawn vite through `node node_modules/vite/bin/vite.js`, not
+`npm.cmd` — Node 24 on Windows refuses to spawn a `.cmd` without `shell: true`. And the deep-link
+harness's "press outside the popup" must click something inert (the header title) or it lands on a
+table panel's Enter Game and walks the device into its match.
+
+### Deferred
+
+**The image** — both viable paths (a browser-side canvas on a new share route, where real fonts are
+free; or a hand-rolled PNG encoder beside `pdf.ts`, which still needs a font asset to supply and
+license) are larger than everything above combined. Decided: ship the text card and choose with
+something real in front of us. **Link unfurling** — an SSR'd `/army/[code]` with `og:` tags would
+make a bare URL preview itself with no bot involved, and it is the same route the image path would
+want. **Mentions and free-form chat** — needs the gateway, the message-content intent and an
+always-on process.
+
+---
+
 ## v0.10.0 — summoning, and attaching an army by pasting its code (2026-10-25, 9 commits)
 
 Two features: **summoning**, across all three modes, and the **paste-an-army-code shortcut** on the
