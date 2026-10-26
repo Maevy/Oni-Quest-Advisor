@@ -1,6 +1,7 @@
 [
 	{
 		"id": "additional-protection",
+		"producerId": 6,
 		"name": "Additional Protection",
 		"cost": 2,
 		"limit": 3,
@@ -21,6 +22,7 @@
 	},
 	{
 		"id": "adept-shaper-helian-league",
+		"producerId": 2,
 		"name": "Adept Shaper",
 		"cost": 3,
 		"factionId": "helian-league",
@@ -38,6 +40,7 @@
 	},
 	{
 		"id": "arcane-tome-sand-kingdoms",
+		"producerId": 38,
 		"name": "Arcane Tome",
 		"cost": 4,
 		"factionId": "sand-kingdoms",
@@ -55,6 +58,7 @@
 	},
 	{
 		"id": "bujutsu-expertise-empire-of-soga",
+		"producerId": 13,
 		"name": "Bujutsu Expertise",
 		"cost": 3,
 		"factionId": "empire-of-soga",
@@ -100,6 +104,7 @@
 	},
 	{
 		"id": "camaraderie",
+		"producerId": 11,
 		"name": "Camaraderie",
 		"cost": 5,
 		"limit": 3,
@@ -112,6 +117,7 @@
 	},
 	{
 		"id": "casting-amplifier-sand-kingdoms",
+		"producerId": 42,
 		"name": "Casting Amplifier",
 		"cost": 2,
 		"factionId": "sand-kingdoms",
@@ -140,6 +146,7 @@
 	},
 	{
 		"id": "climbing-expertise-coalition-of-thenion",
+		"producerId": 24,
 		"name": "Climbing Expertise",
 		"cost": 2,
 		"factionId": "coalition-of-thenion",
@@ -169,6 +176,7 @@
 	},
 	{
 		"id": "companion-of-hairon-helian-league",
+		"producerId": 32,
 		"name": "Companion of Hairon",
 		"cost": 2,
 		"factionId": "helian-league",
@@ -205,6 +213,7 @@
 	},
 	{
 		"id": "concealed-approach-coalition-of-thenion",
+		"producerId": 26,
 		"name": "Concealed Approach",
 		"cost": 3,
 		"factionId": "coalition-of-thenion",
@@ -218,6 +227,7 @@
 	},
 	{
 		"id": "conjured-retinue-sand-kingdoms",
+		"producerId": 40,
 		"name": "Conjured Retinue",
 		"cost": 3,
 		"factionId": "sand-kingdoms",
@@ -241,6 +251,7 @@
 	},
 	{
 		"id": "devotion-anras-coalition-of-thenion",
+		"producerId": 28,
 		"name": "Devotion: Anras",
 		"cost": 1,
 		"factionId": "coalition-of-thenion",
@@ -291,6 +302,7 @@
 	},
 	{
 		"id": "devotion-paimon-coalition-of-thenion",
+		"producerId": 29,
 		"name": "Devotion: Paimon",
 		"cost": 2,
 		"factionId": "coalition-of-thenion",
@@ -328,6 +340,7 @@
 	},
 	{
 		"id": "devotion-tiamat-coalition-of-thenion",
+		"producerId": 27,
 		"name": "Devotion: Tiamat",
 		"cost": 1,
 		"factionId": "coalition-of-thenion",
@@ -387,6 +400,7 @@
 	},
 	{
 		"id": "elemental-lineage-sand-kingdoms",
+		"producerId": 4,
 		"name": "Elemental Lineage",
 		"cost": 4,
 		"factionId": "sand-kingdoms",
@@ -482,6 +496,7 @@
 	},
 	{
 		"id": "expedition-leader",
+		"producerId": 46,
 		"name": "Expedition Leader",
 		"cost": 5,
 		"description": [
@@ -508,6 +523,7 @@
 	},
 	{
 		"id": "expeditionary-tactics-double-time-helian-league",
+		"producerId": 36,
 		"name": "Expeditionary Tactics: Double Time",
 		"cost": 3,
 		"factionId": "helian-league",
@@ -521,6 +537,7 @@
 	},
 	{
 		"id": "expeditionary-tactics-surge-order-helian-league",
+		"producerId": 37,
 		"name": "Expeditionary Tactics: Surge Order",
 		"cost": 3,
 		"factionId": "helian-league",
@@ -534,6 +551,7 @@
 	},
 	{
 		"id": "fangs-of-tiamat-coalition-of-thenion",
+		"producerId": 25,
 		"name": "Fangs of Tiamat",
 		"cost": 2,
 		"factionId": "coalition-of-thenion",
@@ -562,6 +580,7 @@
 	},
 	{
 		"id": "first-aid",
+		"producerId": 8,
 		"name": "First Aid",
 		"cost": 2,
 		"limit": 2,
@@ -574,6 +593,7 @@
 	},
 	{
 		"id": "flying-carpet-sand-kingdoms",
+		"producerId": 39,
 		"name": "Flying Carpet",
 		"cost": 4,
 		"factionId": "sand-kingdoms",
@@ -605,6 +625,7 @@
 	},
 	{
 		"id": "gift-of-longevity-helian-league",
+		"producerId": 33,
 		"name": "Gift of Longevity",
 		"cost": 1,
 		"factionId": "helian-league",
@@ -625,6 +646,7 @@
 	},
 	{
 		"id": "glyphscribe-hyperias-providence-helian-league",
+		"producerId": 35,
 		"name": "Glyphscribe: Hyperia’s Providence",
 		"cost": 3,
 		"factionId": "helian-league",
@@ -638,6 +660,7 @@
 	},
 	{
 		"id": "glyphscribe-reduce-weight-helian-league",
+		"producerId": 5,
 		"name": "Glyphscribe: Reduce Weight",
 		"cost": 3,
 		"factionId": "helian-league",
@@ -673,6 +696,7 @@
 	},
 	{
 		"id": "imported-casting-amplifier",
+		"producerId": 9,
 		"name": "Imported Casting Amplifier",
 		"cost": 4,
 		"limit": 1,
@@ -690,6 +714,7 @@
 	},
 	{
 		"id": "imported-crossbow",
+		"producerId": 10,
 		"name": "Imported Crossbow",
 		"cost": 5,
 		"limit": 1,
@@ -717,6 +742,7 @@
 	},
 	{
 		"id": "journeyman-adventurer",
+		"producerId": 44,
 		"name": "Journeyman Adventurer",
 		"cost": 3,
 		"description": [
@@ -760,6 +786,7 @@
 	},
 	{
 		"id": "kassen-buki-daikyuu-tsukai-empire-of-soga",
+		"producerId": 18,
 		"name": "Kassen Buki: Daikyuu-tsukai",
 		"cost": 3,
 		"factionId": "empire-of-soga",
@@ -811,6 +838,7 @@
 	},
 	{
 		"id": "kassen-buki-kanabou-tsukai-empire-of-soga",
+		"producerId": 19,
 		"name": "Kassen Buki: Kanabou-tsukai",
 		"cost": 3,
 		"factionId": "empire-of-soga",
@@ -852,6 +880,7 @@
 	},
 	{
 		"id": "kassen-buki-nagamaki-tsukai-empire-of-soga",
+		"producerId": 17,
 		"name": "Kassen Buki: Nagamaki-tsukai",
 		"cost": 2,
 		"factionId": "empire-of-soga",
@@ -893,6 +922,7 @@
 	},
 	{
 		"id": "kassen-buki-yari-tsukai-empire-of-soga",
+		"producerId": 16,
 		"name": "Kassen Buki: Yari-tsukai",
 		"cost": 2,
 		"factionId": "empire-of-soga",
@@ -943,6 +973,7 @@
 	},
 	{
 		"id": "king-of-the-battlefield",
+		"producerId": 12,
 		"name": "King of the Battlefield",
 		"cost": 2,
 		"limit": 3,
@@ -970,6 +1001,7 @@
 	},
 	{
 		"id": "kyujutsu-expertise-empire-of-soga",
+		"producerId": 14,
 		"name": "Kyujutsu Expertise",
 		"cost": 3,
 		"factionId": "empire-of-soga",
@@ -1026,6 +1058,7 @@
 	},
 	{
 		"id": "lucky-charm-empire-of-soga",
+		"producerId": 15,
 		"name": "Lucky Charm",
 		"cost": 3,
 		"factionId": "empire-of-soga",
@@ -1039,6 +1072,7 @@
 	},
 	{
 		"id": "mana-catalyst-sand-kingdoms",
+		"producerId": 3,
 		"name": "Mana Catalyst",
 		"cost": 1,
 		"factionId": "sand-kingdoms",
@@ -1096,6 +1130,7 @@
 	},
 	{
 		"id": "muffled-movement-coalition-of-thenion",
+		"producerId": 23,
 		"name": "Muffled movement",
 		"cost": 2,
 		"factionId": "coalition-of-thenion",
@@ -1125,6 +1160,7 @@
 	},
 	{
 		"id": "personal-guard-sand-kingdoms",
+		"producerId": 41,
 		"name": "Personal Guard",
 		"cost": 3,
 		"factionId": "sand-kingdoms",
@@ -1148,6 +1184,7 @@
 	},
 	{
 		"id": "poisoned-weapons-coalition-of-thenion",
+		"producerId": 22,
 		"name": "Poisoned Weapons",
 		"cost": 2,
 		"factionId": "coalition-of-thenion",
@@ -1189,6 +1226,7 @@
 	},
 	{
 		"id": "pouch",
+		"producerId": 1,
 		"name": "Pouch",
 		"cost": 1,
 		"description": [
@@ -1204,6 +1242,7 @@
 	},
 	{
 		"id": "raid-leader",
+		"producerId": 45,
 		"name": "Raid Leader",
 		"cost": 4,
 		"description": [
@@ -1235,6 +1274,7 @@
 	},
 	{
 		"id": "seasoned-combatant-empire-of-soga",
+		"producerId": 21,
 		"name": "Seasoned Combatant",
 		"cost": 2,
 		"factionId": "empire-of-soga",
@@ -1264,6 +1304,7 @@
 	},
 	{
 		"id": "seasoned-combatant-helian-league",
+		"producerId": 31,
 		"name": "Seasoned Combatant",
 		"cost": 2,
 		"factionId": "helian-league",
@@ -1293,6 +1334,7 @@
 	},
 	{
 		"id": "smokescreen",
+		"producerId": 43,
 		"name": "Smokescreen",
 		"cost": 2,
 		"limit": 2,
@@ -1320,6 +1362,7 @@
 	},
 	{
 		"id": "tactical-expertise-helian-league",
+		"producerId": 30,
 		"name": "Tactical Expertise",
 		"cost": 3,
 		"factionId": "helian-league",
@@ -1350,6 +1393,7 @@
 	},
 	{
 		"id": "traveling-duelist-empire-of-soga",
+		"producerId": 20,
 		"name": "Traveling Duelist",
 		"cost": 3,
 		"factionId": "empire-of-soga",
@@ -1393,6 +1437,7 @@
 	},
 	{
 		"id": "utility-tool",
+		"producerId": 7,
 		"name": "Utility Tool",
 		"cost": 1,
 		"description": [

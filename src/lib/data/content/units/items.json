@@ -1,6 +1,7 @@
 [
 	{
 		"id": "acid-vomit",
+		"producerId": 92,
 		"name": "Acid Vomit",
 		"category": "weapon",
 		"mode": "natural-and-ranged",
@@ -39,6 +40,7 @@
 	},
 	{
 		"id": "arcane-lantern",
+		"producerId": 26,
 		"name": "Arcane Lantern",
 		"category": "accessory",
 		"mode": "melee",
@@ -75,6 +77,7 @@
 	},
 	{
 		"id": "banner-lance",
+		"producerId": 100,
 		"name": "Banner Lance",
 		"category": "weapon",
 		"mode": "melee",
@@ -106,6 +109,7 @@
 	},
 	{
 		"id": "battle-axe",
+		"producerId": 105,
 		"name": "Battle Axe",
 		"category": "weapon",
 		"mode": "melee",
@@ -129,6 +133,7 @@
 	},
 	{
 		"id": "bisento",
+		"producerId": 69,
 		"name": "Bisento",
 		"category": "weapon",
 		"mode": "melee",
@@ -171,6 +176,7 @@
 	},
 	{
 		"id": "bite",
+		"producerId": 88,
 		"name": "Bite",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -192,6 +198,7 @@
 	},
 	{
 		"id": "bite-and-claws",
+		"producerId": 28,
 		"name": "Bite & Claws",
 		"category": "weapon",
 		"mode": "melee",
@@ -213,6 +220,7 @@
 	},
 	{
 		"id": "blighted-relic-blade",
+		"producerId": 84,
 		"name": "Blighted Relic Blade",
 		"category": "weapon",
 		"mode": "melee",
@@ -275,6 +283,7 @@
 	},
 	{
 		"id": "bow",
+		"producerId": 29,
 		"name": "Bow",
 		"category": "weapon",
 		"mode": "ranged",
@@ -312,6 +321,7 @@
 	},
 	{
 		"id": "casting-amplifier",
+		"producerId": 46,
 		"name": "Casting Amplifier",
 		"category": "accessory",
 		"mode": "melee",
@@ -324,6 +334,7 @@
 	},
 	{
 		"id": "chimera-claws",
+		"producerId": 67,
 		"name": "Chimera Claws",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -349,6 +360,7 @@
 	},
 	{
 		"id": "crushing-maw",
+		"producerId": 72,
 		"name": "Chrushing Maw",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -388,6 +400,7 @@
 	},
 	{
 		"id": "corroded-piercing-dagger",
+		"producerId": 82,
 		"name": "Corroded Piercing Dagger",
 		"category": "weapon",
 		"mode": "melee",
@@ -443,6 +456,7 @@
 	},
 	{
 		"id": "corroded-sword",
+		"producerId": 81,
 		"name": "Corroded Sword",
 		"category": "weapon",
 		"mode": "melee",
@@ -475,6 +489,7 @@
 	},
 	{
 		"id": "corroded-war-bow",
+		"producerId": 80,
 		"name": "Corroded War Bow",
 		"category": "weapon",
 		"mode": "ranged",
@@ -530,6 +545,7 @@
 	},
 	{
 		"id": "corroded-weapon",
+		"producerId": 79,
 		"name": "Corroded Weapon",
 		"category": "weapon",
 		"mode": "melee",
@@ -561,6 +577,7 @@
 	},
 	{
 		"id": "crossbow",
+		"producerId": 47,
 		"name": "Crossbow",
 		"category": "weapon",
 		"mode": "ranged",
@@ -596,6 +613,7 @@
 	},
 	{
 		"id": "cursed-grab",
+		"producerId": 62,
 		"name": "Cursed Grab",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -647,6 +665,7 @@
 	},
 	{
 		"id": "dagger",
+		"producerId": 30,
 		"name": "Dagger",
 		"category": "weapon",
 		"mode": "melee",
@@ -692,6 +711,7 @@
 	},
 	{
 		"id": "deathweaving-fan",
+		"producerId": 70,
 		"name": "Deathweaving Fan",
 		"category": "accessory",
 		"effect": [
@@ -713,6 +733,7 @@
 	},
 	{
 		"id": "descrated-relic-blade",
+		"producerId": 60,
 		"name": "Desecrated Relic Blade",
 		"category": "weapon",
 		"mode": "melee",
@@ -765,6 +786,7 @@
 	},
 	{
 		"id": "earthen-fists",
+		"producerId": 54,
 		"name": "Earthen Fists",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -808,6 +830,7 @@
 	},
 	{
 		"id": "empyrean-standard",
+		"producerId": 101,
 		"name": "Empyrean Standard",
 		"category": "accessory",
 		"effect": [
@@ -819,6 +842,7 @@
 	},
 	{
 		"id": "firecracker",
+		"producerId": 66,
 		"name": "Firecracker",
 		"category": "consumable",
 		"mode": "ranged",
@@ -856,6 +880,7 @@
 	},
 	{
 		"id": "fists-of-stone",
+		"producerId": 53,
 		"name": "Fists of Stone",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -885,6 +910,7 @@
 	},
 	{
 		"id": "flying-carpet",
+		"producerId": 45,
 		"name": "Flying Carpet",
 		"category": "accessory",
 		"effect": [
@@ -907,6 +933,7 @@
 	},
 	{
 		"id": "gargoyles-claws",
+		"producerId": 31,
 		"name": "Gargoyle’s Claws",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -932,6 +959,7 @@
 	},
 	{
 		"id": "glyph-of-protection",
+		"producerId": 104,
 		"name": "Glyph of Protection",
 		"category": "accessory",
 		"effect": [
@@ -942,6 +970,7 @@
 	},
 	{
 		"id": "glyphscribe-dagger",
+		"producerId": 77,
 		"name": "Glyphscribe Dagger",
 		"category": "weapon",
 		"mode": "melee",
@@ -989,6 +1018,7 @@
 	},
 	{
 		"id": "grapeshot",
+		"producerId": 65,
 		"name": "Grapeshot",
 		"category": "consumable",
 		"mode": "ranged",
@@ -1016,6 +1046,7 @@
 	},
 	{
 		"id": "great-axe",
+		"producerId": 90,
 		"name": "Great Axe",
 		"category": "weapon",
 		"mode": "melee",
@@ -1069,6 +1100,7 @@
 	},
 	{
 		"id": "great-shield",
+		"producerId": 107,
 		"name": "Great Shield",
 		"category": "shield",
 		"mode": "melee",
@@ -1081,6 +1113,7 @@
 	},
 	{
 		"id": "greatsword",
+		"producerId": 33,
 		"name": "Greatsword",
 		"category": "weapon",
 		"mode": "melee",
@@ -1139,6 +1172,7 @@
 	},
 	{
 		"id": "hack-and-thrash",
+		"producerId": 55,
 		"name": "Hack & Thrash",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -1194,6 +1228,7 @@
 	},
 	{
 		"id": "haze-bomb",
+		"producerId": 99,
 		"name": "Haze Bomb",
 		"category": "consumable",
 		"mode": "ranged",
@@ -1224,6 +1259,7 @@
 	},
 	{
 		"id": "heavy-bludgeon",
+		"producerId": 51,
 		"name": "Heavy Bludgeon",
 		"category": "weapon",
 		"mode": "melee",
@@ -1292,6 +1328,7 @@
 	},
 	{
 		"id": "heavy-polarm",
+		"producerId": 35,
 		"name": "Heavy Polarm",
 		"category": "weapon",
 		"mode": "melee",
@@ -1338,6 +1375,7 @@
 	},
 	{
 		"id": "ice-pick",
+		"producerId": 57,
 		"name": "Ice Pick",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -1385,6 +1423,7 @@
 	},
 	{
 		"id": "javelin",
+		"producerId": 102,
 		"name": "Javelin",
 		"category": "consumable",
 		"mode": "ranged",
@@ -1412,6 +1451,7 @@
 	},
 	{
 		"id": "lance",
+		"producerId": 48,
 		"name": "Lance",
 		"category": "weapon",
 		"mode": "melee",
@@ -1458,6 +1498,7 @@
 	},
 	{
 		"id": "light-shield",
+		"producerId": 103,
 		"name": "Light Shield",
 		"category": "shield",
 		"mode": "melee",
@@ -1478,6 +1519,7 @@
 	},
 	{
 		"id": "longhilted-sword",
+		"producerId": 49,
 		"name": "Longhilted Sword",
 		"category": "weapon",
 		"mode": "melee",
@@ -1535,6 +1577,7 @@
 	},
 	{
 		"id": "looted-weapons",
+		"producerId": 87,
 		"name": "Looted Weapons",
 		"category": "weapon",
 		"mode": "melee",
@@ -1557,6 +1600,7 @@
 	},
 	{
 		"id": "mastercrafted-helrin-sword",
+		"producerId": 36,
 		"name": "Mastercrafted Helrin Sword",
 		"category": "weapon",
 		"mode": "melee",
@@ -1583,6 +1627,7 @@
 	},
 	{
 		"id": "mastercrafted-piercing-dagger",
+		"producerId": 38,
 		"name": "Mastercrafted Piercing Dagger",
 		"category": "weapon",
 		"mode": "melee",
@@ -1629,6 +1674,7 @@
 	},
 	{
 		"id": "mastercrafted-sword",
+		"producerId": 94,
 		"name": "Mastercrafted Sword",
 		"category": "weapon",
 		"mode": "melee",
@@ -1655,6 +1701,7 @@
 	},
 	{
 		"id": "missile-weapons",
+		"producerId": 89,
 		"name": "Missile Weapons",
 		"category": "weapon",
 		"mode": "ranged",
@@ -1677,6 +1724,7 @@
 	},
 	{
 		"id": "monks-staff",
+		"producerId": 97,
 		"name": "Monk's Staff",
 		"category": "weapon",
 		"mode": "melee",
@@ -1700,6 +1748,7 @@
 	},
 	{
 		"id": "naginata",
+		"producerId": 74,
 		"name": "Naginata",
 		"category": "weapon",
 		"mode": "melee",
@@ -1743,6 +1792,7 @@
 	},
 	{
 		"id": "parrying-dagger",
+		"producerId": 95,
 		"name": "Parrying Dagger",
 		"category": "weapon",
 		"mode": "melee",
@@ -1780,6 +1830,7 @@
 	},
 	{
 		"id": "piercing-dagger",
+		"producerId": 39,
 		"name": "Piercing Dagger",
 		"category": "weapon",
 		"mode": "melee",
@@ -1824,6 +1875,7 @@
 	},
 	{
 		"id": "polearm",
+		"producerId": 96,
 		"name": "Polearm",
 		"category": "weapon",
 		"mode": "melee",
@@ -1867,6 +1919,7 @@
 	},
 	{
 		"id": "poleaxe",
+		"producerId": 76,
 		"name": "Poleaxe",
 		"category": "weapon",
 		"mode": "melee",
@@ -1918,6 +1971,7 @@
 	},
 	{
 		"id": "profane-arc",
+		"producerId": 85,
 		"name": "Profane Arc",
 		"category": "weapon",
 		"mode": "melee-and-ranged",
@@ -1955,6 +2009,7 @@
 	},
 	{
 		"id": "quaking-smash",
+		"producerId": 73,
 		"name": "Quaking Smash",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -2006,6 +2061,7 @@
 	},
 	{
 		"id": "raging-thrash",
+		"producerId": 83,
 		"name": "Raging Trash",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -2047,6 +2103,7 @@
 	},
 	{
 		"id": "relic-weapon",
+		"producerId": 68,
 		"name": "Relic Weapon",
 		"category": "weapon",
 		"mode": "melee",
@@ -2088,6 +2145,7 @@
 	},
 	{
 		"id": "rending-claws",
+		"producerId": 91,
 		"name": "Rending Claws",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -2117,6 +2175,7 @@
 	},
 	{
 		"id": "scepter-of-sorceries",
+		"producerId": 23,
 		"name": "Scepter of Sorceries",
 		"category": "accessory",
 		"effect": [
@@ -2139,6 +2198,7 @@
 	},
 	{
 		"id": "sealing-javelin",
+		"producerId": 64,
 		"name": "Sealing Javelins",
 		"category": "consumable",
 		"mode": "ranged",
@@ -2161,6 +2221,7 @@
 	},
 	{
 		"id": "shield",
+		"producerId": 24,
 		"name": "Shield",
 		"category": "shield",
 		"mode": "melee",
@@ -2187,6 +2248,7 @@
 	},
 	{
 		"id": "short-bow",
+		"producerId": 25,
 		"name": "Short Bow",
 		"category": "weapon",
 		"mode": "ranged",
@@ -2222,6 +2284,7 @@
 	},
 	{
 		"id": "short-sword",
+		"producerId": 27,
 		"name": "Short Sword",
 		"category": "weapon",
 		"mode": "melee",
@@ -2248,6 +2311,7 @@
 	},
 	{
 		"id": "slayers-blade",
+		"producerId": 106,
 		"name": "Slayer's Blade",
 		"category": "weapon",
 		"mode": "melee",
@@ -2293,6 +2357,7 @@
 	},
 	{
 		"id": "slayers-lance",
+		"producerId": 32,
 		"name": "Slayer’s Lance",
 		"category": "weapon",
 		"mode": "melee",
@@ -2360,6 +2425,7 @@
 	},
 	{
 		"id": "small-bludgeon",
+		"producerId": 34,
 		"name": "Small Bludgeon",
 		"category": "weapon",
 		"mode": "melee",
@@ -2407,6 +2473,7 @@
 	},
 	{
 		"id": "smash-and-trash",
+		"producerId": 71,
 		"name": "Smash and Trash",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -2447,6 +2514,7 @@
 	},
 	{
 		"id": "spear",
+		"producerId": 37,
 		"name": "Spear",
 		"category": "weapon",
 		"mode": "melee",
@@ -2478,6 +2546,7 @@
 	},
 	{
 		"id": "spectral-weapon",
+		"producerId": 78,
 		"name": "Spectral Weapon",
 		"category": "weapon",
 		"mode": "melee",
@@ -2507,6 +2576,7 @@
 	},
 	{
 		"id": "spirit-drum",
+		"producerId": 40,
 		"name": "Spirit Drum",
 		"category": "accessory",
 		"effect": [
@@ -2518,6 +2588,7 @@
 	},
 	{
 		"id": "staff-of-chaos",
+		"producerId": 86,
 		"name": "Staff of Chaos",
 		"category": "accessory",
 		"reach": {
@@ -2547,6 +2618,7 @@
 	},
 	{
 		"id": "staff-of-conjuration",
+		"producerId": 41,
 		"name": "Staff of Conjuration",
 		"category": "accessory",
 		"effect": [
@@ -2558,6 +2630,7 @@
 	},
 	{
 		"id": "staff-of-light",
+		"producerId": 42,
 		"name": "Staff of Light",
 		"category": "accessory",
 		"effect": [
@@ -2580,6 +2653,7 @@
 	},
 	{
 		"id": "stonesplitter",
+		"producerId": 63,
 		"name": "Stonesplitter",
 		"category": "weapon",
 		"mode": "melee",
@@ -2632,6 +2706,7 @@
 	},
 	{
 		"id": "succumbing-embrace",
+		"producerId": 43,
 		"name": "Succumbing Embrace",
 		"category": "weapon",
 		"mode": "melee",
@@ -2665,6 +2740,7 @@
 	},
 	{
 		"id": "sword",
+		"producerId": 44,
 		"name": "Sword",
 		"category": "weapon",
 		"mode": "melee",
@@ -2691,6 +2767,7 @@
 	},
 	{
 		"id": "tengu-screech",
+		"producerId": 75,
 		"name": "Tengu Screech",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -2764,6 +2841,7 @@
 	},
 	{
 		"id": "tidal-wave",
+		"producerId": 58,
 		"name": "Tidal Wave",
 		"category": "weapon",
 		"mode": "natural-and-ranged",
@@ -2793,6 +2871,7 @@
 	},
 	{
 		"id": "venomous-bite",
+		"producerId": 93,
 		"name": "Venomous Bite",
 		"category": "weapon",
 		"mode": "natural-and-melee",
@@ -2823,6 +2902,7 @@
 	},
 	{
 		"id": "war-bow",
+		"producerId": 50,
 		"name": "War Bow",
 		"category": "weapon",
 		"mode": "ranged",
@@ -2873,6 +2953,7 @@
 	},
 	{
 		"id": "war-club-2",
+		"producerId": 61,
 		"name": "War Club",
 		"category": "weapon",
 		"mode": "melee",
@@ -2914,6 +2995,7 @@
 	},
 	{
 		"id": "war-club-1",
+		"producerId": 59,
 		"name": "War Club",
 		"category": "weapon",
 		"mode": "melee",
@@ -2966,6 +3048,7 @@
 	},
 	{
 		"id": "war-darts",
+		"producerId": 52,
 		"name": "War Darts",
 		"category": "consumable",
 		"mode": "ranged",
@@ -3007,6 +3090,7 @@
 	},
 	{
 		"id": "water-tentacle",
+		"producerId": 56,
 		"name": "Water Tentacle",
 		"category": "weapon",
 		"mode": "natural-and-ranged",

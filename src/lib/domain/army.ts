@@ -339,6 +339,14 @@ export type ArmyItemReach = {
 /** An item from the producer catalog; toughness/stk reuse the spell cost shape. */
 export type ArmyItemSpec = {
 	id: string;
+	/**
+	 * The producer catalog's own row id. Our ids are slugified names, which do not
+	 * round-trip for the third of entries that carry no code, so anything that has to
+	 * address the producer's data - the Guildhall export - resolves through this
+	 * instead of reverse-engineering the slug. Absent on synthetic entries we author
+	 * ourselves, which have no producer row to point at.
+	 */
+	producerId?: number;
 	name: string;
 	category: ArmyItemCategory;
 	/** Attack mode, e.g. 'melee', 'ranged', 'natural-and-melee'. */
@@ -426,6 +434,8 @@ export type ArmyUpgradeRequirement = {
 /** An upgrade from the producer catalog. */
 export type ArmyUpgradeSpec = {
 	id: string;
+	/** The producer catalog's row id; see {@link ArmyItemSpec.producerId}. */
+	producerId?: number;
 	name: string;
 	/** Points this upgrade adds to the army total. */
 	cost: number;
@@ -467,6 +477,8 @@ export type ArmySummonSpec = {
 
 export type ArmyUnitSpec = {
 	id: string;
+	/** The producer catalog's row id; see {@link ArmyItemSpec.producerId}. */
+	producerId?: number;
 	name: string;
 	points: number;
 	limit: number;

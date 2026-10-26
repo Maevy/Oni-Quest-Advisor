@@ -1,6 +1,7 @@
 [
 	{
 		"id": "academy-expeditioner",
+		"producerId": 51,
 		"name": "Academy Expeditioner",
 		"points": 18,
 		"limit": 2,
@@ -47,6 +48,7 @@
 	},
 	{
 		"id": "djinnborn-marzban",
+		"producerId": 90,
 		"name": "Djinnborn Marzban",
 		"points": 25,
 		"limit": 1,
@@ -114,6 +116,7 @@
 	},
 	{
 		"id": "faris-outrider",
+		"producerId": 40,
 		"name": "Faris Outrider",
 		"points": 18,
 		"limit": 2,
@@ -182,6 +185,7 @@
 	},
 	{
 		"id": "nara",
+		"producerId": 81,
 		"name": "Na'ra, Veil Watcher",
 		"points": 28,
 		"limit": 1,
@@ -256,6 +260,7 @@
 	},
 	{
 		"id": "spelldancer-aeroturge",
+		"producerId": 42,
 		"name": "Spelldancer Aeroturge",
 		"points": 15,
 		"limit": 2,
@@ -305,6 +310,7 @@
 	},
 	{
 		"id": "spelldancer-voidcaster",
+		"producerId": 41,
 		"name": "Spelldancer Voidcaster",
 		"points": 17,
 		"limit": 2,
@@ -354,6 +360,7 @@
 	},
 	{
 		"id": "vizier-of-conjurations",
+		"producerId": 45,
 		"name": "Vizier of Conjurations",
 		"points": 22,
 		"limit": 1,

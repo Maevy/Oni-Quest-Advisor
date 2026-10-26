@@ -1,6 +1,7 @@
 [
 	{
 		"id": "blue-rasetsu",
+		"producerId": 62,
 		"name": "Blue Rasetsu",
 		"points": 37,
 		"limit": 1,
@@ -70,6 +71,7 @@
 	},
 	{
 		"id": "blue-yaksha",
+		"producerId": 65,
 		"name": "Blue Yaksha",
 		"points": 30,
 		"limit": 2,
@@ -132,6 +134,7 @@
 	},
 	{
 		"id": "bonewalker",
+		"producerId": 71,
 		"name": "Bonewalker, Tier I",
 		"points": 10,
 		"limit": 10,
@@ -181,6 +184,7 @@
 	},
 	{
 		"id": "chiyohime",
+		"producerId": 66,
 		"name": "Chiyohime",
 		"points": 45,
 		"limit": 1,
@@ -252,6 +256,7 @@
 	},
 	{
 		"id": "forgotten-hero",
+		"producerId": 72,
 		"name": "Forgotten Hero, Tier II",
 		"points": 20,
 		"limit": 2,
@@ -319,6 +324,7 @@
 	},
 	{
 		"id": "oni-marauder",
+		"producerId": 60,
 		"name": "Oni Marauder",
 		"points": 24,
 		"limit": 2,
@@ -373,6 +379,7 @@
 	},
 	{
 		"id": "oni-pariah",
+		"producerId": 67,
 		"name": "Oni Pariah",
 		"points": 40,
 		"limit": 1,
@@ -435,6 +442,7 @@
 	},
 	{
 		"id": "red-rasetsu",
+		"producerId": 61,
 		"name": "Red Rasetsu",
 		"points": 35,
 		"limit": 1,
@@ -508,6 +516,7 @@
 	},
 	{
 		"id": "red-yaksha",
+		"producerId": 64,
 		"name": "Red Yaksha",
 		"points": 30,
 		"limit": 2,
@@ -584,6 +593,7 @@
 	},
 	{
 		"id": "vengeful-spirit",
+		"producerId": 70,
 		"name": "Vengeful Spirit, Tier I",
 		"points": 10,
 		"limit": 10,

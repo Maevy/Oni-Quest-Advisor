@@ -581,6 +581,10 @@ for (const character of characters) {
 	traitRefs.sort((a, b) => a.id.localeCompare(b.id) || a.level - b.level);
 	const unit = {
 		id: kebab(attributes.code),
+		// The producer's own row id, kept because our slug is not reversible: a third of
+		// the entries has no code at all, and the Guildhall export has to address their
+		// catalog objects by id rather than guess the slug back.
+		producerId: character.id,
 		name: attributes.name,
 		points: attributes.recruitment_cost,
 		limit: attributes.limit,
@@ -710,6 +714,7 @@ const items = pageProps.itemList.data.map((wrapper) => {
 	const item = wrapper.attributes;
 	const entry = {
 		id: kebab(item.code),
+		producerId: wrapper.id,
 		name: normalize(item.name),
 		category: item.category.toLowerCase()
 	};
@@ -747,6 +752,7 @@ const upgrades = pageProps.upgradeList.data
 		const factionId = factionCode ? FACTIONS[factionCode] : undefined;
 		const entry = {
 			id: kebab(upgrade.code) + (factionId ? '-' + factionId : ''),
+			producerId: wrapper.id,
 			name: normalize(upgrade.name),
 			cost: upgrade.cost,
 			factionId

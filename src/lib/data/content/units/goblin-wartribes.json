@@ -1,6 +1,7 @@
 [
 	{
 		"id": "chanre",
+		"producerId": 73,
 		"name": "Chanra, Goblin Shaman, Tier III",
 		"points": 28,
 		"limit": 1,
@@ -64,6 +65,7 @@
 	},
 	{
 		"id": "goblin-brawlers",
+		"producerId": 75,
 		"name": "Goblin Brawlers, Tier I",
 		"points": 8,
 		"limit": 10,
@@ -113,6 +115,7 @@
 	},
 	{
 		"id": "goblin-shaman",
+		"producerId": 74,
 		"name": "Goblin Shaman, Tier III",
 		"points": 24,
 		"limit": 1,
@@ -175,6 +178,7 @@
 	},
 	{
 		"id": "goblin-skirmishers",
+		"producerId": 76,
 		"name": "Goblin Skirmishers, Tier I",
 		"points": 9,
 		"limit": 10,
@@ -224,6 +228,7 @@
 	},
 	{
 		"id": "goblin-warchief",
+		"producerId": 77,
 		"name": "Goblin Warchief, Tier II",
 		"points": 22,
 		"limit": 2,
@@ -283,6 +288,7 @@
 	},
 	{
 		"id": "troll-prowler",
+		"producerId": 78,
 		"name": "Troll Prowler, Tier III",
 		"points": 24,
 		"limit": 2,

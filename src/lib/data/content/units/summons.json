@@ -1,6 +1,7 @@
 [
 	{
 		"id": "blighted-riftspawn",
+		"producerId": 83,
 		"name": "Blighted Riftspawn, Tier V",
 		"points": 0,
 		"limit": 0,
@@ -71,6 +72,7 @@
 	},
 	{
 		"id": "colossus-tier-iv",
+		"producerId": 57,
 		"name": "Colossus, Tier IV",
 		"points": 0,
 		"limit": 0,
@@ -135,6 +137,7 @@
 	},
 	{
 		"id": "earth-elemental-tier-iii",
+		"producerId": 56,
 		"name": "Earth Elemental, Tier III",
 		"points": 0,
 		"limit": 0,
@@ -211,6 +214,7 @@
 	},
 	{
 		"id": "gargoyle-tier-i",
+		"producerId": 54,
 		"name": "Gargoyle, Tier I",
 		"points": 0,
 		"limit": 0,
@@ -267,6 +271,7 @@
 	},
 	{
 		"id": "golem-tier-ii",
+		"producerId": 55,
 		"name": "Golem, Tier II",
 		"points": 0,
 		"limit": 0,
@@ -319,6 +324,7 @@
 	},
 	{
 		"id": "water-elemental-tier-iii",
+		"producerId": 58,
 		"name": "Water Elemental, Tier III",
 		"points": 0,
 		"limit": 0,

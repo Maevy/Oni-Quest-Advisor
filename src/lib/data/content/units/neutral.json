@@ -1,6 +1,7 @@
 [
 	{
 		"id": "amazon-gladiatrix",
+		"producerId": 52,
 		"name": "Amazon Gladiatrix",
 		"points": 32,
 		"limit": 2,
@@ -60,6 +61,7 @@
 	},
 	{
 		"id": "eonian-runner",
+		"producerId": 89,
 		"name": "Eonian Runner",
 		"points": 17,
 		"limit": 3,
@@ -110,6 +112,7 @@
 	},
 	{
 		"id": "guildsworn-knight",
+		"producerId": 69,
 		"name": "Guildsworn Knight",
 		"points": 30,
 		"limit": 1,
@@ -182,6 +185,7 @@
 	},
 	{
 		"id": "helrin-expatriate",
+		"producerId": 37,
 		"name": "Helrin Expatriate",
 		"points": 16,
 		"limit": 3,
@@ -246,6 +250,7 @@
 	},
 	{
 		"id": "hired-blade",
+		"producerId": 85,
 		"name": "Hired Blade",
 		"points": 17,
 		"limit": 2,
@@ -298,6 +303,7 @@
 	},
 	{
 		"id": "kogetsu",
+		"producerId": 68,
 		"name": "Kogetsu, Cursed Monk",
 		"points": 30,
 		"limit": 1,
@@ -358,6 +364,7 @@
 	},
 	{
 		"id": "musha-blademaster",
+		"producerId": 32,
 		"name": "Musha Blademaster",
 		"points": 17,
 		"limit": 2,
@@ -414,6 +421,7 @@
 	},
 	{
 		"id": "onitaoshi",
+		"producerId": 43,
 		"name": "Onitaoshi",
 		"points": 21,
 		"limit": 2,
@@ -473,6 +481,7 @@
 	},
 	{
 		"id": "renegade-rasetsu",
+		"producerId": 63,
 		"name": "Renegade Rasetsu",
 		"points": 27,
 		"limit": 1,
@@ -541,6 +550,7 @@
 	},
 	{
 		"id": "scholar-of-the-true-word",
+		"producerId": 87,
 		"name": "Scholar of the True Word",
 		"points": 19,
 		"limit": 1,
@@ -586,6 +596,7 @@
 	},
 	{
 		"id": "shieldbearer",
+		"producerId": 91,
 		"name": "Shieldbearer",
 		"points": 18,
 		"limit": 4,
@@ -640,6 +651,7 @@
 	},
 	{
 		"id": "slayer-dragon",
+		"producerId": 39,
 		"name": "Slayer Dragoon",
 		"points": 17,
 		"limit": 2,
@@ -700,6 +712,7 @@
 	},
 	{
 		"id": "taskmage-explorer",
+		"producerId": 44,
 		"name": "Taskmage Explorer",
 		"points": 19,
 		"limit": 2,
@@ -760,6 +773,7 @@
 	},
 	{
 		"id": "thenrin-swashbuckler",
+		"producerId": 38,
 		"name": "Thenrin Swashbuckler",
 		"points": 16,
 		"limit": 2,
@@ -810,6 +824,7 @@
 	},
 	{
 		"id": "tomoe",
+		"producerId": 82,
 		"name": "Tomoe, Endless Rain",
 		"points": 28,
 		"limit": 1,

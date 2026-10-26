@@ -1,6 +1,7 @@
 [
 	{
 		"id": "bladebrethren-elite",
+		"producerId": 84,
 		"name": "Bladebrethren Elite",
 		"points": 23,
 		"limit": 1,
@@ -68,6 +69,7 @@
 	},
 	{
 		"id": "night-temple-priestess",
+		"producerId": 36,
 		"name": "Night-Temple Priestess",
 		"points": 21,
 		"limit": 1,
@@ -139,6 +141,7 @@
 	},
 	{
 		"id": "nightshade",
+		"producerId": 34,
 		"name": "Nightshade",
 		"points": 22,
 		"limit": 1,
@@ -198,6 +201,7 @@
 	},
 	{
 		"id": "rangers-guild-hunter",
+		"producerId": 35,
 		"name": "Rangers-Guild Hunter",
 		"points": 19,
 		"limit": 2,
@@ -270,6 +274,7 @@
 	},
 	{
 		"id": "tharos",
+		"producerId": 80,
 		"name": "Tharos, One-Eyed Wolf ",
 		"points": 28,
 		"limit": 1,

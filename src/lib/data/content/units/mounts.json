@@ -1,6 +1,7 @@
 [
 	{
 		"id": "lupus-rex",
+		"producerId": 53,
 		"name": "Lupus Rex",
 		"points": 5,
 		"limit": 2,
