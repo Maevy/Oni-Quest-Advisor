@@ -8,7 +8,7 @@ type ChannelRegistry = {
 	/** Total number of open streams in this registry (operational probe). */
 	openStreamCount: () => number;
 	notify: (id: string, eventType: string) => void;
-	subscribe: (id: string) => ReadableStream<Uint8Array>;
+	subscribe: (id: string, signal?: AbortSignal) => ReadableStream<Uint8Array>;
 };
 
 /**
@@ -37,18 +37,46 @@ function createChannelRegistry(): ChannelRegistry {
 			const frame = `event: change\ndata: ${JSON.stringify({ type: eventType })}\n\n`;
 			for (const send of channel) send(frame);
 		},
-		subscribe(id) {
+		subscribe(id, signal) {
 			const encoder = new TextEncoder();
 			let heartbeat: ReturnType<typeof setInterval> | null = null;
 			let send: Sender | null = null;
+			let detached = false;
+
+			// The one cleanup path, reached from three triggers: the consumer cancelling, the
+			// request's abort signal firing when the client disconnects, and the heartbeat finding
+			// the stream already dead. Idempotent because whichever fires first wins. It has to be
+			// reachable from more than cancel() alone because a sender left behind in the channel
+			// keeps occupying a slot of the subscriber cap — eight per game — so a leak eventually
+			// locks out the real players reconnecting to that game.
+			const detach = () => {
+				if (detached) return;
+				detached = true;
+				if (heartbeat) clearInterval(heartbeat);
+				heartbeat = null;
+				signal?.removeEventListener('abort', detach);
+				const channel = channels.get(id);
+				if (channel && send) {
+					channel.delete(send);
+					if (channel.size === 0) channels.delete(id);
+				}
+				send = null;
+			};
 
 			return new ReadableStream<Uint8Array>({
 				start(controller) {
+					// A request already aborted on arrival gets no stream and takes no cap slot.
+					if (signal?.aborted) {
+						controller.close();
+						return;
+					}
 					send = (frame) => {
 						try {
 							controller.enqueue(encoder.encode(frame));
 						} catch {
-							// Stream already closed; cancel() cleans up.
+							// enqueue throws once the stream is closed or errored, which is the
+							// consumer saying it is gone.
+							detach();
 						}
 					};
 					let channel = channels.get(id);
@@ -58,15 +86,21 @@ function createChannelRegistry(): ChannelRegistry {
 					}
 					channel.add(send);
 					controller.enqueue(encoder.encode(': connected\n\n'));
-					heartbeat = setInterval(() => send?.(': heartbeat\n\n'), HEARTBEAT_MS);
+					heartbeat = setInterval(() => {
+						// desiredSize is null once the stream is closed or errored. A consumer that
+						// vanishes without cancelling never reaches cancel(), so this is the backstop
+						// that stops the interval — and frees the cap slot — instead of letting both
+						// run for the lifetime of the process.
+						if (controller.desiredSize === null) {
+							detach();
+							return;
+						}
+						send?.(': heartbeat\n\n');
+					}, HEARTBEAT_MS);
+					signal?.addEventListener('abort', detach, { once: true });
 				},
 				cancel() {
-					if (heartbeat) clearInterval(heartbeat);
-					const channel = channels.get(id);
-					if (channel && send) {
-						channel.delete(send);
-						if (channel.size === 0) channels.delete(id);
-					}
+					detach();
 				}
 			});
 		}
@@ -99,10 +133,19 @@ export function notifyTournamentChanged(tournamentId: string, eventType: string)
 	tournaments.notify(tournamentId, eventType);
 }
 
-export function subscribeToGame(gameId: string): ReadableStream<Uint8Array> {
-	return games.subscribe(gameId);
+/**
+ * Opens a stream on a game's channel. Pass the route's `request.signal`: it aborts when the client
+ * disconnects, which is what frees the subscriber slot. Omitting it leaves cleanup to `cancel()`
+ * alone, and a consumer that vanishes without cancelling is never reclaimed.
+ */
+export function subscribeToGame(gameId: string, signal?: AbortSignal): ReadableStream<Uint8Array> {
+	return games.subscribe(gameId, signal);
 }
 
-export function subscribeToTournament(tournamentId: string): ReadableStream<Uint8Array> {
-	return tournaments.subscribe(tournamentId);
+/** As `subscribeToGame`, for a tournament lobby's channel. */
+export function subscribeToTournament(
+	tournamentId: string,
+	signal?: AbortSignal
+): ReadableStream<Uint8Array> {
+	return tournaments.subscribe(tournamentId, signal);
 }

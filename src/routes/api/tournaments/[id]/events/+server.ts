@@ -14,7 +14,7 @@ export const GET = api(async ({ params, request }) => {
 	if (tournamentSubscriberCount(params.id) >= MAX_SUBSCRIBERS_PER_TOURNAMENT) {
 		throw new ApiError(429, 'Too many live connections for this tournament');
 	}
-	return new Response(subscribeToTournament(params.id), {
+	return new Response(subscribeToTournament(params.id, request.signal), {
 		headers: {
 			'content-type': 'text/event-stream',
 			'cache-control': 'no-cache',
