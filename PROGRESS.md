@@ -10,9 +10,9 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
   2026-10-26, deployed the same day with **no database wipe**): Chiyo-Bot, the Discord bot that
   reads an army code into an embed card plus a deep link back into the builder. Day-to-day work
   happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
-- **`develop` carries no unreleased feature work** — it is level with the v0.11.0 tag. What
-  shipped, with its decisions and traps, is in `ARCHIVE.md`; that file is the index into
-  `git log`, not a replacement.
+- **`develop` carries no unreleased feature work** — it is one ops commit ahead of the v0.11.0
+  tag (staging back to `min_machines_running = 0`). What shipped, with its decisions and traps,
+  is in `ARCHIVE.md`; that file is the index into `git log`, not a replacement.
 - Missions bundled (`src/lib/data/content/missions/`, all Season 2): Treasure Hunt, Clue
   Trail, Magic Stones, Quarter War, Snail Chase, Supply Run, Toxic Infestation, Open
   Hostilities, Awaiting Reinforcements.
@@ -154,14 +154,16 @@ them, from 8 to 65 assertions. Five traps cost a run each and recur:
   mutation queue) cannot run on two — their databases would diverge. The legacy second machine
   was destroyed during the v0.5.0 deploy; after any manual scaling, check `fly machines list`
   and keep it at one.
-- `min_machines_running`: **1 in both `fly.toml` (prod, since v0.11.0) and `fly.test.toml`**
-  (staging, since 2026-10-25). Discord gives an interactions webhook only **3 s** and a cold wake
-  costs more than that: measured, `curl /api/health` against a stopped machine took **4.71 s** end
-  to end, the proxy's own `machine became reachable` line read 2.4 s, and the boot ran start → Node
-  listening ~3 s → health passing ~4 s. Prod went always-on with the bot rather than ship a command
-  that silently drops the first interaction after every idle period; players get the same benefit,
-  since online mode's state lives in SQLite and phones refetch and resubscribe SSE on wake either
-  way. Cost ~$2.19/mo per app at shared-cpu-1x/256mb (cheapest-region figure; `fra` may differ).
+- `min_machines_running`: **1 in `fly.toml` (prod, since v0.11.0), 0 in `fly.test.toml`**
+  (staging, back to on-demand 2026-10-26). Discord gives an interactions webhook only **3 s** and
+  a cold wake costs more than that: measured, `curl /api/health` against a stopped machine took
+  **4.71 s** end to end, the proxy's own `machine became reachable` line read 2.4 s, and the boot
+  ran start → Node listening ~3 s → health passing ~4 s. Production is always-on because **it owns
+  the Interactions Endpoint URL**; staging was pinned to 1 for the same reason only while the bot
+  was developed against it, and went back to 0 the moment the URL moved to prod. **Pointing that
+  URL back at staging requires setting it to 1 and redeploying first**, or the bot fails silently
+  on every cold start with nothing logged. Cost ~$2.19/mo per always-on machine at
+  shared-cpu-1x/256mb (cheapest-region figure; `fra` may differ).
 - **`min_machines_running` is a floor on auto-stop, not a resurrection guarantee.** Proven
   2026-10-25: `flyctl machine stop`, then five `flyctl status` polls over 5.3 min with no traffic
   sent to the app — Fly never restarted it. A _running_ machine is kept running indefinitely

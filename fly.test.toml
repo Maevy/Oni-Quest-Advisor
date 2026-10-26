@@ -28,12 +28,15 @@ primary_region = "fra"
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  # One machine stays up. Discord allows 3s to an interaction and a boot from stopped
-  # measured 3-4s to listening (2026-10-25: start 17:37:50, Node listening 17:37:53,
-  # health passing 17:37:54), so the whole budget is spent before the handler runs a line -
-  # deferring the response cannot help, and the interaction is dropped unseen. auto_stop
-  # will not go below this minimum. Costs ~$2.19/mo at shared-cpu-1x/256mb.
-  min_machines_running = 1
+  # Staging auto-stops and wakes on request (~4.71s cold, measured 2026-10-25), which is fine for
+  # testers browsing unreleased `develop`. It was briefly pinned to 1 (9c49a3f) for one reason
+  # only: Discord allows an interaction 3s and a cold wake overruns that, so the interaction is
+  # dropped without the app ever logging it. The Interactions Endpoint URL now points at
+  # PRODUCTION (switched 2026-10-26, v0.11.0), which carries min_machines_running = 1 instead, so
+  # the constraint no longer applies here and this app can sleep.
+  # **If the endpoint URL is ever pointed back at this app, set this to 1 and redeploy FIRST** -
+  # otherwise the bot fails silently on every cold start, with nothing in the log to show why.
+  min_machines_running = 0
 
 # Probes /api/health on running machines (DB reachable, aggregates report).
 # Health checks do not auto-start a stopped machine — requests still do.
