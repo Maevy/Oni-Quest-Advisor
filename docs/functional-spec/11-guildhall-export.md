@@ -1,9 +1,10 @@
 # 11 · Guildhall export
 
 > **Status: built, not yet released.** The serializer, the server-side catalog artifact, the download
-> route and the second button on the Chiyo-Bot card are all implemented and verified against
-> Freecompany's own exports. Nothing is deployed yet, and **granted traits are refused rather than
-> written** — see _What it refuses_ for the one sample that would unlock them.
+> route and the second button on the Chiyo-Bot card are all implemented, and **six of the eight
+> ground-truth exports reproduce byte-for-byte** — including the granted-trait and mount cases.
+> Nothing is deployed yet. Every remaining difference is catalog drift or a harness limitation, not a
+> serializer fault; see _Verification_.
 
 Exports an army list as a file that Freecompany's own army builder
 (`guildhall.eldfall-chronicles.com`) can import. Reachable from the second button on a Chiyo-Bot
@@ -98,17 +99,52 @@ with no hint why.
 Factions are keyed by **our** faction id, not their row id: their `code` kebabs to exactly our id
 (`COALITION_OF_THENION` → `coalition-of-thenion`), and a decoded army carries nothing else.
 
+## Granted traits
+
+A trait an upgrade grants — Poisoned Weapons, Seasoned Combatant, Tactical Expertise, Traveling
+Duelist — is the one part of their format that is not already sitting inside a character object, so
+it has to be assembled. Ground truth is the Nightshade + Poisoned Weapons export, whose base traits
+are empty so the whole entry is new:
+
+```json
+{
+	"trait": {
+		"data": {
+			"id": 58,
+			"attributes": {
+				"description": "WEAK POISON; If a model suffers a Wound…",
+				"level": 1,
+				"name__": "Poison 1",
+				"trait_group": { "data": { "id": 46, "attributes": { "code": "POISON" } } }
+			}
+		}
+	},
+	"dynamic_value": null,
+	"dynamic_elements": { "data": [] }
+}
+```
+
+(`trait_group.data` is elided here but is the **whole** group object, nested `traits` included.)
+
+**No outer join-row id**, same as an upgrade-granted inventory item. `trait.data` is the group's
+per-level entry **verbatim** with `trait_group` injected — and that injected group **keeps** its own
+nested `traits` array, which is the opposite of how they treat element objects. Innate traits are
+patched in place and keep the catalog's order; granted ones are appended, which is where their own
+builder puts them. The level is matched strictly against the group's entries: guessing the nearest
+one would write the wrong rules text into a player's army, which is worse than refusing.
+
+This was the last piece inferred from minified bundle code, and it is now confirmed by a real export
+that reproduces byte-for-byte.
+
 ## What it refuses
 
 Every unrepresentable case is a typed error, never a best guess.
 
-- **`granted-trait`** — an upgrade gave a model a trait it was not born with. Emitting one means
-  assembling a trait entry from their trait catalog, and the only evidence for that shape is
-  minified bundle code. **This is a real gap, not an edge case**: it covers Poisoned Weapons,
-  Seasoned Combatant, Tactical Expertise and Traveling Duelist.
-- **`unknown-unit` / `unknown-mount` / `unknown-upgrade` / `unknown-item` / `missing-faction`** —
-  content drift between our catalog and the artifact. The message names what is missing, because
-  that is what makes it actionable.
+- **`unknown-unit` / `unknown-mount` / `unknown-upgrade` / `unknown-item` / `unknown-element` /
+  `unknown-trait` / `missing-faction`** — content drift between our catalog and the artifact. The
+  message names what is missing, because that is what makes it actionable.
+- **`malformed-catalog`** — the artifact lacks a shape the serializer needs, such as a trait group
+  with no entry at the requested level.
 - **`roster-mismatch`** (409, from `decodeArmy`) — the code was built against older content. This is
   the one a whole Discord hits at once on re-import day, and the message says what to do about it.
 
@@ -117,8 +153,9 @@ Every unrepresentable case is a typed error, never a best guess.
 The serializer is pure and covered by unit tests, but the unit tests were **not** sufficient and it
 is worth recording why. A throwaway harness rebuilt each of Freecompany's own exports from the picks
 the file described, ran the real `resolveArmyEntries` → `buildGuildhallArmy` pipeline, and diffed
-leaf by leaf. Three of seven reproduce byte-for-byte; every remaining difference is array ordering,
-a stale producer dump, or a choice upgrade the harness declined to reconstruct.
+leaf by leaf. **Six of the eight characters reproduce byte-for-byte**, including the granted-trait
+and mount cases; every remaining difference is array ordering or a stale producer dump — both
+catalog drift, not serializer faults — or a choice upgrade the harness declined to reconstruct.
 
 That harness found two bugs the 21 synthetic tests could not:
 
@@ -141,8 +178,6 @@ channel can click.
 
 ## Open questions
 
-- **Granted traits** need one ground-truth export: a model given a trait it does not start with
-  (Traveling Duelist on a non-Duelist, or Poisoned Weapons). Until then four upgrades refuse.
 - **Two upgrades diverge from their builder.** We model effects for `expedition-leader` (stratagem)
   and `journeyman-adventurer` (two traits); their client has **no handler** for either, so their
   builder records them without applying anything. Unresolved: export our rulebook-correct

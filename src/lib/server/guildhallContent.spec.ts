@@ -61,6 +61,23 @@ describe('getGuildhallCatalog', () => {
 		expect(catalog.elements.Fire).toBeTruthy();
 	});
 
+	it('keys trait groups by our trait id, carrying their per-level entries', async () => {
+		const catalog = await getGuildhallCatalog();
+
+		// A trait an upgrade grants is assembled from the group's per-level entries, so the loader has
+		// to expose them keyed the way `ArmyTraitRef.id` is spelled - kebab of their code, which for
+		// AFFINITY__ELEMENT means a double hyphen.
+		const poison = catalog.traitGroups.poison as {
+			attributes: {
+				code: string;
+				traits: { data: { id: number; attributes: { level: number } }[] };
+			};
+		};
+		expect(poison.attributes.code).toBe('POISON');
+		expect(poison.attributes.traits.data.length).toBeGreaterThan(0);
+		expect(poison.attributes.traits.data[0].attributes.level).toBe(1);
+	});
+
 	it('memoizes, so the artifact is parsed once per process', async () => {
 		const first = await getGuildhallCatalog();
 		const second = await getGuildhallCatalog();

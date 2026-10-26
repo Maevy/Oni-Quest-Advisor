@@ -3,6 +3,7 @@ import type {
 	ArmyItemSpec,
 	ArmyRosterRow,
 	ArmyStatKey,
+	ArmyTraitRef,
 	ArmyUpgradeSpec,
 	ArmyUnitSpec
 } from './army';
@@ -53,6 +54,11 @@ export type GuildhallCatalog = {
 	factions: Record<string, Json>;
 	/** Element wrappers keyed by our title-cased element name ('Fire', 'Elder', ...). */
 	elements: Record<string, Json>;
+	/**
+	 * Trait groups keyed by our trait id (`kebab(code)`), each carrying its per-level entries. Only
+	 * needed for a trait an upgrade *grants* — every other trait arrives inside its character.
+	 */
+	traitGroups: Record<string, Json>;
 };
 
 /** The structure version their importer expects. Refuse rather than emit a stale one. */
@@ -80,8 +86,8 @@ export type GuildhallExportError =
 	| { kind: 'unknown-element'; element: string }
 	| { kind: 'missing-faction'; factionId: string }
 	| { kind: 'malformed-catalog'; path: string }
-	/** An upgrade grants a trait the base model lacks; emitting it needs their trait catalog. */
-	| { kind: 'granted-trait'; traitId: string };
+	/** An upgrade granted a trait whose group is absent from the artifact. */
+	| { kind: 'unknown-trait'; traitId: string };
 
 export type GuildhallExportResult =
 	{ ok: true; document: Json } | { ok: false; error: GuildhallExportError };
@@ -191,6 +197,92 @@ function makeItemResolver(
 }
 
 /**
+ * Writes a trait ref's dynamic parts onto one of their trait entries. Returns an error rather than
+ * throwing, because an element we cannot resolve is a caller-visible refusal.
+ */
+function applyTraitDynamics(
+	entry: Json,
+	ref: ArmyTraitRef,
+	catalog: GuildhallCatalog
+): GuildhallExportError | null {
+	if (!isRecord(entry)) return null;
+	if (ref.dynamicValue !== undefined) entry.dynamic_value = ref.dynamicValue;
+	if (!ref.dynamicElements) return null;
+
+	// Two provenances, two shapes, and their exports preserve the difference. An element the model
+	// was born with rides inside the character object and carries no `spells`; one an upgrade
+	// granted is pulled from their elementList and does - Elder alone nests 19 spells with full
+	// rules text. Academy Expeditioner after Elemental Lineage is stored as [ELDER without spells,
+	// WATER with 20]: the inherited element untouched, only the new one full size. So reuse whatever
+	// the entry already carries and reach for the catalog only for elements that are not there yet.
+	// Trimming every element, which an earlier revision did, matches the no-grant case and silently
+	// corrupts every granted one.
+	const current = entry.dynamic_elements;
+	const currentList = isRecord(current) && Array.isArray(current.data) ? current.data : [];
+	const inherited = new Map<string, Json>();
+	for (const element of currentList) {
+		const code = path(element, ['attributes', 'code']);
+		if (typeof code === 'string') inherited.set(titleCase(code), element);
+	}
+	const elements: Json[] = [];
+	for (const name of ref.dynamicElements) {
+		const carried = inherited.get(name);
+		if (carried !== undefined) {
+			elements.push(clone(carried));
+			continue;
+		}
+		const element = catalog.elements[name];
+		if (element === undefined) return { kind: 'unknown-element', element: name };
+		elements.push(clone(element));
+	}
+	entry.dynamic_elements = { data: elements };
+	return null;
+}
+
+/**
+ * Assembles the entry their builder writes when an upgrade grants a trait the model was not born
+ * with. Ground truth is Nightshade with Poisoned Weapons, whose base traits are empty so the whole
+ * entry is new: **no outer join-row id**, `trait.data` is the group's per-level entry verbatim with
+ * `trait_group` injected, and that injected group keeps its own nested `traits` array - they do not
+ * trim it here, unlike the element objects they do. `dynamic_value` and `dynamic_elements` start
+ * empty and are filled in by `applyTraitDynamics`.
+ */
+function buildGrantedTrait(
+	ref: ArmyTraitRef,
+	catalog: GuildhallCatalog
+): { trait: Json } | { error: GuildhallExportError } {
+	const group = catalog.traitGroups[ref.id];
+	if (group === undefined) return { error: { kind: 'unknown-trait', traitId: ref.id } };
+	const levels = path(group, ['attributes', 'traits', 'data']);
+	if (!Array.isArray(levels)) {
+		return {
+			error: { kind: 'malformed-catalog', path: `traitGroups.${ref.id}.attributes.traits.data` }
+		};
+	}
+	// Strict on the level: picking the nearest one would write the wrong rules text into a player's
+	// army, which is worse than refusing.
+	const level = levels.find((entry) => path(entry, ['attributes', 'level']) === ref.level);
+	if (!isRecord(level)) {
+		return {
+			error: { kind: 'malformed-catalog', path: `traitGroups.${ref.id} has no level ${ref.level}` }
+		};
+	}
+	const attributes = clone(asRecord(level.attributes, `traitGroups.${ref.id}.attributes`));
+	return {
+		trait: {
+			trait: {
+				data: {
+					id: level.id,
+					attributes: { ...attributes, trait_group: { data: clone(group) } }
+				}
+			},
+			dynamic_value: null,
+			dynamic_elements: { data: [] }
+		}
+	};
+}
+
+/**
  * Patches one producer character object with what our own domain resolved for that copy. The base
  * is copied verbatim and only the leaves their builder would have changed are touched, which keeps
  * their Strapi row ids, per-stat ids and display caches intact.
@@ -224,48 +316,31 @@ function buildCharacter(
 		}
 	}
 
-	// Traits already on the model are patched in place. One the model does not start with would
-	// have to be assembled from their trait catalog, which this artifact does not carry yet - so
-	// refuse rather than quietly export a model missing a trait it should have.
-	const traitEntries = Array.isArray(attrs.traits) ? attrs.traits : [];
+	// Traits the model was born with are patched in place, preserving the catalog's order - ordering
+	// differences were the main source of noise in the round-trip, so nothing here reorders. Traits
+	// an upgrade granted are appended afterwards, which is where their own builder puts them.
+	const traitEntries: Json[] = Array.isArray(attrs.traits) ? attrs.traits : [];
 	const present = new Set(traitEntries.map(traitGroupCode));
-	for (const ref of unit.traits ?? []) {
-		if (!present.has(ref.id)) return { error: { kind: 'granted-trait', traitId: ref.id } };
-		const entry = traitEntries.find((candidate) => traitGroupCode(candidate) === ref.id);
+	for (const entry of traitEntries) {
 		if (!isRecord(entry)) continue;
+		const ref = (unit.traits ?? []).find((candidate) => candidate.id === traitGroupCode(entry));
+		if (!ref) continue;
 		asRecord(path(entry, ['trait', 'data', 'attributes']), 'trait.data.attributes').level =
 			ref.level;
-		if (ref.dynamicValue !== undefined) entry.dynamic_value = ref.dynamicValue;
-		if (ref.dynamicElements) {
-			// Two provenances, two shapes, and their exports preserve the difference. An element the
-			// model was born with rides inside the character object and carries no `spells`; one an
-			// upgrade granted is pulled from their elementList and does - Elder alone nests 19 spells
-			// with full rules text. Academy Expeditioner after Elemental Lineage is stored as
-			// [ELDER without spells, WATER with 20]: the inherited element untouched, only the new one
-			// full size. So reuse whatever the base already carries and reach for the catalog only for
-			// elements that are not there yet. Trimming every element, which an earlier revision did,
-			// matches the no-grant case and silently corrupts every granted one.
-			const current = entry.dynamic_elements;
-			const currentList = isRecord(current) && Array.isArray(current.data) ? current.data : [];
-			const inherited = new Map<string, Json>();
-			for (const element of currentList) {
-				const code = path(element, ['attributes', 'code']);
-				if (typeof code === 'string') inherited.set(titleCase(code), element);
-			}
-			const elements: Json[] = [];
-			for (const name of ref.dynamicElements) {
-				const carried = inherited.get(name);
-				if (carried !== undefined) {
-					elements.push(clone(carried));
-					continue;
-				}
-				const element = catalog.elements[name];
-				if (element === undefined) return { error: { kind: 'unknown-element', element: name } };
-				elements.push(clone(element));
-			}
-			entry.dynamic_elements = { data: elements };
-		}
+		const dynamicError = applyTraitDynamics(entry, ref, catalog);
+		if (dynamicError) return { error: dynamicError };
 	}
+	for (const ref of unit.traits ?? []) {
+		if (present.has(ref.id)) continue;
+		const built = buildGrantedTrait(ref, catalog);
+		if ('error' in built) return { error: built.error };
+		const dynamicError = applyTraitDynamics(built.trait, ref, catalog);
+		if (dynamicError) return { error: dynamicError };
+		traitEntries.push(built.trait);
+	}
+	// Assigning back only when there is something to say keeps a character that had no `traits` key
+	// from gaining an empty one their own exports would not carry.
+	if (Array.isArray(attrs.traits) || traitEntries.length > 0) attrs.traits = traitEntries;
 
 	// Inventory: a row the model already carries keeps its join-row id and takes a QTY patch; a row
 	// an upgrade added is written bare, exactly as their own builder writes it.

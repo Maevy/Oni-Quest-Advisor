@@ -15,10 +15,10 @@ import type { GuildhallCatalog, Json } from '$lib/domain/guildhallExport';
  * - It is loaded lazily behind a memoized promise, the way `getArmyCodeCatalog()` does, so booting
  *   the server does not parse it and an online game never pays for a feature it does not use.
  *
- * The artifact also carries `traitGroups`, which this loader does not yet index: granted traits are
- * the one part of their format still refused rather than guessed at, pending a ground-truth export of
- * a model that gained a trait it was not born with. The data is generated now so that wiring it up
- * needs no re-import.
+ * The artifact also carries `traitGroups`, keyed by our trait id, because a trait an upgrade *grants*
+ * is the one part of their format that is not already sitting inside a character object — it has to
+ * be assembled from the group's per-level entries. Ground truth for that assembly is the Nightshade +
+ * Poisoned Weapons export; see `domain/guildhallExport.ts`.
  */
 
 /** One `{id, attributes}` Strapi wrapper, as the producer dump nests every catalog row. */
@@ -48,12 +48,12 @@ function kebab(code: string): string {
 }
 
 /**
- * Factions are keyed by **our** id rather than their row id, because their faction `code` kebabs to
- * exactly our id (`COALITION_OF_THENION` -> `coalition-of-thenion`). A decoded army carries our
- * `factionId` and nothing else, so this is what makes the catalog addressable straight from it
- * instead of making every caller resolve a mapping first.
+ * Keyed by **our** id rather than their row id, for the two catalogs whose producer `code` kebabs to
+ * exactly the id our content uses: factions (`COALITION_OF_THENION` -> `coalition-of-thenion`) and
+ * trait groups (`POISON` -> `poison`). A decoded army carries only our ids, so this is what makes
+ * the catalog addressable straight from it instead of making every caller resolve a mapping first.
  */
-function indexFactionsByOurId(records: ProducerRecord[]): Record<string, Json> {
+function indexByKebabCode(records: ProducerRecord[]): Record<string, Json> {
 	const indexed: Record<string, Json> = {};
 	for (const record of records) {
 		const code = record.attributes?.code;
@@ -89,8 +89,9 @@ export function getGuildhallCatalog(): Promise<GuildhallCatalog> {
 			characters: indexById(artifact.characters),
 			upgrades: indexById(artifact.upgrades),
 			items: indexById(artifact.items),
-			factions: indexFactionsByOurId(artifact.factions),
-			elements: indexElementsByTitleCasedCode(artifact.elements)
+			factions: indexByKebabCode(artifact.factions),
+			elements: indexElementsByTitleCasedCode(artifact.elements),
+			traitGroups: indexByKebabCode(artifact.traitGroups)
 		};
 		return catalog;
 	})();

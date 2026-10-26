@@ -140,6 +140,25 @@ function catalog(overrides: Partial<GuildhallCatalog> = {}): GuildhallCatalog {
 			Fire: { id: 3, attributes: { code: 'FIRE', name: 'Fire', spells: { data: [{ id: 44 }] } } },
 			Elder: { id: 1, attributes: { code: 'ELDER', name: 'Elder' } }
 		},
+		// Mirrors their traitGroupList entry for POISON (group id 46, levels at ids 58 and 59), which
+		// is the group the Nightshade + Poisoned Weapons export used. The group keeps its own nested
+		// per-level `traits`, and the granted entry's injected `trait_group` keeps it too.
+		traitGroups: {
+			poison: {
+				id: 46,
+				attributes: {
+					name: 'Poison',
+					code: 'POISON',
+					description: 'Poison rules text',
+					traits: {
+						data: [
+							{ id: 58, attributes: { description: 'WEAK POISON', level: 1, name__: 'Poison 1' } },
+							{ id: 59, attributes: { description: 'STRONG POISON', level: 2, name__: 'Poison 2' } }
+						]
+					}
+				}
+			}
+		},
 		...overrides
 	};
 }
@@ -395,6 +414,65 @@ describe('buildGuildhallArmy - patching the verbatim producer object', () => {
 		});
 	});
 
+	// Ground truth is the Nightshade + Poisoned Weapons export, whose base traits are empty so the
+	// whole entry is new. This is the shape that could only be learned from a real file.
+	it('builds a granted trait from the group, with no outer join-row id', () => {
+		const doc = build({
+			rows: [row({ upgradedUnit: unit({ traits: [{ id: 'poison', level: 1 }] }) })]
+		});
+		const traits = attrsOf(charactersOf(doc)[0]).traits as Record<string, Json>[];
+		expect(traits).toHaveLength(1);
+		expect(traits[0].id).toBeUndefined();
+		expect(traits[0].dynamic_value).toBeNull();
+		expect(traits[0].dynamic_elements).toEqual({ data: [] });
+
+		const data = (traits[0].trait as Record<string, Json>).data as Record<string, Json>;
+		expect(data.id).toBe(58);
+		const attributes = data.attributes as Record<string, Json>;
+		expect(attributes.level).toBe(1);
+		expect(attributes.name__).toBe('Poison 1');
+		expect(attributes.description).toBe('WEAK POISON');
+		// The injected group keeps its own nested per-level traits - they do not trim it here,
+		// unlike the element objects they do.
+		const group = (attributes.trait_group as Record<string, Json>).data as Record<string, Json>;
+		expect(group.id).toBe(46);
+		const groupAttrs = group.attributes as Record<string, Json>;
+		expect(groupAttrs.code).toBe('POISON');
+		expect(groupAttrs.traits).toBeTruthy();
+	});
+
+	it('picks the level entry matching the ref rather than the first one', () => {
+		const doc = build({
+			rows: [row({ upgradedUnit: unit({ traits: [{ id: 'poison', level: 2 }] }) })]
+		});
+		const traits = attrsOf(charactersOf(doc)[0]).traits as Record<string, Json>[];
+		const data = (traits[0].trait as Record<string, Json>).data as Record<string, Json>;
+		expect(data.id).toBe(59);
+		expect((data.attributes as Record<string, Json>).name__).toBe('Poison 2');
+	});
+
+	it('appends a granted trait after the ones the model was born with', () => {
+		const doc = build({
+			catalog: catalog({ characters: { 84: affinityCharacter(), 53: producerCharacter() } }),
+			rows: [
+				row({
+					upgradedUnit: unit({
+						traits: [
+							{ id: 'affinity--element', level: 1, dynamicElements: ['Elder'] },
+							{ id: 'poison', level: 1 }
+						]
+					})
+				})
+			]
+		});
+		const traits = attrsOf(charactersOf(doc)[0]).traits as Record<string, Json>[];
+		expect(traits).toHaveLength(2);
+		// Innate first, still carrying its join-row id; granted appended without one. Reordering the
+		// innate traits would add noise to every round-trip diff.
+		expect(traits[0].id).toBe(245);
+		expect(traits[1].id).toBeUndefined();
+	});
+
 	it('keeps an existing inventory row id and patches its QTY', () => {
 		const withItem = producerCharacter({
 			inventory: {
@@ -527,9 +605,9 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 		});
 	});
 
-	it('refuses a trait the base model does not have, since emitting it needs their trait catalog', () => {
+	it('refuses a granted trait whose group is absent from the artifact', () => {
 		const result = buildGuildhallArmy({
-			rows: [row({ upgradedUnit: unit({ traits: [{ id: 'granted-trait', level: 1 }] }) })],
+			rows: [row({ upgradedUnit: unit({ traits: [{ id: 'not-a-trait', level: 1 }] }) })],
 			format: 'standard',
 			catalog: catalog(),
 			itemIndex: {},
@@ -538,7 +616,22 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 		});
 		expect(result).toEqual({
 			ok: false,
-			error: { kind: 'granted-trait', traitId: 'granted-trait' }
+			error: { kind: 'unknown-trait', traitId: 'not-a-trait' }
+		});
+	});
+
+	it('refuses a trait level the group does not define rather than picking a nearby one', () => {
+		const result = buildGuildhallArmy({
+			rows: [row({ upgradedUnit: unit({ traits: [{ id: 'poison', level: 7 }] }) })],
+			format: 'standard',
+			catalog: catalog(),
+			itemIndex: {},
+			upgradeIndex: {},
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
+		});
+		expect(result).toEqual({
+			ok: false,
+			error: { kind: 'malformed-catalog', path: 'traitGroups.poison has no level 7' }
 		});
 	});
 

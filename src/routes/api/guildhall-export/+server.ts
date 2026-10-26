@@ -26,17 +26,13 @@ import { api, ApiError } from '$lib/server/http';
 /** Player-facing wording for a refusal. The kinds are the domain's; only the prose lives here. */
 function messageFor(error: GuildhallExportError): string {
 	switch (error.kind) {
-		case 'granted-trait':
-			return (
-				'That list gives a model a trait it was not born with, which the Guildhall export ' +
-				'cannot write yet. Open it in the Army Builder instead.'
-			);
 		case 'unknown-unit':
 		case 'unknown-mount':
 		case 'unknown-upgrade':
 		case 'unknown-item':
-		case 'missing-faction':
 		case 'unknown-element':
+		case 'unknown-trait':
+		case 'missing-faction':
 		case 'malformed-catalog':
 			// Content drift rather than a player mistake: the code decoded against our catalog, so
 			// the gap is between our catalog and the Guildhall artifact. Says which thing is missing
