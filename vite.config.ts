@@ -24,6 +24,18 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	],
+	server: {
+		watch: {
+			// Neither folder is imported by the app — `data-import/` is read only by
+			// scripts/importUnits.mjs, and `.qwen/` is local tooling state — but both sit inside the
+			// project root, so Vite watched them by proximity. That cost a crash: a producer export
+			// being written to data-import/ while chokidar tried to watch it gave EBUSY, which
+			// chokidar emits as an unhandled FSWatcher 'error' event and takes the dev process down.
+			// Writes under .qwen/ were merely disruptive, full-page-reloading every connected browser
+			// and dropping mid-journey verification harnesses back to the startup prompt.
+			ignored: ['**/data-import/**', '**/.qwen/**']
+		}
+	},
 	test: {
 		environment: 'node',
 		include: ['src/**/*.{test,spec}.ts']
