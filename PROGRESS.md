@@ -134,13 +134,16 @@ them, from 8 to 65 assertions. Five traps cost a run each and recur:
 - **A fresh browser context shows the privacy banner**, which intercepts clicks until
   dismissed. Also: the first unit in the Helian catalog is `upgradesLocked`, so it renders no
   upgrade slot at all.
-- **Keep throwaway scripts outside the project root.** Vite's dev server watches the whole tree,
-  and any write under it — including editing a `.mjs` harness in `.qwen/tmp/` while a pass is in
-  flight — logs `[vite] (ssr) page reload` and **full-page-reloads every connected browser**,
-  which drops mid-journey devices back onto the startup prompt and reads as a flaky app. The
-  harnesses live in `~/.qwen/tmp/oni-verify/` now (importing Playwright by absolute path into this
-  project's `node_modules`), and "press outside the popup" must click something inert — the
-  header's title — or it lands on a table panel's Enter Game and walks the device into its match.
+- **Keep throwaway scripts outside the project root.** Vite's dev server watches the tree, and a
+  write under it logs `[vite] (ssr) page reload` and **full-page-reloads every connected browser**,
+  which drops mid-journey devices back onto the startup prompt and reads as a flaky app. Since
+  `7287c9f`, `vite.config.ts` ignores `**/data-import/**` and `**/.qwen/**` — the first because a
+  producer export being written there while locked killed the server outright with `EBUSY`, the
+  second because it was the usual source of stray reloads — but the rule still holds for every other
+  path. The harnesses live in `~/.qwen/tmp/oni-verify/` regardless (importing Playwright by absolute
+  path into this project's `node_modules`), and "press outside the popup" must click something
+  inert — the header's title — or it lands on a table panel's Enter Game and walks the device into
+  its match.
 
 ## Deployment & ops
 
