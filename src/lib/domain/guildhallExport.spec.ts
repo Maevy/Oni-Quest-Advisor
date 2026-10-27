@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { loadArmyUpgrades } from '$lib/data/units';
 import type { ArmyItemSpec, ArmyRosterRow, ArmyStats, ArmyUnitSpec, ArmyUpgradeSpec } from './army';
 import {
 	buildGuildhallArmy,
 	GUILDHALL_ROSTER_CAP,
 	GUILDHALL_STANDARD_CAP,
 	GUILDHALL_STRUCTURE_VERSION,
+	WRITTEN_EFFECT_KINDS,
 	type GuildhallCatalog,
 	type GuildhallExportInput,
 	type Json
@@ -881,5 +883,26 @@ describe('buildGuildhallArmy - refusing what it cannot represent', () => {
 				rows: [row({ upgradedUnit: unit({ stratagems: ['nope'] }) })]
 			})
 		).toEqual({ ok: false, error: { kind: 'unknown-stratagem', stratagemId: 'nope' } });
+	});
+});
+
+/**
+ * The audit that caught the four silently-dropped effect kinds, made permanent.
+ *
+ * This is the only check that can catch that class of bug. The round-trip against Freecompany's own
+ * exports stayed green the whole time the defect was live, because none of their eight samples used
+ * an affected upgrade - a corpus of ground-truth files only covers the cases the files happen to
+ * contain. Coverage of the input space has to be asserted separately, against the real content.
+ */
+describe('effect-kind coverage', () => {
+	it('writes every effect kind the shipped content actually uses', async () => {
+		const upgrades = await loadArmyUpgrades();
+		const used = new Set<string>();
+		for (const upgrade of upgrades) {
+			for (const effect of upgrade.effects) used.add(effect.kind);
+		}
+		// Guards against the audit passing vacuously if the content ever loads empty.
+		expect(used.size).toBeGreaterThan(0);
+		expect([...used].filter((kind) => !WRITTEN_EFFECT_KINDS.has(kind)).sort()).toEqual([]);
 	});
 });

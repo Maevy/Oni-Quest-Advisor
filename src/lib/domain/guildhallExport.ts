@@ -421,8 +421,12 @@ function reconcileLeveled(
  * each picked upgrade rather than assumed, so that adding a kind to `ArmyUpgradeEffect` without
  * teaching the export about it fails loudly here instead of shipping an army that lists the upgrade
  * in `appliedArmyCharacterUpgrades` while the model lacks the thing it grants.
+ *
+ * Exported so the spec can audit it against the kinds the real content actually uses. That audit is
+ * the only check that ever caught this class of bug: the round-trip against Freecompany's exports
+ * stayed green through all of it, because none of their samples happened to use an affected upgrade.
  */
-const WRITTEN_EFFECT_KINDS: ReadonlySet<string> = new Set([
+export const WRITTEN_EFFECT_KINDS: ReadonlySet<string> = new Set([
 	'stat',
 	'trait',
 	'skill',
