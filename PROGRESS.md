@@ -12,8 +12,10 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
   happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
 - **`develop` carries one unreleased feature** — the **Guildhall export** (spec 11): a serializer
   for Freecompany's builder format, a generated server-only catalog artifact, a public download
-  route and a second button on the Chiyo-Bot card. Built and verified end to end, **not deployed**,
-  and it still refuses granted traits. Count what is past the tag with
+  route and a second button on the Chiyo-Bot card. Built and verified end to end — six of eight
+  ground-truth exports reproduce byte-for-byte, and two generated armies were imported into
+  Guildhall itself with every granted rule rendering — and **not deployed**. Count what is past the
+  tag with
   `git rev-list --count v0.11.0..develop` rather than trusting a number here; this bullet has gone
   stale inside the session that wrote it three times, which is why it no longer carries a count —
   and why naming the feature matters more than counting the commits. What shipped, with its
@@ -67,17 +69,21 @@ alike in the aggregate. Behind that sit the two deferred paths: **link unfurling
 image**, which needs either a browser-side canvas on a share route or a hand-rolled PNG encoder
 plus a font asset to supply and license.
 
-The newest thread is the **Guildhall export** (spec 11), built 2026-10-26 and unreleased. It exists
-because Freecompany's builder cannot be deep-linked — six static routes, saved armies in browser
-localStorage, import by file drop — so the card's second button hands over a file rather than a link.
-Three things gate it. **Granted traits are refused** (Poisoned Weapons, Seasoned Combatant, Tactical
-Expertise, Traveling Duelist) pending one ground-truth export of a model that gained a trait it was
-not born with. **`expedition-leader` and `journeyman-adventurer` diverge** — we model effects their
-client has no handler for, so it is undecided whether an export carries our rulebook-correct reading
-or mirrors their record-only one. And **`data-import/units.json` is stale** (2026-08-31, against
-their 2026-09-10 edits), which is why the round-trip showed array-ordering noise and why one
-Glyphscribe sample still cannot be explained; a fresh dump is wanted regardless, since that staleness
-affects the whole app's content and not only this export.
+The newest thread is the **Guildhall export** (spec 11), built 2026-10-26/27 and unreleased. It
+exists because Freecompany's builder cannot be deep-linked — six static routes, saved armies in
+browser localStorage, import by file drop — so the card's second button hands over a file rather than
+a link. It is **feature-complete and verified**: six of eight ground-truth exports reproduce
+byte-for-byte, and two generated armies were imported into Guildhall itself with every granted class,
+skill, combat art, stratagem and trait rendering. Two things remain. **`data-import/units.json` is
+stale** (2026-08-31, against their 2026-09-10 edits), which is why the round-trip showed
+array-ordering noise, why one Glyphscribe sample still cannot be explained, and why we carry two live
+rules errors — Cryomancy's attack mode should be `RANGED`, and Art of Sorcery's Armor-Piercing markup
+was repaired upstream. `units3.json` is **3 of 12 sections and cannot be imported**; the importer does
+not guard against an empty list, so it would write nine valid-looking empty catalogs. And
+**`expedition-leader` / `journeyman-adventurer`** are a fairness call rather than a technical one:
+their client has no handler for either, we bake in the rulebook-correct grants, and the import test
+confirmed they render exactly once — so an army imported from us is stronger than the same list built
+natively there. Worth reporting to Freecompany as a bug.
 
 The app's live thread is unchanged: the two buttons those dialogs still render inert — **Trade
 Item** and **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action
@@ -137,7 +143,8 @@ copy-pasted class strings, which is why disabled styling has drifted between scr
 
 ## Verification on this machine
 
-`npm run check`, `npm run lint`, `npm run test` after every change (848 tests as of v0.11.0).
+`npm run check`, `npm run lint`, `npm run test` after every change. The suite is the count; a number
+written here goes stale the same session it is written (it has, twice), so run it instead.
 Beyond that, the habit here has been **throwaway browser and API passes** — a real multi-context
 Playwright run asserting the journey, deleted afterwards; v0.9.0 alone was verified by a dozen of
 them, from 8 to 65 assertions. Five traps cost a run each and recur:
