@@ -190,6 +190,63 @@ Phase 1 needed nothing from Discord, which is why it landed on its own.
 Development pointed at the staging app (`oni-quest-advisor-test.fly.dev`, which runs `develop`);
 the endpoint URL moved to production with v0.11.0.
 
+## Another server adopting the bot
+
+One application serves every server it is invited to, and **nothing in this repo or on Fly changes
+when another guild adopts it** — there is no per-server configuration to add. Four facts make that
+true, each checked against the deployed code rather than assumed:
+
+- `/chiyo` is registered **globally** (production leaves `DISCORD_GUILD_ID` unset), so the command
+  belongs to the application: a freshly joined guild gets it with no re-registration and no deploy.
+  Allow up to an hour for it to appear, so "the command isn't there yet" is a normal report in the
+  first ten minutes.
+- The interactions handler keeps **no guild allowlist** — it reads `type`, `id`, `token` and `data`
+  and answers any correctly signed interaction, whichever server it came from.
+- An application has **one** Interactions Endpoint URL and it already points at production, so every
+  server's traffic is served by the same app.
+- Both card buttons are **link buttons** (`type: 2`, `style: 5`) built from `url.origin`, so the
+  _player's own browser_ fetches them. There is no callback URL to register per server.
+
+**The only gate is the portal's _Public Bot_ toggle** (Developer Portal → app → Bot). While it is
+off, just the owner and any app-team members can add the bot, and everyone else's invite link
+errors. With it on, a server admin installs from
+`https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot%20applications.commands&permissions=0`
+(the URL the portal's OAuth2 URL Generator produces), picks their server and authorizes. That is the
+whole adoption.
+
+`permissions=0` is deliberate, and it is the answer for an admin who asks what the bot can see: it
+never posts into a channel on its own — it replies through the interaction's own webhook, authorized
+by the interaction token Discord hands it — so it needs no View Channels, no Send Messages, no
+message-content intent and no gateway. At runtime it holds only the two application-wide secrets,
+`DISCORD_APPLICATION_ID` and `DISCORD_PUBLIC_KEY`; the bot token is used by the registration script
+and never by the server.
+
+**What adoption lets neither side do.** The command sets neither `contexts` nor
+`default_member_permissions`, so every member of an adopting server can run it in every channel by
+default. Their admin can lock it down under _Server Settings → Integrations_ — Discord applies
+per-command permissions to any slash command — but we cannot restrict a server from our side, and
+there is no per-server configuration such a rule could hang off. DM use is probably enabled by the
+same omission; nothing tests it. And one application means one identity: whatever the bot does in
+someone else's server is attributed to this app, which is the real cost of adoption and the reason
+the reply surface stays as small as it is.
+
+**Capacity is settled rather than open.** The expected volume is at most one request per 10–20
+minutes across the whole community, against a machine that idles near zero and has been always-on
+since v0.11.0. The catalog and the Guildhall artifact are memoized per process, so memory grows once
+rather than per server. The interactions route stays exempt from the app's rate limiter by design —
+every interaction arrives from Discord's own address range, so one shared bucket would throttle the
+whole bot — and Discord's own limits are the bound that matters. The export GET _is_ limited
+(30/min per IP), and because it is a link button that bucket is per real player.
+
+**After every deploy, run `/chiyo` once yourself.** A deploy starts a fresh process, so the first
+command afterwards is the only realistic window for the cold-start follow-up failure — the one that
+left a player on "thinking…" forever, now retried once, with `discord follow-up needed a retry` as
+its trace. At this traffic level a real player can easily be that first request; spending it
+yourself absorbs the risk and doubles as the bot's post-deploy smoke test.
+
+Listing the bot in Discord's **App Directory** instead of sharing a link would additionally need app
+verification. Nothing above requires it.
+
 ## Verification
 
 - **vitest** — _done, 11 tests._ The sheet against a real minted code, both decoder refusals, the
@@ -255,12 +312,19 @@ the endpoint URL moved to production with v0.11.0.
   seat colours in `components/playerAccent.ts` are a different thing entirely and stay out of it.
 - **Should the fingerprint be player-visible?** The card's footer would carry it, and the app's
   share UI could too, so a player can tell a stale code from a mistyped one before asking. Open.
-- **Always-on or not.** If "did not respond" after each deploy proves annoying in practice, the fix
-  is `min_machines_running = 1` (roughly $2/month), which would also end cold starts for online
-  games. Open until the bot has real traffic.
+- **Always-on or not.** _Resolved 2026-10-26 (v0.11.0):_ production carries
+  `min_machines_running = 1` (`fly.toml`), because Discord allows an interaction 3 s and a cold wake
+  measured 4.71 s — and a dropped interaction is never logged, so the bot would simply have looked
+  broken. Staging stays at `0` and sleeps (`fly.test.toml`), which is why it must be warmed before
+  any test against it. What remains is narrower: a deploy still starts a fresh process, so the first
+  command after one is the only window left for that failure — see _Another server adopting the bot_.
 - **A public sheet endpoint.** `/api/army-sheet/[code]` is not needed while the bot runs in-process,
   but unfurling and any external tool would want it. Whether to expose one — and with what rate
   limit, since decoding is public and unauthenticated — is open.
 - **Channel scope and abuse.** Whether the bot should answer in threads, and whether a server should
   be able to lock it to one channel. Discord's own rate limits bound the second half; the first is
-  a permissions question nobody has asked yet.
+  a permissions question nobody has asked yet. Neither is ours to decide per server today: the
+  command declares no `contexts` and no `default_member_permissions`, so an adopting server's admin
+  restricts it under _Server Settings → Integrations_ and we have no configuration to hang a rule on
+  — see _Another server adopting the bot_. Setting either field would be the change, and it would
+  need a re-registration plus up to an hour of propagation.
