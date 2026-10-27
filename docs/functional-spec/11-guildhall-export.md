@@ -151,13 +151,20 @@ them**, and getting it backwards ships a group object their builder never writes
 | class      | flat catalog row                     | n/a                                         |
 | stratagem  | flat catalog row                     | n/a                                         |
 
-Only the **trait** case is confirmed by a real export that reproduces byte-for-byte. Their builder
-has no handler for any of the five upgrades that grant these, so no export of theirs contains a
-granted class, skill, combat art or stratagem to compare against. Those four are built by analogy
-with **innate** entries in the dump, which are byte-identical to their group's per-level entry plus
-the injected group — that is what pins each row of the table, and it is inference rather than
-observation. Confirming it needs an import test: export from us, drop it into Guildhall, and check
-the granted rule actually renders.
+Only the **trait** case can be confirmed by diffing against one of their exports, because their
+builder has no handler for any of the five upgrades that grant these — so no file of theirs contains
+a granted class, skill, combat art or stratagem. Those four were built by analogy with **innate**
+entries in the dump, which are byte-identical to their group's per-level entry plus the injected
+group.
+
+All five are now **confirmed by import** (2026-10-27). Two test armies covering all six
+grant-bearing upgrades were exported and dropped into Guildhall, and every grant rendered:
+Armsmaster + Fencing 1 on Bushi Attendant, Marksman + Archery 1 on Kitsune Spellmaiden, Advance! and
+Back to Back on Helrin Expatriate, Climbing 1 and Stealth 1 on their respective models, and
+Resourceful II with Survival (Difficult) on an Eonian Runner that has **no innate traits at all**, so
+nothing on it could have come from the character object. Both totals read 56/85, so their cost model
+agrees with ours. Import is the only verification available for these four shapes, since there is no
+file of theirs to diff against.
 
 ## What it refuses
 
@@ -219,20 +226,16 @@ channel can click.
 
 ## Open questions
 
-- **Two upgrades diverge from their builder.** We model effects for `expedition-leader` (two
-  stratagems) and `journeyman-adventurer` (two traits); their client has **no handler** for either,
-  so their builder records the upgrade without applying anything. The export currently bakes in
-  **our** rulebook-correct reading. The double-display risk once feared here is ruled out: their
-  upgrade objects carry no structured relation to a trait or stratagem at all — the grant exists only
-  as prose inside `description` — so nothing on their side can render it a second time. It remains a
-  maintainer decision rather than a settled one, because baking ours in means an exported army
-  differs from the same list built natively in Guildhall.
-- **Four granted-rule shapes are inferred, not observed.** Their builder never writes a granted
-  class, skill, combat art or stratagem, because it has no handler for the upgrades that grant them —
-  so there is no export of theirs to diff against. Those four are built by analogy with **innate**
-  entries, which are byte-identical to their group's per-level entry plus the injected group. One
-  import test would confirm it: export an army using Bujutsu Expertise, Climbing Expertise and
-  Expedition Leader, drop it into Guildhall, and check the grants render.
+- **Two upgrades diverge from their builder — a fairness call, not a technical one.** We model
+  effects for `expedition-leader` (two stratagems) and `journeyman-adventurer` (two traits); their
+  client has **no handler** for either, so their builder records the upgrade without applying
+  anything. The export bakes in **our** rulebook-correct reading, and the import test confirmed it
+  renders **exactly once** — the double-display risk that made this uncomfortable is empirically
+  gone. Their upgrade objects carry no structured relation to a trait or stratagem at all, only prose
+  inside `description`, which is why they can neither apply the grant nor duplicate it. What remains
+  is the maintainer's call: an army imported from us is stronger than the same list built natively in
+  Guildhall, and in a tournament that difference is visible to both players. Worth raising with
+  Freecompany as a bug report, since their own card text promises grants their builder does not make.
 - **The producer dump is stale, and the replacement offered so far is partial.**
   `data-import/units.json` is dated 2026-08-31, but their catalog has edits from 2026-09-10 (Lupus
   Rex's item `attack_mode` changed from `MELEE` to `NATURAL_AND_MELEE`). `units3.json` confirms the
