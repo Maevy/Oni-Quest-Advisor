@@ -59,6 +59,17 @@ export type GuildhallCatalog = {
 	 * needed for a trait an upgrade *grants* — every other trait arrives inside its character.
 	 */
 	traitGroups: Record<string, Json>;
+	/** Classes keyed by our class id (`kebab(code)`); only those an upgrade can grant. */
+	classes: Record<string, Json>;
+	/** Skill groups keyed by our skill id (`kebab(code)`), each carrying its per-level entries. */
+	skillGroups: Record<string, Json>;
+	/** Combat-art groups keyed by our art id (`kebab(code)`), each carrying its per-level entries. */
+	combatArtGroups: Record<string, Json>;
+	/**
+	 * Stratagems keyed by our stratagem id, which is `slug(name)` rather than `kebab(code)` — a third
+	 * of their stratagem codes contain spaces or are null, so the name is the only reliable key.
+	 */
+	stratagems: Record<string, Json>;
 };
 
 /** The structure version their importer expects. Refuse rather than emit a stale one. */
@@ -87,7 +98,23 @@ export type GuildhallExportError =
 	| { kind: 'missing-faction'; factionId: string }
 	| { kind: 'malformed-catalog'; path: string }
 	/** An upgrade granted a trait whose group is absent from the artifact. */
-	| { kind: 'unknown-trait'; traitId: string };
+	| { kind: 'unknown-trait'; traitId: string }
+	| { kind: 'unknown-class'; classId: string }
+	| { kind: 'unknown-skill'; skillId: string }
+	| { kind: 'unknown-combat-art'; artId: string }
+	| { kind: 'unknown-stratagem'; stratagemId: string }
+	/**
+	 * A picked upgrade carries an effect kind this serializer does not write. The tripwire that
+	 * makes silent loss impossible: adding a kind to `ArmyUpgradeEffect` without teaching the export
+	 * about it fails here, at the boundary, instead of shipping an army that lists the upgrade while
+	 * the model lacks the thing.
+	 */
+	| { kind: 'unsupported-effect'; upgradeId: string; effect: string }
+	/**
+	 * An inscribed item (Glyphscribe: Reduce Weight) carries per-copy stat overrides that their
+	 * format has no observed representation for - no ground-truth export shows one.
+	 */
+	| { kind: 'unrepresentable-inscription'; itemId: string };
 
 export type GuildhallExportResult =
 	{ ok: true; document: Json } | { ok: false; error: GuildhallExportError };
@@ -282,6 +309,134 @@ function buildGrantedTrait(
 	};
 }
 
+/** Mirrors the importer's `slug()`: our stratagem ids are name-derived, not code-derived. */
+function slug(name: unknown): string {
+	return String(name ?? '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
+}
+
+/** A `{id, level}` reference — the shape both `ArmySkillRef` and `ArmyCombatArtRef` satisfy. */
+type LeveledRef = { id: string; level: number };
+
+const classCode = (entry: Json): string => kebab(path(entry, ['attributes', 'code']));
+const stratagemSlug = (entry: Json): string => slug(path(entry, ['attributes', 'name']));
+const skillGroupCode = (entry: Json): string =>
+	kebab(path(entry, ['attributes', 'skill_group', 'data', 'attributes', 'code']));
+const combatArtGroupCode = (entry: Json): string =>
+	kebab(path(entry, ['attributes', 'combat_art_group', 'data', 'attributes', 'code']));
+
+/**
+ * Reconciles one of their `{data:[...]}` rule arrays whose entries are **flat catalog rows** —
+ * classes and stratagems. An innate entry is already correct, so it is left completely alone,
+ * keeping its join-row id and its position; a granted one is appended bare, with no outer id, which
+ * is how their builder writes anything it added at runtime.
+ */
+function reconcileFlat(
+	attrs: Record<string, Json>,
+	field: string,
+	ours: readonly string[],
+	rows: Record<string, Json>,
+	keyOf: (entry: Json) => string,
+	errorFor: (id: string) => GuildhallExportError
+): GuildhallExportError | null {
+	const container = asRecord(attrs[field], `attributes.${field}`);
+	const entries: Json[] = Array.isArray(container.data) ? container.data : [];
+	const present = new Set(entries.map(keyOf));
+	for (const id of ours) {
+		if (present.has(id)) continue;
+		const row = rows[id];
+		if (row === undefined) return errorFor(id);
+		entries.push({
+			attributes: clone(asRecord(path(row, ['attributes']), `${field}.attributes`))
+		});
+	}
+	container.data = entries;
+	return null;
+}
+
+/**
+ * Reconciles a **per-level** rule array — skills and combat arts. Same rule as traits: an innate
+ * entry keeps its position and join-row id and takes only a `level` patch, a granted one is appended
+ * and assembled from its group's matching level entry.
+ *
+ * The injected group **drops** its own nested level list here, which is the *opposite* of traits,
+ * where `trait_group.data` keeps its nested `traits`. Verified against innate entries in the dump:
+ * an innate skill's `skill_group.data.attributes` carries only name, code, timestamps and
+ * description. Generalising the trait rule to skills would ship a group object their builder never
+ * writes.
+ */
+function reconcileLeveled(
+	attrs: Record<string, Json>,
+	field: string,
+	refs: readonly LeveledRef[],
+	groups: Record<string, Json>,
+	nestedKey: string,
+	groupKey: string,
+	keyOf: (entry: Json) => string,
+	errorFor: (id: string) => GuildhallExportError
+): GuildhallExportError | null {
+	const container = asRecord(attrs[field], `attributes.${field}`);
+	const entries: Json[] = Array.isArray(container.data) ? container.data : [];
+	const present = new Set(entries.map(keyOf));
+
+	for (const entry of entries) {
+		if (!isRecord(entry)) continue;
+		const ref = refs.find((candidate) => candidate.id === keyOf(entry));
+		if (ref) asRecord(entry.attributes, `${field}.attributes`).level = ref.level;
+	}
+
+	for (const ref of refs) {
+		if (present.has(ref.id)) continue;
+		const group = groups[ref.id];
+		if (group === undefined) return errorFor(ref.id);
+		const levels = path(group, ['attributes', nestedKey, 'data']);
+		if (!Array.isArray(levels)) {
+			return {
+				kind: 'malformed-catalog',
+				path: `${field}.${ref.id}.attributes.${nestedKey}.data`
+			};
+		}
+		// Strict on the level, as with traits: the nearest one would carry the wrong rules text.
+		const level = levels.find((entry) => path(entry, ['attributes', 'level']) === ref.level);
+		if (!isRecord(level)) {
+			return { kind: 'malformed-catalog', path: `${field}.${ref.id} has no level ${ref.level}` };
+		}
+		const groupAttrs = clone(asRecord(path(group, ['attributes']), `${field}.${ref.id}.group`));
+		delete groupAttrs[nestedKey];
+		entries.push({
+			attributes: {
+				...clone(asRecord(level.attributes, `${field}.${ref.id}.level`)),
+				[groupKey]: { data: { id: (group as Record<string, Json>).id, attributes: groupAttrs } }
+			}
+		});
+	}
+	container.data = entries;
+	return null;
+}
+
+/**
+ * Every effect kind this serializer knows how to write into their character object. Checked against
+ * each picked upgrade rather than assumed, so that adding a kind to `ArmyUpgradeEffect` without
+ * teaching the export about it fails loudly here instead of shipping an army that lists the upgrade
+ * in `appliedArmyCharacterUpgrades` while the model lacks the thing it grants.
+ */
+const WRITTEN_EFFECT_KINDS: ReadonlySet<string> = new Set([
+	'stat',
+	'trait',
+	'skill',
+	'combatArt',
+	'class',
+	'stratagem',
+	'item',
+	'replacePrimaryWeapon',
+	'pouch',
+	'costReduction',
+	'spellcraftLevelUp',
+	'choice'
+]);
+
 /**
  * Patches one producer character object with what our own domain resolved for that copy. The base
  * is copied verbatim and only the leaves their builder would have changed are touched, which keeps
@@ -301,6 +456,25 @@ function buildCharacter(
 
 	const character = clone(base);
 	const attrs = asRecord(path(character, ['attributes']), 'attributes');
+
+	// Refuse before mutating anything. An effect kind this serializer does not write would otherwise
+	// vanish silently while the upgrade still appeared in appliedArmyCharacterUpgrades - the file
+	// would look complete and the model would be missing what the player paid for.
+	for (const upgrade of row.upgrades) {
+		for (const effect of upgrade.effects) {
+			if (!WRITTEN_EFFECT_KINDS.has(effect.kind)) {
+				return {
+					error: { kind: 'unsupported-effect', upgradeId: upgrade.id, effect: effect.kind }
+				};
+			}
+		}
+	}
+	// An inscribed item carries per-copy stat overrides that their format has no observed
+	// representation for, so refuse rather than export the un-inscribed item and call it the same.
+	const inscribed = Object.keys(row.itemOverrides ?? {});
+	if (inscribed.length > 0) {
+		return { error: { kind: 'unrepresentable-inscription', itemId: inscribed[0] } };
+	}
 
 	// The statline keeps each stat's own producer row id and prefix; only `value` is ours.
 	const statline = asRecord(attrs.attributes, 'attributes.attributes');
@@ -341,6 +515,54 @@ function buildCharacter(
 	// Assigning back only when there is something to say keeps a character that had no `traits` key
 	// from gaining an empty one their own exports would not carry.
 	if (Array.isArray(attrs.traits) || traitEntries.length > 0) attrs.traits = traitEntries;
+
+	// Classes and stratagems are flat catalog rows; skills and combat arts are per-level entries with
+	// their group injected. All four arrays always exist on a character - `{data:[]}` when empty, in
+	// the dump and in all eight of their exports alike - so appending a grant never introduces a key
+	// their own files lack.
+	const classError = reconcileFlat(
+		attrs,
+		'classes',
+		unit.classes ?? [],
+		catalog.classes,
+		classCode,
+		(classId) => ({ kind: 'unknown-class', classId })
+	);
+	if (classError) return { error: classError };
+
+	const stratagemError = reconcileFlat(
+		attrs,
+		'stratagems',
+		unit.stratagems ?? [],
+		catalog.stratagems,
+		stratagemSlug,
+		(stratagemId) => ({ kind: 'unknown-stratagem', stratagemId })
+	);
+	if (stratagemError) return { error: stratagemError };
+
+	const skillError = reconcileLeveled(
+		attrs,
+		'skills',
+		unit.skills ?? [],
+		catalog.skillGroups,
+		'skills',
+		'skill_group',
+		skillGroupCode,
+		(skillId) => ({ kind: 'unknown-skill', skillId })
+	);
+	if (skillError) return { error: skillError };
+
+	const combatArtError = reconcileLeveled(
+		attrs,
+		'combat_arts',
+		unit.combatArts ?? [],
+		catalog.combatArtGroups,
+		'combat_arts',
+		'combat_art_group',
+		combatArtGroupCode,
+		(artId) => ({ kind: 'unknown-combat-art', artId })
+	);
+	if (combatArtError) return { error: combatArtError };
 
 	// Inventory: a row the model already carries keeps its join-row id and takes a QTY patch; a row
 	// an upgrade added is written bare, exactly as their own builder writes it.

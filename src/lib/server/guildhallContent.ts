@@ -31,6 +31,10 @@ type GuildhallArtifact = {
 	factions: ProducerRecord[];
 	elements: ProducerRecord[];
 	traitGroups: ProducerRecord[];
+	classes: ProducerRecord[];
+	skillGroups: ProducerRecord[];
+	combatArtGroups: ProducerRecord[];
+	stratagems: ProducerRecord[];
 };
 
 let catalog: GuildhallCatalog | null = null;
@@ -47,11 +51,20 @@ function kebab(code: string): string {
 	return code.toLowerCase().replace(/_/g, '-');
 }
 
+/** Mirrors the importer's `slug()`, which is how our stratagem ids are derived. */
+function slug(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '');
+}
+
 /**
- * Keyed by **our** id rather than their row id, for the two catalogs whose producer `code` kebabs to
- * exactly the id our content uses: factions (`COALITION_OF_THENION` -> `coalition-of-thenion`) and
- * trait groups (`POISON` -> `poison`). A decoded army carries only our ids, so this is what makes
- * the catalog addressable straight from it instead of making every caller resolve a mapping first.
+ * Keyed by **our** id rather than their row id, for every catalog whose producer `code` kebabs to
+ * exactly the id our content uses: factions (`COALITION_OF_THENION` -> `coalition-of-thenion`),
+ * trait groups (`POISON` -> `poison`), classes, skill groups and combat-art groups. A decoded army
+ * carries only our ids, so this is what makes the artifact addressable straight from it instead of
+ * making every caller resolve a mapping first.
  */
 function indexByKebabCode(records: ProducerRecord[]): Record<string, Json> {
 	const indexed: Record<string, Json> = {};
@@ -79,6 +92,21 @@ function indexElementsByTitleCasedCode(records: ProducerRecord[]): Record<string
 	return indexed;
 }
 
+/**
+ * Stratagems are the exception to code-based keying. A third of theirs have no usable `code` —
+ * several contain spaces ("active support", "solemn- presence") and some are null — so our content
+ * ids them by `slug(name)`, and the artifact has to be keyed the same way or the lookups miss.
+ */
+function indexBySlugName(records: ProducerRecord[]): Record<string, Json> {
+	const indexed: Record<string, Json> = {};
+	for (const record of records) {
+		const name = record.attributes?.name;
+		if (typeof name !== 'string') continue;
+		indexed[slug(name)] = record as unknown as Json;
+	}
+	return indexed;
+}
+
 /** The Guildhall catalog, parsed once per process and shared thereafter. */
 export function getGuildhallCatalog(): Promise<GuildhallCatalog> {
 	if (catalog) return Promise.resolve(catalog);
@@ -91,7 +119,11 @@ export function getGuildhallCatalog(): Promise<GuildhallCatalog> {
 			items: indexById(artifact.items),
 			factions: indexByKebabCode(artifact.factions),
 			elements: indexElementsByTitleCasedCode(artifact.elements),
-			traitGroups: indexByKebabCode(artifact.traitGroups)
+			traitGroups: indexByKebabCode(artifact.traitGroups),
+			classes: indexByKebabCode(artifact.classes),
+			skillGroups: indexByKebabCode(artifact.skillGroups),
+			combatArtGroups: indexByKebabCode(artifact.combatArtGroups),
+			stratagems: indexBySlugName(artifact.stratagems)
 		};
 		return catalog;
 	})();

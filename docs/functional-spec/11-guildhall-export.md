@@ -89,22 +89,29 @@ the thing being kept out is half a megabyte of someone else's rules prose. `guil
 loads it lazily behind a memoized promise, so boot does not parse it and an online game never pays
 for a feature it does not use — measured, a first export costs ~0.24 s and every one after ~0.005 s.
 
-Characters are 456 KB of that and irreducible: fidelity requires the whole object. Trait groups are
-narrowed to the seven an upgrade can actually _grant_ (4.4 KB instead of 60.4 KB), because every
-other trait reaches the export inside its character. That set is derived from `UPGRADE_EFFECTS`
-rather than listed twice, and the importer **throws** if a granted trait is missing from the dump —
-a catalog that silently could not build one trait would surface only as a refusal at export time
-with no hint why.
+Characters are 456 KB of that and irreducible: fidelity requires the whole object. Everything else
+is narrowed to only what an upgrade can **grant** — trait groups, classes, skill groups, combat-art
+groups and stratagems — because every other instance of those reaches the export inside its own
+character object. The set is derived from `UPGRADE_EFFECTS` rather than listed twice, so it tracks
+the curation, and the importer **throws** if a granted row is missing from the dump: a catalog that
+silently could not build one grant would surface only as a refusal at export time, with no hint why.
+Narrowing is cheap — the four rule catalogs add ~10 KB — and keeps the artifact near 600 KB.
 
-Factions are keyed by **our** faction id, not their row id: their `code` kebabs to exactly our id
-(`COALITION_OF_THENION` → `coalition-of-thenion`), and a decoded army carries nothing else.
+Two keying conventions, both matching our content's own: factions, trait groups, classes, skill
+groups and combat-art groups key by **`kebab(code)`**, which is exactly our id
+(`COALITION_OF_THENION` → `coalition-of-thenion`). **Stratagems key by `slug(name)`** instead,
+because a third of theirs have no usable code — several contain spaces (`"active support"`,
+`"solemn- presence"`) and some are `null`. A decoded army carries only our ids, so keying the
+artifact our way is what makes it addressable without every caller resolving a mapping first.
 
-## Granted traits
+## Granted rules
 
-A trait an upgrade grants — Poisoned Weapons, Seasoned Combatant, Tactical Expertise, Traveling
-Duelist — is the one part of their format that is not already sitting inside a character object, so
-it has to be assembled. Ground truth is the Nightshade + Poisoned Weapons export, whose base traits
-are empty so the whole entry is new:
+An upgrade can grant five kinds of thing a model was not born with — a **trait** (Poisoned Weapons,
+Seasoned Combatant, Tactical Expertise, Traveling Duelist), a **class** and a **combat art** (Bujutsu
+and Kyujutsu Expertise), a **skill** (Climbing Expertise, Muffled Movement), and a **stratagem**
+(Expedition Leader). None of these is sitting inside the character object, so each has to be
+assembled. Ground truth for the trait case is the Nightshade + Poisoned Weapons export, whose base
+traits are empty so the whole entry is new:
 
 ```json
 {
@@ -127,24 +134,49 @@ are empty so the whole entry is new:
 (`trait_group.data` is elided here but is the **whole** group object, nested `traits` included.)
 
 **No outer join-row id**, same as an upgrade-granted inventory item. `trait.data` is the group's
-per-level entry **verbatim** with `trait_group` injected — and that injected group **keeps** its own
-nested `traits` array, which is the opposite of how they treat element objects. Innate traits are
-patched in place and keep the catalog's order; granted ones are appended, which is where their own
-builder puts them. The level is matched strictly against the group's entries: guessing the nearest
-one would write the wrong rules text into a player's army, which is worse than refusing.
+per-level entry **verbatim** with `trait_group` injected. Innate entries are patched in place and
+keep the catalog's order — reordering was the largest source of noise in every round-trip diff — and
+granted ones are appended, which is where their own builder puts them. The level is matched strictly
+against the group's entries: guessing the nearest one would write the wrong rules text into a
+player's army, which is worse than refusing.
 
-This was the last piece inferred from minified bundle code, and it is now confirmed by a real export
-that reproduces byte-for-byte.
+The other four kinds follow the same two patterns, but **the nested-group rule differs between
+them**, and getting it backwards ships a group object their builder never writes:
+
+| Granted    | Shape                                | Injected group keeps its nested level list? |
+| ---------- | ------------------------------------ | ------------------------------------------- |
+| trait      | per-level entry + `trait_group`      | **yes**                                     |
+| skill      | per-level entry + `skill_group`      | **no** — stripped                           |
+| combat art | per-level entry + `combat_art_group` | **no** — stripped                           |
+| class      | flat catalog row                     | n/a                                         |
+| stratagem  | flat catalog row                     | n/a                                         |
+
+Only the **trait** case is confirmed by a real export that reproduces byte-for-byte. Their builder
+has no handler for any of the five upgrades that grant these, so no export of theirs contains a
+granted class, skill, combat art or stratagem to compare against. Those four are built by analogy
+with **innate** entries in the dump, which are byte-identical to their group's per-level entry plus
+the injected group — that is what pins each row of the table, and it is inference rather than
+observation. Confirming it needs an import test: export from us, drop it into Guildhall, and check
+the granted rule actually renders.
 
 ## What it refuses
 
 Every unrepresentable case is a typed error, never a best guess.
 
 - **`unknown-unit` / `unknown-mount` / `unknown-upgrade` / `unknown-item` / `unknown-element` /
-  `unknown-trait` / `missing-faction`** — content drift between our catalog and the artifact. The
-  message names what is missing, because that is what makes it actionable.
-- **`malformed-catalog`** — the artifact lacks a shape the serializer needs, such as a trait group
-  with no entry at the requested level.
+  `unknown-trait` / `unknown-class` / `unknown-skill` / `unknown-combat-art` / `unknown-stratagem` /
+  `missing-faction`** — content drift between our catalog and the artifact. The message names what is
+  missing, because that is what makes it actionable.
+- **`malformed-catalog`** — the artifact lacks a shape the serializer needs, such as a group with no
+  entry at the requested level. Refusing beats taking the nearest level, which would write the wrong
+  rules text into a player's army.
+- **`unsupported-effect`** — a picked upgrade carries an effect kind the serializer does not write.
+  This is a **tripwire, not a live case**: all twelve kinds in `ArmyUpgradeEffect` are covered today.
+  It exists so that adding a thirteenth fails here, instead of silently shipping an army that lists
+  the upgrade in `appliedArmyCharacterUpgrades` while the model lacks the thing it grants.
+- **`unrepresentable-inscription`** — Glyphscribe: Reduce Weight's inscribed item carries per-copy
+  stat overrides (`ArmyRosterRow.itemOverrides`) that their format has no observed representation
+  for. Refusing is better than exporting the un-inscribed item and calling it the same thing.
 - **`roster-mismatch`** (409, from `decodeArmy`) — the code was built against older content. This is
   the one a whole Discord hits at once on re-import day, and the message says what to do about it.
 
@@ -166,6 +198,15 @@ That harness found two bugs the 21 synthetic tests could not:
    to include the key, so the suite passed against a serializer that was wrong. **A fixture that
    already contains the field under test hides its absence.**
 
+A third defect was found by neither, and the reason matters more than the defect. Four effect kinds —
+`class`, `skill`, `combatArt`, `stratagem` — were applied by our domain and written by no part of the
+serializer, so five upgrades exported with the upgrade listed in `appliedArmyCharacterUpgrades` and
+the grant silently absent. **The round-trip could not have caught it**: none of the eight samples
+used any of those five upgrades, so every diff was clean. It surfaced only by auditing the kinds in
+`ArmyUpgradeEffect` against the kinds the serializer writes — which is why the `unsupported-effect`
+tripwire now exists. A corpus of ground-truth samples covers only the cases the samples happen to
+contain; coverage of the _input space_ has to be checked separately.
+
 The route itself was exercised end to end against a running dev server: a minted Standard code and a
 minted Roster code both returned `200` with the right `content-disposition`, `no-store`, correct
 `mode`/variant, and — for the Roster — `armyCharacterList: []`, no upgrade key on the roster unit,
@@ -178,17 +219,31 @@ channel can click.
 
 ## Open questions
 
-- **Two upgrades diverge from their builder.** We model effects for `expedition-leader` (stratagem)
-  and `journeyman-adventurer` (two traits); their client has **no handler** for either, so their
-  builder records them without applying anything. Unresolved: export our rulebook-correct
-  interpretation, or mirror their record-only behaviour? Baking ours in is more accurate but means an
-  exported army differs from the same army built natively — and risks a double-display if their UI
-  also renders granted traits from the upgrade list.
-- **The producer dump is stale.** `data-import/units.json` is dated 2026-08-31, but their catalog has
-  edits from 2026-09-10 (Lupus Rex's item `attack_mode` changed from `MELEE` to
-  `NATURAL_AND_MELEE`). This affects the whole app's content, not just this export, and it explains
-  the array-ordering differences the round-trip surfaced. A fresh dump is needed before
-  byte-fidelity claims mean much.
+- **Two upgrades diverge from their builder.** We model effects for `expedition-leader` (two
+  stratagems) and `journeyman-adventurer` (two traits); their client has **no handler** for either,
+  so their builder records the upgrade without applying anything. The export currently bakes in
+  **our** rulebook-correct reading. The double-display risk once feared here is ruled out: their
+  upgrade objects carry no structured relation to a trait or stratagem at all — the grant exists only
+  as prose inside `description` — so nothing on their side can render it a second time. It remains a
+  maintainer decision rather than a settled one, because baking ours in means an exported army
+  differs from the same list built natively in Guildhall.
+- **Four granted-rule shapes are inferred, not observed.** Their builder never writes a granted
+  class, skill, combat art or stratagem, because it has no handler for the upgrades that grant them —
+  so there is no export of theirs to diff against. Those four are built by analogy with **innate**
+  entries, which are byte-identical to their group's per-level entry plus the injected group. One
+  import test would confirm it: export an army using Bujutsu Expertise, Climbing Expertise and
+  Expedition Leader, drop it into Guildhall, and check the grants render.
+- **The producer dump is stale, and the replacement offered so far is partial.**
+  `data-import/units.json` is dated 2026-08-31, but their catalog has edits from 2026-09-10 (Lupus
+  Rex's item `attack_mode` changed from `MELEE` to `NATURAL_AND_MELEE`). `units3.json` confirms the
+  drift but carries only **3 of 12** sections — no `upgradeList`, `itemList`, `traitGroupList`,
+  `skillGroupList`, `classList`, `combatArtGroupList`, `strategmList` or `elementList` — so it
+  **cannot** be imported: the importer does not guard against an empty list and would write nine
+  valid-looking empty catalogs. Its three sections do reveal two live rules errors we carry:
+  Cryomancy's attack mode is `RANGED`, not `MELEE_AND_RANGED`, and Art of Sorcery's Armor-Piercing
+  markup was repaired upstream. This affects the whole app's content, not just this export, and it
+  explains the array-ordering differences the round-trip surfaced. A **full** fresh dump is needed
+  before byte-fidelity claims mean much.
 - **One unexplained sample.** In a Glyphscribe: Reduce Weight export, Flameshaper gained a
   _Mastercrafted Helrin Sword_ from an empty inventory — but neither of that upgrade's two options
   adds an item. Most likely their current catalog gives Flameshaper a starting sword our stale dump

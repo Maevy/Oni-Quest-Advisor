@@ -78,6 +78,41 @@ describe('getGuildhallCatalog', () => {
 		expect(poison.attributes.traits.data[0].attributes.level).toBe(1);
 	});
 
+	it('keys the granted-rule catalogs, stratagems by slug(name) and the rest by kebab(code)', async () => {
+		const catalog = await getGuildhallCatalog();
+
+		// Classes, skills and combat arts all key off the producer code, which kebabs to our id.
+		expect((catalog.classes.armsmaster as { attributes: { code: string } }).attributes.code).toBe(
+			'ARMSMASTER'
+		);
+		expect((catalog.skillGroups.climbing as { attributes: { code: string } }).attributes.code).toBe(
+			'CLIMBING'
+		);
+		expect(
+			(catalog.combatArtGroups.fencing as { attributes: { code: string } }).attributes.code
+		).toBe('FENCING');
+
+		// Stratagems cannot: a third of their codes contain spaces ("active support") or are null, so
+		// our content ids them by slug(name) and the artifact has to match that instead.
+		expect((catalog.stratagems.advance as { attributes: { name: string } }).attributes.name).toBe(
+			'Advance!'
+		);
+		expect(
+			(catalog.stratagems['back-to-back'] as { attributes: { name: string } }).attributes.name
+		).toBe('Back to Back');
+	});
+
+	it('carries the per-level entries a granted skill or combat art is assembled from', async () => {
+		const catalog = await getGuildhallCatalog();
+		const fencing = catalog.combatArtGroups.fencing as {
+			attributes: { combat_arts: { data: { id: number; attributes: { level: number } }[] } };
+		};
+		// Fencing has five levels in the producer catalog; the export picks the one matching the ref
+		// and refuses rather than taking a neighbour.
+		expect(fencing.attributes.combat_arts.data.length).toBeGreaterThan(1);
+		expect(fencing.attributes.combat_arts.data[0].attributes.level).toBe(1);
+	});
+
 	it('memoizes, so the artifact is parsed once per process', async () => {
 		const first = await getGuildhallCatalog();
 		const second = await getGuildhallCatalog();

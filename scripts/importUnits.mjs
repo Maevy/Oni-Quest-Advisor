@@ -792,31 +792,58 @@ if (skipped.length > 0) {
 const guildhallDir = join(root, 'src', 'lib', 'server', 'guildhall');
 mkdirSync(guildhallDir, { recursive: true });
 
-// Only trait groups an upgrade can *grant* have to be reconstructible from scratch; every other
-// trait reaches the export inside its character object. Derived from UPGRADE_EFFECTS rather than
-// listed a second time, so it tracks the curation automatically.
-const grantedTraitIds = new Set();
+// Only the catalog rows an upgrade can *grant* have to be reconstructible from scratch; every other
+// class, skill, combat art, stratagem and trait reaches the export inside its character object.
+// Derived from UPGRADE_EFFECTS rather than listed a second time, so it tracks the curation.
+const grantedTraits = new Set();
+const grantedClasses = new Set();
+const grantedSkills = new Set();
+const grantedArts = new Set();
+const grantedStratagems = new Set();
 for (const effects of Object.values(UPGRADE_EFFECTS)) {
 	for (const effect of effects ?? []) {
-		if (effect.kind === 'trait') grantedTraitIds.add(effect.traitId);
+		if (effect.kind === 'trait') grantedTraits.add(effect.traitId);
+		if (effect.kind === 'class') grantedClasses.add(effect.classId);
+		if (effect.kind === 'skill') grantedSkills.add(effect.skillId);
+		if (effect.kind === 'combatArt') grantedArts.add(effect.artId);
+		if (effect.kind === 'stratagem') {
+			for (const id of effect.stratagemIds ?? []) grantedStratagems.add(id);
+		}
 		for (const option of effect.options ?? []) {
-			if (option.grantTrait?.traitId) grantedTraitIds.add(option.grantTrait.traitId);
+			if (option.grantTrait?.traitId) grantedTraits.add(option.grantTrait.traitId);
 		}
 	}
 }
-const guildhallTraitGroups = pageProps.traitGroupList.data.filter((wrapper) =>
-	grantedTraitIds.has(kebab(wrapper.attributes.code))
-);
-// Throw rather than ship a catalog that quietly cannot build some granted trait - the export would
-// refuse at runtime with no hint that the artifact is missing a group. Same reasoning as sizeId().
-const missingTraitGroups = [...grantedTraitIds].filter(
-	(id) => !guildhallTraitGroups.some((wrapper) => kebab(wrapper.attributes.code) === id)
-);
-if (missingTraitGroups.length > 0) {
-	throw new Error(
-		'UPGRADE_EFFECTS grants traits missing from traitGroupList: ' + missingTraitGroups.join(', ')
-	);
-}
+
+// Classes, skills and combat arts are keyed by kebab(code). Stratagems are keyed by slug(name),
+// because a third of the producer's stratagems have no usable code - several contain spaces
+// ("active support", "solemn- presence") and some are null - and our content ids them by name.
+// Both functions are the importer's own, so the artifact's keys match content/units by construction.
+const pickByCode = (list, wanted) => list.filter((w) => wanted.has(kebab(w.attributes?.code)));
+const pickBySlug = (list, wanted) => list.filter((w) => wanted.has(slug(w.attributes?.name ?? '')));
+
+const guildhallTraitGroups = pickByCode(pageProps.traitGroupList.data, grantedTraits);
+const guildhallClasses = pickByCode(pageProps.classList.data, grantedClasses);
+const guildhallSkillGroups = pickByCode(pageProps.skillGroupList.data, grantedSkills);
+const guildhallCombatArtGroups = pickByCode(pageProps.combatArtGroupList.data, grantedArts);
+const guildhallStratagems = pickBySlug(pageProps.strategmList.data, grantedStratagems);
+
+// Throw rather than ship an artifact that quietly cannot build some grant - the export would refuse
+// at runtime with no hint that the catalog is missing a row. Same reasoning as sizeId().
+const assertComplete = (label, wanted, picked, keyOf) => {
+	const have = new Set(picked.map(keyOf));
+	const missing = [...wanted].filter((id) => !have.has(id));
+	if (missing.length > 0) {
+		throw new Error(`UPGRADE_EFFECTS grants ${label} missing from the dump: ${missing.join(', ')}`);
+	}
+};
+const codeOf = (w) => kebab(w.attributes?.code);
+const slugOf = (w) => slug(w.attributes?.name ?? '');
+assertComplete('traits', grantedTraits, guildhallTraitGroups, codeOf);
+assertComplete('classes', grantedClasses, guildhallClasses, codeOf);
+assertComplete('skills', grantedSkills, guildhallSkillGroups, codeOf);
+assertComplete('combat arts', grantedArts, guildhallCombatArtGroups, codeOf);
+assertComplete('stratagems', grantedStratagems, guildhallStratagems, slugOf);
 
 const guildhallCatalog = {
 	characters: pageProps.characterList.data,
@@ -827,7 +854,11 @@ const guildhallCatalog = {
 	// Elemental Lineage between them cover Fire/Water/Earth/Air today, and the extra three cost
 	// ~17 KB against the risk of a future grant refusing to export.
 	elements: pageProps.elementList.data,
-	traitGroups: guildhallTraitGroups
+	traitGroups: guildhallTraitGroups,
+	classes: guildhallClasses,
+	skillGroups: guildhallSkillGroups,
+	combatArtGroups: guildhallCombatArtGroups,
+	stratagems: guildhallStratagems
 };
 writeFileSync(join(guildhallDir, 'catalog.json'), JSON.stringify(guildhallCatalog));
 console.log(
@@ -843,5 +874,13 @@ console.log(
 		guildhallCatalog.elements.length +
 		' elements, ' +
 		guildhallTraitGroups.length +
-		' grantable trait groups'
+		' grantable trait groups, ' +
+		guildhallClasses.length +
+		' classes, ' +
+		guildhallSkillGroups.length +
+		' skill groups, ' +
+		guildhallCombatArtGroups.length +
+		' combat-art groups, ' +
+		guildhallStratagems.length +
+		' stratagems'
 );

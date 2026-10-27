@@ -105,6 +105,13 @@ function producerCharacter(overrides: Record<string, Json> = {}): Json {
 			mount_character: { data: null },
 			spellcrafts: [],
 			traits: [],
+			// The four rule arrays are `{data:[...]}` wrappers and are present on every real
+			// character - `{data:[]}` when empty - in the dump and in all eight exports alike. The
+			// serializer relies on that when appending a grant, so the fixture has to carry them too.
+			classes: { data: [{ id: 7, attributes: { name: 'WARRIOR', code: 'WARRIOR' } }] },
+			skills: { data: [] },
+			combat_arts: { data: [] },
+			stratagems: { data: [] },
 			inventory: { id: 84, space: 4, items: [] },
 			appliedArmyCharacterUpgrades: [],
 			...overrides
@@ -157,6 +164,48 @@ function catalog(overrides: Partial<GuildhallCatalog> = {}): GuildhallCatalog {
 						]
 					}
 				}
+			}
+		},
+		// Classes and stratagems are flat rows; skills and combat arts nest their per-level entries.
+		// Stratagems are keyed by slug(name) - "Advance!" -> "advance" - because their codes are
+		// unreliable, while the other three key by kebab(code).
+		classes: {
+			armsmaster: { id: 11, attributes: { name: 'ARMSMASTER', code: 'ARMSMASTER' } }
+		},
+		skillGroups: {
+			climbing: {
+				id: 36,
+				attributes: {
+					name: 'Climbing',
+					code: 'CLIMBING',
+					description: 'Climbing rules text',
+					skills: {
+						data: [{ id: 44, attributes: { description: 'CLIMB', level: 1, name__: 'Climbing 1' } }]
+					}
+				}
+			}
+		},
+		combatArtGroups: {
+			fencing: {
+				id: 8,
+				attributes: {
+					name: 'Fencing',
+					code: 'FENCING',
+					description: 'Fencing rules text',
+					combat_arts: {
+						data: [
+							{ id: 26, attributes: { description: 'FENCING 1', level: 1, name__: 'Fencing 1' } },
+							{ id: 29, attributes: { description: 'FENCING 2', level: 2, name__: 'Fencing 2' } }
+						]
+					}
+				}
+			}
+		},
+		stratagems: {
+			advance: { id: 16, attributes: { name: 'Advance!', code: 'ADVANCE', type: 'authority' } },
+			'back-to-back': {
+				id: 17,
+				attributes: { name: 'Back to Back', code: 'BACK_TO_BACK', type: 'authority' }
 			}
 		},
 		...overrides
@@ -655,5 +704,182 @@ describe('buildGuildhallArmy - refusing rather than guessing', () => {
 			rows: [row({ upgradedUnit: unit({ stats: stats({ DEF: 99 }) }), upgrades: [upgrade()] })]
 		});
 		expect(JSON.stringify(shared)).toBe(before);
+	});
+});
+
+describe('buildGuildhallArmy - granted classes, skills, combat arts and stratagems', () => {
+	it('appends a granted class bare, leaving the innate one untouched', () => {
+		const doc = build({
+			rows: [row({ upgradedUnit: unit({ classes: ['warrior', 'armsmaster'] }) })]
+		});
+		const container = attrsOf(charactersOf(doc)[0]).classes as Record<string, Json>;
+		const classes = container.data as Record<string, Json>[];
+		expect(classes).toHaveLength(2);
+		// The innate entry keeps its join-row id and its position; the granted one has no outer id,
+		// which is how their builder writes anything it added at runtime.
+		expect(classes[0].id).toBe(7);
+		expect(classes[1].id).toBeUndefined();
+		expect(classes[1].attributes).toEqual({ name: 'ARMSMASTER', code: 'ARMSMASTER' });
+	});
+
+	it('appends a granted stratagem, matched by slug(name) rather than by code', () => {
+		const doc = build({
+			rows: [row({ upgradedUnit: unit({ stratagems: ['advance', 'back-to-back'] }) })]
+		});
+		const container = attrsOf(charactersOf(doc)[0]).stratagems as Record<string, Json>;
+		const stratagems = container.data as Record<string, Json>[];
+		expect(stratagems).toHaveLength(2);
+		expect(stratagems[0].attributes).toEqual({
+			name: 'Advance!',
+			code: 'ADVANCE',
+			type: 'authority'
+		});
+		expect(stratagems[1].id).toBeUndefined();
+	});
+
+	it('builds a granted skill from its group and strips the group nested level list', () => {
+		const doc = build({
+			rows: [row({ upgradedUnit: unit({ skills: [{ id: 'climbing', level: 1 }] }) })]
+		});
+		const container = attrsOf(charactersOf(doc)[0]).skills as Record<string, Json>;
+		const skills = container.data as Record<string, Json>[];
+		expect(skills).toHaveLength(1);
+		expect(skills[0].id).toBeUndefined();
+		const attributes = skills[0].attributes as Record<string, Json>;
+		expect(attributes.level).toBe(1);
+		expect(attributes.name__).toBe('Climbing 1');
+		const group = (attributes.skill_group as Record<string, Json>).data as Record<string, Json>;
+		expect(group.id).toBe(36);
+		// The injected group DROPS its nested `skills` - the opposite of traits, where trait_group
+		// keeps its nested `traits`. Generalising the trait rule here would ship a group object
+		// their builder never writes.
+		expect(group.attributes).toEqual({
+			name: 'Climbing',
+			code: 'CLIMBING',
+			description: 'Climbing rules text'
+		});
+	});
+
+	it('picks the combat-art level matching the ref and strips its nested list too', () => {
+		const doc = build({
+			rows: [row({ upgradedUnit: unit({ combatArts: [{ id: 'fencing', level: 2 }] }) })]
+		});
+		const container = attrsOf(charactersOf(doc)[0]).combat_arts as Record<string, Json>;
+		const arts = container.data as Record<string, Json>[];
+		expect(arts).toHaveLength(1);
+		const attributes = arts[0].attributes as Record<string, Json>;
+		expect(attributes.level).toBe(2);
+		expect(attributes.name__).toBe('Fencing 2');
+		const group = (attributes.combat_art_group as Record<string, Json>).data as Record<
+			string,
+			Json
+		>;
+		expect(group.id).toBe(8);
+		expect(group.attributes).toEqual({
+			name: 'Fencing',
+			code: 'FENCING',
+			description: 'Fencing rules text'
+		});
+	});
+
+	it('patches an innate skill level in place, keeping its join-row id', () => {
+		const doc = build({
+			catalog: catalog({
+				characters: {
+					84: producerCharacter({
+						skills: {
+							data: [
+								{
+									id: 31,
+									attributes: {
+										description: 'CLIMB',
+										level: 1,
+										name__: 'Climbing 1',
+										skill_group: { data: { id: 36, attributes: { code: 'CLIMBING' } } }
+									}
+								}
+							]
+						}
+					}),
+					53: producerCharacter()
+				}
+			}),
+			rows: [row({ upgradedUnit: unit({ skills: [{ id: 'climbing', level: 1 }] }) })]
+		});
+		const container = attrsOf(charactersOf(doc)[0]).skills as Record<string, Json>;
+		const skills = container.data as Record<string, Json>[];
+		expect(skills).toHaveLength(1);
+		expect(skills[0].id).toBe(31);
+	});
+});
+
+describe('buildGuildhallArmy - refusing what it cannot represent', () => {
+	it('refuses an effect kind it does not write, rather than dropping it silently', () => {
+		// Simulates a kind added to ArmyUpgradeEffect later without teaching the export about it,
+		// which is the regression this tripwire exists to catch. The cast is deliberate: no such kind
+		// exists today, and that is the point.
+		const future = { kind: 'something-new' } as unknown as ArmyUpgradeSpec['effects'][number];
+		const result = buildGuildhallArmy({
+			rows: [row({ upgrades: [upgrade({ effects: [future] })] })],
+			format: 'standard',
+			catalog: catalog(),
+			itemIndex: {},
+			upgradeIndex: {},
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
+		});
+		expect(result).toEqual({
+			ok: false,
+			error: {
+				kind: 'unsupported-effect',
+				upgradeId: 'devotion-anras-coalition-of-thenion',
+				effect: 'something-new'
+			}
+		});
+	});
+
+	it('refuses an inscribed item rather than export its un-inscribed stats', () => {
+		const result = buildGuildhallArmy({
+			rows: [row({ itemOverrides: { 'mastercrafted-sword': item() } })],
+			format: 'standard',
+			catalog: catalog(),
+			itemIndex: {},
+			upgradeIndex: {},
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
+		});
+		expect(result).toEqual({
+			ok: false,
+			error: { kind: 'unrepresentable-inscription', itemId: 'mastercrafted-sword' }
+		});
+	});
+
+	it('refuses a grant missing from the artifact, naming which kind', () => {
+		const base = {
+			format: 'standard' as const,
+			catalog: catalog(),
+			itemIndex: {},
+			upgradeIndex: {},
+			options: { armyName: 'x', armyId: 1, factionId: 'coalition-of-thenion' }
+		};
+		expect(
+			buildGuildhallArmy({ ...base, rows: [row({ upgradedUnit: unit({ classes: ['nope'] }) })] })
+		).toEqual({ ok: false, error: { kind: 'unknown-class', classId: 'nope' } });
+		expect(
+			buildGuildhallArmy({
+				...base,
+				rows: [row({ upgradedUnit: unit({ skills: [{ id: 'nope', level: 1 }] }) })]
+			})
+		).toEqual({ ok: false, error: { kind: 'unknown-skill', skillId: 'nope' } });
+		expect(
+			buildGuildhallArmy({
+				...base,
+				rows: [row({ upgradedUnit: unit({ combatArts: [{ id: 'nope', level: 1 }] }) })]
+			})
+		).toEqual({ ok: false, error: { kind: 'unknown-combat-art', artId: 'nope' } });
+		expect(
+			buildGuildhallArmy({
+				...base,
+				rows: [row({ upgradedUnit: unit({ stratagems: ['nope'] }) })]
+			})
+		).toEqual({ ok: false, error: { kind: 'unknown-stratagem', stratagemId: 'nope' } });
 	});
 });

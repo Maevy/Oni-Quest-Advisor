@@ -26,12 +26,24 @@ import { api, ApiError } from '$lib/server/http';
 /** Player-facing wording for a refusal. The kinds are the domain's; only the prose lives here. */
 function messageFor(error: GuildhallExportError): string {
 	switch (error.kind) {
+		// These two are about the list, not about drift, so they say what the player can do instead.
+		case 'unsupported-effect':
+			return 'That list uses an upgrade this export cannot represent yet. Open it in the Army Builder instead.';
+		case 'unrepresentable-inscription':
+			return (
+				'That list inscribes an item, and Guildhall has no way to represent the inscription. ' +
+				'Open it in the Army Builder instead.'
+			);
 		case 'unknown-unit':
 		case 'unknown-mount':
 		case 'unknown-upgrade':
 		case 'unknown-item':
 		case 'unknown-element':
 		case 'unknown-trait':
+		case 'unknown-class':
+		case 'unknown-skill':
+		case 'unknown-combat-art':
+		case 'unknown-stratagem':
 		case 'missing-faction':
 		case 'malformed-catalog':
 			// Content drift rather than a player mistake: the code decoded against our catalog, so
