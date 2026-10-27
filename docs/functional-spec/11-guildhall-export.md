@@ -1,10 +1,10 @@
 # 11 · Guildhall export
 
-> **Status: built, not yet released.** The serializer, the server-side catalog artifact, the download
-> route and the second button on the Chiyo-Bot card are all implemented, and **six of the eight
+> **Status: released in v0.12.0.** The serializer, the server-side catalog artifact, the download
+> route and the second button on the Chiyo-Bot card are all shipped, and **six of the eight
 > ground-truth exports reproduce byte-for-byte** — including the granted-trait and mount cases.
-> Nothing is deployed yet. Every remaining difference is catalog drift or a harness limitation, not a
-> serializer fault; see _Verification_.
+> Every remaining difference is catalog drift or a harness limitation, not a serializer fault; see
+> _Verification_.
 
 Exports an army list as a file that Freecompany's own army builder
 (`guildhall.eldfall-chronicles.com`) can import. Reachable from the second button on a Chiyo-Bot

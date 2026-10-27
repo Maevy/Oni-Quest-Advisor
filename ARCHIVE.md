@@ -16,6 +16,222 @@ worth knowing before touching the code.
 
 ---
 
+## v0.12.0 — the Guildhall export: a list Freecompany's builder can import (2026-10-27, 21 commits)
+
+Chiyo-Bot could read a list into Discord and hand it back to this app, but not to the game's own
+builder. **The Guildhall export** closes that: a second button on the card, and
+`GET /api/guildhall-export?code=<army code>`, write a `.json` in Freecompany's own saved-army
+format that their builder imports by file drop. The property the whole feature is organised around
+is that **an exported army and this app's Army view are the same army** — the serializer consumes
+`resolveArmyEntries` rows rather than re-deriving anything, so every effect application goes through
+the code path the app already uses. A file that disagreed with the card next to the button that
+produced it would be worse than no file.
+
+**No database wipe needed.** The diff over `domain/online.ts`, `lib/server` and `routes/api`
+returns eleven files, and none of them is a persisted shape or a schema change: `db.ts` and
+`domain/online.ts` are untouched, the Guildhall pieces are new files, and the SSE fix below changes
+an in-process registry that a restart already emptied. Live games and tournaments survive.
+
+### A file, because there is no link to give (`021168e`, `c6b9306`)
+
+Established by reading their client bundles rather than guessing: **six static routes**, no dynamic
+one, and **zero `router.query` reads** in the army bundle; **saved armies live in that browser's
+`localStorage`**, which a link from our origin cannot write; **`armyId` is `Date.now()`**, so forging
+one addresses nothing; import is a `type:"file"` input plus `onDrop` on `/army-saving`. The journey
+is therefore tap → download → drop → select, two clicks more than a deep link and the only door their
+builder has. The route is **unauthenticated by design** — a share code is already public the moment
+somebody pastes it into a channel, and this reveals nothing the code does not.
+
+The code travels as a **query parameter**, not a path segment: codes carry `:`, `_`, `-`, `.` and `*`
+(the mount marker), and `*` in a path segment is exactly what proxies and CDNs handle inconsistently.
+This URL is clicked from a Discord button, so the encoding has to survive intermediaries nobody
+controls. It is also **the only GET this app rate limits** (30/min per IP) — `hooks.server.ts` had
+always limited POSTs alone on the reasoning that its other GETs are the app's own polling, and this
+one differs on both counts that matter: it does real work and streams a large body, and it sits
+behind a button any member of a channel can click.
+
+### The artifact, and why it lives under `lib/server` (`fcfc5c2`, `8a38046`)
+
+Their saved character is the **full Strapi object** — nested rule text, image metadata, per-stat row
+ids — and fidelity requires copying it verbatim and patching only the leaf. Our content cannot supply
+it: `scripts/importUnits.mjs` strips exactly those fields on purpose, because a phone has no use for
+twenty kilobytes of description per model. So the importer generates a second artifact,
+`src/lib/server/guildhall/catalog.json` (~600 KB, minified, `.prettierignore`d), holding what we threw
+away.
+
+Its location is the load-bearing choice. `lib/data` content reaches the phone through an eager
+`import.meta.glob`; `$lib/server/**` makes a client import a **build error**. That is a structural
+guarantee rather than a convention somebody has to remember, which is what you want when the thing
+being kept out is half a megabyte of someone else's rules prose. The loader parses it lazily behind a
+memoized promise, so boot does not pay for it and an online game never does either — measured, a first
+export costs ~0.24 s and every one after ~0.005 s. Characters are 456 KB of it and irreducible;
+everything else is narrowed to only what an upgrade can **grant** (trait groups, classes, skill
+groups, combat-art groups, stratagems), derived from `UPGRADE_EFFECTS` rather than listed twice, and
+the importer **throws** if a granted row is missing from the dump — a catalog that silently could not
+build one grant would surface only as a refusal at export time, with no hint why.
+
+Two keying conventions, both matching our content's own: most things key by **`kebab(code)`**, which
+is exactly our id (`COALITION_OF_THENION` → `coalition-of-thenion`, and `AFFINITY__ELEMENT` →
+`affinity--element` with the double hyphen — a fixture written from the readable form missed it, and
+the failure surfaced as a bogus refusal rather than a mismatch). **Stratagems key by `slug(name)`**,
+because a third of theirs have no usable code: several contain spaces (`"active support"`,
+`"solemn- presence"`) and some are `null`.
+
+Getting to those row ids needed content to carry them at all, so the importer now **stamps the
+producer's id** beside ours on units, upgrades and items. That is safe for every code already in the
+wild, which was the thing to check first: `catalogFingerprint()` hashes faction ids, sorted unit ids
+with their mount pairings, upgrade ids with their effect kinds and choice-option order, spellcraft ids
+and item ids — and nothing else, so adding a field cannot shift an index or change a fingerprint.
+
+### The format rules that are easy to get backwards
+
+Every one of these came out of diffing ground-truth exports against the producer catalog, and each
+was a way to be plausibly wrong:
+
+- **Copies duplicate; upgrades and items aggregate.** A second copy of a unit is a second array
+  entry. A second copy of an upgrade is `QTY: 2` on one entry. Same concept, opposite representation,
+  one document.
+- **A mounted model is two unlinked entries.** Rider and mount sit side by side with nothing joining
+  them (`mount_character.data` stays `null` — dead Strapi residue) and **each keeps its own
+  statline**, so `effectiveStats` must never be written into either: their app combines them at
+  display time, and writing the combined value double-counts the mount.
+- **Elements have two provenances with two shapes.** One the model was born with rides inside the
+  character object and carries **no** `spells`; one an upgrade granted is pulled from their
+  `elementList` and carries **all** of them (Elder nests 19 spells with full rules text). Academy
+  Expeditioner after Elemental Lineage is stored as `[ELDER bare, WATER with 20]`. Lineage **appends**,
+  Mana Catalyst **replaces**.
+- **A granted rule is assembled, not copied**, and the injected group's nesting **differs per kind**:
+  `trait_group` keeps its nested `traits`, while `skill_group` and `combat_art_group` strip theirs.
+  Classes and stratagems are flat rows with no levels. Do not generalise one rule to the others.
+- **Display caches are not refreshed** — a spellcraft bumped to level 4 still reads
+  `name__: "Art of Sorcery, lvl 3"`. Regenerating that string would make our file differ from what
+  their own builder writes.
+- **Roster format inverts the document**: `mode: "TOURNAMENT"`, `armyCharacterList: []`, units in
+  `roster.characterList` with the `appliedArmyCharacterUpgrades` key **absent entirely** (not `[]`),
+  and the equipment pool as raw upgrade objects one per copy rather than aggregated. `mode` is the
+  discriminator — their own default state pairs `NORMAL` with `TOURNAMENT_ROSTER`, so the variant is
+  vestigial unless mode is `TOURNAMENT`.
+- **`armyPts` / `rosterPts` are caps, not totals.** Their builder computes the total itself, so this
+  side does no points arithmetic.
+
+Anything unrepresentable is a **typed error, never a best guess**: eleven `unknown-*` kinds for
+content drift, `malformed-catalog` (a group with no entry at the requested level — taking the nearest
+would write the wrong rules text into a player's army), `unrepresentable-inscription` (Glyphscribe's
+per-copy stat overrides have no observed representation in their format), `roster-mismatch` (409, a
+code built against older content — the one a whole Discord hits at once on re-import day), and
+`unsupported-effect`.
+
+### Three defects, and only one of them was found by the thing built to find it
+
+1. **Element trimming.** The round-trip harness against Freecompany's own exports found that the
+   serializer was copying each element's `spells` array through, ballooning every exported caster.
+   **The first fix was wrong**: `dba1bde` blanket-stripped `spells`, which matched the three samples
+   that then went byte-perfect — and none of the three contained a granted element. Reading the
+   element objects directly rather than the diff totals is what revealed the two-provenance rule
+   (`a242773`). **A fix verified only against samples that lack the case it concerns is not
+   verified.**
+2. **A missing key on mounts.** Mount entries needed `appliedArmyCharacterUpgrades: []` in standard
+   format. The _test fixture's_ mount happened to include the key, so the suite passed against a
+   serializer that was wrong. **A fixture that already contains the field under test hides its
+   absence** — build fixtures from the real producer object.
+3. **Four effect kinds the serializer never wrote.** `class`, `skill`, `combatArt` and `stratagem`
+   are applied by our domain and were written by no part of the export, so five upgrades shipped with
+   the upgrade listed in `appliedArmyCharacterUpgrades` and the grant silently absent — a model
+   missing what the player paid for. **The round-trip could not have caught this**: none of the eight
+   samples used any of those five upgrades, so every diff stayed green while the defect sat in the
+   code. It surfaced only by auditing the kinds in `ArmyUpgradeEffect` against the kinds the
+   serializer writes. **A corpus of ground-truth samples covers only the cases the samples happen to
+   contain; coverage of the _input space_ has to be checked separately.** That is why
+   `unsupported-effect` now exists as a **tripwire** — all twelve kinds are covered today, so it is
+   inert, and its whole job is to stop being inert the moment a thirteenth is added to the domain —
+   and why the audit itself is a permanent test (`82455e4`) that derives its expectation from
+   `ArmyUpgradeEffect` rather than restating it. An audit that duplicates the thing it audits will
+   eventually disagree with it, and be believed.
+
+Verification ended at **six of eight ground-truth exports reproducing byte-for-byte** (including the
+granted-trait and mount cases), with every remaining difference accounted for as array ordering, a
+stale producer dump, or a choice upgrade the harness declined to reconstruct. Then, because four of
+the five granted-rule shapes exist in no file of theirs — their builder has no handler for any of the
+five upgrades that grant them — two test armies covering all six grant-bearing upgrades were
+**imported into Guildhall itself** (`22ee17b`): every grant rendered, and the sharpest case was
+Resourceful II with Survival (Difficult) on an Eonian Runner that has **no innate traits at all**, so
+nothing on it could have come from the character object. Both totals read 56/85, so their cost model
+agrees with ours. Import is the only verification available for those shapes, and it is now done.
+
+### Left open on purpose
+
+- **`expedition-leader` / `journeyman-adventurer` are a fairness call, not a technical one.** Their
+  client has no handler for either, and their upgrade objects carry no structured trait or stratagem
+  relation at all — both grants exist purely as prose inside `description`, which is why they can
+  neither apply them nor duplicate them. We bake in the rulebook-correct reading, and the import test
+  confirmed both render **exactly once**, so the double-display worry is empirically gone. What
+  remains: an army imported from us is stronger than the same list built natively there, visible to
+  both players in a tournament. Worth reporting to Freecompany as a bug, since their own card text
+  promises grants their builder does not make.
+- **The producer dump is stale** (`data-import/units.json`, 2026-08-31, against their 2026-09-10
+  edits), which is why the round-trip showed array-ordering noise, why one Glyphscribe sample is
+  still unexplained, and why we carry two live rules errors — Cryomancy's attack mode should be
+  `RANGED`, and Art of Sorcery's Armor-Piercing markup was repaired upstream. The replacement offered
+  so far, `units3.json`, carries **3 of 12 sections and cannot be imported**: the importer does not
+  guard against an empty list, so it would write nine valid-looking empty catalogs. This affects the
+  whole app's content, not just this export.
+- **`structureVersion` drift.** Everything observed says `"2.0.0"`; nothing compares it against
+  anything. The constant is exported so a guard has somewhere to live.
+- **No permanent route test.** The end-to-end pass was a throwaway harness plus curl; a committed
+  test would need a route-handler pattern this repo does not have yet.
+
+### The SSE fix that shipped alongside it (`c61ea4b`, `2500afe`)
+
+The channel registry removed a sender in exactly one place — the `ReadableStream`'s `cancel()`
+callback — and the other signal was thrown away on purpose, with the assumption written in the
+comment beside it: `catch { /* Stream already closed; cancel() cleans up. */ }`. A client that
+vanishes (tab closed, phone locked, network dropped) does not necessarily produce either a cancel or
+a throwing enqueue, so its sender could stay in the channel Set with its 25 s heartbeat still
+running. That is functional rather than cosmetic: `subscriberCount()` gates new subscriptions at
+`MAX_SUBSCRIBERS_PER_GAME` = 8 (tournaments 40), so a match whose players refresh eight times starts
+answering 429 to the phones that are actually there.
+
+**Why it surfaced now:** until v0.11.0 production ran at `min_machines_running = 0` and auto-stopped
+after roughly five minutes idle, and every restart cleared the in-process Map. The leak was
+self-healing because nothing ran long enough to accumulate. **Making production always-on removed
+that mitigation.** The fix routes every teardown through one idempotent `detach()`, reachable from
+three triggers instead of one: `cancel()`, the request's abort signal (now threaded from both events
+routes as `request.signal`), and a heartbeat backstop checking `controller.desiredSize === null`. The
+backstop is deliberately redundant, because it is not established that adapter-node aborts
+`request.signal` on every disconnect path — a half-open TCP connection is exactly the hard case. Ten
+tests, including the one that names the consequence: eight subscriptions exhaust a game's cap, and
+aborting all eight recovers every slot.
+
+`2500afe` then **retracted the incident claim** the first commit had justified itself with. Staging's
+`/api/health` reading `sseStreams: 1` minutes after "the only client had gone" was a misreading — the
+log showed a client reconnecting seven seconds after a machine restart, and the counter-evidence had
+been there all along, read backwards: `/events` had been opened twice with the count still at 1,
+which is `cancel()` working. What survives is a code-review argument, not an incident, and the
+comments were corrected to match. **The transferable error is worth more than either correction: a
+server-side counter is not evidence that a client is gone.** Read the request log for a reconnect
+before inferring one, and prefer a fresh-process baseline over a count read from a process of unknown
+history.
+
+### Dev and ops hygiene (`7287c9f`, `2538e68`)
+
+The dev server died mid-session with `EBUSY: resource busy or locked, watch
+'data-import/exportarmy.json'` — a producer export being written while chokidar walked the tree
+emitted an unhandled `error` on the FSWatcher, which takes the Node process down. `vite.config.ts` now
+ignores `**/data-import/**` and `**/.qwen/**`; nothing in the app imports either folder, but no
+`server.watch` was set at all, so Vite watched the whole root and picked both up by proximity. The
+`.qwen` half also removes the stray `[vite] (ssr) page reload` storm that used to drop a
+mid-journey verification harness back to the startup prompt. Verified by A/B against the actual
+failure mechanism — hold an exclusive lock on a file, then start the server — **with a control**: the
+same probe on a non-ignored path still crashes, which is what makes the passing case mean something
+rather than proving the lock was never taken.
+
+Staging went back to `min_machines_running = 0`: it had been pinned to 1 only while the Discord
+Interactions Endpoint URL pointed at it, and production took that over in v0.11.0.
+
+Spec: `docs/functional-spec/11-guildhall-export.md`.
+
+---
+
 ## v0.11.0 — Chiyo-Bot: an army code read in Discord (2026-10-26, 12 commits)
 
 Sharing a list meant screenshotting a phone and squinting at it in a channel. **Chiyo-Bot** replaces

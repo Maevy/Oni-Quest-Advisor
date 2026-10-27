@@ -6,7 +6,7 @@ shapes, rendering geometry, colours and server architecture see
 rules each layer must follow, see the root [QWEN.md](../../QWEN.md) and the `CLAUDE.md` inside
 each `src/lib/` folder.
 
-> These specs describe the app **as built**, verified against the code at v0.11.0. Where the app
+> These specs describe the app **as built**, verified against the code at v0.12.0. Where the app
 > is mid-iteration or internally inconsistent, the relevant document says so explicitly and lists
 > it under **Open questions** — those sections are live to-do lists, not rhetorical.
 
@@ -217,9 +217,9 @@ each transition clears, in [01-navigation-flow.md](./01-navigation-flow.md).
     interactions endpoint, the card and `?army=<code>` are in, and `/chiyo army` answers on the
     production endpoint. The image is still undecided.
 11. [11-guildhall-export.md](./11-guildhall-export.md) — exporting a list as a file Freecompany's
-    own Guildhall builder can import, and why it has to be a file rather than a link. **Built, not
-    yet released**; granted traits are refused rather than guessed at, pending one ground-truth
-    sample.
+    own Guildhall builder can import, and why it has to be a file rather than a link. Released in
+    v0.12.0; every granted rule is written, and six of eight ground-truth exports reproduce
+    byte-for-byte.
 
 ## Open questions
 

@@ -14,8 +14,7 @@ This spec complements, and does not replace, two other sources:
 Where a rule here and a rule in a layer `CLAUDE.md` disagree, the layer file wins: it is closer
 to the code and reviewed on every change.
 
-> These specs describe the app **as built**, verified against the code at v0.8.0 plus the
-> unreleased tournament and online-mode redesign on `develop`.
+> These specs describe the app **as built**, verified against the code at v0.12.0.
 
 ## Documents
 

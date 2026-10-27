@@ -12,8 +12,8 @@ exists for one reason: **so nobody has to screenshot their phone to show a list 
 > decided (see _Architecture decisions_); what is genuinely undecided — above all whether the bot
 > ever posts a rendered image — is listed under **Open questions** at the end.
 >
-> The card's **second** button, _Download for Guildhall_, is built and verified but **not yet
-> released**. It has its own spec: [11-guildhall-export.md](./11-guildhall-export.md).
+> The card's **second** button, _Download for Guildhall_, shipped in v0.12.0. It has its own spec:
+> [11-guildhall-export.md](./11-guildhall-export.md).
 
 ## The shape of the feature
 
