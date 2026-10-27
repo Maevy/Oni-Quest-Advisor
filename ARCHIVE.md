@@ -16,7 +16,7 @@ worth knowing before touching the code.
 
 ---
 
-## v0.12.0 — the Guildhall export: a list Freecompany's builder can import (2026-10-27, 21 commits)
+## v0.12.0 — the Guildhall export: a list Freecompany's builder can import (2026-10-27, 20 commits)
 
 Chiyo-Bot could read a list into Discord and hand it back to this app, but not to the game's own
 builder. **The Guildhall export** closes that: a second button on the card, and
