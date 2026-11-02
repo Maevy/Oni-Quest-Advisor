@@ -214,6 +214,18 @@ used any of those five upgrades, so every diff was clean. It surfaced only by au
 tripwire now exists. A corpus of ground-truth samples covers only the cases the samples happen to
 contain; coverage of the _input space_ has to be checked separately.
 
+A fourth defect came out of that same blind spot, found by two ground-truth exports produced on
+request (2026-11-02): the neutral **Imported Casting Amplifier** granted an item our importer had
+invented for it, with no producer row behind it, so **every** army carrying that upgrade refused with
+`unknown-item`. The effect-kind audit could not see it — the kind was written, the item behind it was
+not addressable — and neither could the round-trip, because none of the eight samples used it. Their
+exports also settled the rule: upgrade row 9 (4 points, neutral) and row 42 (2 points, Sand Kingdoms)
+both inject **the same** item row 46, `CASTING_AMPLIFIER` — their catalog has no "Imported Casting
+Amplifier" item at all. `guildhallContent.spec.ts` now audits the real content against the real
+artifact (both upgrades resolve to row 46, and every item an export can be asked to write — granted or
+innate — has a producer row), and the importer throws on the same condition, so a re-import cannot
+regenerate it.
+
 The route itself was exercised end to end against a running dev server: a minted Standard code and a
 minted Roster code both returned `200` with the right `content-disposition`, `no-store`, correct
 `mode`/variant, and — for the Roster — `armyCharacterList: []`, no upgrade key on the roster unit,
@@ -251,6 +263,12 @@ channel can click.
   _Mastercrafted Helrin Sword_ from an empty inventory — but neither of that upgrade's two options
   adds an item. Most likely their current catalog gives Flameshaper a starting sword our stale dump
   lacks. A fresh dump settles it; until then it is unexplained, not assumed away.
+- **Two upgrades granting the same item.** A Sand Kingdoms model can carry both Casting Amplifiers —
+  the 2-point faction one (limit 3) and the 4-point neutral one (limit 1) — and since 2026-11-02 both
+  resolve to producer item row 46, so the export writes **two bare inventory entries of QTY 1** where
+  their builder would probably write one entry with QTY 2. The serializer aggregates _upgrades_ by QTY
+  but walks _inventory_ by our item id, and the two ids differ, which is what splits them. No ground
+  truth for that combination exists; one such export settles it.
 - **`structureVersion` drift.** Everything observed says `"2.0.0"`. If they bump it, exports may be
   rejected silently. The constant is exported from the domain module so a guard has somewhere to
   live, but nothing currently compares it against anything.

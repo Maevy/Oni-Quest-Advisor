@@ -42,7 +42,12 @@ what the producer altered.
 its whole pool is the neutral list. An empty array is the correct output, not a failed import.
 
 `items.json` includes one synthetic entry (`imported-casting-amplifier`) that the producer dump
-does not carry as an item but that upgrade effects reference.
+does not carry as an item but that upgrade effects reference. It **borrows the `producerId` of the
+dump's `CASTING_AMPLIFIER` row**, because Freecompany's builder hands the neutral 4-point upgrade the
+same accessory the Sand Kingdoms 2-point one grants (confirmed against two of their own exports), and
+the Guildhall export resolves a granted item through `producerId` — an entry without one made every
+army carrying that upgrade refuse with `unknown-item`. The importer looks the row up by code and
+**throws** if any `UPGRADE_EFFECTS` grant has no producer row behind it.
 
 ### Bucketing rules
 

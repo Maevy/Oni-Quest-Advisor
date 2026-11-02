@@ -1411,6 +1411,7 @@
 	},
 	{
 		"id": "imported-casting-amplifier",
+		"producerId": 46,
 		"name": "Imported Casting Amplifier",
 		"category": "accessory",
 		"mode": "melee",

@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { loadArmyItems, loadArmyUnits, loadArmyUpgrades } from '$lib/data/units';
+import type { ArmyItemSpec } from '$lib/domain/army';
+import type { GuildhallCatalog } from '$lib/domain/guildhallExport';
 import { getGuildhallCatalog } from './guildhallContent';
 
 /**
@@ -117,5 +120,95 @@ describe('getGuildhallCatalog', () => {
 		const first = await getGuildhallCatalog();
 		const second = await getGuildhallCatalog();
 		expect(second).toBe(first);
+	});
+});
+
+/** One `{id, attributes}` row of the artifact, narrowed to the leaves these checks read. */
+type ProducerRow = { id: number; attributes: { code: string; name: string } };
+
+/**
+ * The artifact is only useful if our own content can address it. Both sides are read for real here,
+ * so an item whose `producerId` is missing — or points at a row the artifact does not carry — fails
+ * in the suite instead of in a player's download.
+ *
+ * The hole this closes is the one the Casting Amplifier exports exposed: `scripts/importUnits.mjs`
+ * had invented an item for the neutral upgrade to grant, with no producer row behind it, so the
+ * serializer's item resolver came back empty and **every** army carrying that upgrade refused with
+ * `unknown-item`. The effect-kind audit in `guildhallExport.spec.ts` could not see it — the kind was
+ * written, the item behind it was not resolvable — and neither could the round-trip against
+ * Freecompany's exports, because none of their samples used that upgrade.
+ */
+describe('the artifact covers every item our content can put in an inventory', () => {
+	function grantedRow(
+		catalog: GuildhallCatalog,
+		items: ArmyItemSpec[],
+		itemId: string | undefined
+	): ProducerRow | undefined {
+		const producerId =
+			itemId === undefined ? undefined : items.find((item) => item.id === itemId)?.producerId;
+		return producerId === undefined ? undefined : (catalog.items[producerId] as ProducerRow);
+	}
+
+	it('resolves both Casting Amplifier upgrades to the producer row their builder injects', async () => {
+		const catalog = await getGuildhallCatalog();
+		const [items, upgrades] = await Promise.all([loadArmyItems(), loadArmyUpgrades()]);
+
+		// Ground truth, from two of Freecompany's own exports: an Academy Expeditioner carrying the
+		// Sand Kingdoms upgrade (their row 42, 2 points) and a Bladebrethren Elite carrying the
+		// neutral one (row 9, 4 points) both end up with the same bare inventory entry — item row 46,
+		// CASTING_AMPLIFIER. Their catalog holds no "Imported Casting Amplifier" item at all, so the
+		// 4-point upgrade hands out the very same accessory the 2-point one does.
+		for (const upgradeId of ['casting-amplifier-sand-kingdoms', 'imported-casting-amplifier']) {
+			const upgrade = upgrades.find((candidate) => candidate.id === upgradeId);
+			const grant = (upgrade?.effects ?? []).flatMap((effect) =>
+				effect.kind === 'item' ? [effect.itemId] : []
+			)[0];
+			const row = grantedRow(catalog, items, grant);
+			expect(row?.id, `${upgradeId} grants '${grant}'`).toBe(46);
+			expect(row?.attributes.code, `${upgradeId} grants '${grant}'`).toBe('CASTING_AMPLIFIER');
+		}
+	});
+
+	it('gives every item an export can be asked to write a producer row', async () => {
+		const catalog = await getGuildhallCatalog();
+		const [items, upgrades, units] = await Promise.all([
+			loadArmyItems(),
+			loadArmyUpgrades(),
+			loadArmyUnits()
+		]);
+		const itemById = new Map(items.map((item) => [item.id, item]));
+
+		// Every id the serializer's item resolver can be handed: what an upgrade grants, and what a
+		// unit carries innately — an innate slot whose code is missing from the producer's own
+		// inventory row is appended through that same resolver.
+		const referenced = new Set<string>();
+		for (const upgrade of upgrades) {
+			for (const effect of upgrade.effects) {
+				if (effect.kind === 'item' || effect.kind === 'replacePrimaryWeapon') {
+					referenced.add(effect.itemId);
+				}
+			}
+		}
+		for (const pool of [
+			...Object.values(units.factionUnits),
+			units.neutralUnits,
+			units.mounts,
+			units.summons
+		]) {
+			for (const spec of pool ?? []) {
+				for (const slot of spec.inventory ?? []) referenced.add(slot.id);
+			}
+		}
+
+		// Guards against the audit passing vacuously if the content ever loads empty.
+		expect(referenced.size).toBeGreaterThan(0);
+
+		const unresolvable = [...referenced]
+			.filter((id) => {
+				const producerId = itemById.get(id)?.producerId;
+				return producerId === undefined || !(producerId in catalog.items);
+			})
+			.sort();
+		expect(unresolvable).toEqual([]);
 	});
 });

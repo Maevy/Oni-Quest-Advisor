@@ -732,16 +732,49 @@ const items = pageProps.itemList.data.map((wrapper) => {
 	if (item.WGT !== null && item.WGT !== undefined) entry.weight = item.WGT;
 	return entry;
 });
-// The Imported Casting Amplifier upgrade hands out an item that is not part of
-// the producer catalog; it mirrors the catalog's Casting Amplifier shape.
+// The neutral "Imported Casting Amplifier" upgrade has no item of its own in the producer catalog.
+// Freecompany's builder injects the *same* Casting Amplifier accessory the Sand Kingdoms upgrade
+// grants: two of their own exports (Academy Expeditioner with upgrade row 42, Bladebrethren Elite
+// with row 9) both end with an inventory entry for item CASTING_AMPLIFIER. We keep our own display
+// entry - named after the upgrade the player picked - but it must carry that row's id, because the
+// Guildhall export resolves a granted item through `producerId` and refuses the whole army with
+// `unknown-item` when there is none. Looked up by code rather than hardcoded, so a renumbered dump
+// still resolves it.
+const castingAmplifierRow = pageProps.itemList.data.find(
+	(wrapper) => wrapper.attributes?.code === 'CASTING_AMPLIFIER'
+);
+if (!castingAmplifierRow) {
+	throw new Error(
+		'CASTING_AMPLIFIER is missing from the dump; the Imported one borrows its row id.'
+	);
+}
 items.push({
 	id: 'imported-casting-amplifier',
+	producerId: castingAmplifierRow.id,
 	name: 'Imported Casting Amplifier',
 	category: 'accessory',
 	mode: 'melee',
 	effect: richText("The upgraded model's Spells have +4 RCH."),
 	weight: 0
 });
+// An item a UPGRADE_EFFECTS entry grants but cannot resolve makes every army carrying that upgrade
+// unexportable, and nothing downstream can see it - the effect kind is written, the item behind it
+// is not addressable. Same reasoning as assertComplete() for the granted rules below.
+const grantedItemIds = new Set(
+	Object.values(UPGRADE_EFFECTS).flatMap((effects) =>
+		effects.flatMap((effect) => ('itemId' in effect ? [effect.itemId] : []))
+	)
+);
+const producerIdByItem = new Map(items.map((entry) => [entry.id, entry.producerId]));
+const unexportableItems = [...grantedItemIds].filter(
+	(id) => producerIdByItem.get(id) === undefined
+);
+if (unexportableItems.length > 0) {
+	throw new Error(
+		'UPGRADE_EFFECTS grants items with no producer row, so the Guildhall export cannot write them: ' +
+			unexportableItems.join(', ')
+	);
+}
 items.sort((a, b) => a.name.localeCompare(b.name));
 writeFileSync(join(outDir, 'items.json'), JSON.stringify(items, null, '\t') + '\n');
 console.log('items: ' + items.length + ' items');
