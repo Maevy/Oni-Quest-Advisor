@@ -6,17 +6,16 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Where things stand
 
-- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.12.0** (tagged on `main`,
-  2026-10-27): the **Guildhall export** (spec 11) — a serializer for Freecompany's builder format,
-  a generated server-only catalog artifact, a public download route and a second button on the
-  Chiyo-Bot card — plus the SSE subscriber-reclaim fix. Verified before tagging: six of eight
-  ground-truth exports reproduce byte-for-byte, and two generated armies were imported into
-  Guildhall itself with every granted rule rendering. **No database wipe** — the diff over the
-  persisted paths is new files plus an in-process registry, with `db.ts` and `domain/online.ts`
-  untouched. Day-to-day work happens on **`develop`**, pushed to
-  `git@github.com:Maevy/Oni-Quest-Advisor.git`.
+- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.12.1** (tagged on `main`,
+  2026-11-03): a Guildhall-export hotfix — the neutral **Imported Casting Amplifier** made every
+  army carrying it unexportable (422 `unknown-item`), because the importer had invented an item
+  with no producer row behind it. **No database wipe** — the diff over the persisted paths is one
+  spec file. v0.12.0 (2026-10-27) shipped the export itself (spec 11): a serializer for
+  Freecompany's builder format, a generated server-only catalog artifact, a public download route
+  and a second button on the Chiyo-Bot card, plus the SSE subscriber-reclaim fix. Day-to-day work
+  happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
 - `develop` is level with the tag. Count what is past it with
-  `git rev-list --count v0.12.0..develop` rather than trusting a number here; this bullet went
+  `git rev-list --count v0.12.1..develop` rather than trusting a number here; this bullet went
   stale inside the session that wrote it four times, which is why it now carries neither a count
   nor a feature name — the diff is the only version of this claim that cannot rot. What shipped,
   with its decisions and traps, is in `ARCHIVE.md` — that file is the index into `git log`, not a
@@ -48,6 +47,17 @@ would read `undefined !== null` as combat-ready with no army behind it. Any futu
 persisted online shape needs the same conversation.
 
 ## What's next
+
+v0.12.1 (2026-11-03) was a hotfix for that export: the neutral **Imported Casting Amplifier**
+refused every army carrying it (422 `unknown-item`), because the item our importer invented for it
+had no `producerId` and the serializer resolves a granted item through exactly that field. Two
+exports produced in Guildhall on request settled the content — upgrade rows 9 and 42 both inject the
+_same_ item row 46 — and the rule worth carrying forward is why the fix **kept** the invented entry:
+`catalogFingerprint()` hashes the item id list, so deleting a content entry invalidates every army
+code in the wild, while adding a field to one is invisible to them. The effect-kind audit and the
+eight-sample round-trip were both structurally unable to see this, so both guards now sit at the
+source: the importer throws on a grant with no producer row, and `guildhallContent.spec.ts` audits
+the real content against the real artifact.
 
 v0.12.0 (2026-10-27) shipped the **Guildhall export** (spec 11): the Chiyo-Bot card's second
 button, and `GET /api/guildhall-export?code=<code>`, write a `.json` Freecompany's own builder
@@ -95,10 +105,12 @@ to ask Freecompany for. **`expedition-leader` / `journeyman-adventurer`** remain
 rather than a technical one: their client has no handler for either, we bake in the rulebook-correct
 grants, and the import test confirmed they render exactly once — so an army imported from us is
 stronger than the same list built natively there. Worth reporting to Freecompany as a bug, since
-their own card text promises grants their builder does not make. Two smaller ones: `structureVersion`
-is exported but compared against nothing, and the download route has no permanent test (the
+their own card text promises grants their builder does not make. Three smaller ones: `structureVersion`
+is exported but compared against nothing, the download route has no permanent test (the
 end-to-end pass was a throwaway harness plus curl; a committed one needs a route-handler pattern this
-repo does not have yet).
+repo does not have yet), and a model carrying **both** Casting Amplifiers resolves both to producer
+item row 46, so the export writes two bare entries of QTY 1 where their builder probably writes one
+of QTY 2 — one such export settles it (spec 11's Open questions).
 
 The app's live thread is unchanged: the two buttons those dialogs still render inert — **Trade
 Item** and **Assign / Remove Buff** (`enabled: false` in `FlowerInteraction.svelte`'s action

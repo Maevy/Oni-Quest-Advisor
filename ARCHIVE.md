@@ -16,6 +16,61 @@ worth knowing before touching the code.
 
 ---
 
+## v0.12.1 — the Imported Casting Amplifier could not be exported (2026-11-03, 3 commits)
+
+A hotfix for the Guildhall export. **Every** army carrying the neutral 4-point Imported Casting
+Amplifier was refused outright — 422, `'{"kind":"unknown-item","itemId":"imported-casting-amplifier"}'
+has no Guildhall counterpart` — from the Chiyo-Bot card's _Download for Guildhall_ button and the
+route alike, while the Sand Kingdoms 2-point one exported fine. That asymmetry is what made it look
+faction-specific rather than content-wide. Probed in production before and after with a minted code
+(`afwh:1s:3-n`, Bladebrethren Elite + the upgrade): **422 → 200**, with the Sand Kingdoms code
+`afwh:2s:0-5` at 200 throughout as the control.
+
+The importer had invented an item for that upgrade to grant, because the producer's catalog carries
+no "Imported Casting Amplifier" item — and an invented entry has no `producerId`, which is the one
+field the serializer resolves a granted item through (`itemIndex[id].producerId → catalog.items[row]`).
+The refusal was correct behaviour over wrong content. Two exports produced in Guildhall on request
+settle what the content should be: upgrade row 9 (4 points, neutral) and row 42 (2 points, Sand
+Kingdoms) both end with **the same** bare inventory entry — item row 46, `CASTING_AMPLIFIER`, no
+join-row id, no `name__`. Their builder hands out the same accessory either way; only the upgrade
+record differs. The synthetic display item now borrows that row's id, looked up **by code** so a
+renumbered dump still resolves it.
+
+**Worth remembering: the fix keeps the invented entry** rather than deleting it or repointing the
+effect at `casting-amplifier`, however tidier that content model would be. `catalogFingerprint()`
+hashes the item **id list**, so removing an entry would reject every code in the wild as
+`roster-mismatch` — saved armies, `?army=` deep links on cards already sitting in Discord, tournament
+registrations, online seats' armies. Adding a field to an existing entry hashes identically, so this
+fix is invisible to every code ever minted. Any future "just delete that content entry" instinct has
+to answer this first.
+
+**And the blind spot is the one v0.12.0 recorded, arriving a second time.** The effect-kind audit can
+see that a kind is _written_, not that the item behind it is _addressable_; the round-trip against
+Freecompany's eight exports stayed green because none of them used this upgrade. So both guards now
+sit at the source: the importer **throws** when a `UPGRADE_EFFECTS` grant has no producer row, and
+`guildhallContent.spec.ts` audits the real content against the real artifact — both amplifiers must
+resolve to row 46, and every item an export can be asked to write, granted or innate, must have a
+producer row present. Both tests failed before the change, naming `imported-casting-amplifier`.
+
+**No database wipe.** The diff over `domain/online.ts`, `lib/server` and `routes/api` returns one
+file, a spec. Verified by re-running the real pipeline (`getArmyCodeCatalog → resolveArmyEntries →
+buildGuildhallArmy`) for both ground-truth armies and deep-comparing `appliedArmyCharacterUpgrades`
+and the granted inventory entry against their files: exact match on both. 905 unit tests across 37
+files, svelte-check clean, eslint and Prettier clean. A re-import changes one line of content and
+regenerates `catalog.json` byte-identically — the wide diff a re-import appears to produce is
+Prettier collapsing the importer's unformatted arrays, not content drift.
+
+Riding with it: doc 10's **"Another server adopting the bot"** section (`f791119`), which is where a
+server admin's questions get answered instead of re-derived — the only gate is the portal's Public Bot
+toggle, `permissions=0` is the privacy story, and the global command needs no re-registration.
+
+Left open and recorded in spec 11 rather than guessed at: a Sand Kingdoms model can carry **both**
+amplifiers, and since both now resolve to item row 46 the export writes two bare entries of QTY 1,
+where their builder would probably write one entry with QTY 2. The serializer aggregates _upgrades_ by
+QTY but walks _inventory_ by our item id, and the two ids differ. One such export settles it.
+
+Detail: `git log v0.12.0..v0.12.1`
+
 ## v0.12.0 — the Guildhall export: a list Freecompany's builder can import (2026-10-27, 20 commits)
 
 Chiyo-Bot could read a list into Discord and hand it back to this app, but not to the game's own

@@ -4,7 +4,8 @@
 > route and the second button on the Chiyo-Bot card are all shipped, and **six of the eight
 > ground-truth exports reproduce byte-for-byte** — including the granted-trait and mount cases.
 > Every remaining difference is catalog drift or a harness limitation, not a serializer fault; see
-> _Verification_.
+> _Verification_. **v0.12.1** fixed the one upgrade that could not be exported at all — the neutral
+> Imported Casting Amplifier — and added the content↔artifact audit that catches its class.
 
 Exports an army list as a file that Freecompany's own army builder
 (`guildhall.eldfall-chronicles.com`) can import. Reachable from the second button on a Chiyo-Bot

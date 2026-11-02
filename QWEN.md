@@ -422,12 +422,17 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
   and push branch + tag. Commit messages here are detailed by design — they are the
   authoritative record of why a change was made.
-- Current release: **v0.12.0** (2026-10-27 — the **Guildhall export**: the Chiyo-Bot card's second
-  button and `GET /api/guildhall-export?code=` write a `.json` that Freecompany's own builder
-  imports by file drop, because theirs cannot be deep-linked), tagged on `main` with **no database
-  wipe** — the change is new files plus an in-process SSE registry, touching neither the schema nor
-  `domain/online.ts`. Production stays at `min_machines_running = 1` (since v0.11.0): Discord allows
-  an interaction 3 s and a cold wake measured 4.71 s, and a dropped interaction is never logged.
+- Current release: **v0.12.1** (2026-11-03 — a Guildhall-export hotfix: the neutral **Imported
+  Casting Amplifier** made every army carrying it unexportable, because the item the importer
+  invented for it had no `producerId` and the serializer resolves a granted item through exactly
+  that field), tagged on `main` with **no database wipe** — the diff over the persisted paths is one
+  spec file. The rule it leaves behind: **`catalogFingerprint()` hashes the item id list, so
+  deleting a content entry invalidates every army code in the wild**, while adding a field to one is
+  invisible to them. v0.12.0 (2026-10-27) shipped the export itself — the Chiyo-Bot card's second
+  button and `GET /api/guildhall-export?code=` write a `.json` that Freecompany's own builder imports
+  by file drop, because theirs cannot be deep-linked. Production stays at `min_machines_running = 1`
+  (since v0.11.0): Discord allows an interaction 3 s and a cold wake measured 4.71 s, and a dropped
+  interaction is never logged.
 - **The persisted online shape has no migration mechanism** — no `hydrateOnlineGameState`
   exists, so a field added to an online seat or game leaves older rows reading as corrupt (a
   missing combat army reads as combat-ready). v0.9.0 needed a database-wide wipe for exactly
