@@ -360,6 +360,13 @@
 				"qty": 1
 			}
 		],
+		"specialRules": [
+			[
+				{
+					"text": "Protective Currents: Apply -4 to incoming Attacks. If Hit, all enemy models within 3'' suffer a Hit with Knockback (3) and this effect is canceled until the next Strategic Phase."
+				}
+			]
+		],
 		"upgradesLocked": true
 	},
 	{
@@ -546,6 +553,13 @@
 				"id": "relic-weapon",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "Other models in the party suffer -4 Morale."
+				}
+			]
 		]
 	},
 	{
@@ -855,6 +869,13 @@
 				"id": "everlasting-rain-invocations",
 				"level": 3
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "Tomoe has Light Cover against enemy Ranged Attacks."
+				}
+			]
 		],
 		"upgradesLocked": true
 	}

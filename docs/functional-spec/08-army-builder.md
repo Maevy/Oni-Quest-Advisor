@@ -74,7 +74,7 @@ The app's only **full-height screen**: a pinned header, and two panels that slid
 each scrolling independently. (Why this screen alone is `h-dvh overflow-hidden` is explained in
 [../technical-spec/01-visual-theme.md](../technical-spec/01-visual-theme.md#scrolling-model).)
 
-**Header** — row 1: **← Main Menu** and the Standard/Roster tabs. Row 2: **Copy Army Code**
+**Header** — row 1: **← Return** and the Standard/Roster tabs. Row 2: **Copy Army Code**
 (turning emerald **"Copied ✓"** on success) and **Save Army**, both disabled while the army is
 empty, plus the points badge at the right edge.
 
@@ -130,8 +130,12 @@ en dash where a model has no value), showing the **effective** stats: the mount'
 all applied upgrade effects.
 
 Below, in this order: **Skills → Traits → Combat Arts → Spellcrafts**, a divider, then
-**Inventory → Stratagems**. The divider exists because the first four are the model's own rules
-while the last two are its equipment and options; it renders only when something sits below it.
+**Inventory → Stratagems**, a divider, then **Special Rules**. The first divider exists because
+the four above it are the model's own rules while Inventory and Stratagems are its equipment and
+options, and it renders only when equipment exists. **Special Rules carries its own divider** so
+the panel is visually separated whether or not the model has equipment — which matters most for
+the models that have none: Tomoe, Endless Rain has neither inventory nor stratagems, so hers is
+the only rule on the card and the divider is what sets it apart.
 
 - **Rules tags** open popups. A **leveled** entry (Charm, Fencing, Resourceful, …) lists _every_
   catalog level ascending: levels up to the unit's are normal, higher ones greyed out, each headed
@@ -147,6 +151,12 @@ while the last two are its equipment and options; it renders only when something
   Weapons / Shields / Accessories / Consumables, each item showing PW, RCH, STK, QTY and WGT.
   Inscribed items (a Glyphscribe choice) show their modified weight and strike here.
 - **Stratagems** render inline as cards grouped Authority / Subterfuge / Tribe.
+- **Special Rules** render inline as plain cards, one per paragraph, and only for the 14 models
+  the producer gives a rule of their own — a rule that belongs to no catalog, so it is neither a
+  Skill, a Trait nor a Stratagem (Bladebrethren Elite: _"When declaring a Melee Attack as a
+  Reaction, you may perform a M roll. On success, regain the AP spent on this Reaction."_). The
+  heading is the app's, not the producer's: 12 of the 14 are titled `"Special"` upstream and 2
+  carry no title at all.
 
 ## Mounts
 

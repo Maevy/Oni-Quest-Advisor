@@ -399,6 +399,29 @@ function richText(text) {
 	return segments;
 }
 
+/**
+ * The producer's `abilities_additional_info`: rules unique to one model, which are neither a
+ * Skill, a Trait nor a Stratagem. A Strapi rich-text node whose blocks are paragraphs, so it
+ * flattens to one paragraph per block rather than to one run of text - three models carry two
+ * distinct rules each, and `normalize` would merge them into a single unreadable sentence.
+ * Undefined when the model has none (49 of 63).
+ */
+function specialRules(info) {
+	const paragraphs = (info?.description ?? [])
+		.map((block) => {
+			if (block.type !== 'paragraph') {
+				console.log(
+					'WARNING: unexpected abilities_additional_info block type "' +
+						block.type +
+						'" - flattened as plain text'
+				);
+			}
+			return normalize((block.children ?? []).map((child) => child.text ?? '').join(''));
+		})
+		.filter((text) => text.length > 0);
+	return paragraphs.length > 0 ? paragraphs.map((text) => richText(text)) : undefined;
+}
+
 /** One entry per class from the producer's class catalog. */
 function buildClassEntries() {
 	return pageProps.classList.data
@@ -608,6 +631,8 @@ for (const character of characters) {
 			qty: row.QTY ?? 1
 		}));
 	}
+	const special = specialRules(attributes.abilities_additional_info);
+	if (special) unit.specialRules = special;
 	if (UPGRADE_LOCKED_CODES.has(attributes.code)) {
 		unit.upgradesLocked = true;
 	}

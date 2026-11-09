@@ -89,8 +89,23 @@ files. The importer's `throw`s are the only gate — see below.
 (any key may be `null` when a model has no value), a **required** `size`, an optional portrait,
 catalog refs (`classes`, and `{ id, level }` refs for skills / traits / combat arts /
 spellcrafts), `stratagems`, `inventorySpace` + inventory `{ id, qty }` slots, optional
-`upgradesLocked`, an optional `mount: { unitId, points, size }`, and an optional
-`summon: { tier, source }`.
+`specialRules`, optional `upgradesLocked`, an optional `mount: { unitId, points, size }`, and an
+optional `summon: { tier, source }`.
+
+`specialRules` is the producer's `abilities_additional_info`: a rule unique to that one model
+that belongs to no catalog — neither a Skill, a Trait nor a Stratagem. **14 of the 63 characters
+carry one**, among them Bladebrethren Elite regaining the AP on a successful Reaction attack, the
+Goblin Warchief's Tribes, Djinnborn Marzban choosing its element, and Paladin of the Order's
+leader succession. It is `ArmyTextSegment[][]` — **one entry per paragraph**, because three
+models (Chiyohime, Djinnborn Marzban, Goblin Warchief) carry two _distinct_ rules in the field
+and folding the whole node through `normalize` would merge them into one sentence about neither.
+The producer titles 12 of the 14 `"Special"` and leaves 2 `null`, so the card prints a fixed
+**Special Rules** heading instead of the producer's title. The text carries **no rich links
+today** (zero `(X)[trait.Y]` markup in the dump) but goes through `richText()` anyway, so a
+future dump that adds one renders a popup rather than literal markup. Adding the field is
+**army-code safe**: `catalogFingerprint()` hashes ids and mount pairings, so a new field shifts
+no index and invalidates nothing. `lib/data/specialRules.spec.ts` pins the id set, the non-empty
+paragraphs and the paragraph split.
 
 `summon` marks a creature a spell can put on the field, and is **hand-authored rather than
 imported**: the producer carries no tier field anywhere (tier survives only inside the display

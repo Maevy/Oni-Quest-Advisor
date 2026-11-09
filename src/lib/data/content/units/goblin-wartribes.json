@@ -284,6 +284,18 @@
 				"id": "bite",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "Goblin Wartribes party members within this model’s Awareness have Fearless."
+				}
+			],
+			[
+				{
+					"text": "This model's Stratagems are called Tribes and are not regular Stratagems. After Deployment, select one Tribe ability—it applies to all Goblin Wartribes models in your party for the rest of the game. This can be used even if this model is not the Leader."
+				}
+			]
 		]
 	},
 	{
@@ -343,6 +355,13 @@
 				"id": "venomous-bite",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "This model may become Shrouded when it enters Aquatic Environment, if it is not Engaged."
+				}
+			]
 		]
 	}
 ]

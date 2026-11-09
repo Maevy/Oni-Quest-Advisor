@@ -65,6 +65,13 @@
 				"id": "parrying-dagger",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "When declaring a Melee Attack as a Reaction, you may perform a M roll. On success, regain the AP spent on this Reaction."
+				}
+			]
 		]
 	},
 	{

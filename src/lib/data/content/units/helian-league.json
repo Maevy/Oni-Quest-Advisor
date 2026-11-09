@@ -321,6 +321,13 @@
 				"id": "scepter-of-sorceries",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "When an allied model within Awareness is casting a spell (including self), you may remove a Mana Counter from this model, and re-roll 1 failed roll."
+				}
+			]
 		]
 	},
 	{
@@ -383,6 +390,13 @@
 				"id": "empyrean-standard",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "If this model is not the Leader and the Leader becomes Incapacitated, this model may become the new Leader until the original Leader is revived."
+				}
+			]
 		]
 	}
 ]

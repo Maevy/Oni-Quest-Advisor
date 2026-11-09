@@ -1239,6 +1239,17 @@ describe('upgradedArmyUnit', () => {
 		expect(upgradedArmyUnit(UNITS[0], [], UPGRADE_ITEMS)).toBe(UNITS[0]);
 	});
 
+	it('keeps a rule unique to the model through an upgrade', () => {
+		// The unit card renders the *effective* unit, so a field the return drops would make
+		// the Special Rules panel vanish on an upgraded copy only - invisible in the catalog.
+		const unit: ArmyUnitSpec = {
+			...UNITS[0],
+			specialRules: [[{ text: 'When declaring a Melee Attack as a Reaction, roll M.' }]]
+		};
+		const upgraded = upgradedArmyUnit(unit, [UPGRADES[0]], UPGRADE_ITEMS);
+		expect(upgraded.specialRules).toEqual(unit.specialRules);
+	});
+
 	it('applies stat boosts, trait grants and item grants', () => {
 		const upgraded = upgradedArmyUnit(UNITS[0], [UPGRADES[0], UPGRADES[4]], UPGRADE_ITEMS);
 		expect(upgraded.stats.INT).toBe(7);

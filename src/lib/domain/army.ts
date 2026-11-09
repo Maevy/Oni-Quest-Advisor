@@ -501,6 +501,16 @@ export type ArmyUnitSpec = {
 	inventorySpace?: number;
 	/** Equipped items in the producer's order; ids resolve the item catalog. */
 	inventory?: ArmyInventorySlot[];
+	/**
+	 * Rules unique to this one model - the producer's `abilities_additional_info`, which is
+	 * neither a Skill, a Trait nor a Stratagem (Bladebrethren Elite regaining the AP on a
+	 * Reaction attack, the Goblin Warchief's Tribes, Djinnborn Marzban choosing its element).
+	 * One entry per paragraph, because the field carries several distinct rules for three
+	 * models and collapsing them would merge rules that have nothing to do with each other.
+	 * Parsed as rich text like every other rule even though no entry carries a link today, so
+	 * a future dump that adds one renders it as a popup rather than as literal markup.
+	 */
+	specialRules?: ArmyTextSegment[][];
 	/** Rulebook exception: this unit can never receive upgrades. */
 	upgradesLocked?: boolean;
 	/** Mounts only: additive stat bonuses/maluses applied on top of the rider. */

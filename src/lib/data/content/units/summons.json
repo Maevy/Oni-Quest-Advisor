@@ -63,6 +63,13 @@
 				"qty": 1
 			}
 		],
+		"specialRules": [
+			[
+				{
+					"text": "Riftspawn is immune to the effects of States and Environments. Its Attacks always hit if models do not Dodge successfully. It does not cause the Engaged State."
+				}
+			]
+		],
 		"summon": {
 			"tier": 5,
 			"source": {
@@ -404,6 +411,13 @@
 				"id": "tidal-wave",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "Everflowing: This model cannot become Engaged. When attacked, it may move for 2\" in any direction at the end of Resolution Step. 4\" around this model is Shallow Aquatic Environment."
+				}
+			]
 		],
 		"summon": {
 			"tier": 3,

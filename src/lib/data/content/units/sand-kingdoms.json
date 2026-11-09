@@ -112,6 +112,18 @@
 				"id": "glyph-of-protection",
 				"qty": 1
 			}
+		],
+		"specialRules": [
+			[
+				{
+					"text": "Set X to Fire, Air, Earth, Water, or Elder for this model's Resistance and Affinity."
+				}
+			],
+			[
+				{
+					"text": "(Note: The model only has the chosen element. All elements are displayed in the Affinity for the purpose of showing the available spells.)"
+				}
+			]
 		]
 	},
 	{

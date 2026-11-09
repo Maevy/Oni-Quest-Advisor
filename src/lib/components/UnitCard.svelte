@@ -225,6 +225,7 @@
 	let stratagems = $derived(unit.stratagems ? stratagemsFor(unit.stratagems, stratagemIndex) : []);
 	let inventoryRows = $derived(unit.inventory ? resolveInventory(unit.inventory, itemIndex) : []);
 	let usedSpace = $derived(unit.inventory ? inventorySpaceUsed(unit.inventory, itemIndex) : 0);
+	let specialRules = $derived(unit.specialRules ?? []);
 
 	function openPopup(popup: ArmyRulesPopup): void {
 		popupStack = [...popupStack, popup];
@@ -493,6 +494,23 @@
 										</div>
 									{/each}
 								</div>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
+			{#if specialRules.length > 0}
+				<hr class="border-slate-700/50" />
+				<div>
+					<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-sky-300 uppercase">
+						Special Rules
+					</h3>
+					<div class="space-y-1.5">
+						{#each specialRules as paragraph, paragraphIndex (paragraphIndex)}
+							<div class="rounded-xl border border-slate-700/50 bg-slate-800/40 p-2.5">
+								<p class="text-xs text-slate-100">
+									{@render segmentsView(paragraph)}
+								</p>
 							</div>
 						{/each}
 					</div>
