@@ -16,6 +16,49 @@ worth knowing before touching the code.
 
 ---
 
+## v0.12.2 — fourteen rules of their own, finally visible (2026-11-09, 2 commits)
+
+A rule the user spotted at the table turned out to be a whole unmigrated producer field.
+**Bladebrethren Elite** — _"When declaring a Melee Attack as a Reaction, you may perform a M roll.
+On success, regain the AP spent on this Reaction."_ — was assumed to be a one-off special case. It
+is not: **14 of the 63 characters** carry `abilities_additional_info`, a rule belonging to no
+catalog (neither Skill, Trait nor Stratagem), and the importer had never read it. Every one of them
+was invisible in the app, and several are load-bearing: the Goblin Warchief's Fearless aura _and_
+its "Stratagems are called Tribes" ruling, Djinnborn Marzban choosing its element for Resistance and
+Affinity alike, Paladin of the Order succeeding a fallen Leader, Renegade Rasetsu's −4 Morale on its
+party, Tomoe's Light Cover, Kogetsu's Protective Currents, Bonewalker's per-Undead-ally buff.
+
+**Worth remembering: the paragraphs stay separate.** The field is a Strapi rich-text node whose
+blocks are paragraphs, and three models (Chiyohime, Djinnborn Marzban, Goblin Warchief) carry two
+_distinct_ rules in it. Running the whole node through `normalize` — which folds line breaks — would
+merge them into one sentence about neither, so `specialRules` is `ArmyTextSegment[][]`, one entry
+per block, and `lib/data/specialRules.spec.ts` pins both the id set and the split. The heading is
+the app's own (**Special Rules**) because the producer titles 12 of the 14 `"Special"` and leaves 2
+`null`. The panel sits below Stratagems behind **its own divider**, so it reads as set apart whether
+or not the model has equipment — which matters most for Tomoe, who has neither inventory nor
+stratagems and whose special rule is the only thing below her spellcrafts.
+
+**And: adding the field invalidates nothing.** `catalogFingerprint()` hashes ids and mount pairings,
+so a new field on a unit shifts no index — not one saved army, `?army=` deep link, tournament
+registration or online seat. The Guildhall catalog regenerates byte-identically, which is the check
+that a re-import moved content and not formatting. The unit card renders the _effective_ unit, so
+`army.spec.ts` also pins that `upgradedArmyUnit` carries the field through: a return rewritten to
+enumerate fields would make the panel vanish on upgraded copies only, invisible in the catalog.
+
+Two traps found on the way. `data-import/units3.json` is still **not** a usable replacement for
+`units.json` (3 of 12 sections), but its `characterList` agrees with ours on all 14 abilities
+exactly, so the dump's staleness does not touch this field — the partial dump is good evidence, not
+good input. And spec 08 claimed the builder header's back button reads "← Main Menu" while the app
+renders the shared `ScreenHeader`'s "← Return"; a browser harness trusted the doc and timed out on
+it, so the line is corrected in this release.
+
+**No database wipe.** The diff over `domain/online.ts`, `lib/server` and `routes/api` since v0.12.1
+is empty. Verified by svelte-check (0 errors, 0 warnings), 911 unit tests across 38 files, eslint and
+Prettier, and a 17-assertion browser pass over the one-card, two-card, no-equipment and negative
+cases.
+
+Detail: `git log v0.12.1..v0.12.2`
+
 ## v0.12.1 — the Imported Casting Amplifier could not be exported (2026-11-03, 3 commits)
 
 A hotfix for the Guildhall export. **Every** army carrying the neutral 4-point Imported Casting

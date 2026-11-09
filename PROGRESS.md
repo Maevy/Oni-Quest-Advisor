@@ -6,16 +6,16 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Where things stand
 
-- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.12.1** (tagged on `main`,
-  2026-11-03): a Guildhall-export hotfix — the neutral **Imported Casting Amplifier** made every
-  army carrying it unexportable (422 `unknown-item`), because the importer had invented an item
-  with no producer row behind it. **No database wipe** — the diff over the persisted paths is one
-  spec file. v0.12.0 (2026-10-27) shipped the export itself (spec 11): a serializer for
-  Freecompany's builder format, a generated server-only catalog artifact, a public download route
-  and a second button on the Chiyo-Bot card, plus the SSE subscriber-reclaim fix. Day-to-day work
-  happens on **`develop`**, pushed to `git@github.com:Maevy/Oni-Quest-Advisor.git`.
+- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.12.2** (tagged on `main`,
+  2026-11-09): the **Special Rules** panel — the producer's `abilities_additional_info` migrated at
+  last, so the 14 models carrying a rule of their own (Bladebrethren Elite's Reaction AP refund, the
+  Goblin Warchief's Tribes, Djinnborn Marzban's element choice) show it in the unit card below
+  Stratagems behind its own divider. **No database wipe** — the diff over the persisted paths is
+  empty. v0.12.1 (2026-11-03) was the Guildhall-export hotfix for the Imported Casting Amplifier.
+  Day-to-day work happens on **`develop`**, pushed to
+  `git@github.com:Maevy/Oni-Quest-Advisor.git`.
 - `develop` is level with the tag. Count what is past it with
-  `git rev-list --count v0.12.1..develop` rather than trusting a number here; this bullet went
+  `git rev-list --count v0.12.2..develop` rather than trusting a number here; this bullet went
   stale inside the session that wrote it four times, which is why it now carries neither a count
   nor a feature name — the diff is the only version of this claim that cannot rot. What shipped,
   with its decisions and traps, is in `ARCHIVE.md` — that file is the index into `git log`, not a
@@ -47,6 +47,21 @@ would read `undefined !== null` as combat-ready with no army behind it. Any futu
 persisted online shape needs the same conversation.
 
 ## What's next
+
+v0.12.2 (2026-11-09) shipped the **Special Rules** panel: the producer's
+`abilities_additional_info` — a rule belonging to no catalog, neither Skill nor Trait nor Stratagem
+— migrated onto `ArmyUnitSpec.specialRules` and rendered below Stratagems behind its own divider. A
+playtest observation prompted it (Bladebrethren Elite regaining the AP on a successful Reaction
+attack) and it turned out **14 of the 63 characters** carry the field, several of them load-bearing
+(the Goblin Warchief's Tribes, Djinnborn Marzban's element choice, Paladin of the Order's leader
+succession). The rules worth carrying forward: the **paragraphs stay separate** — `normalize` folds
+line breaks and three models carry two distinct rules, so `specialRules` is `ArmyTextSegment[][]`
+and the content spec pins the split; the **heading is the app's own** because the producer titles 12
+"Special" and leaves 2 null; and **adding the field invalidates nothing**, because
+`catalogFingerprint()` hashes ids and mount pairings — the Guildhall catalog regenerating
+byte-identically is the check that a re-import moved content and not formatting. `units3.json`
+remains good evidence but bad input: 3 of 12 sections, though its `characterList` agrees with ours
+on all 14 abilities exactly.
 
 v0.12.1 (2026-11-03) was a hotfix for that export: the neutral **Imported Casting Amplifier**
 refused every army carrying it (422 `unknown-item`), because the item our importer invented for it

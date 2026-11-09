@@ -64,6 +64,11 @@ section.
     loaded behind a type assertion, so a bad value is invisible to `npm run check`.
   - `upgradesLocked` marks the rulebook exceptions (Tomoe, Kogetsu, Seigen, Tharos, Anari,
     Na'ra, Chiyohime, Chanra).
+  - **`specialRules`** (the producer's `abilities_additional_info`) is a rule belonging to no
+    catalog — neither Skill, Trait nor Stratagem; 14 of 63 models carry one. **One paragraph per
+    block**, because `normalize` folds line breaks and three models carry two distinct rules, and
+    rendered below Stratagems behind its own divider. Adding it (or any field) to a unit shifts no
+    army-code index: `catalogFingerprint()` hashes ids and mount pairings only.
   - **Standard upgrades**: per-copy picks; slots = 1 + Resourceful level + Pouch count;
     faction access (four main factions own + neutral; oni/goblin/guild neutral-only). Effects
     include `costReduction` (Devotion: Paimon discounts every other upgrade army-wide by 1,
@@ -422,15 +427,19 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
   and push branch + tag. Commit messages here are detailed by design — they are the
   authoritative record of why a change was made.
-- Current release: **v0.12.1** (2026-11-03 — a Guildhall-export hotfix: the neutral **Imported
-  Casting Amplifier** made every army carrying it unexportable, because the item the importer
-  invented for it had no `producerId` and the serializer resolves a granted item through exactly
-  that field), tagged on `main` with **no database wipe** — the diff over the persisted paths is one
-  spec file. The rule it leaves behind: **`catalogFingerprint()` hashes the item id list, so
-  deleting a content entry invalidates every army code in the wild**, while adding a field to one is
-  invisible to them. v0.12.0 (2026-10-27) shipped the export itself — the Chiyo-Bot card's second
-  button and `GET /api/guildhall-export?code=` write a `.json` that Freecompany's own builder imports
-  by file drop, because theirs cannot be deep-linked. Production stays at `min_machines_running = 1`
+- Current release: **v0.12.2** (2026-11-09 — the **Special Rules** panel: the producer's
+  `abilities_additional_info`, a rule belonging to no catalog, migrated onto
+  `ArmyUnitSpec.specialRules` and rendered below Stratagems behind its own divider; a playtest
+  observation about Bladebrethren Elite turned out to be 14 of the 63 characters), tagged on `main`
+  with **no database wipe** — the diff over the persisted paths is empty. The rules it leaves
+  behind: **the paragraphs stay separate** (`ArmyTextSegment[][]`, one entry per block — `normalize`
+  folds line breaks and three models carry two distinct rules), and **adding a field to a unit
+  invalidates no army code**, because `catalogFingerprint()` hashes ids and mount pairings — the
+  Guildhall catalog regenerating byte-identically is the check that a re-import moved content and
+  not formatting. v0.12.1 (2026-11-03) was the Guildhall-export hotfix for the Imported Casting
+  Amplifier; v0.12.0 (2026-10-27) shipped the export itself — the Chiyo-Bot card's second button and
+  `GET /api/guildhall-export?code=` write a `.json` that Freecompany's own builder imports by file
+  drop, because theirs cannot be deep-linked. Production stays at `min_machines_running = 1`
   (since v0.11.0): Discord allows an interaction 3 s and a cold wake measured 4.71 s, and a dropped
   interaction is never logged.
 - **The persisted online shape has no migration mechanism** — no `hydrateOnlineGameState`

@@ -6,7 +6,7 @@ shapes, rendering geometry, colours and server architecture see
 rules each layer must follow, see the root [QWEN.md](../../QWEN.md) and the `CLAUDE.md` inside
 each `src/lib/` folder.
 
-> These specs describe the app **as built**, verified against the code at v0.12.1. Where the app
+> These specs describe the app **as built**, verified against the code at v0.12.2. Where the app
 > is mid-iteration or internally inconsistent, the relevant document says so explicitly and lists
 > it under **Open questions** — those sections are live to-do lists, not rhetorical.
 
