@@ -16,6 +16,31 @@ worth knowing before touching the code.
 
 ---
 
+## v0.12.3 — the campaign key art takes the background (2026-11-10, 2 commits)
+
+A promotional swap: the fixed background is now the new campaign's key art
+(`assets/Background2.jpg`, the candlelit hall with the party on the bridge) instead of the
+snowy-mountain `OniQuestAdvisorBackgroundv3.jpg`. One import line in `+layout.svelte`; the scrim,
+the layer classes and everything else are untouched.
+
+**Worth remembering: a phone never sees the whole artwork.** `bg-cover bg-center` on a landscape
+image in a portrait viewport shows its central vertical slice — for this art that is the heroes
+themselves, the archer over the axe-knight, so the crop reads as a deliberate poster rather than an
+accident. Panels are unaffected because they sit on `backdrop-blur` surfaces. The two bare-text
+lines in the middle band ("Select Game Mode", "Choose a Season to begin.") do carry less contrast
+than they did over the old dark snow, because the new art's centre is bright and the scrim falls to
+15% there; that was reviewed on a 390×844 viewport and **left as is** — a conscious choice, recorded
+in the theme spec rather than fixed silently. The old key art stays in `assets/` unreferenced:
+Vite bundles only imported assets, so it costs nothing in the build and the swap remains a one-line
+revert.
+
+**No database wipe.** The diff over `domain/online.ts`, `lib/server` and `routes/api` since v0.12.2
+is empty — this release touches one client import and two prose documents. Verified by
+svelte-check (0 errors, 0 warnings), 911 unit tests across 38 files, eslint and Prettier, and an A/B
+screenshot pair before and after the swap.
+
+Detail: `git log v0.12.2..v0.12.3`
+
 ## v0.12.2 — fourteen rules of their own, finally visible (2026-11-09, 2 commits)
 
 A rule the user spotted at the table turned out to be a whole unmigrated producer field.

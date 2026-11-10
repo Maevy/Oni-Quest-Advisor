@@ -6,16 +6,15 @@ for behaviour see `docs/`. Released history lives in [`ARCHIVE.md`](./ARCHIVE.md
 
 ## Where things stand
 
-- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.12.2** (tagged on `main`,
-  2026-11-09): the **Special Rules** panel — the producer's `abilities_additional_info` migrated at
-  last, so the 14 models carrying a rule of their own (Bladebrethren Elite's Reaction AP refund, the
-  Goblin Warchief's Tribes, Djinnborn Marzban's element choice) show it in the unit card below
-  Stratagems behind its own divider. **No database wipe** — the diff over the persisted paths is
-  empty. v0.12.1 (2026-11-03) was the Guildhall-export hotfix for the Imported Casting Amplifier.
+- Live at https://oni-quest-advisor.fly.dev/ — latest release **v0.12.3** (tagged on `main`,
+  2026-11-10): the **campaign key art** takes the fixed background — `Background2.jpg`, the
+  candlelit hall with the party on the bridge, replacing the snowy-mountain key art to promote the
+  new campaign. One import line; the scrim and everything else untouched. **No database wipe** —
+  the diff over the persisted paths is empty. v0.12.2 (2026-11-09) was the Special Rules panel.
   Day-to-day work happens on **`develop`**, pushed to
   `git@github.com:Maevy/Oni-Quest-Advisor.git`.
 - `develop` is level with the tag. Count what is past it with
-  `git rev-list --count v0.12.2..develop` rather than trusting a number here; this bullet went
+  `git rev-list --count v0.12.3..develop` rather than trusting a number here; this bullet went
   stale inside the session that wrote it four times, which is why it now carries neither a count
   nor a feature name — the diff is the only version of this claim that cannot rot. What shipped,
   with its decisions and traps, is in `ARCHIVE.md` — that file is the index into `git log`, not a
@@ -47,6 +46,15 @@ would read `undefined !== null` as combat-ready with no army behind it. Any futu
 persisted online shape needs the same conversation.
 
 ## What's next
+
+v0.12.3 (2026-11-10) was a promotional swap: the fixed background is the new campaign's key art
+(`assets/Background2.jpg`) instead of the snowy-mountain `OniQuestAdvisorBackgroundv3.jpg`. The
+facts worth carrying forward are about the crop, not the code: a phone's `bg-cover bg-center` of a
+landscape image shows only its central vertical slice — here that is the heroes themselves, so the
+crop reads as a poster — and the two bare-text lines in the middle band ("Select Game Mode",
+"Choose a Season to begin.") carry less contrast over the new art's bright centre because the scrim
+falls to 15% there. Reviewed on a 390×844 viewport and consciously left as is; the theme spec
+records both facts. The old art stays in `assets/` unreferenced, so the swap is a one-line revert.
 
 v0.12.2 (2026-11-09) shipped the **Special Rules** panel: the producer's
 `abilities_additional_info` — a rule belonging to no catalog, neither Skill nor Trait nor Stratagem

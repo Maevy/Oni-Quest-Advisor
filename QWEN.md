@@ -427,21 +427,17 @@ After code changes, verify with `npm run check`, `npm run lint`, and `npm run te
   Releases fast-forward merge `develop` into `main`, tag **`vX.Y.Z`** (annotated),
   and push branch + tag. Commit messages here are detailed by design — they are the
   authoritative record of why a change was made.
-- Current release: **v0.12.2** (2026-11-09 — the **Special Rules** panel: the producer's
-  `abilities_additional_info`, a rule belonging to no catalog, migrated onto
-  `ArmyUnitSpec.specialRules` and rendered below Stratagems behind its own divider; a playtest
-  observation about Bladebrethren Elite turned out to be 14 of the 63 characters), tagged on `main`
-  with **no database wipe** — the diff over the persisted paths is empty. The rules it leaves
-  behind: **the paragraphs stay separate** (`ArmyTextSegment[][]`, one entry per block — `normalize`
-  folds line breaks and three models carry two distinct rules), and **adding a field to a unit
-  invalidates no army code**, because `catalogFingerprint()` hashes ids and mount pairings — the
-  Guildhall catalog regenerating byte-identically is the check that a re-import moved content and
-  not formatting. v0.12.1 (2026-11-03) was the Guildhall-export hotfix for the Imported Casting
-  Amplifier; v0.12.0 (2026-10-27) shipped the export itself — the Chiyo-Bot card's second button and
-  `GET /api/guildhall-export?code=` write a `.json` that Freecompany's own builder imports by file
-  drop, because theirs cannot be deep-linked. Production stays at `min_machines_running = 1`
-  (since v0.11.0): Discord allows an interaction 3 s and a cold wake measured 4.71 s, and a dropped
-  interaction is never logged.
+- Current release: **v0.12.3** (2026-11-10 — the **campaign key art** takes the fixed background:
+  `assets/Background2.jpg`, the candlelit hall with the party on the bridge, replaces the
+  snowy-mountain key art to promote the new campaign; one import line, scrim and layers untouched),
+  tagged on `main` with **no database wipe** — the diff over the persisted paths is empty. The rule
+  it leaves behind: **a phone never sees the whole artwork** — `bg-cover bg-center` on a landscape
+  image in a portrait viewport shows its central vertical slice, so a background swap must be judged
+  on that crop (here it is the heroes, which reads as a poster) and on the bare text in the middle
+  band, where the scrim falls to 15% and the new art is bright; both facts live in the theme spec.
+  v0.12.2 (2026-11-09) was the Special Rules panel; v0.12.1 (2026-11-03) the Guildhall-export
+  hotfix. Production stays at `min_machines_running = 1` (since v0.11.0): Discord allows an
+  interaction 3 s and a cold wake measured 4.71 s, and a dropped interaction is never logged.
 - **The persisted online shape has no migration mechanism** — no `hydrateOnlineGameState`
   exists, so a field added to an online seat or game leaves older rows reading as corrupt (a
   missing combat army reads as combat-ready). v0.9.0 needed a database-wide wipe for exactly
