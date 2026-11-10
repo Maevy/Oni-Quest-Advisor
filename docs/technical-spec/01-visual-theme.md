@@ -14,11 +14,16 @@ Tailwind `slate`/`sky` scale, so consistency comes from reusing the recipes belo
 Dark, cold, blueish — not neutral black. `body` is `bg-slate-950 text-slate-100`
 (`layout.css`, `@layer base`).
 
-The fixed background is the official Eldfall Chronicles key art
-(`assets/OniQuestAdvisorBackgroundv3.jpg`), rendered by `+layout.svelte` as a
-`fixed inset-0 -z-10 bg-cover bg-center` layer under a **horizontal gradient scrim** —
-`rgba(2,6,23,0.95)` at both edges falling to `0.15` across the middle 25–75%. The scrim is
-what keeps text legible over artwork; do not put content on top of it without a panel.
+The fixed background is the campaign key art (`assets/Background2.jpg` — swapped in on
+2026-11-10 to promote the new campaign, replacing the snowy-mountain
+`OniQuestAdvisorBackgroundv3.jpg`, which stays in `assets/` unreferenced), rendered by
+`+layout.svelte` as a `fixed inset-0 -z-10 bg-cover bg-center` layer under a **horizontal
+gradient scrim** — `rgba(2,6,23,0.95)` at both edges falling to `0.15` across the middle 25–75%.
+The scrim is what keeps text legible over artwork; do not put content on top of it without a
+panel. The campaign art is markedly brighter in the centre than the art the scrim was tuned
+against, and a phone's `bg-cover` crop of a landscape image shows exactly that centre — so bare
+text in the middle band ("Select Game Mode", "Choose a Season to begin.") carries less contrast
+than it did; anything on a panel is unaffected.
 
 Surface scale (all translucent, all with `backdrop-blur`):
 

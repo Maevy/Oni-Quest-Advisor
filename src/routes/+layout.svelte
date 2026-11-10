@@ -2,7 +2,7 @@
 	import './layout.css';
 	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
-	import background from '$lib/assets/OniQuestAdvisorBackgroundv3.jpg';
+	import background from '$lib/assets/Background2.jpg';
 	import PrivacyNotice from '$lib/components/PrivacyNotice.svelte';
 	import { navigationStore } from '$lib/stores';
 
